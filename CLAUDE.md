@@ -330,6 +330,35 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-06-09] — Multi-charge pathing, true Leader merge, AM Orders + both detachment rules.**
+  Closed the three remaining fidelity items. All gates green: `pnpm typecheck`, `pnpm test`
+  (**204 tests**), `pnpm build`.
+  - **Multi-target charge pathing** — `resolveCharge` takes `targetUnitIds[]` and *searches* for a
+    legal coherent move (≤ 2D6) that ends within Engagement Range of **every** declared target while
+    **not** ending within Engagement Range of a non-target enemy; declaration is rejected past 12".
+    `GamePanel` Charge phase gets a multi-target checklist. (Path search is a 1-D scan along the
+    aim direction; rigid translate keeps coherency. Single-target back-compat via `targetUnitId`.)
+  - **True Leader merge (one unit instance)** — `AttachLeader` now MERGES the Leader's models into
+    the Bodyguard (each tagged with `ModelInstance.datasheetId`); the Leader instance is removed.
+    The merged unit renders each model at its **own base**, fires weapons from **both datasheets**
+    (only the source datasheet's models count — `engine.unitWeapons`), uses **per-model** W/Sv/invuln
+    (`defenderProfileFor`) and OC (`ocModels`), and moves/targets as one. `DetachLeader` splits it
+    back out. *Simplification:* the wound roll uses the primary (Bodyguard) Toughness.
+  - **AM Orders + detachment rules** —
+    - The six **Orders** (`core/orders.ts`): Take Aim!, Fix Bayonets!, First Rank Fire! (+1 Attack to
+      Rapid Fire, via new `EffectOutput.extraAttacks`), Take Cover! (+1 Save cap 3+, via `saveBonus`),
+      Move! Move! Move! (+3" budget in `BeginMove`), Duty and Honour! (+1 OC in `ocModels`, +1 Ld in
+      the Battle-shock test). **Voice of Command**: `phases.orderableUnits` = REGIMENT within 6", not
+      Battle-shocked. `GamePanel` Command phase issues them per Officer.
+    - **Grizzled Company (Ruthless Discipline)**: issuing an Order also grants **re-roll Hit 1s**.
+    - **Imperialis Fleet (At all Costs)**: Command-phase **Eliminate** (mark an enemy: +1 to be hit)
+      / **Acquire** (your unit on an objective: **5++**, +1 OC/Ld). Both via small effect ids.
+  - **To exercise Orders in the UI** you need an **Officer** (Voice of Command) + REGIMENT units in
+    the loaded list — build one in the List Builder (the empty owned rosters still have no units).
+  - **Still open:** the per-unit *special* abilities (Yarrick's Will of Iron, Death Korps Medi-pack,
+    Stormlord Firing Deck, etc.) and the ~25 *named* detachment stratagems' mechanical effects — these
+    need the owned `docs/lists/*.md`; the effect/registry seams are ready (one line each).
+
 - **[2026-06-09] — Fidelity pass: fight pile-in/consolidate, leaders move together, battle-shock dice.**
   Closed three of the gaps the previous entry left open. All gates green: `pnpm typecheck`,
   `pnpm test` (**192 tests**), `pnpm build`.
