@@ -68,7 +68,14 @@ export type Intent =
   /** Run the active player's Command phase: CP, Battle-shock, Primary scoring. Requires EngineContext. */
   | { type: 'RunCommandPhase' }
   /** Set per-unit status flags (movement/charge bookkeeping that later phases drive). */
-  | { type: 'SetUnitStatus'; unitId: string; status: Partial<UnitInstance['status']> };
+  | { type: 'SetUnitStatus'; unitId: string; status: Partial<UnitInstance['status']> }
+  // ── Abilities / Orders / Stratagems (Phase 3) ─────────────────────────────────
+  /** Issue an Order to a unit: applies an effect (from core/effects.ts) until end of turn. */
+  | { type: 'IssueOrder'; unitId: string; effectId: string }
+  /** Use a Stratagem: spend CP for a side and optionally apply an effect to a target unit.
+   *  Not gated by the active player, so reactive stratagems (Displacer Field) work in the
+   *  opponent's turn (architecture rule #3). */
+  | { type: 'UseStratagem'; name: string; side: Side; cost: number; targetUnitId?: string; effectId?: string };
 
 export function createInitialState(layout: Layout): GameState {
   return {
@@ -201,7 +208,42 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       if (!ctx) return { ...state, log: [...state.log, 'Command phase ignored: no datasheet context supplied'] };
       return runCommandPhase(state, ctx, rng);
     }
+
+    case 'IssueOrder':
+      return {
+        ...state,
+        units: state.units.map((u) =>
+          u.id === intent.unitId ? { ...u, status: addEffect(u.status, intent.effectId) } : u,
+        ),
+        log: [...state.log, `Order ${intent.effectId} → ${intent.unitId}`],
+      };
+
+    case 'UseStratagem': {
+      if (state.cp[intent.side] < intent.cost) {
+        return { ...state, log: [...state.log, `Stratagem "${intent.name}" rejected: needs ${intent.cost} CP, ${intent.side} has ${state.cp[intent.side]}`] };
+      }
+      const cp = { ...state.cp, [intent.side]: state.cp[intent.side] - intent.cost };
+      const units =
+        intent.targetUnitId && intent.effectId
+          ? state.units.map((u) =>
+              u.id === intent.targetUnitId ? { ...u, status: addEffect(u.status, intent.effectId!) } : u,
+            )
+          : state.units;
+      return {
+        ...state,
+        cp,
+        units,
+        log: [...state.log, `${intent.side} uses Stratagem "${intent.name}" (-${intent.cost} CP)${intent.effectId ? ` → ${intent.effectId}` : ''}`],
+      };
+    }
   }
+}
+
+/** Append an effect id to a unit's active effects (no duplicates). */
+function addEffect(status: UnitInstance['status'], effectId: string): UnitInstance['status'] {
+  const current = status.activeEffects ?? [];
+  if (current.includes(effectId)) return status;
+  return { ...status, activeEffects: [...current, effectId] };
 }
 
 // ── helpers ──────────────────────────────────────────────────────────────────

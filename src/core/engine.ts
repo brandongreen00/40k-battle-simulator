@@ -15,6 +15,7 @@ import { unitCanSee, unitHasCover } from './los';
 import { controlOfObjective, scorePrimary, type OcModel } from './objectives';
 import { battleShockTest } from './battleshock';
 import { rollCharge, chargeSucceeds } from './movement';
+import { gatherAttackModifiers, type AttackContext } from './effects';
 
 /** Injected lookup the engine needs to read unit stats. Not imported — passed in (rule #1/#2). */
 export interface EngineContext {
@@ -50,6 +51,18 @@ function attackProfileFor(ds: Datasheet, weaponName: string): AttackProfile | un
     D: w.D,
     keywords: parseKeywords(w.keywords),
   };
+}
+
+/**
+ * Curated innate effects per datasheet (Phase 3 seam). Maps a datasheet id to always-on effect
+ * ids from EFFECT_REGISTRY. Empty until the owned lists enumerate each unit's specials; this is
+ * where e.g. a Bullgryn's "-1 Damage" or a unit's innate Feel No Pain gets bound (one line each).
+ */
+export const INNATE_ABILITY_EFFECTS: Record<string, string[]> = {};
+
+/** All effect ids active on a unit right now: issued Orders/Stratagems plus innate abilities. */
+function effectsOf(unit: UnitInstance): string[] {
+  return [...(unit.status.activeEffects ?? []), ...(INNATE_ABILITY_EFFECTS[unit.datasheetId] ?? [])];
 }
 
 function defenderProfileFor(ds: Datasheet, unit: UnitInstance): DefenderProfile {
@@ -130,10 +143,23 @@ export function resolveAttack(
   }
 
   const halfRange = (weaponDef.range ?? 0) / 2;
-  const cover = forceCover || (!isMelee && unitHasCover(aPts, tPts, terrain));
+
+  // Gather ability/Order/Stratagem effects (Phase 3) and merge them into the situation.
+  const abilityCtx: AttackContext = {
+    phase: isMelee ? 'fight' : 'shooting',
+    weaponType: isMelee ? 'melee' : 'ranged',
+    weaponKeywords: kw,
+    attackerKeywords: aDs.keywords.map((k) => k.toUpperCase()),
+    targetKeywords: tDs.keywords.map((k) => k.toUpperCase()),
+    gap,
+  };
+  const mods = gatherAttackModifiers(abilityCtx, effectsOf(attacker), effectsOf(target));
+
+  const cover = (forceCover || (!isMelee && unitHasCover(aPts, tPts, terrain))) && !mods.ignoresCover;
   const situation: CombatSituation = {
     attackerCount: params.attackerCount ?? aliveAttackers,
-    hitModifier: hitPenalty,
+    hitModifier: hitPenalty + mods.hitModifier,
+    woundModifier: mods.woundModifier,
     rapidFireActive: !isMelee && gap <= halfRange,
     meltaActive: !isMelee && gap <= halfRange,
     longRange: !isMelee && gap >= 12,
@@ -141,9 +167,16 @@ export function resolveAttack(
     stationary: attacker.status.remainedStationary,
     cover,
     targetModelCount: aliveTargets,
+    critHitOn: mods.critHitOn,
+    critWoundOn: mods.critWoundOn,
+    rerollHits: mods.rerollHits,
+    rerollWounds: mods.rerollWounds,
+    damageReduction: mods.damageReduction,
   };
 
   const defender = defenderProfileFor(tDs, target);
+  if (mods.fnp != null) defender.fnp = mods.fnp;
+  if (mods.invulnFloor != null) defender.invuln = Math.min(defender.invuln ?? 7, mods.invulnFloor);
   const result = resolveAttacks(profile, defender, situation, rng);
 
   // Map the updated wound state back onto the target's alive models, in order.

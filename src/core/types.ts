@@ -163,6 +163,8 @@ export interface UnitStatus {
   charged?: boolean; // completed a charge this turn (Lance, Fights First)
   hasFought?: boolean; // already fought this turn
   battleShocked?: boolean; // failed a Battle-shock test this round
+  /** Active ability/Order/Stratagem effect ids (see core/effects.ts). Expire at turn reset. */
+  activeEffects?: string[];
 }
 
 export interface UnitInstance {
