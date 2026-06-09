@@ -330,6 +330,66 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-06-09] — Wargear: cap-aware options, a team importer, and loadout-driven saves.**
+  Implements the three requested deliverables. All gates green: `pnpm typecheck`, `pnpm test`
+  (**143 tests**), `pnpm build`.
+
+  **1. Real wargear options (`src/core/wargear.ts`, PURE).** Parses a datasheet's free-text
+  `wargearOption.text` into a numeric **cap** on how many models may take it, honouring the
+  "for every N models, up to M" ratio — so a 10-strong Deathwatch Kill Team correctly allows
+  **4** thunder hammers (2 per 5), **2** at 5 models. `unitWargearOptions(ds, modelCount)` returns
+  UI-ready options (cap + the trackable items, sharing one pool); `validateUnitLoadout` enforces
+  the caps and is wired into `army.validate`. Loadouts are now an **item→count map** (`Loadout`,
+  e.g. `{"Deathwatch thunder hammer": 4}`) — the same granularity the app's export uses — replacing
+  the old `Record<groupIdx,string[]>`. The Options UI (`ListUnitCard`) is now **+/− steppers** per
+  item with live per-item ceilings and an over-cap warning. Verified the parser on **all 358** real
+  options (no anomalies).
+
+  **2. Team importer (`src/core/importer.ts`, PURE + `ImportPanel.tsx`).** `parseArmyText(text, deps)`
+  rebuilds an `ArmyList` from the official 40k app's text export (the task's exact format): army
+  name / faction / detachment / battle size from the header; each unit resolved to a real datasheet;
+  **model count inferred** from the model-group bullets (nesting-aware, so single-model units →
+  1, "1 Sgt + 9 Veterans" → 10, the 4-model Entourage → 4); **per-item loadout** (incl. the 4
+  thunder hammers and the shields); Warlord and Enhancement captured. Unresolvable units/enhancements
+  are returned as **warnings, never invented** (scope rule #6). Tested against the full task example
+  (10 units incl. duplicate Breachers) end-to-end through `validate` + `toRoster` → 0 errors, points
+  985.
+
+  **3. Loadout-driven saves (`combat.ts` / `engine.ts` / `state.ts`).** `ModelInstance` gained
+  `wargear?: string[]`; `SpawnUnit` pins defensive wargear onto distinct front models; the engine's
+  `defenderProfileFor` reads each model's wargear → per-model invuln/save; and the combat save step
+  was **restructured into a per-model allocate→save→damage loop** (`DefenderModel` gained
+  `invuln`/`save`) so a shield-bearer rolls its own **4++**. Equivalent to the old aggregate math
+  for uniform units (the combat Monte-Carlo test is unchanged); new `saves.integration.test.ts`
+  proves shield units survive high-AP fire far better. Shields baked into a datasheet's *default*
+  loadout (e.g. one Navis Armsman's Endurant Shield) are recovered by `resolveWargearCounts` and
+  ride on the exported `Roster.wargearCounts` into the board.
+
+  **Decisions:**
+  - **Loadout granularity = item→count**, matching the app export. Multi-weapon "combo" choices
+    (e.g. "boltgun **and** Astartes shield" vs "power weapon **and** Astartes shield") collapse to
+    their single trackable item (the shield); the other half is a generic default weapon and the
+    export doesn't preserve the combo either. Consistent with the prior "wargear swaps are advisory"
+    stance.
+  - **Generic-only swaps are not tracked/enforced.** When an option's only distinguishing items are
+    base weapons (power weapon / chainsword / bolt pistol…), its count can't be told apart from a
+    model's default loadout, so the option is dropped from the steppers + validation (avoids false
+    "over-cap" positives against default-weapon counts). The meaningful upgrades (special weapons,
+    shields) are non-generic and fully enforced.
+  - **Defensive wargear table** (`DEFENSIVE_WARGEAR`): Astartes/Endurant/storm/boarding/brute shields
+    → 4++. Best-effort 10e readings flagged as assumptions — the *mechanism* (per-model loadout →
+    per-model save) is the deliverable; the exact numbers are one-line data edits.
+  - Only **defensively-relevant** wargear is pinned to specific live models (each on its own model,
+    front-packed); other wargear has no in-game effect yet, so it's left off the models to avoid
+    crowding shields out, but the full counts persist on the Roster.
+
+  **Handoff / what's left:** weapon-swaps that change a model's *offensive* profile still aren't
+  applied in combat (the engine fires one chosen weapon for the whole unit — pre-existing). Natural
+  next step: let the engine read per-model weapons from `ModelInstance.wargear` so a thunder-hammer
+  model fights with the hammer. The three owned `docs/lists/*.md` are still absent; the importer is
+  now the fastest way to load a real list. Multi-profile model points (Entourage tiers) snap to the
+  stated points but per-sub-model loadout isn't modelled separately.
+
 - **[2026-06-09] — Stages 2–4 (Phases 1–3) combat engine implemented: deterministic combat core,
   a real game, and the ability/effect hook system.** Owner explicitly authorised starting Phases 1–3
   (CLAUDE.md rule #6) and said to skip the 3 owned lists + tank-size approximations for now. All

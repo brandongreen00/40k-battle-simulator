@@ -87,7 +87,9 @@ export interface Enhancement {
 export interface RosterUnit {
   datasheetId: string;
   modelCount: number;
-  wargear?: string[]; // chosen options
+  wargear?: string[]; // chosen options (legacy free-text)
+  /** Wargear as an item→count map (e.g. {"Astartes shield": 2}). Drives per-model saves in-game. */
+  wargearCounts?: Record<string, number>;
   enhancementId?: string;
   attachedCharacterId?: string; // leader attachment
   /** Set when the source list named a unit we could not resolve to a datasheet. */
@@ -151,6 +153,8 @@ export interface ModelInstance {
   pos: Vec2;
   wounds: number;
   alive: boolean;
+  /** Wargear items this specific model carries (e.g. ["Astartes shield"]). Drives per-model saves. */
+  wargear?: string[];
 }
 
 /** Per-unit, per-turn activation + status flags. Reset at the points the rules dictate. */

@@ -84,6 +84,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
       anchor,
       formation: placing.formation,
       rotation: placing.rotation,
+      ...(placing.unit.wargearCounts ? { wargear: placing.unit.wargearCounts } : {}),
     });
     setPlacing(null);
   }

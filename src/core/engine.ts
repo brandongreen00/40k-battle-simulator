@@ -16,6 +16,7 @@ import { controlOfObjective, scorePrimary, type OcModel } from './objectives';
 import { battleShockTest } from './battleshock';
 import { rollCharge, chargeSucceeds } from './movement';
 import { gatherAttackModifiers, type AttackContext } from './effects';
+import { defensiveProfileForItem } from './wargear';
 
 /** Injected lookup the engine needs to read unit stats. Not imported — passed in (rule #1/#2). */
 export interface EngineContext {
@@ -72,7 +73,20 @@ function defenderProfileFor(ds: Datasheet, unit: UnitInstance): DefenderProfile 
     save: m.Sv,
     invuln: m.invuln,
     keywords: ds.keywords,
-    models: unit.models.filter((x) => x.alive).map((x) => ({ maxW: m.W, wounds: x.wounds })),
+    models: unit.models
+      .filter((x) => x.alive)
+      .map((x) => {
+        // A shield-bearer (or other defensive wargear) overrides the unit's save/invuln.
+        let invuln = m.invuln;
+        let save: number | undefined;
+        for (const item of x.wargear ?? []) {
+          const def = defensiveProfileForItem(item);
+          if (!def) continue;
+          if (def.invuln != null) invuln = Math.min(invuln ?? 7, def.invuln);
+          if (def.saveBonus != null) save = Math.max(2, (save ?? m.Sv) - def.saveBonus);
+        }
+        return { maxW: m.W, wounds: x.wounds, ...(invuln != null ? { invuln } : {}), ...(save != null ? { save } : {}) };
+      }),
   };
 }
 

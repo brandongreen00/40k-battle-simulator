@@ -32,14 +32,22 @@ pnpm ingest     # regenerate data/game/*.json from Wahapedia (see tools/ingest/R
   base-to-base distance read-out.
 - **List builder** (Imperial Agents + Astra Militarum): searchable catalog grouped by role, add
   units, choose the model-count tier (points update live), add detachment-scoped enhancements,
-  set a Warlord, attach leaders, and pick wargear swaps. A live points bar vs the battle-size
-  limit (Combat Patrol/Incursion/Strike Force) plus a validation panel (points, enhancement
-  legality, datasheet copy limits, Epic-Hero uniqueness). Save to your browser, export a Roster
-  JSON, or send the list straight to the measuring board.
+  set a Warlord, attach leaders, and pick wargear with **cap-aware steppers** — e.g. a 10-strong
+  Deathwatch Kill Team correctly allows up to **4** thunder hammers (2 per 5 models), enforced
+  live. A points bar vs the battle-size limit (Combat Patrol/Incursion/Strike Force) plus a
+  validation panel (points, enhancement legality, datasheet copy limits, Epic-Hero uniqueness,
+  wargear caps). Save to your browser, export a Roster JSON, or send the list to the board.
+- **Team importer**: paste the plain-text export from the official Warhammer 40,000 app's team
+  builder and the list is rebuilt automatically — faction, detachment, battle size, every unit's
+  model count, per-item wargear (including which models carry **shields**), the Warlord and any
+  enhancement. Unresolvable lines are reported, never invented.
+- **Loadout-aware saves**: a model's wargear carries into the game. Shield-bearers (Astartes /
+  Endurant shields) get their **4++ invulnerable save** resolved per model in the combat pipeline,
+  so the right models take the right saves.
 
   > **10th-edition points note:** wargear costs **0 points** in 10e — a unit's cost comes only
   > from its model count, and enhancements. So swapping weapons never changes points (by design);
-  > the builder's points are exact for what actually costs points.
+  > the builder enforces the *number* of each upgrade (the caps), and the points stay exact.
 
 ## Deployment (GitHub Pages)
 
