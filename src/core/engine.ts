@@ -324,8 +324,38 @@ export function resolveCharge(
   const { distance, rolls } = rollCharge(rng);
   const success = chargeSucceeds(gap, distance);
   const summary = `${cDs.name} charges ${tDs.name}: 2D6=${rolls.join('+')}=${distance}" vs ${gap.toFixed(1)}" → ${success ? 'SUCCESS' : 'failed'}`;
-  const units = success
-    ? state.units.map((u) => (u.id === charger.id ? { ...u, status: { ...u.status, charged: true } } : u))
-    : state.units;
+
+  // On success, move the charger into Engagement Range: a rigid translate of the whole unit (so it
+  // stays in coherency) along the closest charger→target axis, far enough to close to ~0.5" but no
+  // more than the roll allows. The unit ends within 1" (the roll guarantees it can).
+  const units = state.units.map((u) => {
+    if (u.id !== charger.id) return u;
+    if (!success) return u;
+    const dir = closestAxis(charger, target);
+    const moveDist = Math.max(0, Math.min(distance, gap - 0.5));
+    const moved = u.models.map((m) =>
+      m.alive ? { ...m, pos: { x: m.pos.x + dir.x * moveDist, y: m.pos.y + dir.y * moveDist } } : m,
+    );
+    return { ...u, models: moved, status: { ...u.status, charged: true, moved: true } };
+  });
   return { state: { ...state, units, log: [...state.log, summary] }, success, summary };
+}
+
+/** Unit vector from the charger's closest model to the target's closest model. */
+function closestAxis(a: UnitInstance, b: UnitInstance): Vec2 {
+  let best = Infinity;
+  let from = a.models[0]?.pos ?? { x: 0, y: 0 };
+  let to = b.models[0]?.pos ?? { x: 0, y: 0 };
+  for (const am of a.models) {
+    if (!am.alive) continue;
+    for (const bm of b.models) {
+      if (!bm.alive) continue;
+      const d = Math.hypot(am.pos.x - bm.pos.x, am.pos.y - bm.pos.y);
+      if (d < best) { best = d; from = am.pos; to = bm.pos; }
+    }
+  }
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const len = Math.hypot(dx, dy) || 1;
+  return { x: dx / len, y: dy / len };
 }

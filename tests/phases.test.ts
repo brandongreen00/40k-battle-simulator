@@ -4,8 +4,9 @@ import {
   chargeTargets, fightActivationOrder, hasFightsFirst, inEngagementRange,
 } from '../src/core/phases';
 import type { BaseShape, Datasheet, GameState, Layout, UnitInstance } from '../src/core/types';
-import { createInitialState } from '../src/core/state';
-import type { EngineContext } from '../src/core/engine';
+import { createInitialState, reduce } from '../src/core/state';
+import { closestGap, type EngineContext } from '../src/core/engine';
+import { makeRNG } from '../src/core/rng';
 
 const circle: BaseShape = { kind: 'circle', radius: 0.5 };
 const layout: Layout = {
@@ -97,5 +98,15 @@ describe('fight phase', () => {
     expect(order[0]).toBe('a'); // Fights First first
     expect(order).toContain('b');
     expect(order).toContain('c');
+  });
+
+  it('a successful charge moves the charger into Engagement Range', () => {
+    // centres 4" apart, 0.5" radii -> 3" gap. 2D6 (>=2) always clears it, so the charge succeeds.
+    const s = withUnits([unit('a', 'player', 'melee', 10, 22), unit('b', 'ai', 'gun', 14, 22)]);
+    expect(closestGap(s.units[0]!, circle, s.units[1]!, circle)).toBeCloseTo(3, 1);
+    const after = reduce(s, { type: 'Charge', chargerUnitId: 'a', targetUnitId: 'b' }, makeRNG(3), ctx);
+    const charger = after.units.find((u) => u.id === 'a')!;
+    expect(charger.status.charged).toBe(true);
+    expect(closestGap(charger, circle, after.units.find((u) => u.id === 'b')!, circle)).toBeLessThanOrEqual(1);
   });
 });
