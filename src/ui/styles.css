@@ -200,6 +200,11 @@ button.remove {
   padding: 6px 10px;
   margin-bottom: 8px;
 }
+.board-hud.placing {
+  color: #fde047;
+  border-color: #a16207;
+  background: #1c1917;
+}
 .board-svg {
   display: block;
   max-width: 100%;

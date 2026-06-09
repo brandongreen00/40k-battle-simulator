@@ -17,15 +17,24 @@ describe('App shell', () => {
 });
 
 describe('MeasuringBoard', () => {
-  it('renders terrain and spawns models from the demo roster', () => {
+  it('renders terrain and places models from the demo roster via the ghost flow', () => {
     expect(rosters.some((r) => r.sample)).toBe(true);
     const { container } = render(<MeasuringBoard />);
     expect(container.querySelectorAll('polygon').length).toBeGreaterThan(0);
     expect(container.querySelectorAll('.model-token')).toHaveLength(0);
 
+    // Pick a unit up for placement, then drop it on the board with a click.
     const sidebar = container.querySelector('.sidebar')!;
-    fireEvent.click(within(sidebar as HTMLElement).getAllByText('+ Spawn')[0]!);
+    fireEvent.click(within(sidebar as HTMLElement).getAllByText('+ Place')[0]!);
+    expect(container.querySelector('.board-hud.placing')).toBeTruthy();
+
+    // jsdom's synthetic PointerEvent drops clientX/Y, so fire a MouseEvent typed 'pointerdown'
+    // (which carries real coords) — React routes it to onPointerDown all the same.
+    const svg = container.querySelector('svg.board-svg')!;
+    fireEvent(svg, new MouseEvent('pointerdown', { bubbles: true, clientX: 100, clientY: 100 }));
     expect(container.querySelectorAll('.model-token').length).toBeGreaterThan(0);
+    // committing exits placement mode
+    expect(container.querySelector('.board-hud.placing')).toBeNull();
   });
 });
 

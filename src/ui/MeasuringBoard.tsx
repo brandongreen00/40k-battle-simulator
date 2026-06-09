@@ -1,11 +1,19 @@
 import { useMemo, useReducer, useRef, useState } from 'react';
-import type { Roster, RosterUnit, Side, Vec2 } from '../core/types';
+import type { Datasheet, Roster, RosterUnit, Side, Vec2 } from '../core/types';
 import { reduce, createInitialState, type Intent } from '../core/state';
 import { makeRNG } from '../core/rng';
-import { clamp } from '../core/geometry';
+import { nextFormation, type Formation } from '../core/formation';
 import { datasheetsById, getDatasheet, layouts, rosters } from '../data/loaders';
-import { Board } from './Board';
+import { Board, type Placement } from './Board';
 import { OWNER_COLOR, TERRAIN_STYLE } from './view';
+
+/** A unit the user has picked up and is positioning with the ghost preview. */
+interface Placing {
+  unit: RosterUnit;
+  ds: Datasheet;
+  formation: Formation;
+  rotation: number;
+}
 
 // Seeded RNG for reproducibility (Stage 1 intents are deterministic; the seam is what matters).
 const rng = makeRNG(0xc0ffee);
@@ -41,6 +49,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
     initialRosterName ?? (allRosters.find((r) => r.units.length > 0) ?? allRosters[0])?.name ?? '',
   );
   const [owner, setOwner] = useState<Side>('player');
+  const [placing, setPlacing] = useState<Placing | null>(null);
   const spawnCount = useRef(0);
 
   const roster: Roster | undefined = useMemo(
@@ -52,26 +61,42 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
     return <div className="app-shell">No layout found in data/layouts.</div>;
   }
 
-  function spawn(unit: RosterUnit) {
+  /** Pick a unit up for placement: the ghost then tracks the cursor until the user clicks. */
+  function beginPlacing(unit: RosterUnit) {
     const ds = getDatasheet(unit.datasheetId);
     if (!ds) return;
+    setPlacing({ unit, ds, formation: 'block', rotation: 0 });
+  }
+
+  /** Drop the held unit at `anchor`, in its current formation/rotation. */
+  function commitPlacement(anchor: Vec2) {
+    if (!placing) return;
     const n = spawnCount.current++;
-    const zoneX = owner === 'player' ? 9 : 51;
-    const anchor: Vec2 = {
-      x: clamp(zoneX + ((n % 3) - 1) * 5, 3, layout!.boardWidth - 3),
-      y: clamp(22 + ((Math.floor(n / 3) % 3) - 1) * 10, 6, layout!.boardHeight - 6),
-    };
     dispatch({
       type: 'SpawnUnit',
       unitId: `u${n}`,
       owner,
-      datasheetId: ds.id,
-      baseShape: ds.baseShape,
-      modelCount: unit.modelCount,
-      wounds: ds.models[0]?.W ?? 1,
+      datasheetId: placing.ds.id,
+      baseShape: placing.ds.baseShape,
+      modelCount: placing.unit.modelCount,
+      wounds: placing.ds.models[0]?.W ?? 1,
       anchor,
+      formation: placing.formation,
+      rotation: placing.rotation,
     });
+    setPlacing(null);
   }
+
+  // Ghost the board renders: owner reflects the live "Spawn as" toggle.
+  const placement: Placement | null = placing
+    ? {
+        baseShape: placing.ds.baseShape,
+        modelCount: placing.unit.modelCount,
+        owner,
+        formation: placing.formation,
+        rotation: placing.rotation,
+      }
+    : null;
 
   return (
     <div className="layout">
@@ -140,10 +165,15 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
               {roster.units.map((u, i) => {
                 const ds = getDatasheet(u.datasheetId);
                 const m = ds?.models[0];
+                const active = placing?.unit === u;
                 return (
                   <li key={i}>
-                    <button className="spawn" onClick={() => spawn(u)} disabled={!ds}>
-                      + Spawn
+                    <button
+                      className={`spawn${active ? ' seg-on' : ''}`}
+                      onClick={() => (active ? setPlacing(null) : beginPlacing(u))}
+                      disabled={!ds}
+                    >
+                      {active ? 'Placing…' : '+ Place'}
                     </button>
                     <span className="unit-name">{u.displayName ?? ds?.name ?? u.datasheetId}</span>
                     <span className="unit-meta">
@@ -204,6 +234,15 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
           units={state.units}
           datasheetsById={datasheetsById}
           onMoveModel={(id, pos) => dispatch({ type: 'MoveModel', modelId: id, pos })}
+          placement={placement}
+          onPlacementCommit={commitPlacement}
+          onPlacementRotate={(d) =>
+            setPlacing((p) => (p ? { ...p, rotation: p.rotation + d } : p))
+          }
+          onPlacementCycle={() =>
+            setPlacing((p) => (p ? { ...p, formation: nextFormation(p.formation) } : p))
+          }
+          onPlacementCancel={() => setPlacing(null)}
         />
       </main>
     </div>
