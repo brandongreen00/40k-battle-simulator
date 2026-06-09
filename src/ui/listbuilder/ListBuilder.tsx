@@ -29,23 +29,13 @@ import {
 import { Catalog } from './Catalog';
 import { ListUnitCard } from './ListUnitCard';
 import { ImportPanel } from './ImportPanel';
+import { loadSavedArmyLists, writeSavedArmyLists } from '../savedLists';
 
 const FACTIONS = [
   { id: 'AM', name: 'Astra Militarum' },
   { id: 'AoI', name: 'Imperial Agents' },
 ];
 
-const LS_KEY = '40k-armylists';
-function loadSaved(): Record<string, ArmyList> {
-  try {
-    return JSON.parse(localStorage.getItem(LS_KEY) ?? '{}') as Record<string, ArmyList>;
-  } catch {
-    return {};
-  }
-}
-function writeSaved(map: Record<string, ArmyList>) {
-  localStorage.setItem(LS_KEY, JSON.stringify(map));
-}
 function download(filename: string, text: string) {
   const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
   const a = document.createElement('a');
@@ -66,7 +56,7 @@ export function ListBuilder({ onOpenInBoard }: Props) {
   const [list, setList] = useState<ArmyList>(() =>
     createArmyList('AM', detachmentsForFaction('AM')[0] ?? '', 'Incursion'),
   );
-  const [savedNames, setSavedNames] = useState<string[]>(() => Object.keys(loadSaved()));
+  const [savedNames, setSavedNames] = useState<string[]>(() => Object.keys(loadSavedArmyLists()));
 
   const points = listPoints(list, dataIndex);
   const limit = BATTLE_SIZES[list.battleSize].points;
@@ -87,19 +77,19 @@ export function ListBuilder({ onOpenInBoard }: Props) {
 
   // ── persistence / export ──
   function save() {
-    const map = loadSaved();
+    const map = loadSavedArmyLists();
     map[list.name] = list;
-    writeSaved(map);
+    writeSavedArmyLists(map);
     setSavedNames(Object.keys(map));
   }
   function loadByName(name: string) {
-    const m = loadSaved();
+    const m = loadSavedArmyLists();
     if (m[name]) setList(m[name]!);
   }
   function del(name: string) {
-    const m = loadSaved();
+    const m = loadSavedArmyLists();
     delete m[name];
-    writeSaved(m);
+    writeSavedArmyLists(m);
     setSavedNames(Object.keys(m));
   }
 

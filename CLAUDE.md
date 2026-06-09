@@ -330,6 +330,26 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-06-09] — Bugfix: saved lists now appear when starting a game; deployment rail no longer
+  clips the "ai army" picker.** Two user-reported UI bugs. All gates green: `pnpm typecheck`,
+  `pnpm test` (**208 tests**), `pnpm build`.
+  - **Saved lists survive a refresh.** The List Builder saves `ArmyList`s to `localStorage`
+    (`40k-armylists`), but the board only ever read the on-disk rosters + the single list handed over
+    this session via "Open in board" — so after a refresh, saved lists vanished from the army pickers.
+    Extracted the localStorage logic into a shared `src/ui/savedLists.ts` (kept OUT of `core/`, which
+    stays pure) with `loadSavedRosters(dataIndex)` (converts each saved list via `toRoster`, skipping
+    any that fail). `MeasuringBoard` now merges saved rosters into `allRosters`, **deduped by name**
+    with precedence *this-session build > saved > on-disk*. `ListBuilder` now imports the same helper
+    (one source of truth for the key/shape). Both the deployment picker and the sandbox roster picker
+    benefit. New `tests/savedLists.test.tsx` (4 tests) incl. an end-to-end check that a seeded saved
+    list shows up in the deployment picker after a fresh mount (== a refresh).
+  - **Deployment rail no longer cut off.** The two roster `<select>`s lived in a fixed `1fr 1fr`
+    grid whose items default to `min-width:auto`, so on a narrow rail the right ("ai army") column
+    overflowed and got clipped. Changed `.dep-rosters` to `repeat(auto-fit, minmax(150px, 1fr))`
+    (collapses to one full-width column when there isn't room for two) and added `min-width:0` +
+    `width:100%` to the fields/selects. Also added `min-width:0` to `.board-main` so the fixed-width
+    right rail can't be pushed off-screen on narrow windows.
+
 - **[2026-06-09] — Multi-charge pathing, true Leader merge, AM Orders + both detachment rules.**
   Closed the three remaining fidelity items. All gates green: `pnpm typecheck`, `pnpm test`
   (**204 tests**), `pnpm build`.

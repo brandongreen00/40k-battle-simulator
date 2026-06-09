@@ -5,10 +5,11 @@ import { makeRNG } from '../core/rng';
 import { nextFormation, type Formation } from '../core/formation';
 import { checkUnitDeployment, deepStrikeArrivalLegal, type DeployAbility } from '../core/deployment';
 import { unitCoherency, unitCentroid } from '../core/phases';
-import { datasheetsById, deployAbilityForDatasheet, getDatasheet, layouts, rosters } from '../data/loaders';
+import { dataIndex, datasheetsById, deployAbilityForDatasheet, getDatasheet, layouts, rosters } from '../data/loaders';
 import { Board, type Placement, type MovementUI } from './Board';
 import { GamePanel } from './GamePanel';
 import { DeploymentPanel, effectiveSide } from './DeploymentPanel';
+import { loadSavedRosters } from './savedLists';
 import { OWNER_COLOR, TERRAIN_STYLE } from './view';
 
 /** A unit the user has picked up and is positioning with the ghost preview. */
@@ -60,7 +61,17 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
     return [...groups.entries()];
   }, []);
 
-  const allRosters = useMemo(() => [...extraRosters, ...rosters], [extraRosters]);
+  // Lists saved in the List Builder (localStorage) — so they survive a refresh and can be picked
+  // when starting a game, not just the one handed over this session via "Open in board".
+  const savedRosters = useMemo(() => loadSavedRosters(dataIndex), []);
+  const allRosters = useMemo(() => {
+    // Dedupe by name; precedence: this-session build > saved > on-disk scaffolds/demo.
+    const byName = new Map<string, Roster>();
+    for (const r of [...extraRosters, ...savedRosters, ...rosters]) {
+      if (!byName.has(r.name)) byName.set(r.name, r);
+    }
+    return [...byName.values()];
+  }, [extraRosters, savedRosters]);
   const firstWithUnits = allRosters.find((r) => r.units.length > 0) ?? allRosters[0];
   const [rosterNameBySide, setRosterNameBySide] = useState<Record<Side, string>>({
     player: initialRosterName ?? firstWithUnits?.name ?? '',
