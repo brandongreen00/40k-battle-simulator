@@ -5,9 +5,9 @@ fixed army lists against each other on labrador.dev terrain layouts, with an AI 
 Private, non-commercial, single-machine tool. See [`CLAUDE.md`](./CLAUDE.md) for the project
 charter and [`docs/40k_simulator_plan.md`](./docs/40k_simulator_plan.md) for the full plan.
 
-> **Status: Stage 1 (Phase 0) — "the measuring board."** Data layer + a board you can place
-> models on, drag, and measure with. No combat / LoS / abilities / AI yet (those are later
-> stages, deliberately out of scope).
+> **Status: Stage 1 (Phase 0) + a points-correct List Builder.** A data layer, a measuring
+> board you can place/drag/measure models on, and a full Imperial Agents / Astra Militarum army
+> list builder. No combat / LoS / abilities / AI yet (those are later stages, out of scope).
 
 ## Quick start
 
@@ -30,6 +30,16 @@ pnpm ingest     # regenerate data/game/*.json from Wahapedia (see tools/ingest/R
 - **Measuring board UI**: the Hammer-and-Anvil layout rendered to scale with type-colored
   terrain, objectives, and deployment zones; spawn units from a roster; drag models; and a live
   base-to-base distance read-out.
+- **List builder** (Imperial Agents + Astra Militarum): searchable catalog grouped by role, add
+  units, choose the model-count tier (points update live), add detachment-scoped enhancements,
+  set a Warlord, attach leaders, and pick wargear swaps. A live points bar vs the battle-size
+  limit (Combat Patrol/Incursion/Strike Force) plus a validation panel (points, enhancement
+  legality, datasheet copy limits, Epic-Hero uniqueness). Save to your browser, export a Roster
+  JSON, or send the list straight to the measuring board.
+
+  > **10th-edition points note:** wargear costs **0 points** in 10e — a unit's cost comes only
+  > from its model count, and enhancements. So swapping weapons never changes points (by design);
+  > the builder's points are exact for what actually costs points.
 
 ## Deployment (GitHub Pages)
 
