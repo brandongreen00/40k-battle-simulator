@@ -8,9 +8,13 @@
 
 import type { Datasheet, GameState, UnitInstance, Vec2, BaseShape } from './types';
 import type { RNG } from './rng';
-import { gapBetweenBases } from './geometry';
+import { baseRadius, gapBetweenBases } from './geometry';
 import { parseKeywords } from './keywords';
 import { resolveAttacks, type AttackProfile, type DefenderProfile, type CombatSituation } from './combat';
+import { unitCanSee, unitHasCover } from './los';
+import { controlOfObjective, scorePrimary, type OcModel } from './objectives';
+import { battleShockTest } from './battleshock';
+import { rollCharge, chargeSucceeds } from './movement';
 
 /** Injected lookup the engine needs to read unit stats. Not imported — passed in (rule #1/#2). */
 export interface EngineContext {
@@ -99,6 +103,7 @@ export function resolveAttack(
   if (aliveAttackers === 0 || aliveTargets === 0) return { state, summary: '', rejected: 'no models' };
 
   const gap = closestGap(attacker, aDs.baseShape, target, tDs.baseShape);
+  const kw = profile.keywords;
 
   // Legality + situational flags from real positions.
   const isMelee = weaponDef.type === 'melee';
@@ -109,14 +114,32 @@ export function resolveAttack(
     if (gap > range) return { state, summary: '', rejected: `out of range (${gap.toFixed(1)}" > ${range}")` };
   }
 
+  // Line of sight + cover from terrain (Phase 2). Indirect Fire may target unseen units.
+  const aPts = attacker.models.filter((m) => m.alive).map((m) => m.pos);
+  const tPts = target.models.filter((m) => m.alive).map((m) => m.pos);
+  const terrain = state.layout.terrain;
+  let hitPenalty = 0;
+  let forceCover = false;
+  if (!isMelee) {
+    const visible = unitCanSee(aPts, tPts, terrain);
+    if (!visible) {
+      if (!kw.indirectFire) return { state, summary: '', rejected: 'no line of sight' };
+      hitPenalty -= 1; // Indirect Fire: -1 to hit and the target gets cover
+      forceCover = true;
+    }
+  }
+
   const halfRange = (weaponDef.range ?? 0) / 2;
+  const cover = forceCover || (!isMelee && unitHasCover(aPts, tPts, terrain));
   const situation: CombatSituation = {
     attackerCount: params.attackerCount ?? aliveAttackers,
+    hitModifier: hitPenalty,
     rapidFireActive: !isMelee && gap <= halfRange,
     meltaActive: !isMelee && gap <= halfRange,
     longRange: !isMelee && gap >= 12,
     charged: attacker.status.charged,
     stationary: attacker.status.remainedStationary,
+    cover,
     targetModelCount: aliveTargets,
   };
 
@@ -151,4 +174,111 @@ export function resolveAttack(
     state: { ...state, units: newUnits, log: [...state.log, summary, ...result.log.map((l) => `  ${l.step}: ${l.detail}`)] },
     summary,
   };
+}
+
+// ── Objective control & scoring (Phase 2) ──────────────────────────────────────
+const aliveCount = (u: UnitInstance): number => u.models.filter((m) => m.alive).length;
+
+/** Build the OC model list for every alive model. Battle-shocked units contribute OC 0. */
+function ocModels(state: GameState, ctx: EngineContext): OcModel[] {
+  const out: OcModel[] = [];
+  for (const u of state.units) {
+    const ds = ctx.datasheets.get(u.datasheetId);
+    if (!ds) continue;
+    const oc = u.status.battleShocked ? 0 : ds.models[0]!.OC;
+    const radius = baseRadius(ds.baseShape);
+    for (const m of u.models) {
+      if (m.alive) out.push({ pos: m.pos, oc, radius, owner: u.owner });
+    }
+  }
+  return out;
+}
+
+/** Per-objective control plus the number of objectives each side controls. */
+export function objectiveControl(state: GameState, ctx: EngineContext) {
+  const markerRadius = (state.layout.objectiveMarkerDiameterIn ?? 1.575) / 2;
+  const controlRadius = state.layout.objectiveControlRadiusIn ?? 3;
+  const models = ocModels(state, ctx);
+  const perObjective = state.layout.objectives.map((marker) =>
+    controlOfObjective(marker, markerRadius, controlRadius, models),
+  );
+  const controlled = { player: 0, ai: 0 };
+  for (const c of perObjective) if (c.controller) controlled[c.controller]++;
+  return { perObjective, controlled };
+}
+
+/**
+ * Run the active player's Command phase: gain 1 CP, take Battle-shock tests for below-half units,
+ * then score Primary VP for held objectives. Pure; requires data (Ld/OC) + RNG (the 2D6 tests).
+ */
+export function runCommandPhase(state: GameState, ctx: EngineContext, rng: RNG): GameState {
+  const side = state.activePlayer;
+  const log: string[] = [`— ${side} Command phase (round ${state.round}) —`];
+
+  // 1. Command points: +1 at the start of each player's Command phase.
+  const cp = { ...state.cp, [side]: state.cp[side] + 1 };
+  log.push(`${side} gains 1 CP (now ${cp[side]})`);
+
+  // 2. Battle-shock tests for the active player's below-half units.
+  const units = state.units.map((u) => {
+    if (u.owner !== side) return u;
+    const ds = ctx.datasheets.get(u.datasheetId);
+    if (!ds) return { ...u, status: { ...u.status, battleShocked: false } };
+    const alive = aliveCount(u);
+    if (alive === 0) return u;
+    const ld = ds.models[0]!.Ld;
+    const woundsFraction =
+      u.startingModels === 1 ? u.models[0]!.wounds / Math.max(1, ds.models[0]!.W) : undefined;
+    const test = battleShockTest(alive, u.startingModels, ld, rng, woundsFraction);
+    if (test.required) {
+      log.push(
+        `${ds.name} Battle-shock: ${test.roll.join('+')}=${test.total} vs Ld ${ld}+ → ${test.passed ? 'passed' : 'BATTLE-SHOCKED'}`,
+      );
+    }
+    return { ...u, status: { ...u.status, battleShocked: test.required && !test.passed } };
+  });
+
+  // 3. Primary scoring for objectives the active player controls (from battle round 2+).
+  const stateForScore = { ...state, units };
+  let score = state.score;
+  if (state.round >= 2) {
+    const { controlled } = objectiveControl(stateForScore, ctx);
+    const gained = scorePrimary(controlled[side], state.score[side]);
+    if (gained > 0) {
+      score = { ...state.score, [side]: state.score[side] + gained };
+      log.push(`${side} controls ${controlled[side]} objective(s): +${gained} Primary VP (now ${score[side]})`);
+    }
+  }
+
+  return { ...state, units, cp, score, log: [...state.log, ...log] };
+}
+
+// ── Charges (Phase 2) ───────────────────────────────────────────────────────────
+export interface ChargeParams {
+  chargerUnitId: string;
+  targetUnitId: string;
+}
+
+/** Resolve a charge roll (2D6). On success, mark the charger `charged` (Lance / Fights First). */
+export function resolveCharge(
+  state: GameState,
+  params: ChargeParams,
+  ctx: EngineContext,
+  rng: RNG,
+): { state: GameState; success: boolean; summary: string } {
+  const charger = state.units.find((u) => u.id === params.chargerUnitId);
+  const target = state.units.find((u) => u.id === params.targetUnitId);
+  if (!charger || !target) return { state, success: false, summary: 'unit not found' };
+  const cDs = ctx.datasheets.get(charger.datasheetId);
+  const tDs = ctx.datasheets.get(target.datasheetId);
+  if (!cDs || !tDs) return { state, success: false, summary: 'datasheet not found' };
+
+  const gap = closestGap(charger, cDs.baseShape, target, tDs.baseShape);
+  const { distance, rolls } = rollCharge(rng);
+  const success = chargeSucceeds(gap, distance);
+  const summary = `${cDs.name} charges ${tDs.name}: 2D6=${rolls.join('+')}=${distance}" vs ${gap.toFixed(1)}" → ${success ? 'SUCCESS' : 'failed'}`;
+  const units = success
+    ? state.units.map((u) => (u.id === charger.id ? { ...u, status: { ...u.status, charged: true } } : u))
+    : state.units;
+  return { state: { ...state, units, log: [...state.log, summary] }, success, summary };
 }

@@ -14,7 +14,14 @@ import type { BaseShape, GameState, Layout, ModelInstance, Side, UnitInstance, V
 import type { RNG } from './rng';
 import { clamp } from './geometry';
 import { formationPositions, type Formation } from './formation';
-import { resolveAttack, type AttackParams, type EngineContext } from './engine';
+import {
+  resolveAttack,
+  resolveCharge,
+  runCommandPhase,
+  type AttackParams,
+  type ChargeParams,
+  type EngineContext,
+} from './engine';
 
 /** The Pariah Nexus phase sequence, as data (rule #4). Stage 1 does not advance through it. */
 export const PARIAH_NEXUS_PHASES = [
@@ -56,6 +63,10 @@ export type Intent =
   | { type: 'SetFirstPlayer'; side: Side }
   /** One unit attacks another with one weapon. Requires the EngineContext (datasheet lookup). */
   | ({ type: 'Attack' } & AttackParams)
+  /** Resolve a charge roll (2D6). Requires the EngineContext. */
+  | ({ type: 'Charge' } & ChargeParams)
+  /** Run the active player's Command phase: CP, Battle-shock, Primary scoring. Requires EngineContext. */
+  | { type: 'RunCommandPhase' }
   /** Set per-unit status flags (movement/charge bookkeeping that later phases drive). */
   | { type: 'SetUnitStatus'; unitId: string; status: Partial<UnitInstance['status']> };
 
@@ -128,6 +139,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         owner: intent.owner,
         datasheetId: intent.datasheetId,
         models,
+        startingModels: models.length,
         status: {},
       };
       return { ...state, units: [...state.units, unit] };
@@ -177,6 +189,17 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         return { ...state, log: [...state.log, `Attack rejected: ${outcome.rejected}`] };
       }
       return outcome.state;
+    }
+
+    case 'Charge': {
+      if (!ctx) return { ...state, log: [...state.log, 'Charge ignored: no datasheet context supplied'] };
+      const { type: _t, ...params } = intent;
+      return resolveCharge(state, params, ctx, rng).state;
+    }
+
+    case 'RunCommandPhase': {
+      if (!ctx) return { ...state, log: [...state.log, 'Command phase ignored: no datasheet context supplied'] };
+      return runCommandPhase(state, ctx, rng);
     }
   }
 }

@@ -170,6 +170,8 @@ export interface UnitInstance {
   owner: Side;
   datasheetId: string;
   models: ModelInstance[];
+  /** Model count at deployment, for Below-Half-strength / Battle-shock tests. */
+  startingModels: number;
   status: UnitStatus;
 }
 
