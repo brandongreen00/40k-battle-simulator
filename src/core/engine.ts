@@ -6,7 +6,7 @@
 // returns a new GameState plus a dice log. Range / half-range / engagement are read from the
 // real model positions via geometry; line-of-sight and cover arrive in Phase 2.
 
-import type { Datasheet, GameState, UnitInstance, Vec2, BaseShape } from './types';
+import type { Datasheet, GameState, ModelInstance, UnitInstance, Vec2, BaseShape, WeaponProfile } from './types';
 import type { RNG } from './rng';
 import { baseRadius, gapBetweenBases } from './geometry';
 import { parseKeywords } from './keywords';
@@ -14,9 +14,10 @@ import { resolveAttacks, type AttackProfile, type DefenderProfile, type CombatSi
 import { unitCanSee, unitHasCover } from './los';
 import { controlOfObjective, scorePrimary, type OcModel } from './objectives';
 import { battleShockTest } from './battleshock';
-import { rollCharge, chargeSucceeds } from './movement';
+import { rollCharge } from './movement';
 import { gatherAttackModifiers, type AttackContext } from './effects';
 import { defensiveProfileForItem } from './wargear';
+import { ocBonusFromOrders, ldBonusFromOrders } from './orders';
 
 /** Injected lookup the engine needs to read unit stats. Not imported — passed in (rule #1/#2). */
 export interface EngineContext {
@@ -40,18 +41,31 @@ export interface AttackOutcome {
 
 const ENGAGEMENT_RANGE = 1; // inches
 
-function attackProfileFor(ds: Datasheet, weaponName: string): AttackProfile | undefined {
-  const w = ds.weapons.find((x) => x.name === weaponName);
-  if (!w) return undefined;
-  return {
-    name: w.name,
-    attacks: w.attacks,
-    skill: w.skill,
-    S: w.S,
-    AP: w.AP,
-    D: w.D,
-    keywords: parseKeywords(w.keywords),
-  };
+function attackProfileForWeapon(w: WeaponProfile): AttackProfile {
+  return { name: w.name, attacks: w.attacks, skill: w.skill, S: w.S, AP: w.AP, D: w.D, keywords: parseKeywords(w.keywords) };
+}
+
+/** All datasheet ids contributing models to a unit (its own + any merged-in Leaders). */
+export function unitDatasheetIds(unit: UnitInstance): string[] {
+  return [...new Set([unit.datasheetId, ...(unit.attachedLeaders ?? []).map((l) => l.datasheetId)])];
+}
+
+/** The datasheet governing a specific model (a merged Leader's model uses its own profile). */
+export function modelDatasheet(model: ModelInstance, unit: UnitInstance, ctx: EngineContext): Datasheet | undefined {
+  return ctx.datasheets.get(model.datasheetId ?? unit.datasheetId);
+}
+
+/** The union of weapons a unit can fire (primary + merged Leaders), each with its source datasheet. */
+export function unitWeapons(unit: UnitInstance, ctx: EngineContext): { weapon: WeaponProfile; sourceDsId: string }[] {
+  const out: { weapon: WeaponProfile; sourceDsId: string }[] = [];
+  const seen = new Set<string>();
+  for (const dsId of unitDatasheetIds(unit)) {
+    for (const w of ctx.datasheets.get(dsId)?.weapons ?? []) {
+      const key = `${dsId}:${w.name}`;
+      if (!seen.has(key)) { seen.add(key); out.push({ weapon: w, sourceDsId: dsId }); }
+    }
+  }
+  return out;
 }
 
 /**
@@ -66,26 +80,28 @@ function effectsOf(unit: UnitInstance): string[] {
   return [...(unit.status.activeEffects ?? []), ...(INNATE_ABILITY_EFFECTS[unit.datasheetId] ?? [])];
 }
 
-function defenderProfileFor(ds: Datasheet, unit: UnitInstance): DefenderProfile {
-  const m = ds.models[0]!; // primary profile; multi-profile allocation arrives later
+function defenderProfileFor(unit: UnitInstance, ctx: EngineContext): DefenderProfile {
+  const primary = ctx.datasheets.get(unit.datasheetId)!;
+  const pm = primary.models[0]!; // the unit's main profile (used for the wound roll's Toughness)
   return {
-    T: m.T,
-    save: m.Sv,
-    invuln: m.invuln,
-    keywords: ds.keywords,
+    T: pm.T,
+    save: pm.Sv,
+    invuln: pm.invuln,
+    keywords: primary.keywords,
     models: unit.models
       .filter((x) => x.alive)
       .map((x) => {
-        // A shield-bearer (or other defensive wargear) overrides the unit's save/invuln.
-        let invuln = m.invuln;
-        let save: number | undefined;
+        // Per-model profile: a merged Leader model uses its own datasheet's W / Sv / invuln.
+        const base = (modelDatasheet(x, unit, ctx) ?? primary).models[0]!;
+        let invuln = base.invuln;
+        let save: number | undefined = base.Sv !== pm.Sv ? base.Sv : undefined;
         for (const item of x.wargear ?? []) {
           const def = defensiveProfileForItem(item);
           if (!def) continue;
           if (def.invuln != null) invuln = Math.min(invuln ?? 7, def.invuln);
-          if (def.saveBonus != null) save = Math.max(2, (save ?? m.Sv) - def.saveBonus);
+          if (def.saveBonus != null) save = Math.max(2, (save ?? base.Sv) - def.saveBonus);
         }
-        return { maxW: m.W, wounds: x.wounds, ...(invuln != null ? { invuln } : {}), ...(save != null ? { save } : {}) };
+        return { maxW: base.W, wounds: x.wounds, ...(invuln != null ? { invuln } : {}), ...(save != null ? { save } : {}) };
       }),
   };
 }
@@ -121,11 +137,14 @@ export function resolveAttack(
   const tDs = ctx.datasheets.get(target.datasheetId);
   if (!aDs || !tDs) return { state, summary: '', rejected: 'datasheet not found' };
 
-  const weaponDef = aDs.weapons.find((w) => w.name === params.weaponName);
-  const profile = attackProfileFor(aDs, params.weaponName);
-  if (!weaponDef || !profile) return { state, summary: '', rejected: 'weapon not found' };
+  // Find the weapon across the unit's datasheets (primary + merged Leaders) and count only the
+  // models from that source datasheet as firing it.
+  const found = unitWeapons(attacker, ctx).find((w) => w.weapon.name === params.weaponName);
+  if (!found) return { state, summary: '', rejected: 'weapon not found' };
+  const weaponDef = found.weapon;
+  const profile = attackProfileForWeapon(weaponDef);
 
-  const aliveAttackers = attacker.models.filter((m) => m.alive).length;
+  const aliveAttackers = attacker.models.filter((m) => m.alive && (m.datasheetId ?? attacker.datasheetId) === found.sourceDsId).length;
   const aliveTargets = target.models.filter((m) => m.alive).length;
   if (aliveAttackers === 0 || aliveTargets === 0) return { state, summary: '', rejected: 'no models' };
 
@@ -186,11 +205,18 @@ export function resolveAttack(
     rerollHits: mods.rerollHits,
     rerollWounds: mods.rerollWounds,
     damageReduction: mods.damageReduction,
+    extraAttacks: mods.extraAttacks,
   };
 
-  const defender = defenderProfileFor(tDs, target);
+  const defender = defenderProfileFor(target, ctx);
   if (mods.fnp != null) defender.fnp = mods.fnp;
   if (mods.invulnFloor != null) defender.invuln = Math.min(defender.invuln ?? 7, mods.invulnFloor);
+  if (mods.saveBonus) {
+    // Take Cover! (+1 Save), capped so it can't improve a save beyond 3+.
+    const improve = (s: number) => Math.max(3, s - mods.saveBonus);
+    defender.save = improve(defender.save);
+    for (const m of defender.models) if (m.save != null) m.save = improve(m.save);
+  }
   const result = resolveAttacks(profile, defender, situation, rng);
 
   // Map the updated wound state back onto the target's alive models, in order.
@@ -232,10 +258,13 @@ function ocModels(state: GameState, ctx: EngineContext): OcModel[] {
   for (const u of state.units) {
     const ds = ctx.datasheets.get(u.datasheetId);
     if (!ds) continue;
-    const oc = u.status.battleShocked ? 0 : ds.models[0]!.OC;
-    const radius = baseRadius(ds.baseShape);
+    const ocBonus = ocBonusFromOrders(u);
     for (const m of u.models) {
-      if (m.alive) out.push({ pos: m.pos, oc, radius, owner: u.owner });
+      if (!m.alive) continue;
+      const mds = modelDatasheet(m, u, ctx) ?? ds; // per-model (a merged Leader has its own OC)
+      // Battle-shocked units have OC 0; otherwise add any Order/detachment OC bonus.
+      const oc = u.status.battleShocked ? 0 : mds.models[0]!.OC + ocBonus;
+      out.push({ pos: m.pos, oc, radius: baseRadius(mds.baseShape), owner: u.owner });
     }
   }
   return out;
@@ -267,17 +296,19 @@ export function runCommandPhase(state: GameState, ctx: EngineContext, rng: RNG):
   log.push(`${side} gains 1 CP (now ${cp[side]})`);
 
   // 2. Battle-shock tests for the active player's below-half units.
+  const reports: import('./types').BattleShockReport[] = [];
   const units = state.units.map((u) => {
     if (u.owner !== side) return u;
     const ds = ctx.datasheets.get(u.datasheetId);
     if (!ds) return { ...u, status: { ...u.status, battleShocked: false } };
     const alive = aliveCount(u);
     if (alive === 0) return u;
-    const ld = ds.models[0]!.Ld;
+    const ld = ds.models[0]!.Ld - ldBonusFromOrders(u); // +Ld = a lower target number (easier test)
     const woundsFraction =
       u.startingModels === 1 ? u.models[0]!.wounds / Math.max(1, ds.models[0]!.W) : undefined;
     const test = battleShockTest(alive, u.startingModels, ld, rng, woundsFraction);
     if (test.required) {
+      reports.push({ unitId: u.id, unitName: ds.name, roll: [test.roll[0]!, test.roll[1]!], total: test.total, ld, passed: test.passed });
       log.push(
         `${ds.name} Battle-shock: ${test.roll.join('+')}=${test.total} vs Ld ${ld}+ → ${test.passed ? 'passed' : 'BATTLE-SHOCKED'}`,
       );
@@ -297,16 +328,68 @@ export function runCommandPhase(state: GameState, ctx: EngineContext, rng: RNG):
     }
   }
 
-  return { ...state, units, cp, score, log: [...state.log, ...log] };
+  return { ...state, units, cp, score, lastBattleShock: reports, log: [...state.log, ...log] };
 }
 
-// ── Charges (Phase 2) ───────────────────────────────────────────────────────────
+// ── Charges (Phase 2 + multi-target pathing) ───────────────────────────────────
 export interface ChargeParams {
   chargerUnitId: string;
-  targetUnitId: string;
+  /** One or more declared charge targets. `targetUnitId` is accepted for back-compat. */
+  targetUnitIds?: string[];
+  targetUnitId?: string;
 }
 
-/** Resolve a charge roll (2D6). On success, mark the charger `charged` (Lance / Fights First). */
+/** Rigid copy of a unit translated by `v` (alive models only). */
+function translatedModels(u: UnitInstance, v: Vec2): UnitInstance {
+  return { ...u, models: u.models.map((m) => (m.alive ? { ...m, pos: { x: m.pos.x + v.x, y: m.pos.y + v.y } } : m)) };
+}
+
+function aliveCentroid(u: UnitInstance): Vec2 {
+  const ms = u.models.filter((m) => m.alive);
+  if (!ms.length) return { x: 0, y: 0 };
+  return { x: ms.reduce((s, m) => s + m.pos.x, 0) / ms.length, y: ms.reduce((s, m) => s + m.pos.y, 0) / ms.length };
+}
+
+/**
+ * Search for a legal charge move: a rigid translate (≤ roll inches) toward the targets that ends
+ * with the charger within Engagement Range of EVERY declared target and NOT within Engagement Range
+ * of any non-target enemy. Rigid translation preserves coherency by construction. Returns the
+ * translation vector, or null if no distance up to the roll satisfies all constraints.
+ */
+function findChargeMove(
+  charger: UnitInstance,
+  cShape: BaseShape,
+  targets: { unit: UnitInstance; shape: BaseShape }[],
+  nonTargets: { unit: UnitInstance; shape: BaseShape }[],
+  roll: number,
+  step = 0.1,
+): Vec2 | null {
+  const from = aliveCentroid(charger);
+  // Aim at the mean of the targets' centroids.
+  const aim = { x: 0, y: 0 };
+  for (const t of targets) { const c = aliveCentroid(t.unit); aim.x += c.x; aim.y += c.y; }
+  aim.x /= targets.length; aim.y /= targets.length;
+  const dx = aim.x - from.x, dy = aim.y - from.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const dir = { x: dx / len, y: dy / len };
+
+  for (let d = 0; d <= roll + 1e-9; d += step) {
+    const v = { x: dir.x * d, y: dir.y * d };
+    const moved = translatedModels(charger, v);
+    const reachesAll = targets.every((t) => closestGap(moved, cShape, t.unit, t.shape) <= ENGAGEMENT_RANGE);
+    if (!reachesAll) continue;
+    const clearOfNonTargets = nonTargets.every((nt) => closestGap(moved, cShape, nt.unit, nt.shape) > ENGAGEMENT_RANGE);
+    if (!clearOfNonTargets) continue; // a longer move might clear it — keep scanning
+    return v;
+  }
+  return null;
+}
+
+/**
+ * Resolve a charge (2D6) against one or more targets. Succeeds only when a single coherent move of
+ * up to the rolled distance reaches Engagement Range of every target without ending within
+ * Engagement Range of a non-target enemy. On success, moves the charger and marks it charged.
+ */
 export function resolveCharge(
   state: GameState,
   params: ChargeParams,
@@ -314,18 +397,110 @@ export function resolveCharge(
   rng: RNG,
 ): { state: GameState; success: boolean; summary: string } {
   const charger = state.units.find((u) => u.id === params.chargerUnitId);
-  const target = state.units.find((u) => u.id === params.targetUnitId);
-  if (!charger || !target) return { state, success: false, summary: 'unit not found' };
+  if (!charger) return { state, success: false, summary: 'unit not found' };
   const cDs = ctx.datasheets.get(charger.datasheetId);
-  const tDs = ctx.datasheets.get(target.datasheetId);
-  if (!cDs || !tDs) return { state, success: false, summary: 'datasheet not found' };
+  if (!cDs) return { state, success: false, summary: 'datasheet not found' };
 
-  const gap = closestGap(charger, cDs.baseShape, target, tDs.baseShape);
+  const targetIds = params.targetUnitIds ?? (params.targetUnitId ? [params.targetUnitId] : []);
+  const targets = targetIds
+    .map((id) => state.units.find((u) => u.id === id))
+    .filter((u): u is UnitInstance => !!u && u.models.some((m) => m.alive))
+    .map((u) => ({ unit: u, shape: ctx.datasheets.get(u.datasheetId)?.baseShape ?? cDs.baseShape }));
+  if (targets.length === 0) return { state, success: false, summary: 'no valid target' };
+
+  // Declaration legality: every target must be within 12".
+  for (const t of targets) {
+    if (closestGap(charger, cDs.baseShape, t.unit, t.shape) > 12) {
+      const summary = `Charge illegal: ${ctx.datasheets.get(t.unit.datasheetId)?.name ?? t.unit.id} is over 12" away`;
+      return { state: { ...state, log: [...state.log, summary] }, success: false, summary };
+    }
+  }
+
+  // Non-target enemies on the board (the charge may not end within Engagement Range of these).
+  const targetSet = new Set(targets.map((t) => t.unit.id));
+  const nonTargets = state.units
+    .filter((u) => u.owner !== charger.owner && !u.inReserves && !targetSet.has(u.id) && u.models.some((m) => m.alive))
+    .map((u) => ({ unit: u, shape: ctx.datasheets.get(u.datasheetId)?.baseShape ?? cDs.baseShape }));
+
   const { distance, rolls } = rollCharge(rng);
-  const success = chargeSucceeds(gap, distance);
-  const summary = `${cDs.name} charges ${tDs.name}: 2D6=${rolls.join('+')}=${distance}" vs ${gap.toFixed(1)}" → ${success ? 'SUCCESS' : 'failed'}`;
+  const move = findChargeMove(charger, cDs.baseShape, targets, nonTargets, distance);
+  const success = move !== null;
+  const names = targets.map((t) => ctx.datasheets.get(t.unit.datasheetId)?.name ?? t.unit.id).join(' + ');
+  const reason = success ? 'SUCCESS' : 'failed (cannot reach all targets / would clip a non-target)';
+  const summary = `${cDs.name} charges ${names}: 2D6=${rolls.join('+')}=${distance}" → ${reason}`;
+
   const units = success
-    ? state.units.map((u) => (u.id === charger.id ? { ...u, status: { ...u.status, charged: true } } : u))
+    ? state.units.map((u) => (u.id === charger.id
+        ? { ...translatedModels(u, move!), status: { ...u.status, charged: true, moved: true } }
+        : u))
     : state.units;
   return { state: { ...state, units, log: [...state.log, summary] }, success, summary };
+}
+
+/** Unit vector from the charger's closest model to the target's closest model. */
+export function closestAxis(a: UnitInstance, b: UnitInstance): Vec2 {
+  let best = Infinity;
+  let from = a.models[0]?.pos ?? { x: 0, y: 0 };
+  let to = b.models[0]?.pos ?? { x: 0, y: 0 };
+  for (const am of a.models) {
+    if (!am.alive) continue;
+    for (const bm of b.models) {
+      if (!bm.alive) continue;
+      const d = Math.hypot(am.pos.x - bm.pos.x, am.pos.y - bm.pos.y);
+      if (d < best) { best = d; from = am.pos; to = bm.pos; }
+    }
+  }
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const len = Math.hypot(dx, dy) || 1;
+  return { x: dx / len, y: dy / len };
+}
+
+// ── Fight-phase moves: Pile In / Consolidate (3") ──────────────────────────────
+export interface FightMoveParams {
+  unitId: string;
+  mode: 'pile_in' | 'consolidate';
+}
+
+/**
+ * Pile In (before attacking) and Consolidate (after) — each lets a unit move every model up to 3"
+ * toward the closest enemy model. Modelled as a coherency-preserving rigid translate toward the
+ * nearest enemy unit, capped at 3" and at base contact (so it never overlaps). A simplification of
+ * the per-model rule that keeps the unit legal; faithful enough for engaged combats.
+ */
+export function resolveFightMove(
+  state: GameState,
+  params: FightMoveParams,
+  ctx: EngineContext,
+): { state: GameState; summary: string } {
+  const unit = state.units.find((u) => u.id === params.unitId);
+  if (!unit) return { state, summary: 'unit not found' };
+  const ds = ctx.datasheets.get(unit.datasheetId);
+  if (!ds) return { state, summary: 'datasheet not found' };
+
+  // Nearest enemy unit by base-to-base gap.
+  let nearest: UnitInstance | undefined;
+  let minGap = Infinity;
+  for (const e of state.units) {
+    if (e.owner === unit.owner || e.inReserves || !e.models.some((m) => m.alive)) continue;
+    const eDs = ctx.datasheets.get(e.datasheetId);
+    if (!eDs) continue;
+    const g = closestGap(unit, ds.baseShape, e, eDs.baseShape);
+    if (g < minGap) { minGap = g; nearest = e; }
+  }
+  if (!nearest) return { state, summary: 'no enemy to move toward' };
+
+  const dir = closestAxis(unit, nearest);
+  const moveDist = Math.min(3, Math.max(0, minGap)); // up to 3", stopping at base contact
+  if (moveDist <= 1e-6) {
+    return { state: { ...state, log: [...state.log, `${ds.name} ${params.mode === 'pile_in' ? 'piles in' : 'consolidates'} (already in base contact)`] }, summary: 'no move' };
+  }
+  const units = state.units.map((u) =>
+    u.id === unit.id
+      ? { ...u, models: u.models.map((m) => (m.alive ? { ...m, pos: { x: m.pos.x + dir.x * moveDist, y: m.pos.y + dir.y * moveDist } } : m)) }
+      : u,
+  );
+  const verb = params.mode === 'pile_in' ? 'piles in' : 'consolidates';
+  const summary = `${ds.name} ${verb} ${moveDist.toFixed(1)}" toward the enemy`;
+  return { state: { ...state, units, log: [...state.log, summary] }, summary };
 }

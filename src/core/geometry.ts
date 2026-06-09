@@ -78,6 +78,40 @@ export function clamp(v: number, min: number, max: number): number {
   return v < min ? min : v > max ? max : v;
 }
 
+/** Clamp a point so its distance from `from` is at most `maxDist` (the direction is preserved). */
+export function clampToRange(from: Vec2, to: Vec2, maxDist: number): Vec2 {
+  const d = dist(from, to);
+  if (d <= maxDist || d === 0) return to;
+  const k = maxDist / d;
+  return { x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k };
+}
+
+// ── Point-to-segment / point-to-polygon distance ─────────────────────────────
+/** Shortest distance from point `p` to the line segment a→b. */
+export function distancePointToSegment(p: Vec2, a: Vec2, b: Vec2): number {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len2 = dx * dx + dy * dy;
+  if (len2 === 0) return dist(p, a);
+  let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2;
+  t = clamp(t, 0, 1);
+  return dist(p, { x: a.x + t * dx, y: a.y + t * dy });
+}
+
+/**
+ * Shortest distance from point `p` to a polygon footprint. Returns 0 when `p` is inside.
+ * Used for deployment legality (e.g. Infiltrators must be > 9" from the enemy deployment zone).
+ */
+export function distancePointToPolygon(p: Vec2, polygon: Vec2[]): number {
+  if (polygon.length === 0) return Infinity;
+  if (pointInPolygon(p, polygon)) return 0;
+  let min = Infinity;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    min = Math.min(min, distancePointToSegment(p, polygon[j]!, polygon[i]!));
+  }
+  return min;
+}
+
 // ── Point in polygon ─────────────────────────────────────────────────────────
 /**
  * Ray-casting point-in-polygon. `polygon` is an ordered vertex list (inches); the edge

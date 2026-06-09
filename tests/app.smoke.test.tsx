@@ -38,6 +38,25 @@ describe('MeasuringBoard', () => {
   });
 });
 
+describe('Deployment flow', () => {
+  it('starts a battle, rolls off with dice, and offers zone deployment', () => {
+    const { container, getByText } = render(<MeasuringBoard />);
+
+    // Enter deployment.
+    fireEvent.click(container.querySelector('.newbattle')!);
+    expect(getByText('Deployment')).toBeTruthy();
+
+    // Roll off for Attacker/Defender -> dice render and a role is assigned.
+    fireEvent.click(getByText(/Roll off/));
+    expect(container.querySelectorAll('svg[aria-label^="die showing"]').length).toBeGreaterThan(0);
+    expect(container.textContent).toMatch(/is Attacker/);
+
+    // The side that deploys first now has units offered for deployment.
+    const sidebar = container.querySelector('.sidebar')!;
+    expect(within(sidebar as HTMLElement).getAllByText('+ Deploy').length).toBeGreaterThan(0);
+  });
+});
+
 describe('ListBuilder', () => {
   it('adds a unit from the catalog and accounts for its points', () => {
     const { container } = render(<ListBuilder onOpenInBoard={() => {}} />);

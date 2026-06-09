@@ -330,6 +330,127 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-06-09] — Multi-charge pathing, true Leader merge, AM Orders + both detachment rules.**
+  Closed the three remaining fidelity items. All gates green: `pnpm typecheck`, `pnpm test`
+  (**204 tests**), `pnpm build`.
+  - **Multi-target charge pathing** — `resolveCharge` takes `targetUnitIds[]` and *searches* for a
+    legal coherent move (≤ 2D6) that ends within Engagement Range of **every** declared target while
+    **not** ending within Engagement Range of a non-target enemy; declaration is rejected past 12".
+    `GamePanel` Charge phase gets a multi-target checklist. (Path search is a 1-D scan along the
+    aim direction; rigid translate keeps coherency. Single-target back-compat via `targetUnitId`.)
+  - **True Leader merge (one unit instance)** — `AttachLeader` now MERGES the Leader's models into
+    the Bodyguard (each tagged with `ModelInstance.datasheetId`); the Leader instance is removed.
+    The merged unit renders each model at its **own base**, fires weapons from **both datasheets**
+    (only the source datasheet's models count — `engine.unitWeapons`), uses **per-model** W/Sv/invuln
+    (`defenderProfileFor`) and OC (`ocModels`), and moves/targets as one. `DetachLeader` splits it
+    back out. *Simplification:* the wound roll uses the primary (Bodyguard) Toughness.
+  - **AM Orders + detachment rules** —
+    - The six **Orders** (`core/orders.ts`): Take Aim!, Fix Bayonets!, First Rank Fire! (+1 Attack to
+      Rapid Fire, via new `EffectOutput.extraAttacks`), Take Cover! (+1 Save cap 3+, via `saveBonus`),
+      Move! Move! Move! (+3" budget in `BeginMove`), Duty and Honour! (+1 OC in `ocModels`, +1 Ld in
+      the Battle-shock test). **Voice of Command**: `phases.orderableUnits` = REGIMENT within 6", not
+      Battle-shocked. `GamePanel` Command phase issues them per Officer.
+    - **Grizzled Company (Ruthless Discipline)**: issuing an Order also grants **re-roll Hit 1s**.
+    - **Imperialis Fleet (At all Costs)**: Command-phase **Eliminate** (mark an enemy: +1 to be hit)
+      / **Acquire** (your unit on an objective: **5++**, +1 OC/Ld). Both via small effect ids.
+  - **To exercise Orders in the UI** you need an **Officer** (Voice of Command) + REGIMENT units in
+    the loaded list — build one in the List Builder (the empty owned rosters still have no units).
+  - **Still open:** the per-unit *special* abilities (Yarrick's Will of Iron, Death Korps Medi-pack,
+    Stormlord Firing Deck, etc.) and the ~25 *named* detachment stratagems' mechanical effects — these
+    need the owned `docs/lists/*.md`; the effect/registry seams are ready (one line each).
+
+- **[2026-06-09] — Fidelity pass: fight pile-in/consolidate, leaders move together, battle-shock dice.**
+  Closed three of the gaps the previous entry left open. All gates green: `pnpm typecheck`,
+  `pnpm test` (**192 tests**), `pnpm build`.
+  - **Fight phase moves** — `engine.resolveFightMove` + the `FightMove` intent: **Pile In** and
+    **Consolidate** move a unit up to **3" toward the nearest enemy** (coherency-preserving rigid
+    translate, capped at base contact). `GamePanel`'s Fight block shows the **activation order**
+    (Fights First then alternating) with each unit's fought/charged state, plus Pile In / Consolidate
+    buttons. So a fight now reads: pick the unit → Pile In → resolve melee → Consolidate.
+  - **Leaders move together** — selecting a unit for movement now also selects its **attached Leader /
+    Bodyguard** (drag-box or click), so an Attached unit moves as one. (Targeting protection was
+    already in via `isLeaderProtected`.)
+  - **Battle-shock dice** — `runCommandPhase` records a `BattleShockReport[]` (unit, 2D6, Ld,
+    pass/fail) on the state; the Command-phase panel renders the **2D6 as dice**.
+  - **Still open (next):** multi-target charge pathing / not ending in a non-target's ER; a true
+    single-activation Leader+Bodyguard *merge* (they're linked + move together, but still two unit
+    instances); AM **Orders** + the 3 **detachment rules** + per-unit specials (need `docs/lists/*.md`).
+
+- **[2026-06-09] — A playable game: deployment → all five phases, deeply programmed for the AI.**
+  Turned the Measuring Board into an actual 10e game flow. The whole game-logic layer is **pure,
+  framework-free, and AI-callable** (the explicit goal: an AI just calls functions). All gates green:
+  `pnpm typecheck`, `pnpm test` (**190 tests**), `pnpm build`.
+
+  **New pure-core modules (the AI's function library):**
+  - `setup.ts` — roll-off (Attacker/Defender + first turn, re-rolls ties).
+  - `deployment.ts` — deployment-zone legality, **Infiltrators** (>9" from enemy zone/models),
+    **Deep Strike arrival** (battle round 2+, >9" from enemies), `deployAbilityFromKeywords`.
+  - `leaders.ts` — `canLead`/`canBeLedBy` resolution both directions (e.g. **Rogue Trader → Imperial
+    Navy Breachers**), `eligibleLeaderIds`/`eligibleBodyguardIds`.
+  - `coherency.ts` — the 2" rule + the **7+-model two-neighbour rule** + single-group connectivity.
+  - `phases.ts` — the per-phase **legality/targeting query layer**: `eligibleToShoot/Charge/Fight`
+    (Advanced/Fell-Back/engagement, Big Guns Never Tire, Pistols, Aircraft), `validShootingTargets`
+    (unit-to-unit "any model sees any model + in range", Indirect Fire), `chargeTargets`,
+    `fightActivationOrder` (Fights First then alternating from the non-active player),
+    `isLeaderProtected`, `unitCoherency`/`unitCentroid`, `reservesArrivable`.
+  - `stratagems.ts` — `Stratagem` type, the **11 universal CORE_STRATAGEMS**, and pure filters
+    (`usableStratagems`/`phaseMatches`/`turnMatches`); reactive (`turn:'opponent'`) stratagems are
+    usable on the opponent's turn (rule #3). The loader merges in the **100 detachment stratagems**
+    from the data.
+  - `geometry.ts` — `distancePointToSegment/Polygon`, `clampToRange`.
+
+  **Reducer (`state.ts`) — Stage('setup'/'battle'/'done') + SetupState, and new intents:**
+  `NewBattle, RollRoles, SetAttacker, DeployUnit` (zone-validated), `PlaceInReserves, AttachLeader,
+  DetachLeader, RollFirstTurn, BeginBattle, BeginMove, NudgeUnit` (incremental, budget-clamped),
+  `MoveModel` (now clamps to M" from the move origin), `EndMove` (**rejects if a unit is out of
+  coherency**), `CancelMove`, `ArriveFromReserves`. `closestAxis` charge move below.
+
+  **Engine — charge now resolves into Engagement Range** (rigid translate toward the target, capped
+  by the 2D6 roll, preserves coherency, marks `charged`+`moved`).
+
+  **UI:**
+  - **Deployment** (`DeploymentPanel.tsx`, `Dice.tsx`): assign a roster per side, **roll off with SVG
+    dice** for Attacker/Defender and first turn, alternating zone-limited placement (the ghost turns
+    **red and refuses illegal drops** outside the zone / <9" for Infiltrators), **attach Leaders**
+    (eligible bodyguards only), place units in **Reserves** (⤓), Begin Battle.
+  - **Movement** (`Board.tsx` + `GamePanel.tsx`): **drag-box select** (Shift adds), **group move**
+    of selected units (rigid, budget-clamped; Alt+drag reshapes one model), **coherency warning
+    triangles** over offending units, **Confirm disabled until coherency is restored**; Move/Advance/
+    Fall Back/Remain; **Deep Strike arrivals** (round 2+) via a >9"-gated ghost.
+  - **Shooting/Charge/Fight** (`GamePanel.tsx`): the attacker picker lists only **phase-eligible**
+    units (with the reason when not), the target picker lists only **valid targets** (LoS+range /
+    within-12" / engaged) — all driven by `phases.ts`.
+  - **Stratagems** (`GamePanel.tsx`): pick a side (reactive use on the opponent's turn); lists **Core
+    + that side's detachment** stratagems for the current phase, greys out unaffordable, spends CP.
+
+  **Decisions:**
+  - Roll-off **winner = Attacker**; **Defender deploys first** (mission-pack order); a separate roll
+    decides first turn — both shown as dice (the user asked for "two rolls").
+  - **New Battle** flow vs. the free **sandbox**: the old measuring board (free `+ Place`, any side)
+    is preserved as `stage:'battle'` so all prior tests/behaviour stay green; "⚔ New battle" enters
+    `stage:'setup'`. `createInitialState` still defaults to `'battle'`.
+  - **Group move = rigid translate** (coherency-preserving by construction); coherency breaks — and
+    the warning triangle appears — when individual models are dragged (Alt) or models clamp unevenly
+    at the board edge/budget. The confirm gate (`EndMove`) enforces it for real.
+  - **Any unit may go to Reserves** (Strategic Reserves); arrival uses the 9" Deep-Strike rule for
+    all of them (documented simplification). Deep Strike auto-detected from the resolved ability names.
+  - **Stratagems spend CP + log** by default (the long-tail mechanical effects need the owned lists,
+    per `effects.ts`); a few Core ones carry an `effectId` that applies to the selected target.
+
+  **Handoff / what's left (honest gaps):**
+  1. **Charge declaration vs. legality detail.** The charge moves into ER, but doesn't yet verify the
+     path avoids non-target enemies' ER or that it can reach *every* multi-charge target — single-target
+     charges are faithful; multi-target pathing is the next refinement.
+  2. **Fight phase pile-in/consolidate (3") aren't positional moves yet** — fights resolve via the
+     `Attack` intent and `fightActivationOrder` gives the order, but the UI doesn't yet walk the
+     alternating activation or move models 3". 
+  3. **Leaders move/are-targeted together only partially** — attaching links them and hides the leader
+     from targeting (`isLeaderProtected`); the bodyguard's move doesn't auto-drag the leader (select
+     both with the drag-box). A true single-activation merge is the faithful next step.
+  4. **Battle-shock has no dice popup** (it logs the 2D6); Orders (`IssueOrder`) and the detachment
+     rules still need the owned `docs/lists/*.md` to enumerate (engine + effect seam are ready).
+  5. The three owned lists are **still absent** — the importer/builder remain the way to load a list.
+
 - **[2026-06-09] — Wargear: cap-aware options, a team importer, and loadout-driven saves.**
   Implements the three requested deliverables. All gates green: `pnpm typecheck`, `pnpm test`
   (**143 tests**), `pnpm build`.

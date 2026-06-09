@@ -23,6 +23,7 @@ import type {
   BaseShape,
   PointsTier,
   WargearOption,
+  UnitAbility,
   Enhancement,
 } from '../../src/core/types.ts';
 
@@ -277,6 +278,12 @@ async function main() {
   const optionsBy = groupBy(csv['Datasheets_options']!.filter((r) => keepIds.has(r['datasheet_id']!)), 'datasheet_id');
   const compositionBy = groupBy(csv['Datasheets_unit_composition']!.filter((r) => keepIds.has(r['datasheet_id']!)), 'datasheet_id');
 
+  // Ability catalog (ALL rows, unfiltered) so Core/Faction ability_id references resolve to text.
+  const abilityCatalog = new Map<string, { name: string; description: string }>();
+  for (const r of csv['Abilities']!) {
+    abilityCatalog.set(r['id']!, { name: r['name'] ?? '', description: stripHtml(r['description']) });
+  }
+
   // Leader attachments, scoped so both ends are kept factions.
   const leaderRows = csv['Datasheets_leader']!.filter(
     (r) => keepIds.has(r['leader_id']!) && keepIds.has(r['attached_id']!),
@@ -329,9 +336,22 @@ async function main() {
       // First model's base size is used for the unit's base shape (keyword-aware for hulls).
       const firstModelBase = (modelsBy[id] ?? [])[0]?.['base_size'];
       const baseShape = roundShape(parseBaseShape(firstModelBase, name, keywords));
-      const abilityIds = uniq(
-        (abilitiesBy[id] ?? []).map((a) => a['ability_id']!).filter((x) => x && x.length > 0),
-      );
+      const abilityRows = (abilitiesBy[id] ?? []).sort((a, b) => intOr(a['line'], 0) - intOr(b['line'], 0));
+      const abilityIds = uniq(abilityRows.map((a) => a['ability_id']!).filter((x) => x && x.length > 0));
+
+      // Full ability list, incl. the unit's *special* rules: inline (type=Datasheet) rows carry the
+      // name + description directly; Core/Faction rows resolve their text from the catalog.
+      const abilities: UnitAbility[] = abilityRows
+        .map((a): UnitAbility => {
+          const cat = a['ability_id'] ? abilityCatalog.get(a['ability_id']) : undefined;
+          const name = (a['name'] && a['name'].length ? a['name'] : cat?.name) ?? '';
+          const description = a['description'] && a['description'].length ? stripHtml(a['description']) : (cat?.description ?? '');
+          // Wahapedia decorates `type` with a layout hint, e.g. "Special (правая колонка)" — keep the
+          // leading word only (Core / Faction / Datasheet / Wargear / Special / Primarch / …).
+          const type = (a['type'] || '').split('(')[0].trim();
+          return { name, description, ...(type ? { type } : {}) };
+        })
+        .filter((x) => x.name.length > 0);
 
       // ── list-builder enrichment ──
       const points: PointsTier[] = (costBy[id] ?? [])
@@ -368,6 +388,7 @@ async function main() {
         baseShape,
         keywords,
         abilityIds,
+        ...(abilities.length ? { abilities } : {}),
         points,
         composition,
         wargearOptions,

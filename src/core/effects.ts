@@ -39,11 +39,13 @@ export interface EffectOutput {
   critHitOn?: number;
   critWoundOn?: number;
   ignoresCover?: boolean;
+  extraAttacks?: number; // +N to the Attacks characteristic, per firing model (e.g. First Rank Fire!)
   // Defensive (the bearer is being attacked)
   toBeHitModifier?: number; // e.g. Stealth -1 (subtracts from the attacker's hit roll)
   damageReduction?: number; // e.g. -1 Damage
   fnp?: number; // Feel No Pain value
   invulnFloor?: number; // grant/raise an invuln (e.g. a 4++ from a Displacer Field)
+  saveBonus?: number; // +N to the Save characteristic, capped at 3+ (e.g. Take Cover!)
 }
 
 export interface Effect {
@@ -71,6 +73,11 @@ export const EFFECT_REGISTRY: Record<string, Effect> = {
   // ── Offensive building blocks (Orders, buffs) ────────────────────────────────
   'order:take_aim': { id: 'order:take_aim', name: 'Take Aim!', side: 'attacker', appliesTo: ranged, output: { hitModifier: 1 } },
   'order:fix_bayonets': { id: 'order:fix_bayonets', name: 'Fix Bayonets!', side: 'attacker', appliesTo: melee, output: { hitModifier: 1 } },
+  // First Rank, Fire! Second Rank, Fire! — +1 Attack to Rapid Fire weapons.
+  'order:first_rank_fire': {
+    id: 'order:first_rank_fire', name: 'First Rank, Fire! Second Rank, Fire!', side: 'attacker',
+    appliesTo: (c) => c.weaponType === 'ranged' && !!c.weaponKeywords.rapidFire, output: { extraAttacks: 1 },
+  },
   'reroll_hits_1': { id: 'reroll_hits_1', name: 'Re-roll Hit rolls of 1', side: 'attacker', output: { rerollHits: 'ones' } },
   'reroll_wounds_1': { id: 'reroll_wounds_1', name: 'Re-roll Wound rolls of 1', side: 'attacker', output: { rerollWounds: 'ones' } },
   'plus1_to_wound': { id: 'plus1_to_wound', name: '+1 to Wound', side: 'attacker', output: { woundModifier: 1 } },
@@ -83,8 +90,14 @@ export const EFFECT_REGISTRY: Record<string, Effect> = {
   'fnp_5': { id: 'fnp_5', name: 'Feel No Pain 5+', side: 'defender', output: { fnp: 5 } },
   'fnp_6': { id: 'fnp_6', name: 'Feel No Pain 6+', side: 'defender', output: { fnp: 6 } },
   'stealth': { id: 'stealth', name: 'Stealth (-1 to be hit)', side: 'defender', appliesTo: ranged, output: { toBeHitModifier: -1 } },
+  // Take Cover! — +1 to the Save characteristic (the engine caps the improvement at 3+).
+  'order:take_cover': { id: 'order:take_cover', name: 'Take Cover!', side: 'defender', output: { saveBonus: 1 } },
   // A reactive defensive save buff in the mould of a Displacer Field's protective effect.
   'displacer_field': { id: 'displacer_field', name: 'Displacer Field (4++)', side: 'defender', output: { invulnFloor: 4 } },
+  // Imperialis Fleet "At all Costs": Eliminate marks an enemy unit (+1 to be hit by your army);
+  // Acquire grants the holding unit a 5+ invuln (its +1 OC/Ld are applied via core/orders.ts).
+  'mark_eliminate': { id: 'mark_eliminate', name: 'Eliminate At All Costs (+1 to hit)', side: 'defender', output: { toBeHitModifier: 1 } },
+  'acquire_buff': { id: 'acquire_buff', name: 'Acquire At All Costs (5++, +1 OC/Ld)', side: 'defender', output: { invulnFloor: 5 } },
 };
 
 /** Merge the gathered modifiers for one attack. `attacker`/`defender` are lists of effect ids. */
@@ -101,6 +114,8 @@ export function gatherAttackModifiers(
   critWoundOn?: number;
   ignoresCover: boolean;
   damageReduction: number;
+  extraAttacks: number;
+  saveBonus: number;
   fnp?: number;
   invulnFloor?: number;
 } {
@@ -113,6 +128,8 @@ export function gatherAttackModifiers(
     critWoundOn: undefined as number | undefined,
     ignoresCover: false,
     damageReduction: 0,
+    extraAttacks: 0,
+    saveBonus: 0,
     fnp: undefined as number | undefined,
     invulnFloor: undefined as number | undefined,
   };
@@ -131,6 +148,8 @@ export function gatherAttackModifiers(
     if (out.critWoundOn != null) acc.critWoundOn = Math.min(acc.critWoundOn ?? 6, out.critWoundOn);
     if (out.ignoresCover) acc.ignoresCover = true;
     if (out.damageReduction) acc.damageReduction += out.damageReduction;
+    if (out.extraAttacks) acc.extraAttacks += out.extraAttacks;
+    if (out.saveBonus) acc.saveBonus = Math.max(acc.saveBonus, out.saveBonus);
     if (out.fnp != null) acc.fnp = Math.min(acc.fnp ?? 7, out.fnp);
     if (out.invulnFloor != null) acc.invulnFloor = Math.min(acc.invulnFloor ?? 7, out.invulnFloor);
   };
