@@ -1,0 +1,173 @@
+[
+  {
+    "id": "000008379",
+    "faction_id": "AM",
+    "name": "Born Soldiers",
+    "detachment": "Combined Arms",
+    "detachment_id": "000000760",
+    "legend": "Regiments of numerous origins and tactical roles inculcate their soldiers from an early age with the legendary doctrines of the Tactica Imperium. Infantry train in close-range fire patterns intended to decimate enemy soldiers, whilst tank crews spend countless hours practising to bring down enemy armour and rampaging monstrosities.",
+    "description": "Each time a model in a Regiment unit from your army makes a ranged attack that targets a visible unit (excluding <span class=\"kwb\">MONSTERS</span> and <span class=\"kwb\">VEHICLES</span>), that attack has the [LETHAL HITS] ability.<br><br>Each time a model in a Squadron unit from your army makes a ranged attack that targets a visible <span class=\"kwb\">MONSTER</span> or <span class=\"kwb\">VEHICLE</span> unit, that attack has the [LETHAL HITS] ability."
+  },
+  {
+    "id": "000009125",
+    "faction_id": "AoI",
+    "name": "Deathwatch Mission Tactics",
+    "detachment": "Ordo Xenos Alien Hunters",
+    "detachment_id": "000000892",
+    "legend": "Thousands of years of collated strategic data and hard-won combat experience have provided the Deathwatch with the ultimate battlefield tactics to combat almost any foe.",
+    "description": "At the start of your Command phase, you can select one of the Mission Tactics listed below. Until the start of your next Command phase, that Mission Tactic is active and its effects apply to all DEATHwATCH units from your army. Each Mission Tactic can only be selected once per battle.<div style=\"height:8px\"></div><div class=\"BreakInsideAvoid\"><table max-width=\"480px\" border=\"0\" cellpadding=\"3\" style=\"border-width:0px\"><tbody><tbody><tr><td class=\"td_w\"><p style=\"display:block\" class=\"impact18\">Furor Tactics</p><p class=\"ShowFluff legend2\">The warriors of the Deathwatch are often sorely outnumbered by swarming foes, yet by striking for maximum indiscriminate carnage they soon even the odds.</p><p>While this Mission Tactic is active, weapons equipped by <span class=\"tooltip00071\" data-tooltip-content=\"#tooltip_content00071\" data-tooltip-anchor=\"#tooltip_content00071\"><span class=\"kwb kwbu\">DEATHWATCH</span></span> units from your army have the <span class=\"kwb2 bluefont\"><span class=\"tooltip00032\" data-tooltip-content=\"#tooltip_content00032\"><span class=\"tt kwbu\">[SUSTAINED</span> <span class=\"tt kwbu\">HITS</span> <span class=\"tt kwbu\">1]</span></span></span> ability.</p></td></tr></tbody></tbody></table></div><div class=\"BreakInsideAvoid\"><table max-width=\"480px\" border=\"0\" cellpadding=\"3\" style=\"border-width:0px\"><tbody><tbody><tr><td class=\"td_w\"><p style=\"display:block\" class=\"impact18\">Malleus Tactics</p><p class=\"ShowFluff legend2\">Even the largest behemoth has a weak point, and the Deathwatch find them all.</p><p>While this Mission Tactic is active, weapons equipped by <span class=\"tooltip00071\" data-tooltip-content=\"#tooltip_content00071\" data-tooltip-anchor=\"#tooltip_content00071\"><span class=\"kwb kwbu\">DEATHWATCH</span></span> units from your army have the <span class=\"kwb2 bluefont\"><span class=\"tooltip00033\" data-tooltip-content=\"#tooltip_content00033\"><span class=\"tt kwbu\">[LETHAL</span> <span class=\"tt kwbu\">HITS]</span></span></span> ability.</p></td></tr></tbody></tbody></table></div><div class=\"BreakInsideAvoid\"><table max-width=\"480px\" border=\"0\" cellpadding=\"3\" style=\"border-width:0px\"><tbody><tbody><tr><td class=\"td_w\"><p style=\"display:block\" class=\"impact18\">Purgatus Tactics</p><p class=\"ShowFluff legend2\">Adopting Purgatus tactics, the Deathwatch focus their ire upon the commanders of the enemy host.</p><p>While this Mission Tactic is active, each time a <span class=\"tooltip00071\" data-tooltip-content=\"#tooltip_content00071\" data-tooltip-anchor=\"#tooltip_content00071\"><span class=\"kwb kwbu\">DEATHWATCH</span></span> model from your army makes an attack, on a <span class=\"tooltip00004\" data-tooltip-content=\"#tooltip_content00004\"><span class=\"tt kwbu\">Critical</span> <span class=\"tt kwbu\">Wound</span></span>, that attack has the <span class=\"kwb2 bluefont\"><span class=\"tooltip00009\" data-tooltip-content=\"#tooltip_content00009\"><span class=\"tt kwbu\">[PRECISION]</span></span></span> ability.</p></td></tr></tbody></tbody></table></div>"
+  },
+  {
+    "id": "000009129",
+    "faction_id": "AoI",
+    "name": "Root out Heresy",
+    "detachment": "Ordo Hereticus Purgation Force",
+    "detachment_id": "000000893",
+    "legend": "No matter how cunningly their heretical prey hides, they cannot escape the zealous retribution of the Ordo Hereticus.",
+    "description": "Ranged weapons equipped by ADEPTUS ARbITES, INqUISITOR, INqUISITORIAl AGENTS and ORDO HERETICUS models from your army have the [IGNORES COvER] ability.<br><br>Each time an <span class=\"kwb\">ADEPTUS</span> <span class=\"kwb\">ARBITES</span>, <span class=\"kwb\">INQUISITOR</span>, <span class=\"kwb\">INQUISITORIAL</span> <span class=\"kwb\">AGENTS</span> or <span class=\"kwb\">ORDO</span> <span class=\"kwb\">HERETICUS</span> model from your army makes an attack that targets a <span class=\"kwb\">CHAOS</span> unit containing 5 or more models, that attack has the [SUSTAINED HITS 1] ability."
+  },
+  {
+    "id": "000009133",
+    "faction_id": "AoI",
+    "name": "Destroy the Daemonic",
+    "detachment": "Ordo Malleus Daemon Hunters",
+    "detachment_id": "000000894",
+    "legend": "Knowing the vital nature of their mission, the servants of the Ordo Malleus fight all the harder to lay their enemies low.",
+    "description": "Each time an INqUISITOR, INqUISITORIAl AGENTS or ORDO MAllEUS model from your army makes an attack, re-roll a Hit roll of 1 and, if the target of that attack is a <span class=\"kwb\">DAEMON</span> unit, re-roll a Wound roll of 1 as well."
+  },
+  {
+    "id": "000009137",
+    "faction_id": "AoI",
+    "name": "At all Costs",
+    "detachment": "Imperialis Fleet",
+    "detachment_id": "000000895",
+    "legend": "While the nature of the missions undertaken by Imperial agents is as varied as they are, the vital importance of these tasks rarely changes. The enemies they face are the most unholy. The prizes they seek are as priceless as they are nightmarishly dangerous. Thus, when such warriors of the Imperium identify a priority target for elimination or acquisition, no effort is too great nor price too high to see their aims achieved.",
+    "description": "At the start of your Command phase, you can select one of the following to apply:<div style=\"height:8px\"></div><div class=\"BreakInsideAvoid\"><table max-width=\"480px\" border=\"0\" cellpadding=\"3\" style=\"border-width:0px\"><tbody><tbody><tr><td class=\"td_w\"><p style=\"display:block\" class=\"impact18\">Eliminate At All Costs</p><p>Select one enemy unit on the battlefield. Until the start of your next <a href=\"/wh40k10ed/the-rules/core-rules/#COMMAND-PHASE\">Command phase</a>, each time an <span class=\"tooltip00072\" data-tooltip-content=\"#tooltip_content00072\" data-tooltip-anchor=\"#tooltip_content00072\"><span class=\"kwb kwbu\">AGENTS</span> <span class=\"kwb2 kwbu\">OF</span> <span class=\"kwb2 kwbu\">THE</span> <span class=\"kwb kwbu\">IMPERIUM</span></span> model from your army makes an attack that targets that enemy unit, add 1 to the <span class=\"tooltip00023\" data-tooltip-content=\"#tooltip_content00023\"><span class=\"tt kwbu\">Hit</span> <span class=\"tt kwbu\">roll</span></span>.</p></td></tr></tbody></tbody></table></div><div class=\"BreakInsideAvoid\"><table max-width=\"480px\" border=\"0\" cellpadding=\"3\" style=\"border-width:0px\"><tbody><tbody><tr><td class=\"td_w\"><p style=\"display:block\" class=\"impact18\">Acquire At All Costs</p><p>Select one <span class=\"tooltip00046\" data-tooltip-content=\"#tooltip_content00046\"><span class=\"tt kwbu\">objective</span> <span class=\"tt kwbu\">marker</span></span> on the battlefield. Until the start of your next <a href=\"/wh40k10ed/the-rules/core-rules/#COMMAND-PHASE\">Command phase</a>, while an <span class=\"tooltip00072\" data-tooltip-content=\"#tooltip_content00072\" data-tooltip-anchor=\"#tooltip_content00072\"><span class=\"kwb kwbu\">AGENTS</span> <span class=\"kwb2 kwbu\">OF</span> <span class=\"kwb2 kwbu\">THE</span> <span class=\"kwb kwbu\">IMPERIUM</span></span> unit from your army is within range of that objective marker, improve the Leadership and Objective Control characteristics of models in that unit by 1 and models in that unit have a 5+ <span class=\"tooltip00073\" data-tooltip-content=\"#tooltip_content00073\"><span class=\"tt kwbu\">invulnerable</span> <span class=\"tt kwbu\">save</span></span>.</p></td></tr></tbody></tbody></table></div>"
+  },
+  {
+    "id": "000009359",
+    "faction_id": "AoI",
+    "name": "Beseechment Codes",
+    "detachment": "Voidship’s Company",
+    "detachment_id": "000000924",
+    "legend": "Key to the duty of dedicated shipboard soldiery is the ability to move easily through even code-locked hatchways, or those whose machine spirits are corrupted or heretical. Dataspikes loaded with potent codes to appease or banish such troublesome gatekeepers allow them the swift progress they need.",
+    "description": "In your Movement phase, each time a VOiDFARERS unit from your army makes a Normal move, while that unit is moving it can attempt to operate a closed Hatchway that it is within 1\" of at any point during the move. It cannot do this, however, if there are one or more enemy units also within 1\" of that Hatchway. If that <span class=\"kwb\">VOIDFARERS</span> unit does attempt to operate that Hatchway, it cannot operate a Hatchway again this turn."
+  },
+  {
+    "id": "000009368",
+    "faction_id": "AoI",
+    "name": "Chastisor Auto-Vox",
+    "detachment": "Interdiction Team",
+    "detachment_id": "000000925",
+    "legend": "Booming admonishments ring from vox-amps and laud hailers built into the Arbitrators’ wargear, demanding foes lay down arms and submit.",
+    "description": "In your opponent’s Command phase, each enemy unit within 3\" of one or more ADEPTUS ARbiTES units from your army must take a Battle-shock test. If that enemy unit is also Below Half-strength, subtract 1 from that test. This Detachment rule cannot cause a unit to take two Battle-shock tests in the same phase."
+  },
+  {
+    "id": "000009379",
+    "faction_id": "AM",
+    "name": "Get Down!",
+    "detachment": "Embarked Regiment",
+    "detachment_id": "000000927",
+    "legend": "At a shouted command from their superiors, Imperial Guardsmen throw themselves flat to the decks, allowing the ranks behind to fire over their heads.",
+    "description": "Each time an <span class=\"kwb\">ASTRA</span> <span class=\"kwb\">MILITARUM</span> unit from your army is selected to shoot, you can select one other friendly <span class=\"kwb\">ASTRA</span> <span class=\"kwb\">MILITARUM</span> unit (excluding OGRYN units). Until the end of the phase, models in the attacking unit can ignore models in that friendly unit for the purposes of determining visibility."
+  },
+  {
+    "id": "000009388",
+    "faction_id": "AM",
+    "name": "Purge-Sweep Protocols",
+    "detachment": "Tempestus Boarding Regiment",
+    "detachment_id": "000000928",
+    "legend": "Tempestus Scions are drilled to progress through voidships chamber by chamber, corridor by corridor, clearing each with blitzing firepower before sweeping on to the next.",
+    "description": "Each time a MiLiTARUM TEMPESTUS unit from your army is selected to shoot, if one or more models in that unit are within 1\" of an open Hatchway and every model in that unit is on the same side of that Hatchway, select one enemy unit on the opposite side of that Hatchway from that unit. Until the end of the phase, ranged weapons equipped by models in that unit have the [LETHAL HiTS] ability while targeting that enemy unit."
+  },
+  {
+    "id": "000009756",
+    "faction_id": "AoI",
+    "name": "Extremis Sanction",
+    "detachment": "Veiled Blade Elimination Force",
+    "detachment_id": "000000987",
+    "legend": "When pursuing an extremis-level target, the agents of the Officio Assassinorum are expected to push their altered minds and bodies beyond the limits of endurance. Additional equipment, augmentation and ammunition may be provided to complete the task.",
+    "description": "Officio Assassinorum units from your army can use the Overkill, Soulless Horror and Shieldbreaker abilities twice per battle, instead of once per battle (but cannot use such an ability more than once in the same battle round).<br><br>When mustering your army, each <span class=\"kwb\">OFFICIO</span> <span class=\"kwb\">ASSASSINORUM</span> unit from your army has the relevant Extremis ability shown on the right, and you must increase the points cost of each of those units by the amount shown. If this causes your army to exceed the points limit for the battle you are playing, you cannot include that unit in your army."
+  },
+  {
+    "id": "000009798",
+    "faction_id": "AM",
+    "name": "Only the Best",
+    "detachment": "Bridgehead Strike",
+    "detachment_id": "000000996",
+    "legend": "The soldiers who make up such targeted strike forces are hand-picked for their excellence and – where possible – provided with rigorous additional training to prepare them for conditions and foes on the ground.",
+    "description": "Each time an Astra Militarum Infantry model from your army makes a ranged attack, re‐roll a Hit roll of 1."
+  },
+  {
+    "id": "000009799",
+    "faction_id": "AM",
+    "name": "Fire Zone Purge",
+    "detachment": "Bridgehead Strike",
+    "detachment_id": "000000996",
+    "legend": "Key to this force’s mission is the swift purgation of local enemy forces through sudden deployment and focused firefights. As such, whether they hit the ground from a low-altitude drop or deploy from armoured transports, the soldiers of this formation are trained to find targets and start shooting the instant the foe is in sight.",
+    "description": "Each time a Militarum Tempestus model from your army makes a ranged attack in a turn in which it was set up on the battlefield from Reserves or it disembarked from a Transport, add 1 to the Hit roll."
+  },
+  {
+    "id": "000009856",
+    "faction_id": "AM",
+    "name": "Artillery Support",
+    "detachment": "Siege Regiment",
+    "detachment_id": "000001010",
+    "legend": "Artillery barrages lay the ground for the assault to come.",
+    "description": "At the start of the battle round, select one of the following types of artillery support.<br><ul><li><b>Creeping Barrage:</b> Roll one D6 for each enemy unit that is more than 12\" from every model from your army that is on the battlefield: On a 5+, until the end of the battle round, that unit is shaken. While a unit is shaken, subtract 2\" from its Move characteristic and subtract 2 from Charge rolls made for it. The maximum number of units that can be shaken by this rule in each battle round depends on the battle size, as shown below.</li><li><b>Incendiary Bombardment:</b> Select a number of enemy units more than 12\" from every model from your army that is on the battlefield. Until the end of the battle round, those enemy units are scattered. While a unit is scattered, it cannot have the Benefit of Cover. The maximum number of units you can select in this way depends on the battle size, as shown below.</li><li><b>Smoke Shells:</b> Select a number of units from your army. Until the end of the battle round, those units have the Stealth ability.<br><br><div class=\"BreakInsideAvoid\"  style=\"\"\"><table width=\"0\" border=\"0\" bordercolor=\"#888\" cellpadding=\"4\" cellspacing=\"0\" style=\"border-collapse:collapse;border-width:0px\"><tbody><tr><td><table class=\" customTable tablefont\" border=\"1\" bordercolor=\"#888\" cellpadding=\"4\" style=\"border-collapse:collapse;border-color:#888888;border-width:0px\"><tbody><tr><td style=\"border-width:1px 1px 1px 1px;border-style:none none solid none;background-color:rgb(50,73,53);color:rgb(254,254,254);text-align:center;vertical-align:middle;font-size:20px;width:160px;height:0px;\"><b>BATTLE SIZE</b></td><td style=\"border-width:1px 1px 1px 1px;border-style:none none solid none;background-color:rgb(50,73,53);color:rgb(254,254,254);text-align:center;vertical-align:middle;font-size:20px;width:320px;height:0px;\"><b>MAXIMUM NUMBER OF UNITS</b></td></tr><tr><td style=\"border-width:1px 1px 1px 1px;border-style:none none dotted none;text-align:center;vertical-align:middle;font-size:18px;width:160px;height:0px;\">Incursion</td><td style=\"border-width:1px 1px 1px 1px;border-style:none none dotted none;text-align:center;vertical-align:middle;font-size:18px;width:320px;height:0px;\">2</td></tr><tr><td style=\"border-width:1px 1px 1px 1px;border-style:none none dotted none;background-color:var(--row-bg);text-align:center;vertical-align:middle;font-size:18px;width:160px;height:0px;\">Strike Force</td><td style=\"border-width:1px 1px 1px 1px;border-style:none none dotted none;background-color:var(--row-bg);text-align:center;vertical-align:middle;font-size:18px;width:320px;height:0px;\">3</td></tr><tr><td style=\"border-width:1px 1px 1px 1px;border-style:none none dotted none;text-align:center;vertical-align:middle;font-size:18px;width:160px;height:0px;\">Onslaught</td><td style=\"border-width:1px 1px 1px 1px;border-style:none none dotted none;text-align:center;vertical-align:middle;font-size:18px;width:320px;height:0px;\">4</td></tr></tbody></table></td></tr></tbody></table></div>"
+  },
+  {
+    "id": "000009860",
+    "faction_id": "AM",
+    "name": "Armoured Fist",
+    "detachment": "Mechanised Assault",
+    "detachment_id": "000001011",
+    "legend": "Astra Militarum mechanised forces combine heavy armour with elite infantry. Reliant on speed and short-ranged firepower, the armoured spearhead hurtles through the enemy line and deploys its cargo of shock troops to cut the enemy down with volleys of lasgun fire.",
+    "description": "Each time an <span class=\"kwb\">ASTRA</span> <span class=\"kwb\">MILITARUM</span> model from your army makes a ranged attack in a turn in which it disembarked from a Transport, add 1 to the Wound roll."
+  },
+  {
+    "id": "000009864",
+    "faction_id": "AM",
+    "name": "Iron Tread",
+    "detachment": "Hammer of the Emperor",
+    "detachment_id": "000001012",
+    "legend": "The armoured spearhead of an Astra Militarum army group grinds relentlessly forward, ploughing through enemy infantry with arrogant disregard.",
+    "description": "Each time a Squadron unit from your army Advances, do not make an Advance roll for it; until the end of the phase, add 6\" to the Move characteristic of models in that unit, and when making that Advance move, that unit can move within Engagement Range of enemy models but cannot end that move within Engagement Range of enemy models."
+  },
+  {
+    "id": "000009868",
+    "faction_id": "AM",
+    "name": "Masters of Camouflage",
+    "detachment": "Recon Element",
+    "detachment_id": "000001013",
+    "legend": "Reconnaissance infantry use face paint, camo-pattern fatigues, ghillie suits and more to conceal themselves from the foe. Vehicles are camouflaged using netting and disruptive camo patterns, enabling them to blend into surrounding terrain. Suitably outfitted, recon forces need only rely upon stealth and concealment rather than heavy armour for protection.",
+    "description": "Astra Militarum Walker and Regiment models from your army have the Benefit of Cover. While such a model has the Benefit of Cover for any other reason (e.g. because it is wholly within a <span class=\"kwb\">RUIN</span>), improve the Save characteristic of that model by 1 (to a maximum of 3+)."
+  },
+  {
+    "id": "000010636",
+    "faction_id": "AM",
+    "name": "Ruthless Discipline",
+    "detachment": "Grizzled Company",
+    "detachment_id": "000001121",
+    "legend": "The officers of this company are wily, iron-willed veterans both respected and feared by the troops under their command. At their barked orders, even the weariest soldiers redouble their efforts.",
+    "description": "Add 1 to the number of Orders each Astra Militarum Officer model from your army can issue, as stated on their datasheet.<br><br>While an <span class=\"kwb\">ASTRA</span> <span class=\"kwb\">MILITARUM</span> unit from your army is affected by an Order, each time a model in that unit makes an attack, re-roll a Hit roll of 1."
+  },
+  {
+    "id": "000010786",
+    "faction_id": "AM",
+    "name": "Ceaseless Cannonade",
+    "detachment": "Steel Hammer",
+    "detachment_id": "000001149",
+    "legend": "The heaviest Astra Militarum vehicles are adamantine behemoths whose armour is almost impenetrable. The crews of these colossal war engines need have no concern for the integrity of their vehicles, unleashing even the most violently destructive ordnance at point-blank range.",
+    "description": "Each time an Astra Militarum Titanic or Astra Militarum Squadron unit from your army is selected to shoot, models in that unit can target enemy units within Engagement Range of that unit (including with Blast weapons), provided no other friendly units are also within Engagement Range of that enemy unit. When doing so, such models do not suffer the penalty to their Hit rolls for being within Engagement Range of one or more enemy units (excluding attacks made with Indirect Fire weapons).<br><br><span class=\"hi_custom\">KEYWORDS</span><br>In the Muster Armies step, you can select one or more <span class=\"kwb\">ASTRA</span> <span class=\"kwb\">MILITARUM</span> <span class=\"kwb\">TITANIC</span> units from your army to gain the <span class=\"kwb\">CHARACTER</span> keyword.<br><br><b>Designer’s Note:</b> <i>This means that the selected units can be given Enhancements, and one of them can be selected as your <span class=\"kwb\">WARLORD</span>.</i>"
+  },
+  {
+    "id": "000010790",
+    "faction_id": "AM",
+    "name": "Squadron Command",
+    "detachment": "Armoured Infantry",
+    "detachment_id": "000001150",
+    "legend": "Officers in charge of motorised formations are as well versed in armoured combat as in infantry operations.",
+    "description": "Add Squadron to the list of units each Officer unit from your army can issue Orders to. Add the Order below to those listed in the Voice of Command ability.<br><br><span class=\"hi_custom\">ON MY SIGNAL</span><br><p class=\"ShowFluff legend2\">The most effective commanders know how and when to make use of their armoured fighting vehicles’ speed.</p>This Order can only be issued to Armoured Skirmisher units (see below). Each time an enemy unit ends a Normal or Advance move within 9\" of this unit, this unit can make a Normal move of up to D6\". Each unit can only move in this way once per turn.<br><br><span class=\"hi_custom\">KEYWORDS</span><br>Astra Militarum Squadron units from your army have the <span class=\"kwb\">ARMOURED</span> <span class=\"kwb\">SKIRMISHER</span> keyword (excluding Artillery units and units containing one or more models with a Wounds characteristic of 13 or higher)."
+  }
+]

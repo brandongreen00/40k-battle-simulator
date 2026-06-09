@@ -1,0 +1,8 @@
+{
+  "name": "Grizzled Company",
+  "faction": "AM",
+  "detachment": "Grizzled Company",
+  "points": 1000,
+  "units": [],
+  "note": "AWAITING SOURCE LIST. The army-list file docs/lists/grizzled_company_suggested_list.md was not provided, so units are not yet encoded. Faction (Astra Militarum) and detachment (Grizzled Company — confirmed to exist in the converted data) are set. Add RosterUnit entries (datasheetId from data/game/datasheets.json, modelCount, wargear, enhancementId) once the list is supplied; flag any unit that can't be resolved with `unresolved: true`."
+}

@@ -1,0 +1,642 @@
+[
+  {
+    "id": "000008380002",
+    "name": "Death Mask of Ollanius",
+    "faction_id": "AM",
+    "cost": "10",
+    "detachment": "Combined Arms",
+    "detachment_id": "000000760",
+    "legend": "This mask depicts in obsidian and void-fired bronze the agonised visage of Saint Ollanius. Soldiers in the ancient artefacts presence are gifted the determination and endurance of the famous martyr himself.",
+    "description": "Officer model only. While the bearer’s unit is Battle-shocked, subtract 1 from the Objective Control characteristic of models in that unit, instead of changing it to 0."
+  },
+  {
+    "id": "000008380003",
+    "name": "Drill Commander",
+    "faction_id": "AM",
+    "cost": "20",
+    "detachment": "Combined Arms",
+    "detachment_id": "000000760",
+    "legend": "This officer has spent countless hours putting their soldiers through ceaseless firing drills. In the heat of combat, the worth of this training reveals itself.",
+    "description": "Officer model only. While the bearer is leading a unit, each time a model in that unit makes a ranged attack, if that unit Remained Stationary this turn, a Critical Hit is scored on a successful unmodified Hit roll of 5+."
+  },
+  {
+    "id": "000008380004",
+    "name": "Grand Strategist",
+    "faction_id": "AM",
+    "cost": "15",
+    "detachment": "Combined Arms",
+    "detachment_id": "000000760",
+    "legend": "This commander can precisely anticipate the ebb and flow of war, their seemingly reactive tactics often prepared far in advance.",
+    "description": "Officer model only. In your Command phase, the bearer can issue one additional Order."
+  },
+  {
+    "id": "000008380005",
+    "name": "Reactive Command",
+    "faction_id": "AM",
+    "cost": "15",
+    "detachment": "Combined Arms",
+    "detachment_id": "000000760",
+    "legend": "A natural tactician, this officer responds to their opponent’s manoeuvres in swift and decisive fashion, never allowing the foe to dictate the battle.",
+    "description": "Officer model only. Each time an enemy unit is set up within 9\" of the bearer’s unit, the bearer can issue one Order. This is not counted towards the number of Orders the bearer can issue in a battle round."
+  },
+  {
+    "id": "000009126002",
+    "name": "Amulet of Auto-Chastisement",
+    "faction_id": "AoI",
+    "cost": "25",
+    "detachment": "Ordo Xenos Alien Hunters",
+    "detachment_id": "000000892",
+    "legend": "This talisman houses a hate-filled machine spirit that despises alien artifice. Its influence can be focused against the war engines of aliens and traitors alike to disrupt or even paralyse them altogether.",
+    "description": "<span class=\"kwb\">WATCH</span> <span class=\"kwb\">MASTER</span> model only. At the start of your opponents Shooting phase, select one enemy <span class=\"kwb\">VEHICLE</span> unit (excluding <span class=\"kwb\">TITANIC</span> units) within 12\" of and visible to the bearer. That unit must take a Leadership test. If that test is passed, until the end of the phase, each time a model in that unit makes an attack, subtract 1 from the Hit roll; if that test is failed, that unit is not eligible to shoot this phase."
+  },
+  {
+    "id": "000009126003",
+    "name": "Beacon Angelis",
+    "faction_id": "AoI",
+    "cost": "30",
+    "detachment": "Ordo Xenos Alien Hunters",
+    "detachment_id": "000000892",
+    "legend": "The Beacon Angelis was devised to guide the Death watch to the threshold of the alien adversary. Housed within a reliquary, it calls out to the warriors’ augur arrays with the voices of a hundred electric cherubim, its summons so strong that it draws the righteous unto its locale regardless of what darkness may surround it.",
+    "description": "WATCH MASTER model only. Models in the bearer’s unit have the Deep Strike ability. In addition, you can target the bearer’s unit with the Rapid Ingress Stratagem for 0CP."
+  },
+  {
+    "id": "000009126004",
+    "name": "Blackweave Shroud",
+    "faction_id": "AoI",
+    "cost": "15",
+    "detachment": "Ordo Xenos Alien Hunters",
+    "detachment_id": "000000892",
+    "legend": "This hypermorphic bodyglove of uncertain origin is worn beneath a warrior’s armour. It forms a fibrous medium that shields the warrior’s most vital systems.",
+    "description": "<span class=\"kwb\">AGENTS</span> <span class=\"kwb2\">OF</span> <span class=\"kwb2\">THE</span> <span class=\"kwb\">IMPERIUM</span> model only. The bearer has the Feel No Pain 4+ ability."
+  },
+  {
+    "id": "000009126005",
+    "name": "Universal Anathema",
+    "faction_id": "AoI",
+    "cost": "10",
+    "detachment": "Ordo Xenos Alien Hunters",
+    "detachment_id": "000000892",
+    "legend": "A fragment of STC technology, this device tastes the spoor of its owner’s foes, then fashions tailored toxins not even the most resilient victim can long endure.",
+    "description": "AGENTS OF THE IMPERIUM model only. Melee weapons equipped by the bearer have the [ANTI-INFANTRy 2+] and [ANTI-MONSTER 4+] abilities."
+  },
+  {
+    "id": "000009130002",
+    "name": "Ignis Judicium",
+    "faction_id": "AoI",
+    "cost": "10",
+    "detachment": "Ordo Hereticus Purgation Force",
+    "detachment_id": "000000893",
+    "legend": "An artificer-crafted flame projector of focused and terrible vehemence, this weapon has been the bane of countless heretics across the ages.",
+    "description": "INqUISITOR or MINISTORUM PRIEST model only. The bearers ranged weapons have the [DEVASTATING WOUNDS], [MELTA 1] and [PRECISION] abilities."
+  },
+  {
+    "id": "000009130003",
+    "name": "Liber Heresius",
+    "faction_id": "AoI",
+    "cost": "10",
+    "detachment": "Ordo Hereticus Purgation Force",
+    "detachment_id": "000000893",
+    "legend": "This ancient grimoire contains the collected accounts of many Inquisitorial purges, and is a trove of lore for those seeking to ambush and entrap heretics.",
+    "description": "INqUISITOR or MINISTORUM PRIEST model only. After both players have deployed their armies, select up to three AGENTS OF THE IMPERIUM units from your army and redeploy them. When doing so, you can set those units up in Strategic Reserves if you wish, regardless of how many units are already in Strategic Reserves."
+  },
+  {
+    "id": "000009130004",
+    "name": "No Escape (Aura)",
+    "faction_id": "AoI",
+    "cost": "25",
+    "detachment": "Ordo Hereticus Purgation Force",
+    "detachment_id": "000000893",
+    "legend": "None but the most diabolical or desperate stand any chance of slipping through this Inquisitor’s grasp.",
+    "description": "INqUISITOR model only. While an enemy unit is within 6\" of the bearer, each time it is selected to Fall Back it must first take a Leadership test. If that test is failed, that unit must Remain Stationary this phase instead."
+  },
+  {
+    "id": "000009130005",
+    "name": "Witch Hunter",
+    "faction_id": "AoI",
+    "cost": "15",
+    "detachment": "Ordo Hereticus Purgation Force",
+    "detachment_id": "000000893",
+    "legend": "This merciless Imperial agent is monomaniacally focused upon hunting and slaying psykers.",
+    "description": "INqUISITOR or MINISTORUM PRIEST model only. While the bearer is leading a unit, each time a model in that unit makes an attack that targets a PSyKER unit, you can re-roll the Hit roll."
+  },
+  {
+    "id": "000009134002",
+    "name": "Daemon Slayer",
+    "faction_id": "AoI",
+    "cost": "10",
+    "detachment": "Ordo Malleus Daemon Hunters",
+    "detachment_id": "000000894",
+    "legend": "Some whisper this weapon of banishment is in fact host to a hostile warp entity in its own right.",
+    "description": "INqUISITOR model only. Add 1 to the Attacks characteristic of the bearers melee weapons, and those weapons have the [ANTI-DAEMON 3+] ability."
+  },
+  {
+    "id": "000009134003",
+    "name": "Formidable Resolve",
+    "faction_id": "AoI",
+    "cost": "5",
+    "detachment": "Ordo Malleus Daemon Hunters",
+    "detachment_id": "000000894",
+    "legend": "Inquisitors of the Ordo Malleus are amongst the hardiest and most bombastic of their kind. They must be to survive their duties.",
+    "description": "INqUISITOR model only. Improve the bearer’s Leadership and Wounds characteristics by 1. Once per battle, at the start of any phase, you can select one friendly Battle-shocked unit within 12\" of the bearer. That unit is no longer Battle-shocked."
+  },
+  {
+    "id": "000009134004",
+    "name": "Gift of the Prescient",
+    "faction_id": "AoI",
+    "cost": "20",
+    "detachment": "Ordo Malleus Daemon Hunters",
+    "detachment_id": "000000894",
+    "legend": "Guided by the scryings of their Prognosticars, the Grey Knights strike with deadly precision and timing.",
+    "description": "INqUISITOR model only. Once per battle, if the bearer is on the battlefield, you can use the Rapid Ingress Stratagem for 0CP. When doing so, you must target a GREy KNIGHTS TERMINATOR SqUAD unit from your army, and when using that Stratagem, that unit can be set up anywhere on the battlefield that is more than 3\" away from all enemy units."
+  },
+  {
+    "id": "000009134005",
+    "name": "Grimoire of True Names (Aura)",
+    "faction_id": "AoI",
+    "cost": "10",
+    "detachment": "Ordo Malleus Daemon Hunters",
+    "detachment_id": "000000894",
+    "legend": "To wield the true name of a daemon is to control its supernatural power, though whether in the name of banishment or to be unleashed as a weapon of terror falls to the discretion of the grimoire’s keeper.",
+    "description": "INqUISITOR model only. While an enemy unit is within 9\" of the bearer, worsen the Leadership characteristic of models in that unit by 1. In addition, while an enemy <span class=\"kwb\">DAEMON</span> unit is within 9\" of the bearer, each time a model in that <span class=\"kwb\">DAEMON</span> unit makes an attack, subtract 1 from the Hit roll and subtract 1 from the Wound roll."
+  },
+  {
+    "id": "000009138002",
+    "name": "Clandestine Operation",
+    "faction_id": "AoI",
+    "cost": "15",
+    "detachment": "Imperialis Fleet",
+    "detachment_id": "000000895",
+    "legend": "This war leader prefers to strike with subtlety and precision, working their forces into advanced positions before commencing hostilities.",
+    "description": "AGENTS OF THE IMPERIUM model only. At the start of the Declare Battle Formations step, you can select up to three AGENTS OF THE IMPERIUM INFANTRy units from your army (excluding GREy KNIGHTS TERMINATOR SqUAD units) - those units gain the Infiltrators ability."
+  },
+  {
+    "id": "000009138003",
+    "name": "Combat Landers",
+    "faction_id": "AoI",
+    "cost": "10",
+    "detachment": "Imperialis Fleet",
+    "detachment_id": "000000895",
+    "legend": "This commander has access to swift drop craft that can bear portions of their forces directly into the heart of the most ferocious battles.",
+    "description": "VOIDFARERS model only. At the start of the Declare Battle Formations step, you can select up to three <span class=\"kwb\">VOIDFARERS</span> units from your army - those units gain the Deep Strike ability."
+  },
+  {
+    "id": "000009138004",
+    "name": "Digital Weapons",
+    "faction_id": "AoI",
+    "cost": "10",
+    "detachment": "Imperialis Fleet",
+    "detachment_id": "000000895",
+    "legend": "These potent, short-ranged energy weapons are concealed in precious items of jewellery, the better to lethally surprise the foe.",
+    "description": "AGENTS OF THE IMPERIUM model only. Each time the bearer is selected to fight, roll three D6: for each 4+, one enemy unit within Engagement Range of the bearer suffers 1 mortal wound. Mortal wounds inflicted by this Enhancement are allocated as if they had the [PRECISION] ability."
+  },
+  {
+    "id": "000009138005",
+    "name": "Fleetmaster",
+    "faction_id": "AoI",
+    "cost": "20",
+    "detachment": "Imperialis Fleet",
+    "detachment_id": "000000895",
+    "legend": "Be they a Rogue Trader or some agent of the Imperial Navy, this warrior draws upon a wealth of shrewd voidfarer strategies to aid them in battle.",
+    "description": "VOIDFARERS model only. Once per battle round, you can target the bearer’s unit with the Violent Acquisition, Masters of the Void or Close-quarters Barrage Stratagems for 0CP."
+  },
+  {
+    "id": "000009360002",
+    "name": "Lathimon’s Flock",
+    "faction_id": "AoI",
+    "cost": "0",
+    "detachment": "Voidship’s Company",
+    "detachment_id": "000000924",
+    "legend": "This unique flock of artificer servo-skulls can rapidly map every twist and turn of even the largest voidships, before providing their master with comprehensive data on enemy strengths and movements.",
+    "description": "VOiDFARERS model only. In the Deploy Armies step, your opponent must deploy their entire army before you deploy yours. If both players have this rule, they must roll off and deploy their armies normally. In addition, IMPERiAL NAvY BREACHERS units from your army gain the Infiltrators ability."
+  },
+  {
+    "id": "000009360003",
+    "name": "Heirloom Blade",
+    "faction_id": "AoI",
+    "cost": "0",
+    "detachment": "Voidship’s Company",
+    "detachment_id": "000000924",
+    "legend": "Passed through generations of Rogue Traders, this archeotech weapon can sustain short but tremendously potent bursts of disruptor-field overcharge.",
+    "description": "VOiDFARERS model only. Once per battle, when the bearer’s unit is selected to light, it can use this Enhancement. If it does, until the end of the phase, improve every characteristic of the bearer’s monomolecular cane-rapier by 1."
+  },
+  {
+    "id": "000009369002",
+    "name": "Manhunter’s Helm",
+    "faction_id": "AoI",
+    "cost": "0",
+    "detachment": "Interdiction Team",
+    "detachment_id": "000000925",
+    "legend": "This unique flock of artificer servo-skulls can rapidly map every twist and turn of even the largest voidships, before providing their master with comprehensive data on enemy strengths and movements.",
+    "description": "Proctor-Exactant model only. At the start of the first battle round, select one enemy unit to be your Priority Target. Each time an ADEPTUS ARbiTES model from your army makes an attack that targets your Priority Target, if the bearer is on the battlefield, add 1 to the Wound roll. Each time your Priority Target is destroyed, if the bearer is on the battlefield, you can select a new enemy unit to be your Priority Target."
+  },
+  {
+    "id": "000009369003",
+    "name": "Vasov’s Auto-Oppressor",
+    "faction_id": "AoI",
+    "cost": "0",
+    "detachment": "Interdiction Team",
+    "detachment_id": "000000925",
+    "legend": "This ancient device emits focused grav-pulses that forces its targets to their knees in obeisance.",
+    "description": "Proctor-Exactant model only. At the end of your Movement phase, you can select one enemy unit visible to the bearer. Until the start of your next Movement phase, halve the Move characteristic of models in that unit and halve Advance and Charge rolls made for it."
+  },
+  {
+    "id": "000009380002",
+    "name": "Rigged Blind Grenades",
+    "faction_id": "AM",
+    "cost": "0",
+    "detachment": "Embarked Regiment",
+    "detachment_id": "000000927",
+    "legend": "Whether intending to defend some contraband stash or as a precaution to slow down enemy boarding parties, the Imperial Guardsmen have booby trapped this hatch with a bundle of blind grenades.",
+    "description": "Once per battle, when an enemy unit opens a Hatchway, if the bearer is on the battlefield, it can use this Enhancement. If it does, roll one D6: on a 2+, that enemy unit is Battle-shocked."
+  },
+  {
+    "id": "000009380003",
+    "name": "Shipboard Veteran",
+    "faction_id": "AM",
+    "cost": "0",
+    "detachment": "Embarked Regiment",
+    "detachment_id": "000000927",
+    "legend": "This officer has coordinated more than their fair share of boarding actions and voidship defence actions, and knows precisely which strategic gambits will bring them victory in such conditions.",
+    "description": "Each time you target an <span class=\"kwb\">ASTRA</span> <span class=\"kwb\">MILITARUM</span> unit from your army with a Stratagem, if that unit is visible to the bearer, roll one D6: on a 4+, you gain 1CP."
+  },
+  {
+    "id": "000009389002",
+    "name": "Covert Breach",
+    "faction_id": "AM",
+    "cost": "0",
+    "detachment": "Tempestus Boarding Regiment",
+    "detachment_id": "000000928",
+    "legend": "Moving with stealth and urgency, these Scions have already bypassed the enemy’s outer defences before their presence is even detected.",
+    "description": "At the start of the first battle round, the bearer’s unit can make a Normal move of up to 6\"."
+  },
+  {
+    "id": "000009389003",
+    "name": "Elimination Force",
+    "faction_id": "AM",
+    "cost": "0",
+    "detachment": "Tempestus Boarding Regiment",
+    "detachment_id": "000000928",
+    "legend": "Tasked with the destruction of a specific enemy asset, the Tempestus Scions focus their most lethal attentions against it as per their explicit orders.",
+    "description": "At the start of the first battle round, select one enemy unit. Each time a model in the bearer’s unit makes an attack that targets that enemy unit, if the Strength characteristic of that attack is less than the Toughness characteristic of that enemy unit, add 1 to the Wound roll."
+  },
+  {
+    "id": "000009757002",
+    "name": "Decoy Targets",
+    "faction_id": "AoI",
+    "cost": "+40",
+    "detachment": "Veiled Blade Elimination Force",
+    "detachment_id": "000000987",
+    "legend": "The agents of the Callidus Temple are known to utilise vat-grown doubles to confound their foes.",
+    "description": "Callidus Assassin models only. Twice per battle, in your Movement phase, you can select one other friendly Infantry model that is on the battlefield and not within Engagement Range of one or more enemy units. The selected model is destroyed (ignoring any rules that are triggered when a model is destroyed) and this model is removed from the battlefield and set up again as close as possible to where that destroyed model was and not within Engagement Range of one or more enemy units. This ability cannot be used more than once in the same battle round."
+  },
+  {
+    "id": "000009757003",
+    "name": "Esoteric Explosives",
+    "faction_id": "AoI",
+    "cost": "+40",
+    "detachment": "Veiled Blade Elimination Force",
+    "detachment_id": "000000987",
+    "legend": "This Culexus operative has been outfitted with various grenades tailored to destroy their assigned targets.",
+    "description": "Culexus Assassin models only. Each time this model is targeted with the Grenades Stratagem, 1 mortal wound is inflicted for each D6 roll of 3+ instead of for each 4+."
+  },
+  {
+    "id": "000009757004",
+    "name": "Intraneural Biotech",
+    "faction_id": "AoI",
+    "cost": "+35",
+    "detachment": "Veiled Blade Elimination Force",
+    "detachment_id": "000000987",
+    "legend": "This Eversor agent’s neurons have been surgically spliced to enhance awareness and speed of thought.",
+    "description": "Eversor Assassin models only. Once per battle round, you can target this model with the Heroic Intervention or Counter-offensive Stratagem for 0CP, and can do so even if you have already used that Stratagem on a different unit this phase."
+  },
+  {
+    "id": "000009757005",
+    "name": "Micromelta Rounds",
+    "faction_id": "AoI",
+    "cost": "+45",
+    "detachment": "Veiled Blade Elimination Force",
+    "detachment_id": "000000987",
+    "legend": "These projectiles are tipped with miniaturised melta charges that detonate on impact.",
+    "description": "Vindicare Assassin models only. This model’s exitus rifle has the [ANTI-MONSTER 4+] and [ANTI-VEHICLE 4+] abilities."
+  },
+  {
+    "id": "000009801002",
+    "name": "Bombast-class Vox-array",
+    "faction_id": "AM",
+    "cost": "35",
+    "detachment": "Bridgehead Strike",
+    "detachment_id": "000000996",
+    "legend": "This device is a precious example of an omni-frequency master vox-array manufactured on the long-lost forge world of Urvax. It facilitates the rapid dissemination of orders throughout the entire strike force.",
+    "description": "Militarum Tempestus Officer model only. Each time the bearer issues an Order, if the bearer’s unit contains one or more models equipped with a master vox, it can issue that Order to up to three different Regiment units, instead of only one."
+  },
+  {
+    "id": "000009801003",
+    "name": "Priority-drop Beacon",
+    "faction_id": "AM",
+    "cost": "30",
+    "detachment": "Bridgehead Strike",
+    "detachment_id": "000000996",
+    "legend": "Locked to the designator runes of this officer’s dropship and heavily warded against interference, this predeployed beacon ensures they land swiftly and on target.",
+    "description": "Militarum Tempestus Officer model only. The bearer’s unit can be set up using the Deep Strike ability in the Reinforcements step of your first, second or third Movement phase, regardless of any mission rules."
+  },
+  {
+    "id": "000009801004",
+    "name": "Shroud Projector",
+    "faction_id": "AM",
+    "cost": "15",
+    "detachment": "Bridgehead Strike",
+    "detachment_id": "000000996",
+    "legend": "Believed to be the roost of protective machine spirits, this small tech-ossuary is worn on a chain around the neck and obfuscates the bearer and their comrades when moving.",
+    "description": "Militarum Tempestus Officer model only. Enemy units cannot use the Fire Overwatch Stratagem to shoot at the bearer’s unit."
+  },
+  {
+    "id": "000009801005",
+    "name": "Advance Augury",
+    "faction_id": "AM",
+    "cost": "15",
+    "detachment": "Bridgehead Strike",
+    "detachment_id": "000000996",
+    "legend": "This tactically astute officer insists on orbital sensor sweeps and psy-scrying ahead of the operation’s commencement, providing vital intelligence.",
+    "description": "Infantry Officer model only. After both players have deployed their armies, select up to three Regiment units from your army and redeploy them. When doing so, you can set those units up in Strategic Reserves, regardless of how many units are already in Strategic Reserves."
+  },
+  {
+    "id": "000009857002",
+    "name": "Eager Advance",
+    "faction_id": "AM",
+    "cost": "20",
+    "detachment": "Siege Regiment",
+    "detachment_id": "000001010",
+    "legend": "This officer relishes serving in the vanguard and seeks to take up a forward position to be closer to the foe when the firing begins.",
+    "description": "Infantry Officer model only. While the bearer is leading a Regiment unit, that unit has the Scouts 6\" ability."
+  },
+  {
+    "id": "000009857003",
+    "name": "Flash Grenades",
+    "faction_id": "AM",
+    "cost": "20",
+    "detachment": "Siege Regiment",
+    "detachment_id": "000001010",
+    "legend": "These grenades emit loud bangs and bright flashes of light, disorienting defenders and allowing the officer and their bodyguard to press home their assault.",
+    "description": "Infantry Officer model only. Enemy units cannot use the Fire Overwatch Stratagem to shoot at the bearer’s unit."
+  },
+  {
+    "id": "000009857004",
+    "name": "Legacy Sidearm",
+    "faction_id": "AM",
+    "cost": "10",
+    "detachment": "Siege Regiment",
+    "detachment_id": "000001010",
+    "legend": "Handed down by a mentor, this officer’s pistol is an artificer-crafted example of its type, and is all the deadlier for it.",
+    "description": "Infantry Officer model only. Add 2 to the Attacks characteristics of the bearers Pistols."
+  },
+  {
+    "id": "000009857005",
+    "name": "Stalwart’s Honours",
+    "faction_id": "AM",
+    "cost": "15",
+    "detachment": "Siege Regiment",
+    "detachment_id": "000001010",
+    "legend": "Such is this officer’s aura of confidence that the soldiers under their command march into battle heedless of incoming fire, trusting in that old adage of the faithful - the Emperor protects.",
+    "description": "Officer model only. While the bearer is leading a unit, when that unit is issued an Order, it is also affected by the Take Cover! Order."
+  },
+  {
+    "id": "000009861002",
+    "name": "Bold Leadership",
+    "faction_id": "AM",
+    "cost": "25",
+    "detachment": "Mechanised Assault",
+    "detachment_id": "000001011",
+    "legend": "This officer’s aggressive command style sees them lead the advance personally, planting the regiment’s colours on seized objectives and leaving following troops to defend the ground they have gained.",
+    "description": "Infantry Officer model only. If you control an objective marker at the end of your Command phase, and the bearer’s unit (or any Transport it is embarked within) is within range of that objective marker, that objective marker remains under you control, even if you have no models within range of it, until your opponent controls it at the start or end of any turn."
+  },
+  {
+    "id": "000009861003",
+    "name": "Sacred Unguents",
+    "faction_id": "AM",
+    "cost": "10",
+    "detachment": "Mechanised Assault",
+    "detachment_id": "000001011",
+    "legend": "Regimental Tech-Priests bless the vehicles under their charge with holy prayer and sacred oils.",
+    "description": "Astra Militarum Tech-Priest Enginseer model only. At the start of your Shooting phase, select one Transport from your army (excluding Aircraft and Titanic units) within 3\" of the bearer. Until the end of the phase, each time that <span class=\"kwb\">TRANSPORT</span> makes an attack, you can re-roll the Hit roll."
+  },
+  {
+    "id": "000009861004",
+    "name": "Smoke Grenades",
+    "faction_id": "AM",
+    "cost": "10",
+    "detachment": "Mechanised Assault",
+    "detachment_id": "000001011",
+    "legend": "Smokescreens provide cover for the infantry advance and enable troops to disembark safely.",
+    "description": "Infantry Officer model only. The bearer’s unit has the Benefit of Cover and the Stealth ability while the bearer’s unit is wholly within 3\" of one or more friendly TRANSPORT models."
+  },
+  {
+    "id": "000009861005",
+    "name": "Vanguard Honours",
+    "faction_id": "AM",
+    "cost": "15",
+    "detachment": "Mechanised Assault",
+    "detachment_id": "000001011",
+    "legend": "Decorated veteran officers know when and where to press home the assault, ensuring their squad disembarks in the optimum position.",
+    "description": "Infantry Officer model only. The bearer’s unit can disembark from a Transport after it has Advanced. If it does, it counts as having made a Normal move that phase, and cannot declare a charge in the same turn, but can otherwise act normally in the remainder of the turn."
+  },
+  {
+    "id": "000009865002",
+    "name": "Calm Under Fire",
+    "faction_id": "AM",
+    "cost": "15",
+    "detachment": "Hammer of the Emperor",
+    "detachment_id": "000001012",
+    "legend": "In clipped tones, this officer issues clear and precise orders to the vehicles under their command - regardless of the bloodshed.",
+    "description": "Vehicle Officer model only. Once per turn, after the bearer issues an Order to a Squadron unit from your army, it can issue the same Order to another <span class=\"kwb\">SQUADRON</span> unit from your army."
+  },
+  {
+    "id": "000009865003",
+    "name": "Indomitable Steed",
+    "faction_id": "AM",
+    "cost": "15",
+    "detachment": "Hammer of the Emperor",
+    "detachment_id": "000001012",
+    "legend": "This officer goes to war in a favoured vehicle that - whether by fortune or apparent divine intervention - has survived dozens of battles despite suffering heavy damage on multiple occasions.",
+    "description": "Vehicle Officer model only. The bearer has the Feel No Pain 6+ ability."
+  },
+  {
+    "id": "000009865004",
+    "name": "Regimental Banner",
+    "faction_id": "AM",
+    "cost": "20",
+    "detachment": "Hammer of the Emperor",
+    "detachment_id": "000001012",
+    "legend": "A regimental banner flies from this command vehicle, its colours displaying the might of the Astra Militarum for all to see.",
+    "description": "Vehicle Officer model only. Add 3 to the bearer’s Objective Control characteristic."
+  },
+  {
+    "id": "000009865005",
+    "name": "Veteran Crew",
+    "faction_id": "AM",
+    "cost": "20",
+    "detachment": "Hammer of the Emperor",
+    "detachment_id": "000001012",
+    "legend": "Drilled endlessly by the officer in command, the crew of this tank are crack shots who know how to make every shell count.",
+    "description": "Vehicle Officer model only. Each time a model in the bearer’s unit makes a ranged attack, re-roll a Hit roll of 1."
+  },
+  {
+    "id": "000009869002",
+    "name": "Guerrilla Honours",
+    "faction_id": "AM",
+    "cost": "25",
+    "detachment": "Recon Element",
+    "detachment_id": "000001013",
+    "legend": "This officer is a specialist in covert warfare, their experience ensuring they know exactly when to redeploy their forces and close the jaws of their pre-prepared trap.",
+    "description": "Infantry Officer model only. After both players have deployed their armies, if the bearer is on the battlefield, select up to three other Astra Militarum Infantry units from your army and redeploy them. When doing so, you can set those units up in Strategic Reserves if you wish, regardless of how many units are already in Strategic Reserves."
+  },
+  {
+    "id": "000009869003",
+    "name": "Scare Gas Grenades",
+    "faction_id": "AM",
+    "cost": "5",
+    "detachment": "Recon Element",
+    "detachment_id": "000001013",
+    "legend": "Filled with powerful hallucinogens, these grenades overwhelm the senses of those who breathe their fumes, causing them to panic and flee their positions.",
+    "description": "Astra Militarum Infantry model only. Once per battle, at the start of any phase, the bearer can use this Enhancement. If it does, select one enemy unit within 8\" of the bearer’s unit (excluding <span class=\"kwb\">MONSTER</span> and <span class=\"kwb\">VEHICLE</span> units); that unit must take a Battle-shock test."
+  },
+  {
+    "id": "000009869004",
+    "name": "Survival Gear",
+    "faction_id": "AM",
+    "cost": "5",
+    "detachment": "Recon Element",
+    "detachment_id": "000001013",
+    "legend": "Whether equipped with climbing gear, machetes or snow shoes, this unit moves swiftly across inhospitable terrain to engage the enemy.",
+    "description": "Astra Militarum Infantry model only. The bearer has the Scouts 6\" ability."
+  },
+  {
+    "id": "000009869005",
+    "name": "Tripwires",
+    "faction_id": "AM",
+    "cost": "20",
+    "detachment": "Recon Element",
+    "detachment_id": "000001013",
+    "legend": "Carefully placed tripwires detonate booby traps as the enemy advance, the resulting explosions causing the foe to halt in their tracks.",
+    "description": "Astra Militarum Infantry model only. Each time an enemy <span class=\"kwb\">INFANTRY</span> or <span class=\"kwb\">MOUNTED</span> unit ends a Normal, Advance, Charge or Fall Back move within 9\" of the bearer’s unit, roll one D6: on a 4+, until the start of your next turn, that enemy unit is stunned. While a unit is stunned, each time a model in that unit makes an attack, subtract 1 from the Hit roll."
+  },
+  {
+    "id": "000010637002",
+    "name": "Abhuman Detail",
+    "faction_id": "AM",
+    "cost": "20",
+    "detachment": "Grizzled Company",
+    "detachment_id": "000001121",
+    "legend": "Ogryns respond well to this Commissar’s stern discipline and are even known to accompany them as a personal bodyguard.",
+    "description": "Commissar model only. Add the Ogryn keyword to the list of units this model can issue Orders too (as stated on its datasheet).<br><br>In the Declare Battle Formations step, the bearer can be attached to an Ogryn Squad or Bullgryn squad unit."
+  },
+  {
+    "id": "000010637003",
+    "name": "Aquilan Eye",
+    "faction_id": "AM",
+    "cost": "20",
+    "detachment": "Grizzled Company",
+    "detachment_id": "000001121",
+    "legend": "This bionic lens contains a miniaturised auspex capable of detecting the slightest flaws in enemy defences.",
+    "description": "Astra Militarum officer model only. Each time you select an Order for the bearer to issue, you can select the Order below:<br><br><b>Target Weak Spot (Order):</b> Each time a model in this unit makes a ranged attack that targets an enemy unit within 12\", improve the Armour Penetration characteristic of that attack by 1."
+  },
+  {
+    "id": "000010637004",
+    "name": "Spec Ops Veteran",
+    "faction_id": "AM",
+    "cost": "15",
+    "detachment": "Grizzled Company",
+    "detachment_id": "000001121",
+    "legend": "This veteran commando officer imparts their experience in clandestine warfare to the rank and file.",
+    "description": "Astra Militarum Infantry officer model only. Each time you select an Order for the bearer to issue, you can select the Order below:<br><br><b>Move to the Shadows (Order):</b> Each time a ranged attack targets this unit, until those attacks are resolved, models in this unit have the Stealth ability."
+  },
+  {
+    "id": "000010637005",
+    "name": "Laud Hailer",
+    "faction_id": "AM",
+    "cost": "10",
+    "detachment": "Grizzled Company",
+    "detachment_id": "000001121",
+    "legend": "This device amplifies the bearer’s voice, enabling their orders to cut through the din of battle.",
+    "description": "Astra Militarum officer model only. Each time you select a unit for this <span class=\"kwb\">OFFICER</span> model to issue an Order to, that unit can be within 12\" instead of within 6\"."
+  },
+  {
+    "id": "000010787002",
+    "name": "Battalion Commander",
+    "faction_id": "AM",
+    "cost": "30",
+    "detachment": "Steel Hammer",
+    "detachment_id": "000001149",
+    "legend": "High-ranking officers of armoured regiments may operate super-heavy tanks as command vehicles, their orders blaring from hull-mounted laud hailers or crackling over internal vox-channels.",
+    "description": "Astra Militarum Titanic Character model only. The bearer has the Voice of Command ability and the Officer keyword, and can issue up to 2 Orders to Astra Militarum Titanic and Squadron units."
+  },
+  {
+    "id": "000010787003",
+    "name": "Titan Killer",
+    "faction_id": "AM",
+    "cost": "20",
+    "detachment": "Steel Hammer",
+    "detachment_id": "000001149",
+    "legend": "Seeking to add another kill marking to their war machine, this glory-hungry tank commander seeks out and engages only the heaviest enemy assets.",
+    "description": "Astra Militarum Titanic Character model only. Each time the bearer makes a ranged attack, you can re-roll the Damage roll."
+  },
+  {
+    "id": "000010787004",
+    "name": "Engine Speaker",
+    "faction_id": "AM",
+    "cost": "15",
+    "detachment": "Steel Hammer",
+    "detachment_id": "000001149",
+    "legend": "Intimately attuned to the machine spirits of Astra Militarum vehicles, this Tech-Priest administers rites  and rituals, seeking to draw additional performance from engines.",
+    "description": "Astra Militarum Tech-Priest Enginseer model only. Each time the bearer uses its Omnissiah’s Blessing ability, until the start of your next Command phase, add 3\" to the Move characteristic of the selected <span class=\"kwb\">VEHICLE</span> model."
+  },
+  {
+    "id": "000010787005",
+    "name": "Assault Hatches",
+    "faction_id": "AM",
+    "cost": "25",
+    "detachment": "Steel Hammer",
+    "detachment_id": "000001149",
+    "legend": "Ramps and hatches slam down on all sides of this titanic vehicle, enabling infantry to surge forth and overwhelm the enemy.",
+    "description": "Astra Militarum Titanic Character Transport model only. Each time a unit disembarks from the bearer after it has made a Normal move, that unit is still eligible to declare a charge this turn."
+  },
+  {
+    "id": "000010791002",
+    "name": "Exemplary Officer",
+    "faction_id": "AM",
+    "cost": "20",
+    "detachment": "Armoured Infantry",
+    "detachment_id": "000001150",
+    "legend": "Possessed of great initiative and authority, this officer marshals surrounding assets with great efficiency.",
+    "description": "Infantry Officer model only. Each time the bearer issues an Order to its own unit, you can select up to two other Platoon units within 3\" of the bearer’s unit. That Order is also issued to each of those units."
+  },
+  {
+    "id": "000010791003",
+    "name": "Master Manoeuvrist",
+    "faction_id": "AM",
+    "cost": "15",
+    "detachment": "Armoured Infantry",
+    "detachment_id": "000001150",
+    "legend": "Academy training and battlefield experience have instilled in this officer a mastery of mobile warfare. At their barked orders, soldiers and armoured vehicles work in well-drilled unison.",
+    "description": "Infantry Officer model only. At the end of your opponent’s Fight phase, if the bearer’s unit is not within Engagement Range of one or more enemy units and every model in that unit is within 3\" of an Astra Militarum Transport from your army, it can embark within that <span class=\"kwb\">TRANSPORT</span>."
+  },
+  {
+    "id": "000010791004",
+    "name": "Omnissian Unguents  (Aura)",
+    "faction_id": "AM",
+    "cost": "35",
+    "detachment": "Armoured Infantry",
+    "detachment_id": "000001150",
+    "legend": "Tech-Priests of the Adeptus Mechanicus bear to battle an array of sanctified oils and tinctures of protection with which to bless the Machine God’s divine works.",
+    "description": "Astra Militarum Tech-Priest Enginseer model only. While a friendly Armoured Skirmisher unit is within 3\" of the bearer, that unit has the Feel No Pain 5+ ability."
+  },
+  {
+    "id": "000010791005",
+    "name": "Grand Strategist",
+    "faction_id": "AM",
+    "cost": "25",
+    "detachment": "Armoured Infantry",
+    "detachment_id": "000001150",
+    "legend": "Able to see the broader strategic picture, this experienced officer deploys their assets sparingly and with practised precision.",
+    "description": "Officer model only. After both players have deployed their armies, if the bearer’s unit (or any Transport it is embarked within) is on the battlefield, select up to two units with the Regiment or Squadron keywords from your army and redeploy them. When doing so, you can set those units up in Strategic Reserves, regardless of how many units are already in Strategic Reserves."
+  }
+]
