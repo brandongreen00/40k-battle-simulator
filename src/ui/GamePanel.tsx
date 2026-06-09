@@ -47,6 +47,7 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
   const [weaponName, setWeaponName] = useState('');
   const [effectId, setEffectId] = useState('order:take_aim');
   const [stratSide, setStratSide] = useState<Side>(state.activePlayer);
+  const [chargeTargetIds, setChargeTargetIds] = useState<string[]>([]);
 
   const ctx: EngineContext = useMemo(() => ({ datasheets: datasheetsById }), [datasheetsById]);
   const movingUnits = units.filter((u) => u.status.moveMode);
@@ -237,7 +238,7 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
       <h3>Resolve combat</h3>
       <label className="field">
         <span>Attacker {phase === 'Shooting' || phase === 'Fight' || phase === 'Charge' ? `(${eligibleAttackers.length} eligible)` : ''}</span>
-        <select value={attackerId} onChange={(e) => { setAttackerId(e.target.value); setWeaponName(''); setTargetId(''); }}>
+        <select value={attackerId} onChange={(e) => { setAttackerId(e.target.value); setWeaponName(''); setTargetId(''); setChargeTargetIds([]); }}>
           <option value="">— pick a unit —</option>
           {(eligibleAttackers.length ? eligibleAttackers : myUnits).map((u) => (
             <option key={u.id} value={u.id}>{nameOf(u.id)} ({u.owner}, ×{aliveOf(u.id)})</option>
@@ -265,6 +266,25 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
           ))}
         </select>
       </label>
+      {phase === 'Charge' && attacker && (
+        <div className="charge-targets">
+          <span className="muted">Declare charge targets (within 12"):</span>
+          {validTargets.length === 0 ? (
+            <p className="muted">No units within 12".</p>
+          ) : (
+            validTargets.map((u) => (
+              <label key={u.id} className="charge-target">
+                <input
+                  type="checkbox"
+                  checked={chargeTargetIds.includes(u.id)}
+                  onChange={(e) => setChargeTargetIds((prev) => (e.target.checked ? [...prev, u.id] : prev.filter((id) => id !== u.id)))}
+                />
+                {nameOf(u.id)} (×{aliveOf(u.id)})
+              </label>
+            ))
+          )}
+        </div>
+      )}
       <div className="btnrow">
         <button
           disabled={!attackerId || !targetId || !weaponName}
@@ -273,10 +293,10 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
           Resolve attack
         </button>
         <button
-          disabled={!attackerId || !targetId}
-          onClick={() => dispatch({ type: 'Charge', chargerUnitId: attackerId, targetUnitId: targetId })}
+          disabled={!attackerId || (phase === 'Charge' ? chargeTargetIds.length === 0 : !targetId)}
+          onClick={() => dispatch({ type: 'Charge', chargerUnitId: attackerId, targetUnitIds: phase === 'Charge' ? chargeTargetIds : (targetId ? [targetId] : []) })}
         >
-          Charge (2D6)
+          Charge (2D6){chargeTargetIds.length > 1 ? ` ×${chargeTargetIds.length}` : ''}
         </button>
       </div>
 

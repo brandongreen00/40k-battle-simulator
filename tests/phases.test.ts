@@ -116,4 +116,25 @@ describe('fight phase', () => {
     expect(charger.status.charged).toBe(true);
     expect(closestGap(charger, circle, after.units.find((u) => u.id === 'b')!, circle)).toBeLessThanOrEqual(1);
   });
+
+  it('a multi-target charge reaches every declared target', () => {
+    // two enemies clustered close together; the charger must end within 1" of BOTH.
+    const s = withUnits([
+      unit('a', 'player', 'melee', 10, 22),
+      unit('b', 'ai', 'gun', 13, 22),
+      unit('c', 'ai', 'gun', 13, 23),
+    ]);
+    const after = reduce(s, { type: 'Charge', chargerUnitId: 'a', targetUnitIds: ['b', 'c'] }, makeRNG(5), ctx);
+    const charger = after.units.find((u) => u.id === 'a')!;
+    expect(charger.status.charged).toBe(true);
+    expect(closestGap(charger, circle, after.units.find((u) => u.id === 'b')!, circle)).toBeLessThanOrEqual(1);
+    expect(closestGap(charger, circle, after.units.find((u) => u.id === 'c')!, circle)).toBeLessThanOrEqual(1);
+  });
+
+  it('rejects a charge against a target more than 12" away', () => {
+    const s = withUnits([unit('a', 'player', 'melee', 10, 22), unit('b', 'ai', 'gun', 30, 22)]);
+    const after = reduce(s, { type: 'Charge', chargerUnitId: 'a', targetUnitIds: ['b'] }, makeRNG(1), ctx);
+    expect(after.units.find((u) => u.id === 'a')!.status.charged).toBeUndefined();
+    expect(after.log.some((l) => /over 12"/.test(l))).toBe(true);
+  });
 });

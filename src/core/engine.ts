@@ -14,7 +14,7 @@ import { resolveAttacks, type AttackProfile, type DefenderProfile, type CombatSi
 import { unitCanSee, unitHasCover } from './los';
 import { controlOfObjective, scorePrimary, type OcModel } from './objectives';
 import { battleShockTest } from './battleshock';
-import { rollCharge, chargeSucceeds } from './movement';
+import { rollCharge } from './movement';
 import { gatherAttackModifiers, type AttackContext } from './effects';
 import { defensiveProfileForItem } from './wargear';
 
@@ -302,13 +302,65 @@ export function runCommandPhase(state: GameState, ctx: EngineContext, rng: RNG):
   return { ...state, units, cp, score, lastBattleShock: reports, log: [...state.log, ...log] };
 }
 
-// ── Charges (Phase 2) ───────────────────────────────────────────────────────────
+// ── Charges (Phase 2 + multi-target pathing) ───────────────────────────────────
 export interface ChargeParams {
   chargerUnitId: string;
-  targetUnitId: string;
+  /** One or more declared charge targets. `targetUnitId` is accepted for back-compat. */
+  targetUnitIds?: string[];
+  targetUnitId?: string;
 }
 
-/** Resolve a charge roll (2D6). On success, mark the charger `charged` (Lance / Fights First). */
+/** Rigid copy of a unit translated by `v` (alive models only). */
+function translatedModels(u: UnitInstance, v: Vec2): UnitInstance {
+  return { ...u, models: u.models.map((m) => (m.alive ? { ...m, pos: { x: m.pos.x + v.x, y: m.pos.y + v.y } } : m)) };
+}
+
+function aliveCentroid(u: UnitInstance): Vec2 {
+  const ms = u.models.filter((m) => m.alive);
+  if (!ms.length) return { x: 0, y: 0 };
+  return { x: ms.reduce((s, m) => s + m.pos.x, 0) / ms.length, y: ms.reduce((s, m) => s + m.pos.y, 0) / ms.length };
+}
+
+/**
+ * Search for a legal charge move: a rigid translate (≤ roll inches) toward the targets that ends
+ * with the charger within Engagement Range of EVERY declared target and NOT within Engagement Range
+ * of any non-target enemy. Rigid translation preserves coherency by construction. Returns the
+ * translation vector, or null if no distance up to the roll satisfies all constraints.
+ */
+function findChargeMove(
+  charger: UnitInstance,
+  cShape: BaseShape,
+  targets: { unit: UnitInstance; shape: BaseShape }[],
+  nonTargets: { unit: UnitInstance; shape: BaseShape }[],
+  roll: number,
+  step = 0.1,
+): Vec2 | null {
+  const from = aliveCentroid(charger);
+  // Aim at the mean of the targets' centroids.
+  const aim = { x: 0, y: 0 };
+  for (const t of targets) { const c = aliveCentroid(t.unit); aim.x += c.x; aim.y += c.y; }
+  aim.x /= targets.length; aim.y /= targets.length;
+  const dx = aim.x - from.x, dy = aim.y - from.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const dir = { x: dx / len, y: dy / len };
+
+  for (let d = 0; d <= roll + 1e-9; d += step) {
+    const v = { x: dir.x * d, y: dir.y * d };
+    const moved = translatedModels(charger, v);
+    const reachesAll = targets.every((t) => closestGap(moved, cShape, t.unit, t.shape) <= ENGAGEMENT_RANGE);
+    if (!reachesAll) continue;
+    const clearOfNonTargets = nonTargets.every((nt) => closestGap(moved, cShape, nt.unit, nt.shape) > ENGAGEMENT_RANGE);
+    if (!clearOfNonTargets) continue; // a longer move might clear it — keep scanning
+    return v;
+  }
+  return null;
+}
+
+/**
+ * Resolve a charge (2D6) against one or more targets. Succeeds only when a single coherent move of
+ * up to the rolled distance reaches Engagement Range of every target without ending within
+ * Engagement Range of a non-target enemy. On success, moves the charger and marks it charged.
+ */
 export function resolveCharge(
   state: GameState,
   params: ChargeParams,
@@ -316,30 +368,43 @@ export function resolveCharge(
   rng: RNG,
 ): { state: GameState; success: boolean; summary: string } {
   const charger = state.units.find((u) => u.id === params.chargerUnitId);
-  const target = state.units.find((u) => u.id === params.targetUnitId);
-  if (!charger || !target) return { state, success: false, summary: 'unit not found' };
+  if (!charger) return { state, success: false, summary: 'unit not found' };
   const cDs = ctx.datasheets.get(charger.datasheetId);
-  const tDs = ctx.datasheets.get(target.datasheetId);
-  if (!cDs || !tDs) return { state, success: false, summary: 'datasheet not found' };
+  if (!cDs) return { state, success: false, summary: 'datasheet not found' };
 
-  const gap = closestGap(charger, cDs.baseShape, target, tDs.baseShape);
+  const targetIds = params.targetUnitIds ?? (params.targetUnitId ? [params.targetUnitId] : []);
+  const targets = targetIds
+    .map((id) => state.units.find((u) => u.id === id))
+    .filter((u): u is UnitInstance => !!u && u.models.some((m) => m.alive))
+    .map((u) => ({ unit: u, shape: ctx.datasheets.get(u.datasheetId)?.baseShape ?? cDs.baseShape }));
+  if (targets.length === 0) return { state, success: false, summary: 'no valid target' };
+
+  // Declaration legality: every target must be within 12".
+  for (const t of targets) {
+    if (closestGap(charger, cDs.baseShape, t.unit, t.shape) > 12) {
+      const summary = `Charge illegal: ${ctx.datasheets.get(t.unit.datasheetId)?.name ?? t.unit.id} is over 12" away`;
+      return { state: { ...state, log: [...state.log, summary] }, success: false, summary };
+    }
+  }
+
+  // Non-target enemies on the board (the charge may not end within Engagement Range of these).
+  const targetSet = new Set(targets.map((t) => t.unit.id));
+  const nonTargets = state.units
+    .filter((u) => u.owner !== charger.owner && !u.inReserves && !targetSet.has(u.id) && u.models.some((m) => m.alive))
+    .map((u) => ({ unit: u, shape: ctx.datasheets.get(u.datasheetId)?.baseShape ?? cDs.baseShape }));
+
   const { distance, rolls } = rollCharge(rng);
-  const success = chargeSucceeds(gap, distance);
-  const summary = `${cDs.name} charges ${tDs.name}: 2D6=${rolls.join('+')}=${distance}" vs ${gap.toFixed(1)}" → ${success ? 'SUCCESS' : 'failed'}`;
+  const move = findChargeMove(charger, cDs.baseShape, targets, nonTargets, distance);
+  const success = move !== null;
+  const names = targets.map((t) => ctx.datasheets.get(t.unit.datasheetId)?.name ?? t.unit.id).join(' + ');
+  const reason = success ? 'SUCCESS' : 'failed (cannot reach all targets / would clip a non-target)';
+  const summary = `${cDs.name} charges ${names}: 2D6=${rolls.join('+')}=${distance}" → ${reason}`;
 
-  // On success, move the charger into Engagement Range: a rigid translate of the whole unit (so it
-  // stays in coherency) along the closest charger→target axis, far enough to close to ~0.5" but no
-  // more than the roll allows. The unit ends within 1" (the roll guarantees it can).
-  const units = state.units.map((u) => {
-    if (u.id !== charger.id) return u;
-    if (!success) return u;
-    const dir = closestAxis(charger, target);
-    const moveDist = Math.max(0, Math.min(distance, gap - 0.5));
-    const moved = u.models.map((m) =>
-      m.alive ? { ...m, pos: { x: m.pos.x + dir.x * moveDist, y: m.pos.y + dir.y * moveDist } } : m,
-    );
-    return { ...u, models: moved, status: { ...u.status, charged: true, moved: true } };
-  });
+  const units = success
+    ? state.units.map((u) => (u.id === charger.id
+        ? { ...translatedModels(u, move!), status: { ...u.status, charged: true, moved: true } }
+        : u))
+    : state.units;
   return { state: { ...state, units, log: [...state.log, summary] }, success, summary };
 }
 
