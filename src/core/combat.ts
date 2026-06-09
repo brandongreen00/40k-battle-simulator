@@ -28,6 +28,10 @@ export interface AttackProfile {
 export interface DefenderModel {
   maxW: number;
   wounds: number;
+  /** Per-model invuln (e.g. a shield-bearer's 4++), overriding the unit's. */
+  invuln?: number;
+  /** Per-model armour save, overriding the unit's. */
+  save?: number;
 }
 
 export interface DefenderProfile {
@@ -246,49 +250,67 @@ export function resolveAttacks(
     rolls: woundFaces,
   });
 
-  // ── 4. Saving throws ─────────────────────────────────────────────────────────
+  // ── 4 + 5. Allocate → save → damage, one model at a time ─────────────────────────
+  // Each wound is allocated to a target model before its save is rolled, so a model's own
+  // invuln/armour (e.g. a shield-bearer's 4++) is used. Allocation follows 10e: wounds go to the
+  // current "lead" model (first with wounds remaining) until it dies, then the next. Devastating
+  // Wounds skip the save step. No damage spills between models.
   const cover = situation.cover && !kw.ignoresCover;
-  const finalSave = effectiveSave(defender.save, weapon.AP, defender.invuln, !!cover);
-  let failedSaves = 0;
-  const saveFaces: number[] = [];
-  for (let i = 0; i < saveableWounds; i++) {
-    const r = rng.d6();
-    saveFaces.push(r);
-    if (r === 1 || r < finalSave) failedSaves++;
-  }
-  log.push({
-    step: 'save',
-    detail: `${saveableWounds} saves at ${finalSave > 6 ? '—' : finalSave + '+'}${cover ? ' (cover)' : ''}: ${failedSaves} failed`,
-    rolls: saveFaces,
-  });
-
-  // ── 5. Damage & allocation ─────────────────────────────────────────────────────
   const dmgExpr = parseDice(weapon.D);
   const meltaBonus = kw.melta && situation.meltaActive ? kw.melta : 0;
   const reduction = situation.damageReduction ?? 0;
-  // Devastating wounds and failed saves both deal damage; devastating bypasses the save step.
-  const damagingWounds = failedSaves + devastating;
+
+  let failedSaves = 0;
   let damageDealt = 0;
   let modelsSlain = 0;
+  const saveFaces: number[] = [];
   const dmgFaces: number[] = [];
+  const savesByValue = new Map<number, number>(); // for the log: final-save value → count taken
+
+  const totalWounds = saveableWounds + devastating;
   let cursor = models.findIndex((m) => m.wounds > 0);
-  for (let i = 0; i < damagingWounds && cursor !== -1; i++) {
-    const { total, rolls } = rollDice(dmgExpr, rng);
-    dmgFaces.push(...rolls);
-    const rawDmg = Math.max(1, total + meltaBonus - reduction);
-    const { taken } = applyFnp(rawDmg, defender.fnp, rng);
+  for (let i = 0; i < totalWounds && cursor !== -1; i++) {
+    const isDevastating = i >= saveableWounds; // the trailing `devastating` wounds allow no save
     const model = models[cursor]!;
-    const applied = Math.min(taken, model.wounds);
-    model.wounds -= applied;
-    damageDealt += applied;
-    if (model.wounds <= 0) {
-      modelsSlain++;
-      cursor = models.findIndex((m) => m.wounds > 0);
+    let woundGetsThrough = isDevastating;
+
+    if (!isDevastating) {
+      const finalSave = effectiveSave(model.save ?? defender.save, weapon.AP, model.invuln ?? defender.invuln, !!cover);
+      savesByValue.set(finalSave, (savesByValue.get(finalSave) ?? 0) + 1);
+      const r = rng.d6();
+      saveFaces.push(r);
+      if (r === 1 || r < finalSave) {
+        failedSaves++;
+        woundGetsThrough = true;
+      }
+    }
+
+    if (woundGetsThrough) {
+      const { total, rolls } = rollDice(dmgExpr, rng);
+      dmgFaces.push(...rolls);
+      const rawDmg = Math.max(1, total + meltaBonus - reduction);
+      const { taken } = applyFnp(rawDmg, defender.fnp, rng);
+      const applied = Math.min(taken, model.wounds);
+      model.wounds -= applied;
+      damageDealt += applied;
+      if (model.wounds <= 0) {
+        modelsSlain++;
+        cursor = models.findIndex((m) => m.wounds > 0);
+      }
     }
   }
+
+  const saveSummary = [...savesByValue.entries()]
+    .map(([s, n]) => `${n}@${s > 6 ? '—' : s + '+'}`)
+    .join(', ');
+  log.push({
+    step: 'save',
+    detail: `${saveableWounds} saves (${saveSummary || '—'})${cover ? ' (cover)' : ''}: ${failedSaves} failed`,
+    rolls: saveFaces,
+  });
   log.push({
     step: 'damage',
-    detail: `${damagingWounds} wounds dealt ${damageDealt} damage, ${modelsSlain} model(s) slain`,
+    detail: `${failedSaves + devastating} wounds dealt ${damageDealt} damage, ${modelsSlain} model(s) slain`,
     rolls: dmgFaces.length ? dmgFaces : undefined,
   });
 

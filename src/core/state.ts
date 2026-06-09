@@ -14,6 +14,7 @@ import type { BaseShape, GameState, Layout, ModelInstance, Side, UnitInstance, V
 import type { RNG } from './rng';
 import { clamp } from './geometry';
 import { formationPositions, type Formation } from './formation';
+import { defensiveProfileForItem } from './wargear';
 import {
   resolveAttack,
   resolveCharge,
@@ -50,6 +51,8 @@ export type Intent =
       formation?: Formation;
       /** Rotation of the formation around the anchor, radians (defaults to 0). */
       rotation?: number;
+      /** Wargear as item→count (e.g. {"Astartes shield": 2}); assigned to the first N models. */
+      wargear?: Record<string, number>;
     }
   | { type: 'MoveModel'; modelId: string; pos: Vec2 }
   | { type: 'RemoveUnit'; unitId: string }
@@ -256,13 +259,32 @@ function layoutModels(intent: Extract<Intent, { type: 'SpawnUnit' }>, layout: La
     formation: intent.formation ?? 'block',
     rotation: intent.rotation ?? 0,
   });
+  const wargearByModel = assignWargear(intent.wargear, positions.length);
   return positions.map((pos, i) => ({
     id: `${intent.unitId}:m${i}`,
     unitId: intent.unitId,
     pos: clampToBoard(pos, layout),
     wounds: intent.wounds,
     alive: true,
+    ...(wargearByModel[i]?.length ? { wargear: wargearByModel[i] } : {}),
   }));
+}
+
+/**
+ * Pin defensive wargear (shields → invuln) onto distinct models, filling from the front, so the
+ * combat engine can resolve per-model saves. Only defensively-relevant items are placed (each on
+ * its own model); other wargear has no in-game effect yet and is left off the live models to avoid
+ * crowding shields out. The full counts still ride on the Roster for the record.
+ */
+function assignWargear(wargear: Record<string, number> | undefined, n: number): string[][] {
+  const out: string[][] = Array.from({ length: n }, () => []);
+  if (!wargear) return out;
+  let cursor = 0;
+  for (const [item, count] of Object.entries(wargear)) {
+    if (!defensiveProfileForItem(item)) continue;
+    for (let k = 0; k < count && cursor < n; k++) out[cursor++]!.push(item);
+  }
+  return out;
 }
 
 function clampToBoard(p: Vec2, layout: Layout): Vec2 {

@@ -6,6 +6,7 @@
 // or add/remove an enhancement — never when you swap weapons.
 
 import type { Datasheet, Enhancement, Roster } from './types';
+import { defensiveItemsInText, validateUnitLoadout, type Loadout } from './wargear';
 
 // ── Battle size (points limit + datasheet copy limits) ───────────────────────
 export type BattleSize = 'Combat Patrol' | 'Incursion' | 'Strike Force';
@@ -33,8 +34,9 @@ export interface ListUnit {
   enhancementId?: string;
   warlord?: boolean;
   attachedTo?: string; // uid of the bodyguard unit a leader is attached to
-  /** Wargear selections per option-group index. Advisory — does NOT affect points in 10e. */
-  loadout?: Record<number, string[]>;
+  /** Chosen wargear as an item→count map (e.g. {"Deathwatch thunder hammer": 4}). Validated
+   *  against the datasheet's option caps; does NOT affect points (wargear is free in 10e). */
+  loadout?: Loadout;
 }
 
 export interface ArmyList {
@@ -125,6 +127,15 @@ export function setAttachedTo(list: ArmyList, uid: string, attachedTo?: string):
 export function setWarlord(list: ArmyList, uid: string): ArmyList {
   return { ...list, units: list.units.map((u) => ({ ...u, warlord: u.uid === uid })) };
 }
+/** Set how many models in a unit carry a given wargear item (0 removes it). */
+export function setLoadoutCount(list: ArmyList, uid: string, item: string, count: number): ArmyList {
+  return patch(list, uid, (u) => {
+    const loadout: Loadout = { ...(u.loadout ?? {}) };
+    if (count <= 0) delete loadout[item];
+    else loadout[item] = count;
+    return { ...u, loadout: Object.keys(loadout).length ? loadout : undefined };
+  });
+}
 
 // ── validation ───────────────────────────────────────────────────────────────
 export type Severity = 'error' | 'warning';
@@ -165,6 +176,11 @@ export function validate(list: ArmyList, ix: DataIndex): Violation[] {
         uid: u.uid,
         message: `${ds.name}: ${u.modelCount} models has no points value (valid: ${modelCountOptions(ds).join(', ')}).`,
       });
+    }
+
+    // Wargear option caps (e.g. "2 thunder hammers per 5 models").
+    for (const lv of validateUnitLoadout(ds, u.modelCount, u.loadout)) {
+      v.push({ severity: 'error', uid: u.uid, message: lv.message });
     }
 
     if (u.enhancementId) {
@@ -213,17 +229,36 @@ export function validate(list: ArmyList, ix: DataIndex): Violation[] {
 }
 
 // ── export to the Roster shape the board/loaders already understand ──────────
+/**
+ * Resolve a unit's full wargear counts for the game: the chosen loadout, plus any defensive
+ * wargear baked into the datasheet's *default* loadout (e.g. one Navis Armsman's Endurant Shield)
+ * that the builder never asks about. This is what the board needs to assign per-model saves.
+ */
+export function resolveWargearCounts(ds: Datasheet | undefined, unit: ListUnit): Loadout {
+  const counts: Loadout = { ...(unit.loadout ?? {}) };
+  if (ds?.loadout) {
+    for (const item of defensiveItemsInText(ds.loadout)) {
+      if (counts[item] == null) counts[item] = 1; // the default loadout fields exactly one bearer
+    }
+  }
+  return counts;
+}
+
 export function toRoster(list: ArmyList, ix: DataIndex): Roster {
   return {
     name: list.name,
     faction: list.faction,
     detachment: list.detachment,
     points: listPoints(list, ix),
-    units: list.units.map((u) => ({
-      datasheetId: u.datasheetId,
-      modelCount: u.modelCount,
-      ...(u.enhancementId ? { enhancementId: u.enhancementId } : {}),
-      ...(u.attachedTo ? { attachedCharacterId: u.attachedTo } : {}),
-    })),
+    units: list.units.map((u) => {
+      const wargearCounts = resolveWargearCounts(ix.datasheets.get(u.datasheetId), u);
+      return {
+        datasheetId: u.datasheetId,
+        modelCount: u.modelCount,
+        ...(Object.keys(wargearCounts).length ? { wargearCounts } : {}),
+        ...(u.enhancementId ? { enhancementId: u.enhancementId } : {}),
+        ...(u.attachedTo ? { attachedCharacterId: u.attachedTo } : {}),
+      };
+    }),
   };
 }

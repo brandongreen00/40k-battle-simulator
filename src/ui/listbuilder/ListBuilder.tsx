@@ -9,6 +9,7 @@ import {
   removeUnit,
   setAttachedTo,
   setEnhancement,
+  setLoadoutCount,
   setModelCount,
   setWarlord,
   toRoster,
@@ -19,12 +20,15 @@ import {
 } from '../../core/army';
 import {
   dataIndex,
+  datasheets,
   detachmentsForFaction,
+  enhancements,
   enhancementsForDetachment,
   getDatasheet,
 } from '../../data/loaders';
 import { Catalog } from './Catalog';
 import { ListUnitCard } from './ListUnitCard';
+import { ImportPanel } from './ImportPanel';
 
 const FACTIONS = [
   { id: 'AM', name: 'Astra Militarum' },
@@ -99,17 +103,8 @@ export function ListBuilder({ onOpenInBoard }: Props) {
     setSavedNames(Object.keys(m));
   }
 
-  function setLoadout(uid: string, groupIdx: number, selected: string[]) {
-    setList({
-      ...list,
-      units: list.units.map((u) => {
-        if (u.uid !== uid) return u;
-        const loadout = { ...(u.loadout ?? {}) };
-        if (selected.length === 0) delete loadout[groupIdx];
-        else loadout[groupIdx] = selected;
-        return { ...u, loadout };
-      }),
-    });
+  function setLoadout(uid: string, item: string, count: number) {
+    setList(setLoadoutCount(list, uid, item, count));
   }
 
   const errors = violations.filter((v) => v.severity === 'error');
@@ -175,6 +170,12 @@ export function ListBuilder({ onOpenInBoard }: Props) {
             </p>
           ))}
         </section>
+
+        <ImportPanel
+          datasheets={datasheets}
+          enhancements={enhancements}
+          onImport={(imported) => setList(imported)}
+        />
 
         <section className="actions">
           <h2>Save / export</h2>
