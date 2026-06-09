@@ -892,3 +892,60 @@ button.remove {
 .coh-warn text {
   paint-order: stroke;
 }
+
+/* ── Stratagems ──────────────────────────────────────────────────────── */
+.strat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.strat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  background: #1b2230;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 5px 8px;
+  cursor: pointer;
+  color: var(--text);
+}
+.strat:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.strat:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.strat-cp {
+  flex: 0 0 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #3b2a55;
+  border: 1px solid #7c5cc0;
+  color: #d9c8ff;
+  font-size: 11px;
+  font-weight: 700;
+}
+.strat-name {
+  flex: 1;
+  font-size: 12px;
+}
+.strat-det {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+.strat-det.core {
+  color: #8fd98f;
+  border-color: #2f6e2f;
+}

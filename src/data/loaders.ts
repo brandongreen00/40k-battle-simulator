@@ -4,9 +4,11 @@
 import type { Datasheet, Enhancement, Layout, Roster } from '../core/types';
 import type { DataIndex } from '../core/army';
 import { deployAbilityFromKeywords, type DeployAbility } from '../core/deployment';
+import { CORE_STRATAGEMS, parseTurn, type Stratagem } from '../core/stratagems';
 import datasheetsJson from '../../data/game/datasheets.json';
 import enhancementsJson from '../../data/game/enhancements.json';
 import abilitiesJson from '../../data/game/abilities.json';
+import stratagemsJson from '../../data/game/stratagems.json';
 
 export const datasheets = datasheetsJson as unknown as Datasheet[];
 
@@ -37,6 +39,27 @@ export function abilityNamesFor(ds: Datasheet): string[] {
 export function deployAbilityForDatasheet(ds: Datasheet): DeployAbility {
   return deployAbilityFromKeywords(ds.keywords, abilityNamesFor(ds));
 }
+
+// ── Stratagems: Core (universal) + the detachment-scoped ones from the data ──
+interface StratagemRow {
+  id: string; name: string; faction_id?: string; type?: string; cp_cost?: string;
+  turn?: string; phase?: string; detachment?: string; legend?: string; description?: string;
+}
+const stratRows = stratagemsJson as unknown as StratagemRow[];
+const detachmentStratagems: Stratagem[] = stratRows.map((s) => ({
+  id: s.id,
+  name: s.name,
+  cp: parseInt(s.cp_cost ?? '0', 10) || 0,
+  phase: s.phase ?? 'Any phase',
+  turn: parseTurn(s.turn ?? 'Your turn'),
+  detachment: s.detachment,
+  faction: s.faction_id,
+  type: s.type,
+  text: (s.description ?? '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
+}));
+
+/** Core stratagems + every detachment stratagem from the data. */
+export const stratagems: Stratagem[] = [...CORE_STRATAGEMS, ...detachmentStratagems];
 
 /** The lookup bundle the pure army engine expects. */
 export const dataIndex: DataIndex = {

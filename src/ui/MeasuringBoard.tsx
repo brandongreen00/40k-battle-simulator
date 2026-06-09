@@ -347,6 +347,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
             selectedUnitIds={selectedUnitIds}
             setSelectedUnitIds={setSelectedUnitIds}
             onBeginArrival={beginArrival}
+            detachmentBySide={{ player: rosterFor('player')?.detachment ?? '', ai: rosterFor('ai')?.detachment ?? '' }}
           />
         )}
       </aside>

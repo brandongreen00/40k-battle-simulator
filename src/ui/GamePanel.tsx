@@ -4,8 +4,14 @@ import type { Intent } from '../core/state';
 import type { EngineContext } from '../core/engine';
 import type { MoveMode } from '../core/movement';
 import { EFFECT_REGISTRY } from '../core/effects';
-import { reservesArrivable, unitCoherency } from '../core/phases';
+import {
+  reservesArrivable, unitCoherency, eligibleToShoot, eligibleToCharge, eligibleToFight,
+  validShootingTargets, chargeTargets, engagedEnemies, type Eligibility,
+} from '../core/phases';
+import { usableStratagems } from '../core/stratagems';
+import { stratagems } from '../data/loaders';
 import { OWNER_COLOR } from './view';
+import type { Side } from '../core/types';
 
 interface Props {
   state: GameState;
@@ -16,6 +22,8 @@ interface Props {
   setSelectedUnitIds?: (ids: string[]) => void;
   /** Begin a Deep Strike arrival placement for a Reserves unit (handled by the board). */
   onBeginArrival?: (unitId: string) => void;
+  /** Each side's army detachment (drives which detachment stratagems are available). */
+  detachmentBySide?: Record<Side, string>;
 }
 
 const MOVE_MODES: { mode: MoveMode; label: string }[] = [
@@ -30,12 +38,14 @@ const MOVE_MODES: { mode: MoveMode; label: string }[] = [
  * scoreboard, attack/charge resolution between on-board units, Order/Stratagem application, and the
  * live dice log. All actions go through the same intent reducer the rest of the app uses.
  */
-export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [], setSelectedUnitIds, onBeginArrival }: Props) {
+export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [], setSelectedUnitIds, onBeginArrival, detachmentBySide }: Props) {
   const units = state.units;
+  const phase = state.phase;
   const [attackerId, setAttackerId] = useState('');
   const [targetId, setTargetId] = useState('');
   const [weaponName, setWeaponName] = useState('');
   const [effectId, setEffectId] = useState('order:take_aim');
+  const [stratSide, setStratSide] = useState<Side>(state.activePlayer);
 
   const ctx: EngineContext = useMemo(() => ({ datasheets: datasheetsById }), [datasheetsById]);
   const movingUnits = units.filter((u) => u.status.moveMode);
@@ -54,13 +64,34 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
   };
   const aliveOf = (id: string) => units.find((x) => x.id === id)?.models.filter((m) => m.alive).length ?? 0;
 
-  const enemies = useMemo(
-    () => units.filter((u) => attacker && u.owner !== attacker.owner && u.models.some((m) => m.alive)),
-    [units, attacker],
-  );
+  // Phase-aware eligibility: which of my units may act, and which enemies they may target.
+  const myUnits = units.filter((u) => u.owner === state.activePlayer && !u.inReserves && u.models.some((m) => m.alive));
+  const eligibleAttackers = useMemo(() => {
+    const f = phase === 'Shooting' ? eligibleToShoot : phase === 'Fight' ? eligibleToFight : phase === 'Charge' ? eligibleToCharge : null;
+    return f ? myUnits.filter((u) => f(u, state, ctx).eligible) : myUnits;
+  }, [units, phase, state.activePlayer]);
+
+  const attackerEligibility: Eligibility | null = !attacker ? null
+    : phase === 'Shooting' ? eligibleToShoot(attacker, state, ctx)
+    : phase === 'Fight' ? eligibleToFight(attacker, state, ctx)
+    : phase === 'Charge' ? eligibleToCharge(attacker, state, ctx) : null;
+
+  const validTargets = useMemo(() => {
+    if (!attacker) return [];
+    if (phase === 'Shooting') return weaponName ? validShootingTargets(attacker, weaponName, state, ctx) : [];
+    if (phase === 'Charge') return chargeTargets(attacker, state, ctx);
+    if (phase === 'Fight') return engagedEnemies(attacker, state, ctx);
+    return units.filter((u) => u.owner !== attacker.owner && !u.inReserves && u.models.some((m) => m.alive));
+  }, [attacker, weaponName, phase, units]);
 
   const offensiveEffects = Object.values(EFFECT_REGISTRY).filter((e) => e.side === 'attacker');
   const defensiveEffects = Object.values(EFFECT_REGISTRY).filter((e) => e.side === 'defender');
+
+  // Stratagems usable by `stratSide` right now (Core + that side's detachment, phase/turn-gated).
+  const strats = useMemo(
+    () => usableStratagems(stratagems, { phase, isYourTurn: stratSide === state.activePlayer, detachment: detachmentBySide?.[stratSide] }),
+    [phase, stratSide, state.activePlayer, detachmentBySide],
+  );
 
   return (
     <section className="game-panel">
@@ -159,17 +190,20 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
       {/* Attack / charge */}
       <h3>Resolve combat</h3>
       <label className="field">
-        <span>Attacker</span>
-        <select value={attackerId} onChange={(e) => { setAttackerId(e.target.value); setWeaponName(''); }}>
+        <span>Attacker {phase === 'Shooting' || phase === 'Fight' || phase === 'Charge' ? `(${eligibleAttackers.length} eligible)` : ''}</span>
+        <select value={attackerId} onChange={(e) => { setAttackerId(e.target.value); setWeaponName(''); setTargetId(''); }}>
           <option value="">— pick a unit —</option>
-          {units.filter((u) => u.models.some((m) => m.alive)).map((u) => (
+          {(eligibleAttackers.length ? eligibleAttackers : myUnits).map((u) => (
             <option key={u.id} value={u.id}>{nameOf(u.id)} ({u.owner}, ×{aliveOf(u.id)})</option>
           ))}
         </select>
       </label>
+      {attackerEligibility && !attackerEligibility.eligible && (
+        <p className="coh-bad">⚠ {attackerEligibility.reason}</p>
+      )}
       <label className="field">
         <span>Weapon</span>
-        <select value={weaponName} onChange={(e) => setWeaponName(e.target.value)} disabled={!attacker}>
+        <select value={weaponName} onChange={(e) => { setWeaponName(e.target.value); setTargetId(''); }} disabled={!attacker}>
           <option value="">— pick a weapon —</option>
           {weapons.map((w) => (
             <option key={w.name} value={w.name}>{w.name} ({w.type === 'melee' ? 'melee' : `${w.range}"`})</option>
@@ -177,10 +211,10 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
         </select>
       </label>
       <label className="field">
-        <span>Target</span>
+        <span>Target {attacker ? `(${validTargets.length} valid)` : ''}</span>
         <select value={targetId} onChange={(e) => setTargetId(e.target.value)} disabled={!attacker}>
           <option value="">— pick a target —</option>
-          {enemies.map((u) => (
+          {validTargets.map((u) => (
             <option key={u.id} value={u.id}>{nameOf(u.id)} (×{aliveOf(u.id)})</option>
           ))}
         </select>
@@ -226,6 +260,40 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
         >
           Stratagem on target (1 CP)
         </button>
+      </div>
+
+      {/* Stratagems (Core + detachment), phase/turn filtered */}
+      <h3>Stratagems</h3>
+      <div className="btnrow">
+        <span className="muted">For:</span>
+        {(['player', 'ai'] as const).map((s) => (
+          <button key={s} className={stratSide === s ? 'seg-on' : ''} onClick={() => setStratSide(s)}>
+            {s}{s === state.activePlayer ? ' · turn' : ''}
+          </button>
+        ))}
+        <span className="muted">{state.cp[stratSide]} CP</span>
+      </div>
+      <div className="strat-list">
+        {strats.length === 0 ? (
+          <p className="muted">No stratagems usable in the {phase} phase for {stratSide}.</p>
+        ) : (
+          strats.map((st) => {
+            const afford = state.cp[stratSide] >= st.cp;
+            return (
+              <button
+                key={st.id}
+                className="strat"
+                disabled={!afford}
+                title={st.text}
+                onClick={() => dispatch({ type: 'UseStratagem', name: st.name, side: stratSide, cost: st.cp, ...(st.effectId && targetId ? { targetUnitId: targetId, effectId: st.effectId } : {}) })}
+              >
+                <span className="strat-cp">{st.cp}</span>
+                <span className="strat-name">{st.name}</span>
+                <span className={`strat-det${st.detachment ? '' : ' core'}`}>{st.detachment ?? 'Core'}</span>
+              </button>
+            );
+          })
+        )}
       </div>
 
       {/* Dice log */}
