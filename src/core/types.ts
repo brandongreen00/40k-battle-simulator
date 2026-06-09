@@ -155,6 +155,8 @@ export interface ModelInstance {
   alive: boolean;
   /** Wargear items this specific model carries (e.g. ["Astartes shield"]). Drives per-model saves. */
   wargear?: string[];
+  /** Position this model started its current Movement-phase activation from (for the M" clamp). */
+  moveStart?: Vec2;
 }
 
 /** Per-unit, per-turn activation + status flags. Reset at the points the rules dictate. */
@@ -169,6 +171,11 @@ export interface UnitStatus {
   battleShocked?: boolean; // failed a Battle-shock test this round
   /** Active ability/Order/Stratagem effect ids (see core/effects.ts). Expire at turn reset. */
   activeEffects?: string[];
+  // ── Movement-phase activation (transient; set by BeginMove, cleared by EndMove/turn) ──
+  /** The move mode chosen for the current activation. Undefined when not moving. */
+  moveMode?: import('./movement').MoveMode;
+  /** Inches each model may move this activation (M, or M+D6 for an Advance). */
+  moveBudget?: number;
 }
 
 export interface UnitInstance {
@@ -179,11 +186,48 @@ export interface UnitInstance {
   /** Model count at deployment, for Below-Half-strength / Battle-shock tests. */
   startingModels: number;
   status: UnitStatus;
+  /** Held in Reserves (Deep Strike / Strategic Reserves) — off the board until it arrives. */
+  inReserves?: boolean;
+  /** Battle round this unit arrived from Reserves (undefined if deployed normally). */
+  arrivedRound?: number;
+  /** Leader attachment: the Bodyguard unit id this CHARACTER unit is attached to. */
+  attachedTo?: string;
+  /** Leader attachment: Leader unit ids attached to this Bodyguard unit. */
+  leaderUnitIds?: string[];
+}
+
+// ── Pre-battle setup / deployment ────────────────────────────────────────────
+export type Stage = 'setup' | 'battle' | 'done';
+
+/** Steps of the pre-battle sequence (mission pack order). */
+export type DeployStep = 'roll_roles' | 'deploy' | 'roll_first_turn' | 'ready';
+
+export interface RollOff {
+  player: number;
+  ai: number;
+  winner: Side;
+}
+
+export interface SetupState {
+  step: DeployStep;
+  /** Roll-off that set Attacker/Defender (for the dice display). */
+  roleRoll?: RollOff;
+  attacker?: Side;
+  defender?: Side;
+  /** Whose turn it is to place a unit during alternating deployment (Defender first). */
+  toDeploy?: Side;
+  /** Roll-off that set the first turn (for the dice display). */
+  firstTurnRoll?: RollOff;
+  firstTurn?: Side;
 }
 
 export interface GameState {
   layout: Layout;
   units: UnitInstance[];
+  /** 'setup' = pre-battle deployment; 'battle' = the five-phase rounds; 'done' = finished. */
+  stage: Stage;
+  /** Pre-battle deployment sub-state (present while `stage === 'setup'`). */
+  setup?: SetupState;
   round: number; // 1..5
   /** Which side took the first turn of the battle (rounds alternate starting with this side). */
   firstPlayer: Side;
