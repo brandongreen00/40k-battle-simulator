@@ -30,8 +30,9 @@ interface AbilityRow { id: string; name: string; description?: string }
 export const abilities = abilitiesJson as unknown as AbilityRow[];
 const abilityNameById = new Map(abilities.map((a) => [a.id, a.name]));
 
-/** Resolve a datasheet's referenced ability names (from its abilityIds). */
+/** Resolve a datasheet's ability names — from the full ability list when present, else abilityIds. */
 export function abilityNamesFor(ds: Datasheet): string[] {
+  if (ds.abilities?.length) return ds.abilities.map((a) => a.name).filter(Boolean);
   return (ds.abilityIds ?? []).map((id) => abilityNameById.get(id) ?? '').filter(Boolean);
 }
 

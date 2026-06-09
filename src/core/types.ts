@@ -63,13 +63,24 @@ export interface Datasheet {
   weapons: WeaponProfile[];
   baseShape: BaseShape;
   keywords: string[]; // INFANTRY, VEHICLE, TITANIC, CHARACTER, ...
-  abilityIds: string[]; // resolved later by the ability system
+  abilityIds: string[]; // Core/Faction ability ids (resolved via abilities.json)
+  /** Full ability list incl. the unit's *special* rules with their text (the per-unit specials). */
+  abilities?: UnitAbility[];
   points?: PointsTier[]; // cost per model-count tier
   composition?: string[]; // valid unit compositions (plain text)
   wargearOptions?: WargearOption[]; // weapon swap options
   wargearNotes?: string[]; // footnotes constraining the options
   canLead?: string[]; // datasheet ids this CHARACTER can attach to
   canBeLedBy?: string[]; // CHARACTER datasheet ids that can attach to this unit
+}
+
+/** A datasheet ability — a Core/Faction ability (resolved from the catalog) or a unit-specific
+ *  ("Datasheet") special rule with its inline rules text. */
+export interface UnitAbility {
+  name: string;
+  description: string;
+  /** 'Core' | 'Faction' | 'Datasheet' | 'Wargear' | 'Special' (Wahapedia's ability type). */
+  type?: string;
 }
 
 /** An enhancement: points upgrade for a CHARACTER, scoped to one detachment. */
