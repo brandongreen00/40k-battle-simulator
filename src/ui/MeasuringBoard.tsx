@@ -5,6 +5,7 @@ import { makeRNG } from '../core/rng';
 import { nextFormation, type Formation } from '../core/formation';
 import { datasheetsById, getDatasheet, layouts, rosters } from '../data/loaders';
 import { Board, type Placement } from './Board';
+import { GamePanel } from './GamePanel';
 import { OWNER_COLOR, TERRAIN_STYLE } from './view';
 
 /** A unit the user has picked up and is positioning with the ghost preview. */
@@ -26,7 +27,7 @@ interface Props {
 
 export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) {
   const [state, dispatch] = useReducer(
-    (s: ReturnType<typeof createInitialState>, i: Intent) => reduce(s, i, rng),
+    (s: ReturnType<typeof createInitialState>, i: Intent) => reduce(s, i, rng, { datasheets: datasheetsById }),
     layouts[0],
     createInitialState,
   );
@@ -245,6 +246,10 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
           onPlacementCancel={() => setPlacing(null)}
         />
       </main>
+
+      <aside className="gamerail">
+        <GamePanel state={state} dispatch={dispatch} datasheetsById={datasheetsById} />
+      </aside>
     </div>
   );
 }
