@@ -1,0 +1,131 @@
+{
+  "id": "ca2025-hammer-and-anvil-1",
+  "name": "GW Chapter Approved 2025–2026 · Hammer and Anvil · Terrain Layout 1",
+  "boardWidth": 60,
+  "boardHeight": 44,
+  "deployment": "Hammer and Anvil",
+  "_note": "APPROXIMATE TRANSCRIPTION. The exact labrador.dev corner-offset measurements for this layout were not supplied, so terrain footprints and objective positions below are a correctly-shaped, to-scale stand-in (60x44 board, short-edge Hammer-and-Anvil zones, 180° rotational terrain symmetry, types tagged per CLAUDE.md guidance: large/central pieces = ruin_blocking, low pieces = area_cover). Replace coordinates with the real labrador numbers when available — the schema will not change.",
+  "_assumptions": [
+    "Hammer and Anvil = deployment zones along the two SHORT (44\") edges; modelled 18\" deep, leaving 24\" of no-man's-land.",
+    "labrador exposes no terrain TYPE or HEIGHT; tags are manual guesses (central/flank buildings -> ruin_blocking, woods -> area_cover, barricades -> obstacle).",
+    "Objective markers are 40mm; positions are a symmetric placeholder pending the real layout."
+  ],
+  "terrain": [
+    {
+      "id": "ruin-central",
+      "type": "ruin_blocking",
+      "note": "large central building",
+      "polygon": [
+        { "x": 24, "y": 18 },
+        { "x": 36, "y": 18 },
+        { "x": 36, "y": 26 },
+        { "x": 24, "y": 26 }
+      ]
+    },
+    {
+      "id": "ruin-sw",
+      "type": "ruin_blocking",
+      "polygon": [
+        { "x": 10, "y": 8 },
+        { "x": 19, "y": 8 },
+        { "x": 19, "y": 16 },
+        { "x": 10, "y": 16 }
+      ]
+    },
+    {
+      "id": "ruin-ne",
+      "type": "ruin_blocking",
+      "note": "180° partner of ruin-sw",
+      "polygon": [
+        { "x": 41, "y": 28 },
+        { "x": 50, "y": 28 },
+        { "x": 50, "y": 36 },
+        { "x": 41, "y": 36 }
+      ]
+    },
+    {
+      "id": "ruin-nw",
+      "type": "ruin_blocking",
+      "polygon": [
+        { "x": 10, "y": 29 },
+        { "x": 20, "y": 29 },
+        { "x": 20, "y": 37 },
+        { "x": 10, "y": 37 }
+      ]
+    },
+    {
+      "id": "ruin-se",
+      "type": "ruin_blocking",
+      "note": "180° partner of ruin-nw",
+      "polygon": [
+        { "x": 40, "y": 7 },
+        { "x": 50, "y": 7 },
+        { "x": 50, "y": 15 },
+        { "x": 40, "y": 15 }
+      ]
+    },
+    {
+      "id": "woods-south",
+      "type": "area_cover",
+      "polygon": [
+        { "x": 26, "y": 5 },
+        { "x": 34, "y": 5 },
+        { "x": 34, "y": 11 },
+        { "x": 26, "y": 11 }
+      ]
+    },
+    {
+      "id": "woods-north",
+      "type": "area_cover",
+      "note": "180° partner of woods-south",
+      "polygon": [
+        { "x": 26, "y": 33 },
+        { "x": 34, "y": 33 },
+        { "x": 34, "y": 39 },
+        { "x": 26, "y": 39 }
+      ]
+    },
+    {
+      "id": "barricade-west",
+      "type": "obstacle",
+      "polygon": [
+        { "x": 21, "y": 21 },
+        { "x": 24, "y": 21 },
+        { "x": 24, "y": 23 },
+        { "x": 21, "y": 23 }
+      ]
+    },
+    {
+      "id": "barricade-east",
+      "type": "obstacle",
+      "note": "180° partner of barricade-west",
+      "polygon": [
+        { "x": 36, "y": 21 },
+        { "x": 39, "y": 21 },
+        { "x": 39, "y": 23 },
+        { "x": 36, "y": 23 }
+      ]
+    }
+  ],
+  "objectives": [
+    { "x": 10, "y": 22 },
+    { "x": 30, "y": 22 },
+    { "x": 50, "y": 22 },
+    { "x": 30, "y": 8 },
+    { "x": 30, "y": 36 }
+  ],
+  "deploymentZones": {
+    "player": [
+      { "x": 0, "y": 0 },
+      { "x": 18, "y": 0 },
+      { "x": 18, "y": 44 },
+      { "x": 0, "y": 44 }
+    ],
+    "opponent": [
+      { "x": 42, "y": 0 },
+      { "x": 60, "y": 0 },
+      { "x": 60, "y": 44 },
+      { "x": 42, "y": 44 }
+    ]
+  }
+}

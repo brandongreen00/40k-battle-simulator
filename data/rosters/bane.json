@@ -1,0 +1,8 @@
+{
+  "name": "Bane",
+  "faction": "AM",
+  "detachment": "",
+  "points": 1000,
+  "units": [],
+  "note": "AWAITING SOURCE LIST. The unit-reference file docs/lists/jacks_army_unit_reference.md was not provided, so units are not yet encoded. This is the Krieg/Astra Militarum thematic list; detachment is TBD (likely 'Siege Regiment' for a Krieg theme — confirm from the list). Add RosterUnit entries once the list is supplied."
+}

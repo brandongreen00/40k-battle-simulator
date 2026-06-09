@@ -1,0 +1,8 @@
+{
+  "name": "Imperialis Fleet",
+  "faction": "AoI",
+  "detachment": "Imperialis Fleet",
+  "points": 1000,
+  "units": [],
+  "note": "AWAITING SOURCE LIST. The army-list file docs/lists/agents_of_imperium_suggested_list.md was not provided, so units are not yet encoded. Faction (Imperial Agents) and detachment (Imperialis Fleet — confirmed to exist in the converted data) are set. Add RosterUnit entries once the list is supplied."
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Measuring Board Demo (AM)",
+  "faction": "AM",
+  "detachment": "Grizzled Company",
+  "sample": true,
+  "points": 0,
+  "note": "DEMO ONLY — not one of the three owned lists. A grab-bag of real Astra Militarum datasheets used to exercise the board (circle bases 25/28.5/40mm, a 60x35mm oval, and hull-footprint vehicles). Replace with the real lists once docs/lists/*.md are supplied.",
+  "units": [
+    { "datasheetId": "000002612", "modelCount": 10, "displayName": "Cadian Shock Troops" },
+    { "datasheetId": "000002615", "modelCount": 10, "displayName": "Kasrkin" },
+    { "datasheetId": "000000723", "modelCount": 3, "displayName": "Bullgryn Squad" },
+    { "datasheetId": "000003898", "modelCount": 6, "displayName": "Death Riders" },
+    { "datasheetId": "000000692", "modelCount": 1, "displayName": "Chimera" },
+    { "datasheetId": "000000700", "modelCount": 1, "displayName": "Leman Russ Battle Tank" }
+  ]
+}
