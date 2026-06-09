@@ -14,6 +14,7 @@ import type { BaseShape, GameState, Layout, ModelInstance, Side, UnitInstance, V
 import type { RNG } from './rng';
 import { clamp } from './geometry';
 import { formationPositions, type Formation } from './formation';
+import { resolveAttack, type AttackParams, type EngineContext } from './engine';
 
 /** The Pariah Nexus phase sequence, as data (rule #4). Stage 1 does not advance through it. */
 export const PARIAH_NEXUS_PHASES = [
@@ -47,25 +48,78 @@ export type Intent =
   | { type: 'RemoveUnit'; unitId: string }
   | { type: 'ClearUnits' }
   /** Swap the board to a different layout. Resets the board (model positions are layout-specific). */
-  | { type: 'SetLayout'; layout: Layout };
+  | { type: 'SetLayout'; layout: Layout }
+  // ── Combat core (Phase 1) ────────────────────────────────────────────────────
+  /** Advance the phase/turn/round sequencer one step (Command→…→Fight→next turn). */
+  | { type: 'AdvancePhase' }
+  /** Set the side that takes the first turn (and reset the sequencer to round 1). */
+  | { type: 'SetFirstPlayer'; side: Side }
+  /** One unit attacks another with one weapon. Requires the EngineContext (datasheet lookup). */
+  | ({ type: 'Attack' } & AttackParams)
+  /** Set per-unit status flags (movement/charge bookkeeping that later phases drive). */
+  | { type: 'SetUnitStatus'; unitId: string; status: Partial<UnitInstance['status']> };
 
 export function createInitialState(layout: Layout): GameState {
   return {
     layout,
     units: [],
     round: 1,
+    firstPlayer: 'player',
     activePlayer: 'player',
     phase: PARIAH_NEXUS_PHASES[0],
     cp: { player: 0, ai: 0 },
     score: { player: 0, ai: 0 },
+    ended: false,
+    log: [],
+  };
+}
+
+const otherSide = (s: Side): Side => (s === 'player' ? 'ai' : 'player');
+
+/** Clear a side's per-unit, per-turn status flags at the start of that side's turn. */
+function beginTurnFor(state: GameState, side: Side): UnitInstance[] {
+  return state.units.map((u) => (u.owner === side ? { ...u, status: {} } : u));
+}
+
+/** Advance the Pariah Nexus sequencer one step. Phases→turns→rounds; ends after round 5. */
+function advancePhase(state: GameState): GameState {
+  if (state.ended) return state;
+  const i = PARIAH_NEXUS_PHASES.indexOf(state.phase as Phase);
+  if (i >= 0 && i < PARIAH_NEXUS_PHASES.length - 1) {
+    return { ...state, phase: PARIAH_NEXUS_PHASES[i + 1]! };
+  }
+  // End of the Fight phase — the active player's turn ends.
+  if (state.activePlayer === state.firstPlayer) {
+    const next = otherSide(state.activePlayer);
+    return {
+      ...state,
+      activePlayer: next,
+      phase: PARIAH_NEXUS_PHASES[0]!,
+      units: beginTurnFor(state, next),
+      log: [...state.log, `— ${next} turn, round ${state.round} —`],
+    };
+  }
+  // Second player just finished: advance the round (or end the battle after round 5).
+  if (state.round >= 5) {
+    return { ...state, ended: true, log: [...state.log, '— battle ends (round 5 complete) —'] };
+  }
+  const round = state.round + 1;
+  const next = state.firstPlayer;
+  return {
+    ...state,
+    round,
+    activePlayer: next,
+    phase: PARIAH_NEXUS_PHASES[0]!,
+    units: beginTurnFor(state, next),
+    log: [...state.log, `— ${next} turn, round ${round} —`],
   };
 }
 
 /**
  * Apply one validated intent, returning a new GameState (never mutates the input).
- * `rng` is accepted for parity with later stages; Stage 1 intents are deterministic.
+ * `ctx` (the datasheet lookup) is required only by intents that read unit stats (Attack).
  */
-export function reduce(state: GameState, intent: Intent, _rng: RNG): GameState {
+export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineContext): GameState {
   switch (intent.type) {
     case 'SpawnUnit': {
       const models = layoutModels(intent, state.layout);
@@ -74,6 +128,7 @@ export function reduce(state: GameState, intent: Intent, _rng: RNG): GameState {
         owner: intent.owner,
         datasheetId: intent.datasheetId,
         models,
+        status: {},
       };
       return { ...state, units: [...state.units, unit] };
     }
@@ -97,6 +152,32 @@ export function reduce(state: GameState, intent: Intent, _rng: RNG): GameState {
 
     case 'SetLayout':
       return createInitialState(intent.layout);
+
+    case 'AdvancePhase':
+      return advancePhase(state);
+
+    case 'SetFirstPlayer':
+      return { ...state, firstPlayer: intent.side, activePlayer: intent.side, round: 1, phase: PARIAH_NEXUS_PHASES[0], ended: false };
+
+    case 'SetUnitStatus':
+      return {
+        ...state,
+        units: state.units.map((u) =>
+          u.id === intent.unitId ? { ...u, status: { ...u.status, ...intent.status } } : u,
+        ),
+      };
+
+    case 'Attack': {
+      if (!ctx) {
+        return { ...state, log: [...state.log, 'Attack ignored: no datasheet context supplied'] };
+      }
+      const { type: _t, ...params } = intent;
+      const outcome = resolveAttack(state, params, ctx, rng);
+      if (outcome.rejected) {
+        return { ...state, log: [...state.log, `Attack rejected: ${outcome.rejected}`] };
+      }
+      return outcome.state;
+    }
   }
 }
 

@@ -153,20 +153,38 @@ export interface ModelInstance {
   alive: boolean;
 }
 
+/** Per-unit, per-turn activation + status flags. Reset at the points the rules dictate. */
+export interface UnitStatus {
+  moved?: boolean; // made a normal move this turn
+  advanced?: boolean; // Advanced this turn (affects shooting/charge)
+  fellBack?: boolean; // Fell Back this turn
+  remainedStationary?: boolean; // did not move (Heavy bonus)
+  hasShot?: boolean; // already shot this turn
+  charged?: boolean; // completed a charge this turn (Lance, Fights First)
+  hasFought?: boolean; // already fought this turn
+  battleShocked?: boolean; // failed a Battle-shock test this round
+}
+
 export interface UnitInstance {
   id: string;
   owner: Side;
   datasheetId: string;
   models: ModelInstance[];
-  // status flags (battle-shock, under-order, etc.) added in later stages
+  status: UnitStatus;
 }
 
 export interface GameState {
   layout: Layout;
   units: UnitInstance[];
-  round: number;
+  round: number; // 1..5
+  /** Which side took the first turn of the battle (rounds alternate starting with this side). */
+  firstPlayer: Side;
   activePlayer: Side;
   phase: string; // kept as data, not hard-coded into UI (architecture rule #4)
   cp: { player: number; ai: number };
   score: { player: number; ai: number };
+  /** Battle has reached the end of round 5's second turn. */
+  ended: boolean;
+  /** Human-readable event/dice log, newest last. */
+  log: string[];
 }
