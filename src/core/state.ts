@@ -20,6 +20,7 @@ import { checkUnitDeployment, deepStrikeArrivalLegal, type DeployAbility } from 
 import { checkCoherency } from './coherency';
 import { canAttach } from './leaders';
 import { maxMoveDistance, rollAdvance, type MoveMode } from './movement';
+import { moveBonusFromOrders } from './orders';
 import {
   resolveAttack,
   resolveCharge,
@@ -463,7 +464,8 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
           advanceRoll = rollAdvance(rng).roll;
           log = [...log, `Advance roll: +${advanceRoll}" (move up to ${M + advanceRoll}")`];
         }
-        const budget = maxMoveDistance(M, intent.mode, advanceRoll);
+        const orderBonus = intent.mode === 'stationary' ? 0 : moveBonusFromOrders(u); // Move! Move! Move! +3"
+        const budget = maxMoveDistance(M, intent.mode, advanceRoll) + orderBonus;
         return {
           ...u,
           status: { ...u.status, moveMode: intent.mode, moveBudget: budget },

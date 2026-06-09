@@ -17,6 +17,7 @@ import { battleShockTest } from './battleshock';
 import { rollCharge } from './movement';
 import { gatherAttackModifiers, type AttackContext } from './effects';
 import { defensiveProfileForItem } from './wargear';
+import { ocBonusFromOrders, ldBonusFromOrders } from './orders';
 
 /** Injected lookup the engine needs to read unit stats. Not imported — passed in (rule #1/#2). */
 export interface EngineContext {
@@ -186,11 +187,18 @@ export function resolveAttack(
     rerollHits: mods.rerollHits,
     rerollWounds: mods.rerollWounds,
     damageReduction: mods.damageReduction,
+    extraAttacks: mods.extraAttacks,
   };
 
   const defender = defenderProfileFor(tDs, target);
   if (mods.fnp != null) defender.fnp = mods.fnp;
   if (mods.invulnFloor != null) defender.invuln = Math.min(defender.invuln ?? 7, mods.invulnFloor);
+  if (mods.saveBonus) {
+    // Take Cover! (+1 Save), capped so it can't improve a save beyond 3+.
+    const improve = (s: number) => Math.max(3, s - mods.saveBonus);
+    defender.save = improve(defender.save);
+    for (const m of defender.models) if (m.save != null) m.save = improve(m.save);
+  }
   const result = resolveAttacks(profile, defender, situation, rng);
 
   // Map the updated wound state back onto the target's alive models, in order.
@@ -232,7 +240,8 @@ function ocModels(state: GameState, ctx: EngineContext): OcModel[] {
   for (const u of state.units) {
     const ds = ctx.datasheets.get(u.datasheetId);
     if (!ds) continue;
-    const oc = u.status.battleShocked ? 0 : ds.models[0]!.OC;
+    // Battle-shocked units have OC 0; otherwise add any Order/detachment OC bonus (Duty and Honour!).
+    const oc = u.status.battleShocked ? 0 : ds.models[0]!.OC + ocBonusFromOrders(u);
     const radius = baseRadius(ds.baseShape);
     for (const m of u.models) {
       if (m.alive) out.push({ pos: m.pos, oc, radius, owner: u.owner });
@@ -274,7 +283,7 @@ export function runCommandPhase(state: GameState, ctx: EngineContext, rng: RNG):
     if (!ds) return { ...u, status: { ...u.status, battleShocked: false } };
     const alive = aliveCount(u);
     if (alive === 0) return u;
-    const ld = ds.models[0]!.Ld;
+    const ld = ds.models[0]!.Ld - ldBonusFromOrders(u); // +Ld = a lower target number (easier test)
     const woundsFraction =
       u.startingModels === 1 ? u.models[0]!.wounds / Math.max(1, ds.models[0]!.W) : undefined;
     const test = battleShockTest(alive, u.startingModels, ld, rng, woundsFraction);

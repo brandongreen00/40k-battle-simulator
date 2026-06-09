@@ -995,3 +995,26 @@ button.remove {
   padding: 2px 0;
   cursor: pointer;
 }
+
+/* ── Orders (Voice of Command) ───────────────────────────────────────── */
+.order-officer {
+  border-top: 1px solid var(--line);
+  padding-top: 6px;
+  margin-top: 6px;
+}
+.order-officer:first-of-type {
+  border-top: none;
+  margin-top: 0;
+}
+.order-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  padding: 3px 0;
+}
+.order-row select {
+  flex: 0 0 auto;
+  max-width: 55%;
+}

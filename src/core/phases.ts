@@ -202,6 +202,23 @@ export function unitCentroid(u: UnitInstance): Vec2 {
   };
 }
 
+// ── Orders (Voice of Command, 6") ─────────────────────────────────────────────
+const VOICE_OF_COMMAND_RANGE = 6; // inches
+
+/**
+ * Friendly REGIMENT units an Officer can issue an Order to: same owner, within 6", on the board,
+ * not Battle-shocked, not the officer itself. (The order set itself lives in core/orders.ts.)
+ */
+export function orderableUnits(officer: UnitInstance, state: GameState, ctx: EngineContext): UnitInstance[] {
+  return state.units.filter((u) => {
+    if (u.owner !== officer.owner || u.id === officer.id || !isOnBoard(u)) return false;
+    if (u.status.battleShocked) return false;
+    const ds = dsOf(u, ctx);
+    if (!ds?.keywords.some((k) => k.toLowerCase() === 'regiment')) return false;
+    return gapBetween(officer, u, ctx) <= VOICE_OF_COMMAND_RANGE;
+  });
+}
+
 // ── Reserves ─────────────────────────────────────────────────────────────────
 /** Units held in Reserves that are allowed to arrive this Movement phase (battle round 2+). */
 export function reservesArrivable(state: GameState): UnitInstance[] {

@@ -62,6 +62,7 @@ export interface CombatSituation {
   rerollHits?: Reroll;
   rerollWounds?: Reroll;
   damageReduction?: number; // -X to Damage per wound (floored at 1)
+  extraAttacks?: number; // +N to the Attacks characteristic per firing model (e.g. First Rank Fire!)
 }
 
 // ── Outputs ──────────────────────────────────────────────────────────────────
@@ -176,12 +177,13 @@ export function resolveAttacks(
   const attacksExpr = parseDice(weapon.attacks);
   const blastBonus = kw.blast ? Math.floor((situation.targetModelCount ?? models.length) / 5) : 0;
   const rapidBonus = kw.rapidFire && situation.rapidFireActive ? kw.rapidFire : 0;
+  const extra = situation.extraAttacks ?? 0; // +N Attacks per model (e.g. First Rank Fire!)
   let totalAttacks = 0;
   const attackRolls: number[] = [];
   for (let i = 0; i < situation.attackerCount; i++) {
     const { total, rolls } = rollDice(attacksExpr, rng);
     attackRolls.push(...rolls);
-    totalAttacks += total + rapidBonus + blastBonus;
+    totalAttacks += total + rapidBonus + blastBonus + extra;
   }
   log.push({
     step: 'attacks',

@@ -6,10 +6,11 @@ import type { MoveMode } from '../core/movement';
 import { EFFECT_REGISTRY } from '../core/effects';
 import {
   reservesArrivable, unitCoherency, eligibleToShoot, eligibleToCharge, eligibleToFight,
-  validShootingTargets, chargeTargets, engagedEnemies, fightActivationOrder, type Eligibility,
+  validShootingTargets, chargeTargets, engagedEnemies, fightActivationOrder, orderableUnits, type Eligibility,
 } from '../core/phases';
+import { AM_ORDERS, isOfficer } from '../core/orders';
 import { usableStratagems } from '../core/stratagems';
-import { stratagems } from '../data/loaders';
+import { stratagems, abilityNamesFor } from '../data/loaders';
 import { Die } from './Dice';
 import { OWNER_COLOR } from './view';
 import type { Side } from '../core/types';
@@ -91,6 +92,20 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
 
   const fightOrder = useMemo(() => (phase === 'Fight' ? fightActivationOrder(state, ctx) : []), [phase, units]);
 
+  // Command phase: Officers of the active player that can issue Orders, and the active detachment.
+  const activeDetachment = detachmentBySide?.[state.activePlayer] ?? '';
+  const officers = useMemo(
+    () => (phase === 'Command' ? myUnits.filter((u) => isOfficer(datasheetsById.get(u.datasheetId), abilityNamesFor(datasheetsById.get(u.datasheetId)!))) : []),
+    [phase, units, state.activePlayer],
+  );
+  const enemiesOnBoard = units.filter((u) => u.owner !== state.activePlayer && !u.inReserves && u.models.some((m) => m.alive));
+
+  /** Issue an Order; Grizzled Company also grants re-roll Hit 1s while a unit is under an Order. */
+  function issueOrder(unitId: string, effectId: string) {
+    dispatch({ type: 'IssueOrder', unitId, effectId });
+    if (activeDetachment === 'Grizzled Company') dispatch({ type: 'IssueOrder', unitId, effectId: 'reroll_hits_1' });
+  }
+
   const offensiveEffects = Object.values(EFFECT_REGISTRY).filter((e) => e.side === 'attacker');
   const defensiveEffects = Object.values(EFFECT_REGISTRY).filter((e) => e.side === 'defender');
 
@@ -133,6 +148,58 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
           </div>
         ))}
       </div>
+
+      {/* Command phase — Orders (Voice of Command) */}
+      {phase === 'Command' && officers.length > 0 && (
+        <div className="phase-block">
+          <h3>Orders {activeDetachment === 'Grizzled Company' ? '· Ruthless Discipline (+1 order, re-roll Hit 1s)' : ''}</h3>
+          {officers.map((off) => {
+            const targets = orderableUnits(off, state, ctx);
+            return (
+              <div key={off.id} className="order-officer">
+                <strong>{nameOf(off.id)}</strong>
+                {targets.length === 0 ? (
+                  <span className="muted"> — no REGIMENT units within 6"</span>
+                ) : (
+                  targets.map((t) => (
+                    <div key={t.id} className="order-row">
+                      <span>{nameOf(t.id)}{(t.status.activeEffects ?? []).some((e) => e.startsWith('order:')) ? ' ✓' : ''}</span>
+                      <select
+                        value=""
+                        onChange={(e) => { if (e.target.value) issueOrder(t.id, e.target.value); }}
+                      >
+                        <option value="">— issue order —</option>
+                        {AM_ORDERS.map((o) => <option key={o.id} value={o.effectId} title={o.desc}>{o.name} — {o.desc}</option>)}
+                      </select>
+                    </div>
+                  ))
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Command phase — Imperialis Fleet "At all Costs" */}
+      {phase === 'Command' && activeDetachment === 'Imperialis Fleet' && (
+        <div className="phase-block">
+          <h3>At all Costs</h3>
+          <div className="order-row">
+            <span>Eliminate (mark enemy: +1 to Hit it)</span>
+            <select value="" onChange={(e) => { if (e.target.value) dispatch({ type: 'UseStratagem', name: 'Eliminate At All Costs', side: state.activePlayer, cost: 0, targetUnitId: e.target.value, effectId: 'mark_eliminate' }); }}>
+              <option value="">— enemy unit —</option>
+              {enemiesOnBoard.map((u) => <option key={u.id} value={u.id}>{nameOf(u.id)}</option>)}
+            </select>
+          </div>
+          <div className="order-row">
+            <span>Acquire (your unit on an objective: 5++, +1 OC/Ld)</span>
+            <select value="" onChange={(e) => { if (e.target.value) dispatch({ type: 'UseStratagem', name: 'Acquire At All Costs', side: state.activePlayer, cost: 0, targetUnitId: e.target.value, effectId: 'acquire_buff' }); }}>
+              <option value="">— your unit —</option>
+              {myUnits.map((u) => <option key={u.id} value={u.id}>{nameOf(u.id)}</option>)}
+            </select>
+          </div>
+        </div>
+      )}
 
       {/* Command phase — Battle-shock dice */}
       {state.phase === 'Command' && state.lastBattleShock && state.lastBattleShock.length > 0 && (
