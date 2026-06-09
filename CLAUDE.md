@@ -323,5 +323,58 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
-- **[YYYY-MM-DD] — Project bootstrapped.** _(placeholder — first session: replace with what you
-  actually completed, decisions made, and the handoff for the next session.)_
+- **[2026-06-09] — Stage 1 (Phase 0) implemented: the measuring board.**
+  Built the foundation end-to-end. All gates green: `pnpm typecheck`, `pnpm test` (26 tests),
+  `pnpm build` all pass, and the production build uses the correct Pages base path.
+
+  **Done:**
+  - **Scaffold** — Vite + React 18 + TS (strict) + Vitest. Scripts: `dev/build/test/typecheck/ingest`.
+  - **GitHub Pages deploy** — `.github/workflows/deploy.yml` (typecheck→test→build→`deploy-pages`),
+    triggered on push to `main` + manual dispatch. Vite `base = /40k-battle-simulator/`.
+  - **Pure core** (`src/core/`, imports nothing from React/DOM): `types.ts`, `rng.ts` (mulberry32),
+    `geometry.ts` (base-to-base gap, point-in-polygon, vector + base-extent helpers), and
+    `state.ts` (intent reducer: SpawnUnit/MoveModel/RemoveUnit/ClearUnits; phases kept as data;
+    reactive-window seam acknowledged). Geometry/RNG/reducer unit-tested incl. the 32mm@2"→~0.74"
+    acceptance case.
+  - **Ingest** (`tools/ingest/convert.ts`, run via `pnpm ingest`) — dependency-free converter that
+    downloads the Wahapedia 10e pipe-delimited CSVs, parses stats/weapons/keywords/base sizes,
+    filters to **AoI + AM**, and writes typed JSON to `data/game/` (180 datasheets + ability/
+    stratagem/enhancement/detachment catalogs + `meta.json`). Documented in `tools/ingest/README.md`.
+  - **UI** (`src/ui/`) — `Board` (SVG at `INCH_TO_PX=12`, bottom-left origin via y-flip),
+    `TerrainLayer` (type-colored terrain + objectives + deployment zones + 1" grid), `ModelToken`
+    (circle/oval bases at true size), `MeasureOverlay` (live base-to-base tape). Spawn from a
+    roster, drag models, select one→measure-to-cursor or two→measure-between. State mutates only
+    through the core reducer.
+
+  **Decisions made (where the plan left things open):**
+  - `INCH_TO_PX = 12`; board renders responsively via SVG `viewBox` + CSS `max-width`.
+  - RNG = mulberry32, seeded; injected everywhere (core never calls `Math.random`).
+  - Vitest bumped to v3 to match Vite 6 (v2 dragged in a second copy of Vite and broke typecheck).
+    pnpm `onlyBuiltDependencies: [esbuild]` committed so CI installs are reproducible.
+  - Weapon keywords are taken verbatim from the Wahapedia wargear `description` (source casing is
+    inconsistent, e.g. `pistol` vs `PISTOL`) — the Stage-2 keyword library will normalize.
+  - Invuln saves stored as bare numbers (Wahapedia gives `5` meaning 5++); `-`/empty ⇒ none.
+  - Hull-measured vehicles (`base_size = "Use model"`) get an approximate physical footprint —
+    a small curated table + Titanic/Vehicle/Monster/Walker heuristic — so tanks don't render as
+    32mm dots. These are rendering approximations (flagged in `data/game/meta.json` warnings),
+    NOT rules data.
+  - Only non-empty `ability_id` refs captured into `Datasheet.abilityIds`; inline ability *text*
+    deferred to Stage 4.
+
+  **Blocked / needs the owner (⚠️ pick up next):**
+  1. **The three army-list files were never uploaded.** `docs/lists/{agents_of_imperium_suggested_list,
+     grizzled_company_suggested_list,jacks_army_unit_reference}.md` do not exist. The three real
+     rosters (`data/rosters/{imperialis_fleet,grizzled_company,bane}.json`) are therefore valid but
+     **empty**, each flagged with a `note`. A `_demo_measuring_board.json` roster of real AM units
+     exists so the board is usable. **Next session: once the .md lists are provided, encode their
+     units** (datasheetId + modelCount + wargear + enhancementId), flagging any unresolved unit.
+     Bane's detachment is unset (likely "Siege Regiment" — confirm from the list).
+  2. **Terrain layout is an approximation.** The exact labrador.dev corner-offset measurements for
+     "GW CA 2025–2026, Hammer and Anvil, Terrain Layout 1" were not provided, so
+     `data/layouts/ca2025-hammer-and-anvil-1.json` is a correctly-shaped, to-scale *stand-in*
+     (flagged in its `_note`/`_assumptions`). **Replace the coordinates with the real numbers**
+     when available — the schema won't change.
+
+  **Handoff:** Foundation is solid and in scope. The next concrete work is (a) drop in the two
+  missing inputs above, then (b) begin Stage 2 (deterministic combat core) per the roadmap —
+  but only after confirming the owner wants combat next.

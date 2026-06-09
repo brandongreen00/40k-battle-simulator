@@ -1,2 +1,45 @@
 # 40k-battle-simulator
-Coding with Claude creating a 40k battle simulator - 10th edition
+
+A personal Warhammer 40,000 (10th edition, Pariah Nexus) battle simulator that plays three
+fixed army lists against each other on labrador.dev terrain layouts, with an AI opponent.
+Private, non-commercial, single-machine tool. See [`CLAUDE.md`](./CLAUDE.md) for the project
+charter and [`docs/40k_simulator_plan.md`](./docs/40k_simulator_plan.md) for the full plan.
+
+> **Status: Stage 1 (Phase 0) — "the measuring board."** Data layer + a board you can place
+> models on, drag, and measure with. No combat / LoS / abilities / AI yet (those are later
+> stages, deliberately out of scope).
+
+## Quick start
+
+```bash
+pnpm install
+pnpm dev        # run the measuring board locally
+pnpm test       # vitest (geometry, RNG, reducer, app smoke)
+pnpm typecheck  # tsc --noEmit (strict)
+pnpm build      # production build to dist/
+pnpm ingest     # regenerate data/game/*.json from Wahapedia (see tools/ingest/README.md)
+```
+
+## What works now
+
+- **Pure rules core** (`src/core/`, no React/DOM): shared types, a seeded RNG (mulberry32),
+  base-to-base geometry (the canonical 40k gap), and a minimal intent reducer.
+- **Data ingest**: a converter that turns the Wahapedia 10e CSV exports into typed JSON, scoped
+  to the two factions the lists use (Imperial Agents + Astra Militarum). Output committed under
+  `data/game/`.
+- **Measuring board UI**: the Hammer-and-Anvil layout rendered to scale with type-colored
+  terrain, objectives, and deployment zones; spawn units from a roster; drag models; and a live
+  base-to-base distance read-out.
+
+## Deployment (GitHub Pages)
+
+Pages is configured to **deploy from GitHub Actions**. The workflow
+([`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml)) typechecks, tests, builds,
+and publishes on every push to `main` (and via manual "Run workflow"). The Vite `base` is set
+to `/40k-battle-simulator/`, so the site serves from
+`https://<user>.github.io/40k-battle-simulator/`.
+
+## Licensing
+
+All 40k rules and IP belong to Games Workshop; Wahapedia data is personal-use only. This repo is
+private and non-commercial — do not publish it or host the rules text publicly.
