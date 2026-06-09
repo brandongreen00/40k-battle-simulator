@@ -70,6 +70,10 @@ export interface Roster {
   detachment: string; // "Grizzled Company", "Imperialis Fleet"
   points: number;
   units: RosterUnit[];
+  /** Free-text note (e.g. provenance, "awaiting list file", or "demo — not an owned list"). */
+  note?: string;
+  /** True for non-canonical demo rosters used only to exercise the board. */
+  sample?: boolean;
 }
 
 // ── Terrain & board ──────────────────────────────────────────────────────────

@@ -14,6 +14,6 @@ export default defineConfig({
     globals: true,
     setupFiles: './tests/setup.ts',
     // Pure-core + geometry tests live in tests/; co-located UI tests use *.test.tsx
-    include: ['tests/**/*.test.ts', 'src/**/*.test.{ts,tsx}'],
+    include: ['tests/**/*.test.{ts,tsx}', 'src/**/*.test.{ts,tsx}'],
   },
 });

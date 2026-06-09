@@ -64,6 +64,20 @@ export function gapBetweenBases(a: Vec2, sa: BaseShape, b: Vec2, sb: BaseShape):
   return baseToBaseGap(a, baseRadius(sa), b, baseRadius(sb));
 }
 
+/** Half-extents (inches) of a base along x/y — circle is symmetric, oval uses its semi-axes. */
+export function baseHalfExtents(shape: BaseShape): { hx: number; hy: number } {
+  if (shape.kind === 'circle') {
+    const r = baseRadius(shape);
+    return { hx: r, hy: r };
+  }
+  return { hx: shape.rx!, hy: shape.ry! };
+}
+
+/** Clamp a scalar to [min, max]. */
+export function clamp(v: number, min: number, max: number): number {
+  return v < min ? min : v > max ? max : v;
+}
+
 // ── Point in polygon ─────────────────────────────────────────────────────────
 /**
  * Ray-casting point-in-polygon. `polygon` is an ordered vertex list (inches); the edge
