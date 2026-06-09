@@ -16,7 +16,15 @@ import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import type { Datasheet, ModelProfile, WeaponProfile, BaseShape } from '../../src/core/types.ts';
+import type {
+  Datasheet,
+  ModelProfile,
+  WeaponProfile,
+  BaseShape,
+  PointsTier,
+  WargearOption,
+  Enhancement,
+} from '../../src/core/types.ts';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '../..');
@@ -39,6 +47,10 @@ const CSV_FILES = [
   'Datasheets_wargear',
   'Datasheets_keywords',
   'Datasheets_abilities',
+  'Datasheets_models_cost', // points per model-count tier (the list builder's backbone)
+  'Datasheets_options', // wargear swap options (natural-language + <li> choices)
+  'Datasheets_unit_composition', // valid unit compositions
+  'Datasheets_leader', // leader -> bodyguard attachment map
   'Abilities',
   'Stratagems',
   'Enhancements',
@@ -119,6 +131,47 @@ function parseInvuln(s: string | undefined): number | undefined {
   if (!s || s === '-') return undefined;
   const n = num(s);
   return Number.isFinite(n) ? n : undefined;
+}
+
+/** Strip Wahapedia's inline HTML to readable plain text (lists become " • "-separated). */
+function stripHtml(s: string | undefined): string {
+  return (s ?? '')
+    .replace(/<ky>(.*?)<\/ky>/gis, '$1')
+    .replace(/<li>/gi, ' • ')
+    .replace(/<\/(li|p|div|h\d)>/gi, ' ')
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&#39;|&rsquo;|&lsquo;|&apos;/gi, "'")
+    .replace(/&ldquo;|&rdquo;|&quot;/gi, '"')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Parse one wargear-option row into a lead-in sentence + the bulleted weapon choices.
+ * e.g. "...replaced with one of the following:<ul><li>1 flamer</li>...</ul>" ->
+ *      { text: "...replaced with one of the following:", choices: ["1 flamer", ...] }
+ * Rows with no list (a single swap) yield choices: [].
+ */
+function parseWargearOption(html: string): WargearOption {
+  const ulIdx = html.search(/<ul/i);
+  const lead = ulIdx >= 0 ? html.slice(0, ulIdx) : html;
+  const choices = [...html.matchAll(/<li>(.*?)<\/li>/gis)]
+    .map((m) => stripHtml(m[1]))
+    .filter(Boolean);
+  return { text: stripHtml(lead), choices };
+}
+
+/** Parse a cost row's "10 models" / "1 model (Assigned Agent)" description into a tier. */
+function parsePointsTier(description: string, cost: string): PointsTier {
+  const models = intOr(description, 1); // leading integer
+  const paren = description.match(/\(([^)]*)\)/);
+  const note = paren ? stripHtml(paren[1]) : undefined;
+  return { models, cost: intOr(cost, 0), ...(note ? { note } : {}) };
 }
 
 /**
@@ -220,6 +273,16 @@ async function main() {
   const wargearBy = groupBy(csv['Datasheets_wargear']!.filter((r) => keepIds.has(r['datasheet_id']!)), 'datasheet_id');
   const keywordsBy = groupBy(csv['Datasheets_keywords']!.filter((r) => keepIds.has(r['datasheet_id']!)), 'datasheet_id');
   const abilitiesBy = groupBy(csv['Datasheets_abilities']!.filter((r) => keepIds.has(r['datasheet_id']!)), 'datasheet_id');
+  const costBy = groupBy(csv['Datasheets_models_cost']!.filter((r) => keepIds.has(r['datasheet_id']!)), 'datasheet_id');
+  const optionsBy = groupBy(csv['Datasheets_options']!.filter((r) => keepIds.has(r['datasheet_id']!)), 'datasheet_id');
+  const compositionBy = groupBy(csv['Datasheets_unit_composition']!.filter((r) => keepIds.has(r['datasheet_id']!)), 'datasheet_id');
+
+  // Leader attachments, scoped so both ends are kept factions.
+  const leaderRows = csv['Datasheets_leader']!.filter(
+    (r) => keepIds.has(r['leader_id']!) && keepIds.has(r['attached_id']!),
+  );
+  const canLeadBy = groupBy(leaderRows, 'leader_id'); // leader id -> rows (attached_id = bodyguard)
+  const ledByBy = groupBy(leaderRows, 'attached_id'); // bodyguard id -> rows (leader_id = leader)
 
   const datasheets: Datasheet[] = datasheetRows
     .map((r): Datasheet => {
@@ -270,15 +333,47 @@ async function main() {
         (abilitiesBy[id] ?? []).map((a) => a['ability_id']!).filter((x) => x && x.length > 0),
       );
 
+      // ── list-builder enrichment ──
+      const points: PointsTier[] = (costBy[id] ?? [])
+        .sort((a, b) => intOr(a['line'], 0) - intOr(b['line'], 0))
+        .map((c) => parsePointsTier(c['description'] ?? '', c['cost'] ?? '0'));
+      if (points.length === 0) warnings.push(`no points cost found for "${name}" (${id})`);
+
+      const composition = (compositionBy[id] ?? [])
+        .sort((a, b) => intOr(a['line'], 0) - intOr(b['line'], 0))
+        .map((c) => stripHtml(c['description']))
+        .filter(Boolean);
+
+      const optionRows = (optionsBy[id] ?? []).sort((a, b) => intOr(a['line'], 0) - intOr(b['line'], 0));
+      const wargearOptions = optionRows
+        .filter((o) => o['button'] !== '*')
+        .map((o) => parseWargearOption(o['description'] ?? ''))
+        .filter((o) => o.text.length > 0 || o.choices.length > 0);
+      const wargearNotes = optionRows
+        .filter((o) => o['button'] === '*')
+        .map((o) => stripHtml(o['description']))
+        .filter(Boolean);
+
+      const canLead = (canLeadBy[id] ?? []).map((l) => l['attached_id']!);
+      const canBeLedBy = (ledByBy[id] ?? []).map((l) => l['leader_id']!);
+
       return {
         id,
         name,
         faction: r['faction_id']!,
+        role: r['role'] ?? '',
+        loadout: stripHtml(r['loadout']),
         models,
         weapons,
         baseShape,
         keywords,
         abilityIds,
+        points,
+        composition,
+        wargearOptions,
+        ...(wargearNotes.length ? { wargearNotes } : {}),
+        ...(canLead.length ? { canLead } : {}),
+        ...(canBeLedBy.length ? { canBeLedBy } : {}),
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -294,10 +389,18 @@ async function main() {
     .map((r) => pick(r, ['id', 'name', 'faction_id', 'type', 'cp_cost', 'turn', 'phase', 'detachment', 'detachment_id', 'legend', 'description']))
     .sort((a, b) => a.id.localeCompare(b.id));
 
-  const enhancements = csv['Enhancements']!
+  const enhancements: Enhancement[] = csv['Enhancements']!
     .filter((r) => KEEP_FACTIONS.has(r['faction_id']!))
-    .map((r) => pick(r, ['id', 'name', 'faction_id', 'cost', 'detachment', 'detachment_id', 'legend', 'description']))
-    .sort((a, b) => a.id.localeCompare(b.id));
+    .map((r) => ({
+      id: r['id']!,
+      name: r['name']!,
+      faction: r['faction_id']!,
+      cost: intOr(r['cost'], 0),
+      detachment: r['detachment'] ?? '',
+      detachmentId: r['detachment_id'] ?? '',
+      description: stripHtml(r['description']),
+    }))
+    .sort((a, b) => a.detachment.localeCompare(b.detachment) || a.name.localeCompare(b.name));
 
   const detachments = csv['Detachment_abilities']!
     .filter((r) => KEEP_FACTIONS.has(r['faction_id']!))

@@ -40,15 +40,47 @@ export interface WeaponProfile {
   keywords: string[]; // ["Rapid Fire 1","Torrent","Melta 2", ...]
 }
 
+/** A points tier: a unit of `models` size costs `cost` points. */
+export interface PointsTier {
+  models: number;
+  cost: number;
+  note?: string; // e.g. "Assigned Agent", "Agents of the Imperium Detachment"
+}
+
+/** A wargear swap option: a lead-in rule sentence plus the choices it offers. */
+export interface WargearOption {
+  text: string; // e.g. "Up to 2 Shock Troopers can each have their lasgun replaced with:"
+  choices: string[]; // e.g. ["1 flamer", "1 grenade launcher", ...] ([] for a single swap)
+}
+
 export interface Datasheet {
   id: string;
   name: string;
   faction: string;
+  role?: string; // "Characters" | "Battleline" | "Dedicated Transports" | "Fortifications" | "Other"
+  loadout?: string; // default wargear loadout (plain text)
   models: ModelProfile[]; // multi-profile units allowed
   weapons: WeaponProfile[];
   baseShape: BaseShape;
   keywords: string[]; // INFANTRY, VEHICLE, TITANIC, CHARACTER, ...
   abilityIds: string[]; // resolved later by the ability system
+  points?: PointsTier[]; // cost per model-count tier
+  composition?: string[]; // valid unit compositions (plain text)
+  wargearOptions?: WargearOption[]; // weapon swap options
+  wargearNotes?: string[]; // footnotes constraining the options
+  canLead?: string[]; // datasheet ids this CHARACTER can attach to
+  canBeLedBy?: string[]; // CHARACTER datasheet ids that can attach to this unit
+}
+
+/** An enhancement: points upgrade for a CHARACTER, scoped to one detachment. */
+export interface Enhancement {
+  id: string;
+  name: string;
+  faction: string;
+  cost: number;
+  detachment: string;
+  detachmentId: string;
+  description: string;
 }
 
 // ── Roster (an owned army list) ──────────────────────────────────────────────

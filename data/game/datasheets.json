@@ -3,6 +3,8 @@
     "id": "000000713",
     "name": "‘Iron Hand’ Straken",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "This model is equipped with: auto shotgun; plasma pistol; bionic arm with devil’s claw.",
     "models": [
       {
         "name": "‘Iron Hand’ Straken",
@@ -87,12 +89,32 @@
       "000008346",
       "000008344",
       "000008377"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 55
+      }
+    ],
+    "composition": [
+      "1 ‘Iron Hand’ Straken – EPIC HERO"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
+    ],
+    "canLead": [
+      "000002614"
     ]
   },
   {
     "id": "000002619",
     "name": "Aegis Defence Line",
     "faction": "AM",
+    "role": "Fortifications",
+    "loadout": "",
     "models": [
       {
         "name": "Aegis Defence Line",
@@ -126,12 +148,29 @@
       "Aegis Defence Line",
       "Imperium"
     ],
-    "abilityIds": []
+    "abilityIds": [],
+    "points": [
+      {
+        "models": 1,
+        "cost": 145
+      }
+    ],
+    "composition": [
+      "1 Aegis Defence Line"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
+    ]
   },
   {
     "id": "000004174",
     "name": "Aquila Kill Team",
     "faction": "AoI",
+    "role": "Battleline",
+    "loadout": "The Kill Team Sergeant is equipped with: plasma pistol; power weapon. Each Gravis Veteran is equipped with: infernus heavy bolter; bolt pistol; close combat weapon. For every 5 models in the unit, 1 Deathwatch Veteran is equipped with: stalker bolt rifle; bolt pistol; close combat weapon. For every 5 models in the unit, 1 Deathwatch Veteran is equipped with: bolt pistol; heavy thunder hammer. For every 5 models in the unit, 1 Deathwatch Veteran is equipped with: Deathwatch marksman bolt carbine; special-issue bolt pistol; close combat weapon. If the unit contains 10 models, 1 Deathwatch Veteran is equipped with: special-issue bolt pistol; xenophase blade.",
     "models": [
       {
         "name": "KILL TEAM SERGEANT, DEATHWATCH VETERAN",
@@ -427,12 +466,65 @@
     ],
     "abilityIds": [
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 5,
+        "cost": 100
+      },
+      {
+        "models": 10,
+        "cost": 200
+      }
+    ],
+    "composition": [
+      "1 Kill Team Sergeant",
+      "1 Gravis Veteran",
+      "3 Deathwatch Veterans",
+      "OR",
+      "1 Kill Team Sergeant",
+      "2 Gravis Veterans",
+      "7 Deathwatch Veterans"
+    ],
+    "wargearOptions": [
+      {
+        "text": "For every 5 models in the unit, up to 1 model’s infernus heavy bolter can be replaced with one of the following:",
+        "choices": [
+          "1 frag cannon.",
+          "1 hellstorm bolt rifle and 1 Astartes grenade launcher."
+        ]
+      },
+      {
+        "text": "For every 5 models in the unit, up to 1 model’s heavy thunder hammer can be replaced with 1 power weapon and 1 Astartes shield.",
+        "choices": []
+      },
+      {
+        "text": "For every 5 models in the unit, up to 1 model’s stalker bolt rifle can be replaced with 1 plasma incinerator.",
+        "choices": []
+      },
+      {
+        "text": "For every 5 models in the unit, up to 1 model’s Deathwatch marksman bolt carbine can be replaced with 1 combat knife.",
+        "choices": []
+      }
+    ],
+    "canBeLedBy": [
+      "000002090",
+      "000002760",
+      "000000874",
+      "000000876",
+      "000000877",
+      "000001579",
+      "000004173",
+      "000003814",
+      "000003815"
     ]
   },
   {
     "id": "000000778",
     "name": "Aquila Lander",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: heavy bolter; armoured hull.",
     "models": [
       {
         "name": "Aquila Lander",
@@ -508,12 +600,32 @@
     "abilityIds": [
       "000008339",
       "000008342"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 120
+      }
+    ],
+    "composition": [
+      "1 Aquila Lander"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s heavy bolter can be replaced with one of the following:",
+        "choices": [
+          "1 autocannon",
+          "1 multi-laser"
+        ]
+      }
     ]
   },
   {
     "id": "000000764",
     "name": "Arkurian Stormhammer",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: lascannon; 7 multi-lasers; Stormhammer cannon; twin battle cannon; armoured tracks.",
     "models": [
       {
         "name": "Arkurian Stormhammer",
@@ -667,12 +779,44 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 480
+      }
+    ],
+    "composition": [
+      "1 Arkurian Stormhammer"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s 7 multi-lasers can be replaced with one of the following:",
+        "choices": [
+          "7 heavy bolters",
+          "7 heavy flamers",
+          "7 lascannons"
+        ]
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      }
     ]
   },
   {
     "id": "000000739",
     "name": "Armageddon-pattern Medusa",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: heavy bolter; Medusa siege cannon; armoured tracks.",
     "models": [
       {
         "name": "Armageddon-pattern Medusa",
@@ -792,12 +936,40 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 105
+      }
+    ],
+    "composition": [
+      "1 Armageddon-pattern Medusa"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s heavy bolter can be replaced with 1 heavy flamer.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 storm bolter",
+          "1 heavy stubber"
+        ]
+      }
     ]
   },
   {
     "id": "000000691",
     "name": "Armoured Sentinels",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "Every model is equipped with: multi-laser; close combat weapon.",
     "models": [
       {
         "name": "Armoured Sentinels",
@@ -961,12 +1133,47 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 65
+      },
+      {
+        "models": 2,
+        "cost": 130
+      }
+    ],
+    "composition": [
+      "1-2 Armoured Sentinels"
+    ],
+    "wargearOptions": [
+      {
+        "text": "Any number of models can each have their multi-laser replaced with one of the following:",
+        "choices": [
+          "1 autocannon",
+          "1 heavy flamer",
+          "1 lascannon",
+          "1 missile launcher",
+          "1 plasma cannon"
+        ]
+      },
+      {
+        "text": "Any number of models can each be equipped with 1 Sentinel chainsaw.",
+        "choices": []
+      },
+      {
+        "text": "Any number of models can each be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000003896",
     "name": "Artillery Team",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: heavy mortar; lasgun; crew close combat weapons.",
     "models": [
       {
         "name": "Artillery Team",
@@ -1078,12 +1285,33 @@
       "Infantry",
       "Regiment"
     ],
-    "abilityIds": []
+    "abilityIds": [],
+    "points": [
+      {
+        "models": 1,
+        "cost": 95
+      }
+    ],
+    "composition": [
+      "1 Artillery Team"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s heavy mortar can be replaced with one of the following:",
+        "choices": [
+          "1 siege cannon",
+          "1 heavy quad launcher",
+          "1 multiple rocket launcher"
+        ]
+      }
+    ]
   },
   {
     "id": "000000779",
     "name": "Arvus Lighter",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: armoured hull.",
     "models": [
       {
         "name": "Arvus Lighter",
@@ -1124,12 +1352,29 @@
     "abilityIds": [
       "000008339",
       "000008342"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 95
+      }
+    ],
+    "composition": [
+      "1 Arvus Lighter"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000000728",
     "name": "Atlas Recovery Vehicle",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: heavy bolter; armoured tracks.",
     "models": [
       {
         "name": "Atlas Recovery Vehicle",
@@ -1220,12 +1465,36 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 80
+      }
+    ],
+    "composition": [
+      "1 Atlas Recovery Vehicle"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      }
     ]
   },
   {
     "id": "000002616",
     "name": "Attilan Rough Riders",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "Every model is equipped with: lasgun; laspistol; hunting lance; steed’s hooves.",
     "models": [
       {
         "name": "Attilan Rough Riders",
@@ -1336,12 +1605,41 @@
       "Imperium",
       "Regiment"
     ],
-    "abilityIds": []
+    "abilityIds": [],
+    "points": [
+      {
+        "models": 5,
+        "cost": 60
+      },
+      {
+        "models": 10,
+        "cost": 120
+      }
+    ],
+    "composition": [
+      "1 Rough Rider Sergeant",
+      "4-9 Rough Riders"
+    ],
+    "wargearOptions": [
+      {
+        "text": "For every 5 models in this unit, 1 model’s hunting lance can be replaced with 1 goad lance.",
+        "choices": []
+      },
+      {
+        "text": "The Rough Rider Sergeant can be equipped with 1 power sabre.",
+        "choices": []
+      }
+    ],
+    "canBeLedBy": [
+      "000002605"
+    ]
   },
   {
     "id": "000000780",
     "name": "Avenger Strike Fighter",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: Avenger bolt cannon; heavy stubber; 2 lascannons; armoured hull.",
     "models": [
       {
         "name": "Avenger Strike Fighter",
@@ -1417,12 +1715,29 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 130
+      }
+    ],
+    "composition": [
+      "1 Avenger Strike Fighter"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000000702",
     "name": "Baneblade",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: Baneblade cannon; coaxial autocannon; demolisher cannon; heavy stubber; 2 lascannons; twin heavy bolter; 2 twin heavy flamers; armoured tracks.",
     "models": [
       {
         "name": "Baneblade",
@@ -1551,12 +1866,36 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 450
+      }
+    ],
+    "composition": [
+      "1 Baneblade"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s 2 twin heavy flamers can be replaced with 2 twin heavy bolters.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "2 lascannons and 2 twin heavy bolters",
+          "2 lascannons and 2 twin heavy flamers"
+        ]
+      }
     ]
   },
   {
     "id": "000000703",
     "name": "Banehammer",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: 2 lascannons; tremor cannon; twin heavy bolter; 2 twin heavy flamers; armoured tracks.",
     "models": [
       {
         "name": "Banehammer",
@@ -1650,12 +1989,36 @@
     "abilityIds": [
       "000008339",
       "000008334"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 420
+      }
+    ],
+    "composition": [
+      "1 Banehammer"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s 2 twin heavy flamers can be replaced with 2 twin heavy bolters.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "2 lascannons and 2 twin heavy bolters",
+          "2 lascannons and 2 twin heavy flamers"
+        ]
+      }
     ]
   },
   {
     "id": "000000704",
     "name": "Banesword",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: 2 lascannons; quake cannon; twin heavy bolter; 2 twin heavy flamers; armoured tracks.",
     "models": [
       {
         "name": "Banesword",
@@ -1748,12 +2111,36 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 450
+      }
+    ],
+    "composition": [
+      "1 Banesword"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s 2 twin heavy flamers can be replaced with 2 twin heavy bolters.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "2 lascannons and 2 twin heavy bolters",
+          "2 lascannons and 2 twin heavy flamers"
+        ]
+      }
     ]
   },
   {
     "id": "000000695",
     "name": "Basilisk",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: earthshaker cannon; heavy bolter; armoured tracks.",
     "models": [
       {
         "name": "Basilisk",
@@ -1847,12 +2234,33 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 140
+      }
+    ],
+    "composition": [
+      "1 Basilisk"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s heavy bolter can be replaced with 1 heavy flamer.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000000723",
     "name": "Bullgryn Squad",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "Every model is equipped with: grenadier gauntlet; close combat weapon; slabshield.",
     "models": [
       {
         "name": "Bullgryn Squad",
@@ -1913,12 +2321,38 @@
     ],
     "abilityIds": [
       "000008338"
+    ],
+    "points": [
+      {
+        "models": 3,
+        "cost": 100
+      },
+      {
+        "models": 6,
+        "cost": 200
+      }
+    ],
+    "composition": [
+      "1 Bullgryn Bone ‘ead",
+      "2-5 Bullgryns"
+    ],
+    "wargearOptions": [
+      {
+        "text": "Any number of models can each have their grenadier gauntlet replaced with 1 Bullgryn maul.",
+        "choices": []
+      },
+      {
+        "text": "Any number of models can each have their slabshield replaced with 1 brute shield.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000002607",
     "name": "Cadian Castellan",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "This model is equipped with: laspistol; chainsword.",
     "models": [
       {
         "name": "Cadian Castellan",
@@ -2055,12 +2489,44 @@
     "abilityIds": [
       "000008346",
       "000008377"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 55
+      }
+    ],
+    "composition": [
+      "1 Cadian Castellan"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s chainsword can be replaced with one of the following:",
+        "choices": [
+          "1 boltgun and 1 close combat weapon",
+          "1 power fist",
+          "1 power weapon"
+        ]
+      },
+      {
+        "text": "This model’s laspistol can be replaced with one of the following:",
+        "choices": [
+          "1 bolt pistol",
+          "1 plasma pistol"
+        ]
+      }
+    ],
+    "canLead": [
+      "000002615",
+      "000002612"
     ]
   },
   {
     "id": "000002609",
     "name": "Cadian Command Squad",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "The Cadian Commander is equipped with: laspistol; chainsword. 1 Cadian Veteran Guardsman is equipped with: las pistol; chainsword. 1 other Cadian Veteran Guardsman is equipped with: lasgun; master vox; close combat weapon. 1 other Cadian Veteran Guardsman is equipped with: lasgun; medi-pack; close combat weapon. 1 other Cadian Veteran Guardsman is equipped with: lasgun; regimental standard; close combat weapon.",
     "models": [
       {
         "name": "CADIAN COMMANDER",
@@ -2285,12 +2751,70 @@
     "abilityIds": [
       "000008346",
       "000008377"
+    ],
+    "points": [
+      {
+        "models": 5,
+        "cost": 65
+      }
+    ],
+    "composition": [
+      "1 Cadian Commander",
+      "4 Cadian Veteran Guardsmen"
+    ],
+    "wargearOptions": [
+      {
+        "text": "1 Cadian Veteran Guardsman’s lasgun and regimental standard can be replaced with one of the following:",
+        "choices": [
+          "1 flamer",
+          "1 grenade launcher",
+          "1 meltagun",
+          "1 plasma gun"
+        ]
+      },
+      {
+        "text": "1 Cadian Veteran Guardsman’s laspistol can be replaced with one of the following:",
+        "choices": [
+          "1 bolt pistol",
+          "1 plasma pistol"
+        ]
+      },
+      {
+        "text": "The Cadian Commander’s laspistol can be replaced with one of the following:",
+        "choices": [
+          "1 bolt pistol",
+          "1 plasma pistol"
+        ]
+      },
+      {
+        "text": "1 Cadian Veteran Guardsman's chainsword can be replaced with one of the following:",
+        "choices": [
+          "1 flamer and 1 close combat weapon",
+          "1 grenade launcher and 1 close combat weapon",
+          "1 meltagun and 1 close combat weapon",
+          "1 plasma gun and 1 close combat weapon",
+          "1 power fist",
+          "1 power weapon"
+        ]
+      },
+      {
+        "text": "The Cadian Commander’s chainsword can be replaced with one of the following:",
+        "choices": [
+          "1 power fist",
+          "1 power weapon"
+        ]
+      }
+    ],
+    "canLead": [
+      "000002612"
     ]
   },
   {
     "id": "000000686",
     "name": "Cadian Heavy Weapons Squad",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "Every model is equipped with: heavy bolter; laspistol; weapons team close combat weapons.",
     "models": [
       {
         "name": "Heavy Weapons Squad",
@@ -2421,12 +2945,34 @@
       "Grenades",
       "Infantry"
     ],
-    "abilityIds": []
+    "abilityIds": [],
+    "points": [
+      {
+        "models": 3,
+        "cost": 65
+      }
+    ],
+    "composition": [
+      "3 Heavy Weapons Teams"
+    ],
+    "wargearOptions": [
+      {
+        "text": "Any number of models can each have their heavy bolter replaced with one of the following:",
+        "choices": [
+          "1 autocannon",
+          "1 lascannon",
+          "1 missile launcher",
+          "1 mortar"
+        ]
+      }
+    ]
   },
   {
     "id": "000004224",
     "name": "Cadian Recon Squad",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "Each model is equipped with: lasgun; close combat weapon.",
     "models": [
       {
         "name": "Cadian Recon Squad",
@@ -2587,12 +3133,52 @@
     "abilityIds": [
       "000008345",
       "000008337"
+    ],
+    "points": [
+      {
+        "models": 10,
+        "cost": 80
+      }
+    ],
+    "composition": [
+      "1 Recon Sergeant model",
+      "9 Recon Trooper models"
+    ],
+    "wargearOptions": [
+      {
+        "text": "One Recon Trooper can replace their lasgun with 1 autostubber.",
+        "choices": []
+      },
+      {
+        "text": "One Recon Trooper can replace their lasgun with one of the following:",
+        "choices": [
+          "1 plasma gun",
+          "1 meltagun"
+        ]
+      },
+      {
+        "text": "Up to one Recon Trooper can replace their lasgun with 1 long-las.",
+        "choices": []
+      },
+      {
+        "text": "One Recon Trooper equipped with 1 lasgun can be equipped with 1 vox-caster and 1 vox-relay beacon (that model’s lasgun cannot be replaced).",
+        "choices": []
+      },
+      {
+        "text": "You can select one of the following options:",
+        "choices": [
+          "Up to one Recon Trooper can replace their lasgun with 1 long-las.",
+          "Up to two Recon Troopers each equipped with a lasgun can form a weapons team. If they do, one model’s lasgun is replaced with 1 laspistol, and one model’s lasgun is replaced with 1 missile launcher and 1 laspistol."
+        ]
+      }
     ]
   },
   {
     "id": "000002612",
     "name": "Cadian Shock Troops",
     "faction": "AM",
+    "role": "Battleline",
+    "loadout": "Every Shock Trooper Sergeant is equipped with: laspistol; chainsword. Every Shock Trooper is equipped with: lasgun; close combat weapon. This unit can have up to two Leader units attached to it, provided no more than one of those units is a Command Squad unit. If it does, and this Bodyguard unit is destroyed, the Leader units attached to it become separate units, with their original Starting Strengths.",
     "models": [
       {
         "name": "Cadian Shock Troops",
@@ -2769,12 +3355,75 @@
       "Imperium",
       "Battleline"
     ],
-    "abilityIds": []
+    "abilityIds": [],
+    "points": [
+      {
+        "models": 10,
+        "cost": 65
+      },
+      {
+        "models": 20,
+        "cost": 120
+      }
+    ],
+    "composition": [
+      "1 Shock Trooper Sergeant and 9 Shock Troopers",
+      "OR",
+      "2 Shock Trooper Sergeants and 18 Shock Troopers"
+    ],
+    "wargearOptions": [
+      {
+        "text": "For every 10 models in this unit, up to 2 Shock Troopers can each have their lasgun replaced with one of the following*:",
+        "choices": [
+          "1 flamer",
+          "1 grenade launcher",
+          "1 meltagun",
+          "1 plasma gun"
+        ]
+      },
+      {
+        "text": "For every 10 models in this unit, 1 Shock Trooper equipped with a lasgun can be equipped with 1 vox-caster (that model’s lasgun cannot be replaced).",
+        "choices": []
+      },
+      {
+        "text": "Any number of Shock Trooper Sergeants can each have their laspistol replaced with 1 bolt pistol.",
+        "choices": []
+      },
+      {
+        "text": "Any number of Shock Trooper Sergeants can each have their laspistol and chainsword replaced with 1 Sergeant's autogun and 1 close combat weapon.",
+        "choices": []
+      }
+    ],
+    "wargearNotes": [
+      "* You cannot select the same weapon more than once per unit unless it contains 20 models, in which case you cannot select the same weapon more than twice per unit."
+    ],
+    "canBeLedBy": [
+      "000002090",
+      "000002760",
+      "000002605",
+      "000002606",
+      "000002607",
+      "000002609",
+      "000003922",
+      "000001394",
+      "000001396",
+      "000000874",
+      "000000876",
+      "000000877",
+      "000000889",
+      "000001579",
+      "000000716",
+      "000004173",
+      "000004218",
+      "000004216"
+    ]
   },
   {
     "id": "000000871",
     "name": "Callidus Assassin",
     "faction": "AoI",
+    "role": "Characters",
+    "loadout": "This model is equipped with: neural shredder; phase sword and poison blades.",
     "models": [
       {
         "name": "Callidus Assassin",
@@ -2836,12 +3485,24 @@
       "000008345",
       "000008336",
       "000008452"
-    ]
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 100
+      }
+    ],
+    "composition": [
+      "1 Callidus Assassin – EPIC HERO"
+    ],
+    "wargearOptions": []
   },
   {
     "id": "000001994",
     "name": "Carnodon",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: 2 autocannons; Carnodon twin autocannon; armoured tracks.",
     "models": [
       {
         "name": "Carnodon",
@@ -3018,12 +3679,47 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 160
+      }
+    ],
+    "composition": [
+      "1 Carnodon"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s Carnodon twin autocannon can be replaced with one of the following:",
+        "choices": [
+          "1 Carnodon twin lascannon",
+          "1 Carnodon twin multi-laser",
+          "1 volkite culverin"
+        ]
+      },
+      {
+        "text": "This model’s 2 autocannons can be replaced with one of the following:",
+        "choices": [
+          "2 heavy bolters",
+          "2 heavy flamers",
+          "2 lascannons",
+          "2 Militarum multi-lasers",
+          "2 volkite calivers"
+        ]
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000003891",
     "name": "Catachan Command Squad",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "The Catachan Commander is equipped with: laspistol; close combat weapon. Every Veteran Guardsman is equipped with: lasgun; laspistol; close combat weapon.",
     "models": [
       {
         "name": "CATACHAN COMMANDER",
@@ -3290,12 +3986,72 @@
       "000008346",
       "000008344",
       "000008377"
+    ],
+    "points": [
+      {
+        "models": 5,
+        "cost": 65
+      }
+    ],
+    "composition": [
+      "1 Catachan Commander",
+      "4 Veteran Guardsmen"
+    ],
+    "wargearOptions": [
+      {
+        "text": "Any number of Veteran Guardsmen can each have their lasgun replaced with one of the following*:",
+        "choices": [
+          "1 flamer",
+          "1 grenade launcher",
+          "1 heavy flamer",
+          "1 meltagun",
+          "1 plasma gun",
+          "1 sniper rifle"
+        ]
+      },
+      {
+        "text": "Veteran Guardsman equipped with a lasgun can be equipped with 1 master vox.**",
+        "choices": []
+      },
+      {
+        "text": "Veteran Guardsman equipped with a lasgun can be equipped 1 medi-pack.**",
+        "choices": []
+      },
+      {
+        "text": "1 Veteran Guardsman equipped with a lasgun can be equipped with 1 regimental standard.**",
+        "choices": []
+      },
+      {
+        "text": "The Catachan Commander’s laspistol can be replaced with one of the following:",
+        "choices": [
+          "1 bolt pistol",
+          "1 plasma pistol"
+        ]
+      },
+      {
+        "text": "The Catachan Commander can be equipped with one of the following:",
+        "choices": [
+          "1 boltgun",
+          "1 chainsword",
+          "1 power fist",
+          "1 power weapon"
+        ]
+      }
+    ],
+    "wargearNotes": [
+      "* You cannot select the same weapon from this list more than once per unit.",
+      "** A model can only take one of these options."
+    ],
+    "canLead": [
+      "000002614"
     ]
   },
   {
     "id": "000003894",
     "name": "Catachan Heavy Weapons Squad",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "Every model is equipped with: heavy bolter; lasgun; weapons team close combat weapons.",
     "models": [
       {
         "name": "Catachan Heavy Weapons Squad",
@@ -3428,12 +4184,34 @@
     ],
     "abilityIds": [
       "000008344"
+    ],
+    "points": [
+      {
+        "models": 3,
+        "cost": 65
+      }
+    ],
+    "composition": [
+      "3 Heavy Weapons Teams"
+    ],
+    "wargearOptions": [
+      {
+        "text": "Any number of models can each have their heavy bolter replaced with one of the following:",
+        "choices": [
+          "1 autocannon",
+          "1 lascannon",
+          "1 missile launcher",
+          "1 mortar"
+        ]
+      }
     ]
   },
   {
     "id": "000002614",
     "name": "Catachan Jungle Fighters",
     "faction": "AM",
+    "role": "Battleline",
+    "loadout": "Every Jungle Fighter Sergeant is equipped with: laspistol; close combat weapon. Every Jungle Fighter is equipped with: lasgun; close combat weapon. This unit can have up to two Leader units attached to it, provided no more than one of those units is a Command Squad unit. If it does, and this Bodyguard unit is destroyed, the Leader units attached to it become separate units, with their original Starting Strengths.",
     "models": [
       {
         "name": "Catachan Jungle Fighters",
@@ -3513,12 +4291,58 @@
     ],
     "abilityIds": [
       "000008344"
+    ],
+    "points": [
+      {
+        "models": 10,
+        "cost": 65
+      },
+      {
+        "models": 20,
+        "cost": 120
+      }
+    ],
+    "composition": [
+      "1 Jungle Fighter Sergeant and 9 Jungle Fighters",
+      "OR",
+      "2 Jungle Fighter Sergeants and 18 Jungle Fighters"
+    ],
+    "wargearOptions": [
+      {
+        "text": "For every 5 models in this unit, 1 Jungle Fighter’s lasgun can be replaced with 1 flamer.",
+        "choices": []
+      },
+      {
+        "text": "For every 10 models in this unit, 1 Jungle Fighter equipped with a lasgun can be equipped with 1 vox-caster (that model’s lasgun cannot be replaced).",
+        "choices": []
+      }
+    ],
+    "canBeLedBy": [
+      "000002090",
+      "000002760",
+      "000002605",
+      "000003891",
+      "000001394",
+      "000001396",
+      "000000876",
+      "000000877",
+      "000000889",
+      "000001579",
+      "000000713",
+      "000000714",
+      "000000716",
+      "000000874",
+      "000004173",
+      "000004216",
+      "000004218"
     ]
   },
   {
     "id": "000000731",
     "name": "Centaur Light Carrier",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: 2 heavy stubbers; armoured tracks.",
     "models": [
       {
         "name": "Centaur Light Carrier",
@@ -3584,12 +4408,29 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 40
+      }
+    ],
+    "composition": [
+      "1 Centaur Light Carrier"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000004220",
     "name": "Centaur RSV",
     "faction": "AM",
+    "role": "Dedicated Transports",
+    "loadout": "This model is equipped with: 1 pintle-mounted heavy stubber; 1 armoured hull.",
     "models": [
       {
         "name": "Centaur RSV",
@@ -3644,12 +4485,29 @@
     "abilityIds": [
       "000008339",
       "000008334"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 85
+      }
+    ],
+    "composition": [
+      "1 Centaur RSV"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000000692",
     "name": "Chimera",
     "faction": "AM",
+    "role": "Dedicated Transports",
+    "loadout": "This model is equipped with: multi-laser; heavy bolter; lasgun array; armoured tracks.",
     "models": [
       {
         "name": "Chimera",
@@ -3781,12 +4639,50 @@
     "abilityIds": [
       "000008339",
       "000008334"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 85
+      }
+    ],
+    "composition": [
+      "1 Chimera"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s heavy bolter can be replaced with 1 heavy flamer.",
+        "choices": []
+      },
+      {
+        "text": "This model’s multi-laser can be replaced with one of the following:",
+        "choices": [
+          "1 heavy bolter*",
+          "1 heavy flamer*"
+        ]
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
+    ],
+    "wargearNotes": [
+      "* This weapon cannot be replaced."
     ]
   },
   {
     "id": "000000740",
     "name": "Colossus",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: Colossus siege mortar; armoured tracks.",
     "models": [
       {
         "name": "Colossus",
@@ -3878,12 +4774,36 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 160
+      }
+    ],
+    "composition": [
+      "1 Colossus"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      }
     ]
   },
   {
     "id": "000000716",
     "name": "Commissar",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "This model is equipped with: bolt pistol; chainsword.",
     "models": [
       {
         "name": "Commissar",
@@ -3973,12 +4893,41 @@
     "abilityIds": [
       "000008346",
       "000008377"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 30
+      }
+    ],
+    "composition": [
+      "1 Commissar"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s bolt pistol can be replaced with 1 plasma pistol.",
+        "choices": []
+      },
+      {
+        "text": "This model’s chainsword can be replaced with 1 power weapon.",
+        "choices": []
+      }
+    ],
+    "canLead": [
+      "000003893",
+      "000002615",
+      "000002746",
+      "000002614",
+      "000002612",
+      "000002613"
     ]
   },
   {
     "id": "000004217",
     "name": "Commissar Graves",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "This model is equipped with: 1 chiron gatling cannon; 2 Prefectus heavy stubbers; 1 power sword and Manus Mortis; 1 Enforcer crew; 1 armoured hull; 1 aquiline prow.",
     "models": [
       {
         "name": "Commissar Graves",
@@ -4071,12 +5020,29 @@
     "abilityIds": [
       "000008339",
       "000008377"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 110
+      }
+    ],
+    "composition": [
+      "1 Commissar Graves – EPIC HERO"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000004218",
     "name": "Commissar Graves on Foot",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "This model is equipped with: 1 bolt pistol; 1 power sword and Manus Mortis.",
     "models": [
       {
         "name": "Commissar Graves on Foot",
@@ -4129,12 +5095,37 @@
     "abilityIds": [
       "000008346",
       "000008377"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 65
+      }
+    ],
+    "composition": [
+      "1 Commissar Graves on Foot – EPIC HERO"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None.",
+        "choices": []
+      }
+    ],
+    "canLead": [
+      "000002613",
+      "000002612",
+      "000002615",
+      "000003893",
+      "000002614",
+      "000002746"
     ]
   },
   {
     "id": "000004216",
     "name": "Commissar Yarrick",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "This model is equipped with: 1 storm bolter; 1 laspistol; 1 Bale Eye; 1 power klaw; 1 power sword.",
     "models": [
       {
         "name": "Commissar Yarrick",
@@ -4224,12 +5215,37 @@
     "abilityIds": [
       "000008346",
       "000008377"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 150
+      }
+    ],
+    "composition": [
+      "1 Commissar Yarrick – EPIC HERO"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
+    ],
+    "canLead": [
+      "000003893",
+      "000002615",
+      "000002613",
+      "000002614",
+      "000002612",
+      "000002746"
     ]
   },
   {
     "id": "000003817",
     "name": "Corvus Blackstar",
     "faction": "AoI",
+    "role": "Other",
+    "loadout": "This model is equipped with: 2 Blackstar rocket launchers; twin assault cannon; armoured hull.",
     "models": [
       {
         "name": "Corvus Blackstar",
@@ -4340,12 +5356,44 @@
       "000008342",
       "000008337",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 180
+      }
+    ],
+    "composition": [
+      "1 Corvus Blackstar"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s twin assault cannon can be replaced with 1 twin lascannon.",
+        "choices": []
+      },
+      {
+        "text": "This model’s 2 Blackstar rocket launchers can be replaced with 2 stormstrike missile launchers.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with 1 hurricane bolter.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 auspex array",
+          "1 infernum halo-launcher"
+        ]
+      }
     ]
   },
   {
     "id": "000000766",
     "name": "Crassus",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: 4 heavy bolters; armoured tracks.",
     "models": [
       {
         "name": "Crassus",
@@ -4424,12 +5472,32 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 180
+      }
+    ],
+    "composition": [
+      "1 Crassus"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      }
     ]
   },
   {
     "id": "000000873",
     "name": "Culexus Assassin",
     "faction": "AoI",
+    "role": "Characters",
+    "loadout": "This model is equipped with: animus speculum; life-draining touch.",
     "models": [
       {
         "name": "Culexus Assassin",
@@ -4493,12 +5561,24 @@
       "000008336",
       "000008337",
       "000008452"
-    ]
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 85
+      }
+    ],
+    "composition": [
+      "1 Culexus Assassin – EPIC HERO"
+    ],
+    "wargearOptions": []
   },
   {
     "id": "000000741",
     "name": "Cyclops Demolition Vehicle",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: nothing.",
     "models": [
       {
         "name": "Cyclops Demolition Vehicle",
@@ -4535,12 +5615,29 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 25
+      }
+    ],
+    "composition": [
+      "1 Cyclops Demolition Vehicle"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000003828",
     "name": "Daemonhost",
     "faction": "AoI",
+    "role": "Other",
+    "loadout": "Every model is equipped with: unholy gaze; Warp grasp.",
     "models": [
       {
         "name": "Daemonhost",
@@ -4597,12 +5694,36 @@
     "abilityIds": [
       "000008339",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 40
+      },
+      {
+        "models": 2,
+        "cost": 80
+      }
+    ],
+    "composition": [
+      "1-2 Daemonhosts"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
+    ],
+    "canBeLedBy": [
+      "000001579"
     ]
   },
   {
     "id": "000002761",
     "name": "Damned Legionnaires",
     "faction": "AoI",
+    "role": "Other",
+    "loadout": "Every model is equipped with: boltgun; close combat weapon.",
     "models": [
       {
         "name": "Damned Legionnaires",
@@ -4798,12 +5919,54 @@
     "abilityIds": [
       "000008343",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 5,
+        "cost": 90
+      },
+      {
+        "models": 10,
+        "cost": 180
+      }
+    ],
+    "composition": [
+      "1 Legionnaire Sergeant",
+      "4-9 Legionnaires"
+    ],
+    "wargearOptions": [
+      {
+        "text": "The Legionnaire Sergeant’s boltgun can be replaced with one of the following:",
+        "choices": [
+          "1 bolt pistol and 1 power weapon",
+          "1 plasma pistol and 1 power weapon",
+          "1 bolt pistol and 1 Astartes chainsword",
+          "1 plasma pistol and 1 Astartes chainsword"
+        ]
+      },
+      {
+        "text": "One Legionnaire’s boltgun can be replaced with one of the following:",
+        "choices": [
+          "1 heavy flamer",
+          "1 multi-melta"
+        ]
+      },
+      {
+        "text": "One Legionnaire’s boltgun can be replaced with one of the following:",
+        "choices": [
+          "1 flamer",
+          "1 meltagun",
+          "1 plasma gun"
+        ]
+      }
     ]
   },
   {
     "id": "000002374",
     "name": "Death Korps Grenadier Squad",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "The Grenadier Sergeant is equipped with: sergeant’s pistol; sergeant’s close combat weapon. Every Grenadier model is equipped with: hot-shot lasgun; close combat weapon. The Heavy Weapons Team is equipped with: heavy flamer; close combat weapon.",
     "models": [
       {
         "name": "GRENADIER",
@@ -5005,12 +6168,41 @@
       "Infantry",
       "Death Korps Grenadier Squad"
     ],
-    "abilityIds": []
+    "abilityIds": [],
+    "points": [
+      {
+        "models": 10,
+        "cost": 110
+      }
+    ],
+    "composition": [
+      "One of the following:",
+      "1 Grenadier Sergeant and 9 Grenadiers",
+      "1 Grenadier Sergeant, 7 Grenadiers and 1 Heavy Weapons Team"
+    ],
+    "wargearOptions": [
+      {
+        "text": "Up to 2 Grenadier models can each have their hot-shot lasgun replaced with one of the following:",
+        "choices": [
+          "1 flamer",
+          "1 grenade launcher",
+          "1 heavy stubber",
+          "1 meltagun",
+          "1 plasma gun",
+          "1 sniper rifle"
+        ]
+      }
+    ],
+    "canBeLedBy": [
+      "000002375"
+    ]
   },
   {
     "id": "000002613",
     "name": "Death Korps Of Krieg",
     "faction": "AM",
+    "role": "Battleline",
+    "loadout": "Every Death Korps Watchmaster is equipped with: laspistol; chainsword. Every Death Korps Trooper is equipped with: lasgun; close combat weapon. This unit can have up to two Leader units attached to it, provided no more than one of those units is a Command Squad unit. If it does, and this Bodyguard unit is destroyed, the Leader units attached to it become separate units, with their original Starting Strengths.",
     "models": [
       {
         "name": "Death Korps Of Krieg",
@@ -5239,12 +6431,86 @@
       "Imperium",
       "Infantry"
     ],
-    "abilityIds": []
+    "abilityIds": [],
+    "points": [
+      {
+        "models": 10,
+        "cost": 65
+      },
+      {
+        "models": 20,
+        "cost": 145
+      }
+    ],
+    "composition": [
+      "1 Death Korps Watchmaster and 9 Death Korps Troopers",
+      "OR",
+      "2 Death Korps Watchmasters and 18 Death Korps Troopers"
+    ],
+    "wargearOptions": [
+      {
+        "text": "For every 10 models in this unit, up to 2 Death Korps Troopers can each have their lasgun replaced with one of the following*:",
+        "choices": [
+          "1 flamer",
+          "1 grenade launcher",
+          "1 long-las",
+          "1 meltagun",
+          "1 plasma gun"
+        ]
+      },
+      {
+        "text": "For every 10 models in this unit, 1 Death Korps Trooper equipped with a lasgun can be equipped with 1 Death Korps medi-pack (that model’s lasgun cannot be replaced)**.",
+        "choices": []
+      },
+      {
+        "text": "For every 10 models in this unit, 1 Death Korps Trooper equipped with a lasgun can be equipped with 1 vox-caster (that model’s lasgun cannot be replaced).**",
+        "choices": []
+      },
+      {
+        "text": "Any number of Death Korps Watchmasters can each replace their laspistol and chainsword with 1 boltgun and 1 close combat weapon.",
+        "choices": []
+      },
+      {
+        "text": "Any number of Death Korps Watchmasters can each replace their chainsword with 1 power weapon.",
+        "choices": []
+      },
+      {
+        "text": "Any number of Death Korps Watchmasters can each replace their laspistol with one of the following:",
+        "choices": [
+          "1 bolt pistol",
+          "1 plasma pistol"
+        ]
+      }
+    ],
+    "wargearNotes": [
+      "* You cannot select the same option more than once per unit unless it contains 20 models, in which case you cannot select the same option more than twice per unit.",
+      "** A model can only take one of these options."
+    ],
+    "canBeLedBy": [
+      "000002090",
+      "000002760",
+      "000002375",
+      "000002605",
+      "000003889",
+      "000001394",
+      "000001396",
+      "000000874",
+      "000000876",
+      "000000877",
+      "000000889",
+      "000001579",
+      "000000716",
+      "000004173",
+      "000004218",
+      "000004216"
+    ]
   },
   {
     "id": "000002378",
     "name": "Death Rider Commissar",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "This model is equipped with: Commissar's pistol; Commissar's close combat weapon; savage claws.",
     "models": [
       {
         "name": "Death Rider Commissar",
@@ -5310,12 +6576,32 @@
     "abilityIds": [
       "000008346",
       "000008377"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 35
+      }
+    ],
+    "composition": [
+      "1 Death Rider Commissar"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
+    ],
+    "canLead": [
+      "000003898"
     ]
   },
   {
     "id": "000003898",
     "name": "Death Riders",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "Every model is equipped with: Death Rider lascarbine; frag lance; power sabre; steed’s savage claws.",
     "models": [
       {
         "name": "Death Riders",
@@ -5389,12 +6675,34 @@
       "Imperium",
       "Mounted"
     ],
-    "abilityIds": []
+    "abilityIds": [],
+    "points": [
+      {
+        "models": 5,
+        "cost": 60
+      },
+      {
+        "models": 10,
+        "cost": 120
+      }
+    ],
+    "composition": [
+      "1 Ridemaster",
+      "4-9 Death Riders"
+    ],
+    "wargearOptions": [],
+    "canBeLedBy": [
+      "000002605",
+      "000003890",
+      "000002378"
+    ]
   },
   {
     "id": "000000699",
     "name": "Deathstrike",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: heavy bolter; Deathstrike missile; armoured tracks.",
     "models": [
       {
         "name": "Deathstrike",
@@ -5488,12 +6796,33 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 145
+      }
+    ],
+    "composition": [
+      "1 Deathstrike"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s heavy bolter can be replaced with 1 heavy flamer.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000003816",
     "name": "Deathwatch Kill Team",
     "faction": "AoI",
+    "role": "Battleline",
+    "loadout": "Every model is equipped with: boltgun; power weapon.",
     "models": [
       {
         "name": "Deathwatch Veterans",
@@ -5676,12 +7005,88 @@
     ],
     "abilityIds": [
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 5,
+        "cost": 100
+      },
+      {
+        "models": 10,
+        "cost": 190,
+        "note": "AGENTS OF THE IMPERIUM Detachment"
+      },
+      {
+        "models": 10,
+        "cost": 200,
+        "note": "Assigned Agent"
+      }
+    ],
+    "composition": [
+      "1 Watch Sergeant",
+      "4-9 Deathwatch Veterans"
+    ],
+    "wargearOptions": [
+      {
+        "text": "For every 5 models in this unit, up to 2 models can each have their boltgun and power weapon replaced with one of the following:",
+        "choices": [
+          "1 boltgun and 1 Astartes shield",
+          "1 power weapon and 1 Astartes shield"
+        ]
+      },
+      {
+        "text": "For every 5 models in this unit, up to 2 models can each have their boltgun and power weapon replaced with 1 Deathwatch thunder hammer.",
+        "choices": []
+      },
+      {
+        "text": "For every 5 models in this unit, 1 model can have their boltgun and power weapon replaced with 1 stalker-pattern boltgun and 1 close combat weapon.",
+        "choices": []
+      },
+      {
+        "text": "For every 5 models in this unit, up to 2 models can each have their boltgun and power weapon replaced with 1 Deathwatch shotgun and 1 close combat weapon.",
+        "choices": []
+      },
+      {
+        "text": "For every 5 models in this unit, 1 model can have its boltgun and power weapon replaced with 1 frag cannon and 1 close combat weapon.",
+        "choices": []
+      },
+      {
+        "text": "For every 5 models in this unit, 1 model can have its boltgun and power weapon replaced with 1 infernus heavy bolter and 1 close combat weapon.",
+        "choices": []
+      },
+      {
+        "text": "One model's boltgun and power weapon can be replaced with 1 Black Shield blades.",
+        "choices": []
+      },
+      {
+        "text": "The Watch Sergeant’s power weapon can be replaced with 1 xenophase blade.",
+        "choices": []
+      },
+      {
+        "text": "The Watch Sergeant's boltgun can be replaced with 1 combi-weapon.",
+        "choices": []
+      }
+    ],
+    "canBeLedBy": [
+      "000002090",
+      "000002760",
+      "000002760",
+      "000000874",
+      "000000876",
+      "000000877",
+      "000003814",
+      "000003815",
+      "000001579",
+      "000001579",
+      "000004173"
     ]
   },
   {
     "id": "000003822",
     "name": "Deathwatch Terminator Squad",
     "faction": "AoI",
+    "role": "Other",
+    "loadout": "Every model is equipped with: power fist; storm bolter.",
     "models": [
       {
         "name": "Deathwatch Terminator Squad",
@@ -5860,12 +7265,59 @@
     "abilityIds": [
       "000008343",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 5,
+        "cost": 210
+      },
+      {
+        "models": 10,
+        "cost": 420
+      }
+    ],
+    "composition": [
+      "1 Deathwatch Terminator Sergeant",
+      "4-9 Deathwatch Terminators"
+    ],
+    "wargearOptions": [
+      {
+        "text": "Up to 3 Deathwatch Terminators can each have their storm bolter replaced with one of the following:",
+        "choices": [
+          "1 assault cannon",
+          "1 heavy flamer",
+          "1 plasma cannon",
+          "1 cyclone missile launcher and 1 storm bolter (this model’s storm bolter cannot be replaced)"
+        ]
+      },
+      {
+        "text": "Any number of models can each have their power fist and storm bolter replaced with one of the following:",
+        "choices": [
+          "1 storm bolter and 1 power weapon",
+          "1 storm bolter and 1 chainfist",
+          "1 twin lightning claws",
+          "1 thunder hammer and 1 storm shield"
+        ]
+      }
+    ],
+    "canBeLedBy": [
+      "000002090",
+      "000002760",
+      "000000874",
+      "000000876",
+      "000000877",
+      "000003814",
+      "000003815",
+      "000001579",
+      "000004173"
     ]
   },
   {
     "id": "000000767",
     "name": "Dominus Armoured Siege Bombard",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: Dominus triple bombard; 2 heavy bolters; armoured tracks.",
     "models": [
       {
         "name": "Dominus Armoured Siege Bombard",
@@ -6006,12 +7458,44 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 325
+      }
+    ],
+    "composition": [
+      "1 Dominus Armoured Siege Bombard"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s 2 heavy bolters can be replaced with one of the following:",
+        "choices": [
+          "2 autocannons",
+          "2 heavy flamers",
+          "2 lascannons"
+        ]
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      }
     ]
   },
   {
     "id": "000000705",
     "name": "Doomhammer",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: 2 lascannons; magma cannon; twin heavy bolter; 2 twin heavy flamers; armoured tracks.",
     "models": [
       {
         "name": "Doomhammer",
@@ -6106,12 +7590,36 @@
     "abilityIds": [
       "000008339",
       "000008334"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 415
+      }
+    ],
+    "composition": [
+      "1 Doomhammer"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s 2 twin heavy flamers can be replaced with 2 twin heavy bolters.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "2 lascannons and 2 twin heavy bolters",
+          "2 lascannons and 2 twin heavy flamers"
+        ]
+      }
     ]
   },
   {
     "id": "000000743",
     "name": "Earthshaker Carriage Battery",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: earthshaker cannon; battery close combat weapons. Designer’s Note: Place five Heavy Artillery Crew tokens next to each Earthshaker Carriage model when this unit is first set up, removing one each time its Earthshaker Carriage model loses a wound (an Earthshaker Carriage model itself is considered to represent its final wound). These do not count as models for any rules purposes.",
     "models": [
       {
         "name": "Earthshaker Carriage Battery",
@@ -6163,12 +7671,29 @@
       "Grenades",
       "Regiment"
     ],
-    "abilityIds": []
+    "abilityIds": [],
+    "points": [
+      {
+        "models": 1,
+        "cost": 120
+      }
+    ],
+    "composition": [
+      "1 Earthshaker Carriage"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
+    ]
   },
   {
     "id": "000002739",
     "name": "Earthshaker Platform",
     "faction": "AM",
+    "role": "Fortifications",
+    "loadout": "This model is equipped with: earthshaker cannon; close combat weapons.",
     "models": [
       {
         "name": "Earthshaker Platform",
@@ -6219,12 +7744,29 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 110
+      }
+    ],
+    "composition": [
+      "1 Earthshaker Platform"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000002740",
     "name": "Elysian Drop Sentinel",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: heavy bolter; close combat weapon.",
     "models": [
       {
         "name": "Elysian Drop Sentinel",
@@ -6318,12 +7860,36 @@
     "abilityIds": [
       "000008339",
       "000008343"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 85
+      }
+    ],
+    "composition": [
+      "1 Elysian Drop Sentinel"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy flamer",
+          "1 multi-melta"
+        ]
+      }
     ]
   },
   {
     "id": "000002377",
     "name": "Elysian Sniper Squad",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "Every model is equipped with: lasgun; sniper rifle; close combat weapon.",
     "models": [
       {
         "name": "Elysian Sniper Squad",
@@ -6388,12 +7954,29 @@
     ],
     "abilityIds": [
       "000008343"
+    ],
+    "points": [
+      {
+        "models": 3,
+        "cost": 65
+      }
+    ],
+    "composition": [
+      "3 Elysian Sniper Teams"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000000872",
     "name": "Eversor Assassin",
     "faction": "AoI",
+    "role": "Characters",
+    "loadout": "This model is equipped with: executioner pistol; power sword and neuro gauntlet.",
     "models": [
       {
         "name": "Eversor Assassin",
@@ -6457,12 +8040,30 @@
       "000008336",
       "000008344",
       "000008452"
-    ]
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 110,
+        "note": "AGENTS OF THE IMPERIUM Detachment"
+      },
+      {
+        "models": 1,
+        "cost": 120,
+        "note": "Assigned Agent"
+      }
+    ],
+    "composition": [
+      "1 Eversor Assassin – EPIC HERO"
+    ],
+    "wargearOptions": []
   },
   {
     "id": "000002685",
     "name": "Exaction Squad",
     "faction": "AoI",
+    "role": "Other",
+    "loadout": "Every Proctor-Exactant and Exaction Vigilant is equipped with: Arbites combat shotgun; Arbites shotpistol; close combat weapon. The Cyber-mastiff is equipped with: mechanical bite.",
     "models": [
       {
         "name": "Exaction Squad",
@@ -6613,12 +8214,65 @@
     ],
     "abilityIds": [
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 11,
+        "cost": 90
+      }
+    ],
+    "composition": [
+      "1 Proctor-Exactant",
+      "9 Exaction Vigilants",
+      "1 Cyber-mastiff"
+    ],
+    "wargearOptions": [
+      {
+        "text": "Up to 2 Exaction Vigilants can each have their Arbites combat shotgun replaced with one of the following (duplicates are not allowed):",
+        "choices": [
+          "1 executioner shotgun",
+          "1 Arbites grenade launcher",
+          "1 heavy stubber",
+          "1 webber"
+        ]
+      },
+      {
+        "text": "1 Exaction Vigilant that is equipped with an Arbites combat shotgun can be equipped with 1 excruciator maul.*",
+        "choices": []
+      },
+      {
+        "text": "1 other Exaction Vigilant that is equipped with an Arbites combat shotgun can be equipped with 1 Arbites medi-kit.*",
+        "choices": []
+      },
+      {
+        "text": "1 other Exaction Vigilant that is equipped with an Arbites combat shotgun can be equipped with 1 soulguilt scanner.*",
+        "choices": []
+      },
+      {
+        "text": "The Proctor-Exactant can be equipped with 1 nuncio aquila.",
+        "choices": []
+      }
+    ],
+    "wargearNotes": [
+      "* That model’s Arbites combat shotgun cannot be replaced."
+    ],
+    "canBeLedBy": [
+      "000002090",
+      "000002760",
+      "000000874",
+      "000000876",
+      "000000877",
+      "000003812",
+      "000001579",
+      "000004173"
     ]
   },
   {
     "id": "000003897",
     "name": "Field Ordnance Battery",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "Every model is equipped with: malleus rocket launcher; lasgun; laspistol; battery close combat weapons.",
     "models": [
       {
         "name": "Artillery Team",
@@ -6723,12 +8377,32 @@
       "Artillery",
       "Infantry"
     ],
-    "abilityIds": []
+    "abilityIds": [],
+    "points": [
+      {
+        "models": 2,
+        "cost": 110
+      }
+    ],
+    "composition": [
+      "2 Ordnance Teams"
+    ],
+    "wargearOptions": [
+      {
+        "text": "Any number of models can each have their malleus rocket launcher replaced with one of the following:",
+        "choices": [
+          "1 bombast field gun",
+          "1 heavy lascannon"
+        ]
+      }
+    ]
   },
   {
     "id": "000003825",
     "name": "Fortis Kill Team",
     "faction": "AoI",
+    "role": "Other",
+    "loadout": "Every Kill Team Intercessor is equipped with: bolt pistol; bolt rifle; close combat weapon. Every Kill Team Intercessor with plasma incinerator is equipped with: bolt pistol; plasma incinerator; close combat weapon. Every Kill Team Intercessor with heavy bolt pistol is equipped with: heavy bolt pistol; Astartes chainsword. Every Kill Team Outrider is equipped with: bolt pistol; twin bolt rifle; Astartes chainsword.",
     "models": [
       {
         "name": "KILL TEAM INTERCESSOR",
@@ -6938,12 +8612,68 @@
     "abilityIds": [
       "000008519",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 5,
+        "cost": 100
+      },
+      {
+        "models": 10,
+        "cost": 200
+      }
+    ],
+    "composition": [
+      "10 MODELS MAXIMUM",
+      "5-10 Kill Team Intercessors",
+      "0-4 Kill Team Intercessors with plasma incinerators",
+      "0-4 Kill Team Intercessors with heavy bolt pistols",
+      "0-2 Kill Team Outriders"
+    ],
+    "wargearOptions": [
+      {
+        "text": "1 Kill Team Intercessor’s bolt rifle can be replaced with one of the following:",
+        "choices": [
+          "1 hand flamer",
+          "1 plasma pistol",
+          "1 Astartes chainsword",
+          "1 Long Vigil melee weapon"
+        ]
+      },
+      {
+        "text": "1 model equipped with a bolt rifle can replace its close combat weapon with one of the following:",
+        "choices": [
+          "1 Astartes chainsword",
+          "1 Long Vigil melee weapon"
+        ]
+      },
+      {
+        "text": "For every 5 models in this unit, 1 model’s bolt rifle can be replaced with 1 Long Vigil ranged weapon.",
+        "choices": []
+      },
+      {
+        "text": "Any number of Kill Team Intercessors with plasma incinerators can each have their bolt pistol replaced with 1 plasma pistol.",
+        "choices": []
+      }
+    ],
+    "canBeLedBy": [
+      "000002090",
+      "000002760",
+      "000000874",
+      "000000876",
+      "000000877",
+      "000003814",
+      "000003815",
+      "000001579",
+      "000004173"
     ]
   },
   {
     "id": "000002485",
     "name": "Gaunt’s Ghosts",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "Ibram Gaunt is equipped with: bolt pistol; Gaunt’s chainsword. 1 Tanith Ghost is equipped with: Corbec’s hot-shot lascarbine; straight silver knife. 1 Tanith Ghost is equipped with: Rawne’s lascarbine; straight silver knife. 1 Tanith Ghost is equipped with: Larkin’s long-las; straight silver knife. 1 Tanith Ghost is equipped with: Bragg’s autocannon; straight silver knife. 1 Tanith Ghost is equipped with: lascarbine; Mkoll’s straight silver knife.",
     "models": [
       {
         "name": "IBRAM GAUNT",
@@ -7100,12 +8830,25 @@
       "000008336",
       "000008337",
       "000008377"
-    ]
+    ],
+    "points": [
+      {
+        "models": 6,
+        "cost": 100
+      }
+    ],
+    "composition": [
+      "1 Ibram Gaunt",
+      "5 Tanith Ghosts"
+    ],
+    "wargearOptions": []
   },
   {
     "id": "000000768",
     "name": "Gorgon Heavy Transport",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: 2 Gorgon mortars; 2 twin heavy stubbers; landing ramp.",
     "models": [
       {
         "name": "Gorgon Heavy Transport",
@@ -7227,12 +8970,37 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 275
+      }
+    ],
+    "composition": [
+      "1 Gorgon Heavy Transport"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s 2 Gorgon mortars can be replaced with one of the following:",
+        "choices": [
+          "4 heavy bolters",
+          "4 heavy flamers",
+          "4 heavy stubbers"
+        ]
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000003813",
     "name": "Grey Knights Terminator Squad",
     "faction": "AoI",
+    "role": "Other",
+    "loadout": "Every model is equipped with: storm bolter; Nemesis force weapon.",
     "models": [
       {
         "name": "Grey Knights Terminator Squad",
@@ -7331,12 +9099,56 @@
     "abilityIds": [
       "000008343",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 5,
+        "cost": 190,
+        "note": "AGENTS OF THE IMPERIUM Detachment"
+      },
+      {
+        "models": 5,
+        "cost": 210,
+        "note": "Assigned Agent"
+      }
+    ],
+    "composition": [
+      "1 Terminator Justicar",
+      "4 Grey Knights Terminators"
+    ],
+    "wargearOptions": [
+      {
+        "text": "For every 5 models in this unit, 1 Grey Knights Terminator's storm bolter can be replaced with one of the following:",
+        "choices": [
+          "1 incinerator",
+          "1 psilencer",
+          "1 psycannon"
+        ]
+      },
+      {
+        "text": "1 Grey Knights Terminator equipped with a storm bolter can be equipped with 1 Ancient’s banner.*",
+        "choices": []
+      },
+      {
+        "text": "1 Grey Knights Terminator can have its storm bolter replaced with 1 narthecium.*",
+        "choices": []
+      }
+    ],
+    "wargearNotes": [
+      "* You cannot select both of these options for the same model."
+    ],
+    "canBeLedBy": [
+      "000002760",
+      "000000876",
+      "000000877"
     ]
   },
   {
     "id": "000000744",
     "name": "Griffon Mortar Carrier",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: heavy bolter; Griffon heavy mortar; armoured tracks.",
     "models": [
       {
         "name": "Griffon Mortar Carrier",
@@ -7443,12 +9255,36 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 115
+      }
+    ],
+    "composition": [
+      "1 Griffon Mortar Carrier"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s heavy bolter can be replaced with 1 heavy flamer.",
+        "choices": []
+      },
+      {
+        "text": "This model can each be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      }
     ]
   },
   {
     "id": "000000730",
     "name": "Hades Breaching Drill",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: melta-cutter drill.",
     "models": [
       {
         "name": "Hades Breaching Drill",
@@ -7485,12 +9321,29 @@
     ],
     "abilityIds": [
       "000008343"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 110
+      }
+    ],
+    "composition": [
+      "1 Hades Breaching Drill"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000000745",
     "name": "Heavy Mortar Team",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: heavy mortar; close combat weapons.",
     "models": [
       {
         "name": "Heavy Mortar Team",
@@ -7542,12 +9395,29 @@
       "Grenades",
       "Regiment"
     ],
-    "abilityIds": []
+    "abilityIds": [],
+    "points": [
+      {
+        "models": 1,
+        "cost": 50
+      }
+    ],
+    "composition": [
+      "1 Heavy Mortar Team"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
+    ]
   },
   {
     "id": "000000746",
     "name": "Heavy Quad Launcher Team",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: heavy quad launcher; close combat weapons.",
     "models": [
       {
         "name": "Heavy Quad Launcher Team",
@@ -7598,12 +9468,29 @@
       "Regiment",
       "Heavy Quad Launcher Team"
     ],
-    "abilityIds": []
+    "abilityIds": [],
+    "points": [
+      {
+        "models": 1,
+        "cost": 50
+      }
+    ],
+    "composition": [
+      "1 Heavy Quad Launcher Team"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
+    ]
   },
   {
     "id": "000003922",
     "name": "Hell’s Last",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "Minka Lesk is equipped with: bolt pistol; power weapon. 1 Lesk’s Hero is equipped with: demolitions; meltagun; close combat weapon. 1 Lesk’s Hero is equipped with: hot-shot laspistol; dirk 1 Lesk’s Hero is equipped with: bolt pistol; power weapon. 1 Lesk’s Hero is equipped with: power weapon; regimental banner.",
     "models": [
       {
         "name": "MINKA LESK",
@@ -7731,12 +9618,33 @@
     "abilityIds": [
       "000008346",
       "000008377"
+    ],
+    "points": [
+      {
+        "models": 5,
+        "cost": 80
+      }
+    ],
+    "composition": [
+      "1 Minka Lesk - EPIC HERO",
+      "4 Lesk’s Heroes"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
+    ],
+    "canLead": [
+      "000002612"
     ]
   },
   {
     "id": "000000706",
     "name": "Hellhammer",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: coaxial autocannon; demolisher cannon; heavy stubber; Hellhammer cannon; 2 lascannons; twin heavy bolter; 2 twin heavy flamers; armoured tracks.",
     "models": [
       {
         "name": "Hellhammer",
@@ -7866,12 +9774,36 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 420
+      }
+    ],
+    "composition": [
+      "1 Hellhammer"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s 2 twin heavy flamers can be replaced with 2 twin heavy bolters.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "2 lascannons and 2 twin heavy bolters",
+          "2 lascannons and 2 twin heavy flamers"
+        ]
+      }
     ]
   },
   {
     "id": "000000694",
     "name": "Hellhound",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: heavy flamer; inferno cannon; armoured tracks.",
     "models": [
       {
         "name": "Hellhound",
@@ -8005,12 +9937,43 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 125
+      }
+    ],
+    "composition": [
+      "1 Hellhound"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s inferno cannon can be replaced with one of the following:",
+        "choices": [
+          "1 chem cannon",
+          "1 melta cannon"
+        ]
+      },
+      {
+        "text": "This model’s heavy flamer can be replaced with one of the following:",
+        "choices": [
+          "1 heavy bolter",
+          "1 multi-melta"
+        ]
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000004219",
     "name": "Hippogriff AFV",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "Every model is equipped with: 1 vigilator cannon; 1 heavy stubber; 1 armoured hull.",
     "models": [
       {
         "name": "Hippogriff AFV",
@@ -8131,12 +10094,41 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 70
+      },
+      {
+        "models": 2,
+        "cost": 140
+      }
+    ],
+    "composition": [
+      "1-2 Hippogriff AFV"
+    ],
+    "wargearOptions": [
+      {
+        "text": "Any number of models can each have their heavy stubber replaced with 1 meltagun.",
+        "choices": []
+      },
+      {
+        "text": "Any number of models can each have their vigilator cannon replaced with one of the following:",
+        "choices": [
+          "1 chiron gatling cannon",
+          "1 lascannon",
+          "1 melta cannon"
+        ]
+      }
     ]
   },
   {
     "id": "000000696",
     "name": "Hydra",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: heavy bolter; Hydra autocannon; armoured tracks.",
     "models": [
       {
         "name": "Hydra",
@@ -8229,12 +10221,33 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 95
+      }
+    ],
+    "composition": [
+      "1 Hydra"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s heavy bolter can be replaced with 1 heavy flamer.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000000747",
     "name": "Hydra Platform",
     "faction": "AM",
+    "role": "Fortifications",
+    "loadout": "This model is equipped with: Hydra quad autocannon; close combat weapons.",
     "models": [
       {
         "name": "Hydra Platform",
@@ -8285,12 +10298,29 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 95
+      }
+    ],
+    "composition": [
+      "1 Hydra Platform"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000002587",
     "name": "Imperial Navy Breachers",
     "faction": "AoI",
+    "role": "Battleline",
+    "loadout": "The Navis Sergeant-at-Arms is equipped with: Navis shotgun; close combat weapon. One Navis Armsman is equipped with: Navis las-volley; close combat weapon. One other Navis Armsman is equipped with: Navis heavy shotgun; close combat weapon; endurant shield. Every other model is equipped with: Navis shotgun; close combat weapon.",
     "models": [
       {
         "name": "Imperial Navy Breachers",
@@ -8482,12 +10512,73 @@
     ],
     "abilityIds": [
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 10,
+        "cost": 90
+      }
+    ],
+    "composition": [
+      "1 Navis Sergeant-at-Arms",
+      "9 Navis Armsmen"
+    ],
+    "wargearOptions": [
+      {
+        "text": "The Navis Sergeant-at-Arms’ Navis shotgun can be replaced with one of the following:",
+        "choices": [
+          "1 autopistol and 1 chainsword",
+          "1 bolt pistol and 1 power weapon"
+        ]
+      },
+      {
+        "text": "1 Navis Armsman’s Navis las-volley can be replaced with one of the following:",
+        "choices": [
+          "1 meltagun",
+          "1 plasma gun"
+        ]
+      },
+      {
+        "text": "1 Navis Armsman's Navis shotgun can be replaced with 1 autopistol and 1 power weapon.",
+        "choices": []
+      },
+      {
+        "text": "1 Navis Armsman’s Navis shotgun can be replaced with 1 autopistol and 1 chainfist.",
+        "choices": []
+      },
+      {
+        "text": "1 Navis Armsman can be equipped with 1 demolition charge.",
+        "choices": []
+      }
+    ],
+    "canBeLedBy": [
+      "000002090",
+      "000002090",
+      "000002760",
+      "000002760",
+      "000002762",
+      "000002763",
+      "000002764",
+      "000002765",
+      "000000874",
+      "000000874",
+      "000000876",
+      "000000877",
+      "000000877",
+      "000003812",
+      "000001579",
+      "000001579",
+      "000004173",
+      "000000876",
+      "000004173"
     ]
   },
   {
     "id": "000003830",
     "name": "Imperial Rhino",
     "faction": "AoI",
+    "role": "Dedicated Transports",
+    "loadout": "This model is equipped with: storm bolter; armoured tracks.",
     "models": [
       {
         "name": "Imperial Rhino",
@@ -8555,12 +10646,29 @@
       "000008339",
       "000008334",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 75
+      }
+    ],
+    "composition": [
+      "1 Imperial Rhino"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000003826",
     "name": "Indomitor Kill Team",
     "faction": "AoI",
+    "role": "Other",
+    "loadout": "Every Kill Team Heavy Intercessor is equipped with: bolt pistol; heavy bolt rifle; close combat weapon. Every Kill Team Heavy Intercessor with power fists is equipped with: flamestorm gauntlets; power fists. Every Kill Team Heavy Intercessor with melta rifle is equipped with: bolt pistol; melta rifle; close combat weapon. Every Kill Team Heavy Intercessor with jump pack is equipped with: assault bolters; close combat weapon; jump pack.",
     "models": [
       {
         "name": "Indomitor Kill Team",
@@ -8772,12 +10880,55 @@
     "abilityIds": [
       "000008519",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 5,
+        "cost": 120
+      },
+      {
+        "models": 10,
+        "cost": 240
+      }
+    ],
+    "composition": [
+      "10 MODELS MAXIMUM",
+      "5-10 Kill Team Heavy Intercessors",
+      "0-2 Kill Team Heavy Intercessors with power fists",
+      "0-2 Kill Team Heavy Intercessors with melta rifles",
+      "0-2 Kill Team Heavy Intercessors with jump packs"
+    ],
+    "wargearOptions": [
+      {
+        "text": "For every 5 models in this unit, 1 model equipped with a heavy bolt rifle can have its heavy bolt rifle replaced with 1 heavy bolter.",
+        "choices": []
+      },
+      {
+        "text": "1 model equipped with a melta rifle can have its melta rifle replaced with 1 multi-melta.",
+        "choices": []
+      },
+      {
+        "text": "Any number of models equipped with flamestorm gauntlets can each have their flamestorm gauntlets replaced with 1 auto boltstorm gauntlets and 1 fragstorm grenade launcher.",
+        "choices": []
+      },
+      {
+        "text": "Any number of models equipped with assault bolters can each have their assault bolters replaced with 1 plasma exterminators.",
+        "choices": []
+      }
+    ],
+    "canBeLedBy": [
+      "000002760",
+      "000003814",
+      "000003815",
+      "000001579"
     ]
   },
   {
     "id": "000000877",
     "name": "Inquisitor",
     "faction": "AoI",
+    "role": "Characters",
+    "loadout": "This model is equipped with: bolt pistol; Inquisitorial melee weapon; blessed wardings.",
     "models": [
       {
         "name": "Inquisitor",
@@ -8872,12 +11023,64 @@
     "abilityIds": [
       "000008346",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 55,
+        "note": "AGENTS OF THE IMPERIUM Detachment"
+      },
+      {
+        "models": 1,
+        "cost": 65,
+        "note": "Assigned Agent"
+      }
+    ],
+    "composition": [
+      "1 Inquisitor"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s bolt pistol can be replaced with 1 combi-weapon.",
+        "choices": []
+      },
+      {
+        "text": "This model’s blessed wardings can be replaced with 1 psychic gifts and 1 Psychic Shock Wave.",
+        "choices": []
+      },
+      {
+        "text": "If this model is equipped with 1 psychic gifts, its Inquisitorial melee weapon can be replaced with 1 force weapon.",
+        "choices": []
+      }
+    ],
+    "canLead": [
+      "000003824",
+      "000002612",
+      "000002614",
+      "000002683",
+      "000003816",
+      "000004074",
+      "000003827",
+      "000003825",
+      "000002587",
+      "000002684",
+      "000002613",
+      "000002767",
+      "000002685",
+      "000004174",
+      "000003822",
+      "000003813",
+      "000003818",
+      "000002587",
+      "000002683"
     ]
   },
   {
     "id": "000000876",
     "name": "Inquisitor Coteaz",
     "faction": "AoI",
+    "role": "Characters",
+    "loadout": "This model is equipped with: bolt pistol; Psychic Blast; Nemesis daemon hammer; Glovodan psyber-eagle.",
     "models": [
       {
         "name": "Inquisitor Coteaz",
@@ -8951,12 +11154,49 @@
     "abilityIds": [
       "000008346",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 75,
+        "note": "AGENTS OF THE IMPERIUM Detachment"
+      },
+      {
+        "models": 1,
+        "cost": 95,
+        "note": "Assigned Agent"
+      }
+    ],
+    "composition": [
+      "1 Inquisitor Coteaz – EPIC HERO"
+    ],
+    "wargearOptions": [],
+    "canLead": [
+      "000004174",
+      "000003816",
+      "000002767",
+      "000002614",
+      "000002685",
+      "000003825",
+      "000002587",
+      "000003824",
+      "000002683",
+      "000002684",
+      "000003813",
+      "000003822",
+      "000002683",
+      "000002612",
+      "000003827",
+      "000002613",
+      "000002587"
     ]
   },
   {
     "id": "000002090",
     "name": "Inquisitor Draxus",
     "faction": "AoI",
+    "role": "Characters",
+    "loadout": "This model is equipped with: Dirgesinger; Psychic Tempest; power fist.",
     "models": [
       {
         "name": "Inquisitor Draxus",
@@ -9029,12 +11269,48 @@
     "abilityIds": [
       "000008346",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 75,
+        "note": "AGENTS OF THE IMPERIUM Detachment"
+      },
+      {
+        "models": 1,
+        "cost": 110,
+        "note": "Assigned Agent"
+      }
+    ],
+    "composition": [
+      "1 Inquisitor Draxus – EPIC HERO"
+    ],
+    "wargearOptions": [],
+    "canLead": [
+      "000002587",
+      "000003822",
+      "000002612",
+      "000002683",
+      "000004174",
+      "000003825",
+      "000002683",
+      "000002614",
+      "000003824",
+      "000003816",
+      "000002587",
+      "000003827",
+      "000002613",
+      "000002684",
+      "000002685",
+      "000002767"
     ]
   },
   {
     "id": "000001579",
     "name": "Inquisitor Eisenhorn",
     "faction": "AoI",
+    "role": "Characters",
+    "loadout": "This model is equipped with: artificer bolt pistol; Mind Assault; runestaff and Barbarisater",
     "models": [
       {
         "name": "Inquisitor Eisenhorn",
@@ -9108,12 +11384,51 @@
       "000008338",
       "000008346",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 65
+      }
+    ],
+    "composition": [
+      "1 Inquisitor Eisenhorn – EPIC HERO"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
+    ],
+    "canLead": [
+      "000002684",
+      "000004174",
+      "000003822",
+      "000002612",
+      "000003827",
+      "000002685",
+      "000002767",
+      "000002613",
+      "000002614",
+      "000002683",
+      "000003816",
+      "000002683",
+      "000002587",
+      "000003816",
+      "000003828",
+      "000003824",
+      "000003826",
+      "000003825",
+      "000002587",
+      "000003821"
     ]
   },
   {
     "id": "000000874",
     "name": "Inquisitor Greyfax",
     "faction": "AoI",
+    "role": "Characters",
+    "loadout": "This model is equipped with: Castigation; condemnor stake; master-crafter power sword.",
     "models": [
       {
         "name": "Inquisitor Greyfax",
@@ -9189,12 +11504,44 @@
     "abilityIds": [
       "000008346",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 65
+      }
+    ],
+    "composition": [
+      "1 Inquisitor Greyfax – EPIC HERO"
+    ],
+    "wargearOptions": [],
+    "canLead": [
+      "000004174",
+      "000002612",
+      "000002767",
+      "000003818",
+      "000002613",
+      "000002683",
+      "000003825",
+      "000004074",
+      "000003824",
+      "000003816",
+      "000002685",
+      "000002683",
+      "000003827",
+      "000003822",
+      "000002587",
+      "000002684",
+      "000002587",
+      "000002614"
     ]
   },
   {
     "id": "000002760",
     "name": "Inquisitor In Terminator Armour",
     "faction": "AoI",
+    "role": "Characters",
+    "loadout": "This model is equipped with: storm bolter; Inquisitorial melee weapon; blessed wardings.",
     "models": [
       {
         "name": "Inquisitor In Terminator Armour",
@@ -9304,12 +11651,65 @@
       "000008343",
       "000008346",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 70
+      }
+    ],
+    "composition": [
+      "1 Inquisitor in Terminator Armour"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s storm bolter can be replaced with 1 combi-weapon.",
+        "choices": []
+      },
+      {
+        "text": "This model’s blessed wardings can be replaced with 1 psychic gifts and 1 psychic shock wave.",
+        "choices": []
+      },
+      {
+        "text": "If this model is equipped with 1 psychic gifts, its Inquisitorial melee weapon can be replaced with 1 force weapon.",
+        "choices": []
+      },
+      {
+        "text": "If this model is equipped with 1 psychic gifts, its storm bolter can be replaced with 1 psycannon.",
+        "choices": []
+      }
+    ],
+    "canLead": [
+      "000002683",
+      "000002685",
+      "000002683",
+      "000003824",
+      "000003816",
+      "000002587",
+      "000002614",
+      "000004074",
+      "000003818",
+      "000003822",
+      "000003816",
+      "000002612",
+      "000002613",
+      "000003813",
+      "000002587",
+      "000003826",
+      "000003827",
+      "000004174",
+      "000003825",
+      "000003821",
+      "000002767",
+      "000002684"
     ]
   },
   {
     "id": "000000875",
     "name": "Inquisitor Karamazov",
     "faction": "AoI",
+    "role": "Characters",
+    "loadout": "This model is equipped with: master-crafted multi-melta; master-crafted power sword.",
     "models": [
       {
         "name": "Inquisitor Karamazov",
@@ -9365,12 +11765,29 @@
     "abilityIds": [
       "000008339",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 140
+      }
+    ],
+    "composition": [
+      "1 Inquisitor Karamazov – EPIC HERO"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000004214",
     "name": "Inquisitor Kroyle",
     "faction": "AoI",
+    "role": "Characters",
+    "loadout": "This model is equipped with: Jindarii tox-cycler; stubcarbine; butcher blade; Garralisk’s claws and teeth.",
     "models": [
       {
         "name": "Inquisitor Kroyle",
@@ -9455,12 +11872,35 @@
       "000008336",
       "000008344",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 100,
+        "note": "AGENTS OF THE IMPERIUM Detachment"
+      },
+      {
+        "models": 1,
+        "cost": 100,
+        "note": "Assigned Agent"
+      }
+    ],
+    "composition": [
+      "1 Inquisitor Kroyle – EPIC HERO"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000004173",
     "name": "Inquisitor Ostromandeus",
     "faction": "AoI",
+    "role": "Characters",
+    "loadout": "Inquisitor Ostromandeus is equipped with: inferno pistol; power sword, vox-skull. Stentor-I-52 is equipped with: hydraulic vox-ram.",
     "models": [
       {
         "name": "INQUISITOR OSTROMANDEUS",
@@ -9535,12 +11975,49 @@
       "000008338",
       "000008346",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 2,
+        "cost": 65
+      }
+    ],
+    "composition": [
+      "1 Inquisitor Ostromandeus – EPIC HERO",
+      "1 Stentor-I-52 – EPIC HERO"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
+    ],
+    "canLead": [
+      "000003825",
+      "000002612",
+      "000002613",
+      "000002587",
+      "000002767",
+      "000002685",
+      "000003818",
+      "000002683",
+      "000003824",
+      "000003822",
+      "000002684",
+      "000002683",
+      "000004174",
+      "000002614",
+      "000003816",
+      "000003827",
+      "000002587"
     ]
   },
   {
     "id": "000002767",
     "name": "Inquisitorial Agents",
     "faction": "AoI",
+    "role": "Other",
+    "loadout": "*This unit can only contain 2 Gun Servitors if it also contains 10 Inquisitorial Agents. Every Inquisitorial Agent is equipped with: agent firearm; agent melee weapon. Every Gun Servitor is equipped with: heavy bolter; agent melee weapon.",
     "models": [
       {
         "name": "Inquisitorial Agents",
@@ -9700,12 +12177,79 @@
     ],
     "abilityIds": [
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 6,
+        "cost": 50,
+        "note": "AGENTS OF THE IMPERIUM Detachment"
+      },
+      {
+        "models": 12,
+        "cost": 100,
+        "note": "AGENTS OF THE IMPERIUM Detachment"
+      },
+      {
+        "models": 6,
+        "cost": 60,
+        "note": "Assigned Agent"
+      },
+      {
+        "models": 12,
+        "cost": 120,
+        "note": "Assigned Agent"
+      }
+    ],
+    "composition": [
+      "5-10 Inquisitorial Agents",
+      "1-2 Gun Servitors*"
+    ],
+    "wargearOptions": [
+      {
+        "text": "For every 5 Inquisitorial Agents in this unit, it can be equipped with 1 Tome-skull.",
+        "choices": []
+      },
+      {
+        "text": "For every 5 Inquisitorial Agents in this unit, 1 Inquisitorial Agent can be equipped with 1 plasma pistol.**",
+        "choices": []
+      },
+      {
+        "text": "For every 5 Inquisitorial Agents in this unit, 1 Inquisitorial Agent can be equipped with 1 eviscerator.**",
+        "choices": []
+      },
+      {
+        "text": "For every 5 Inquisitorial Agents in this unit, 1 Inquisitorial Agent can be equipped with 1 mystic stave.**",
+        "choices": []
+      },
+      {
+        "text": "Any number of Gun Servitors can each have their heavy bolter replaced with one of the following:",
+        "choices": [
+          "1 multi-melta",
+          "1 plasma cannon"
+        ]
+      }
+    ],
+    "wargearNotes": [
+      "**The some model cannot be equipped with more than one of these wargear options."
+    ],
+    "canBeLedBy": [
+      "000000874",
+      "000000876",
+      "000000877",
+      "000003812",
+      "000003829",
+      "000001579",
+      "000004173",
+      "000002760",
+      "000002090"
     ]
   },
   {
     "id": "000003820",
     "name": "Inquisitorial Chimera",
     "faction": "AoI",
+    "role": "Dedicated Transports",
+    "loadout": "This model is equipped with: multi-laser; heavy bolter; lasgun array; armoured tracks.",
     "models": [
       {
         "name": "Chimera",
@@ -9837,12 +12381,50 @@
       "000008339",
       "000008334",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 70
+      }
+    ],
+    "composition": [
+      "1 Inquisitorial Chimera"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s heavy bolter can be replaced with 1 heavy flamer.",
+        "choices": []
+      },
+      {
+        "text": "This model’s multi-laser can be replaced with one of the following:",
+        "choices": [
+          "1 Heavy bolter*",
+          "1 Heavy flamer*"
+        ]
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
+    ],
+    "wargearNotes": [
+      "This weapon cannot be replaced."
     ]
   },
   {
     "id": "000002763",
     "name": "Janus Draik",
     "faction": "AoI",
+    "role": "Characters",
+    "loadout": "This model is equipped with: heirloom pistol; monomolecular rapier.",
     "models": [
       {
         "name": "Janus Draik",
@@ -9901,12 +12483,33 @@
       "000008345",
       "000008346",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 40
+      }
+    ],
+    "composition": [
+      "1 Janus Draik – EPIC HERO"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
+    ],
+    "canLead": [
+      "000002509",
+      "000002587"
     ]
   },
   {
     "id": "000003829",
     "name": "Jokaero Weaponsmith",
     "faction": "AoI",
+    "role": "Characters",
+    "loadout": "Every model is equipped with: Jokaero weapons; close combat weapon.",
     "models": [
       {
         "name": "Jokaero Weaponsmith",
@@ -9969,12 +12572,32 @@
     "abilityIds": [
       "000008346",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 30
+      }
+    ],
+    "composition": [
+      "1 Jokaero Weaponsmith"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
+    ],
+    "canLead": [
+      "000002767"
     ]
   },
   {
     "id": "000002615",
     "name": "Kasrkin",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "The Kasrkin Sergeant is equipped with: hot-shot laspistol; chainsword. Every Kasrkin Trooper is equipped with: hot-shot lasgun; close combat weapon.",
     "models": [
       {
         "name": "Kasrkin",
@@ -10203,12 +12826,73 @@
     ],
     "abilityIds": [
       "000008344"
+    ],
+    "points": [
+      {
+        "models": 10,
+        "cost": 110
+      }
+    ],
+    "composition": [
+      "1 Kasrkin Sergeant",
+      "9 Kasrkin Troopers"
+    ],
+    "wargearOptions": [
+      {
+        "text": "Up to 4 Kasrkin Troopers can each have their hot-shot lasgun replaced with one of the following:*",
+        "choices": [
+          "1 flamer",
+          "1 grenade launcher",
+          "1 hot-shot volley gun",
+          "1 meltagun",
+          "1 plasma gun"
+        ]
+      },
+      {
+        "text": "1 Kasrkin Trooper’s hot-shot lasgun can be replaced with 1 hot-shot marksman rifle.",
+        "choices": []
+      },
+      {
+        "text": "1 Kasrkin Trooper’s hot-shot lasgun can be replaced with 1 hot-shot laspistol and 1 melta mine.",
+        "choices": []
+      },
+      {
+        "text": "1 Kasrkin Trooper equipped with a hot-shot lasgun can be equipped with 1 vox-caster (that model’s hot-shot lasgun cannot be replaced).",
+        "choices": []
+      },
+      {
+        "text": "The Kasrkin Sergeant’s chainsword can be replaced with 1 power weapon.",
+        "choices": []
+      },
+      {
+        "text": "The Kasrkin Sergeant’s hot-shot laspistol can be replaced with one of the following:",
+        "choices": [
+          "1 bolt pistol",
+          "1 plasma pistol."
+        ]
+      }
+    ],
+    "wargearNotes": [
+      "* You cannot select the same weapon from this list more than twice per unit."
+    ],
+    "canBeLedBy": [
+      "000002605",
+      "000002606",
+      "000002607",
+      "000001394",
+      "000001396",
+      "000000889",
+      "000000716",
+      "000004216",
+      "000004218"
     ]
   },
   {
     "id": "000003821",
     "name": "Kill Team Cassius",
     "faction": "AoI",
+    "role": "Characters",
+    "loadout": "",
     "models": [
       {
         "name": "KILL TEAM VETERAN",
@@ -10429,12 +13113,78 @@
       "000008343",
       "000008452",
       "000008519"
+    ],
+    "points": [
+      {
+        "models": 11,
+        "cost": 220
+      }
+    ],
+    "composition": [
+      "1 Chaplain Cassius – EPIC HERO",
+      "8 Kill Team Veterans: • Vael Donatus • Zameon Gydrael • Rodricus Grytt • Antor Delassio • Edryc Setorax • Jensus Natorian • Drenn Redblade • Ennox Sorrlock",
+      "1 Kill Team Terminator (Garran Branatar)",
+      "1 Kill Team Biker (Jetek Suberei)"
+    ],
+    "wargearOptions": [
+      {
+        "text": "Chaplain Cassius is equipped with: artificer crozius; bolt pistol.",
+        "choices": []
+      },
+      {
+        "text": "Vael Donatus is equipped with: boltgun; bolt pistol; close combat weapon.",
+        "choices": []
+      },
+      {
+        "text": "Zameon Gydrael is equipped with: Long Vigil ranged weapon; Long Vigil melee weapon.",
+        "choices": []
+      },
+      {
+        "text": "Rodricus Grytt is equipped with: frag cannon; bolt pistol; close combat weapon.",
+        "choices": []
+      },
+      {
+        "text": "Antor Delassio is equipped with: Long Vigil ranged weapon; Long Vigil melee weapon, jump pack.",
+        "choices": []
+      },
+      {
+        "text": "Edryc Setorax is equipped with: twin lightning claws, jump pack.",
+        "choices": []
+      },
+      {
+        "text": "Jensus Natorian is equipped with: psychic Cleanse; bolt pistol; force weapon; psychic hood.",
+        "choices": []
+      },
+      {
+        "text": "Drenn Redblade is equipped with: Long Vigil melee weapon; boltgun.",
+        "choices": []
+      },
+      {
+        "text": "Garran Branatar is equipped with: heavy flamer; Long Vigil ranged weapon; power fist.",
+        "choices": []
+      },
+      {
+        "text": "Ennox Sorrlock is equipped with: Long Vigil ranged weapon; close combat weapon.",
+        "choices": []
+      },
+      {
+        "text": "Jetek Suberei is equipped with: Deathwatch twin boltgun; Long Vigil melee weapon.",
+        "choices": []
+      }
+    ],
+    "canBeLedBy": [
+      "000002760",
+      "000003814",
+      "000003815",
+      "000001579"
     ]
   },
   {
     "id": "000003893",
     "name": "Krieg Combat Engineers",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "Every model is equipped with: autopistol; trench club.",
     "models": [
       {
         "name": "Krieg Combat Engineers",
@@ -10598,12 +13348,67 @@
     ],
     "abilityIds": [
       "000008344"
+    ],
+    "points": [
+      {
+        "models": 5,
+        "cost": 60
+      },
+      {
+        "models": 10,
+        "cost": 95
+      }
+    ],
+    "composition": [
+      "1 Krieg Engineer Watchmaster",
+      "4-9 Krieg Combat Engineers"
+    ],
+    "wargearOptions": [
+      {
+        "text": "1 Krieg Combat Engineer's autopistol and trench club can be replaced with 1 flamer and 1 close combat weapon.",
+        "choices": []
+      },
+      {
+        "text": "1 Krieg Combat Engineer’s autopistol and trench club can be replaced with 1 autopistol, 1 remote mine and 1 close combat weapon.",
+        "choices": []
+      },
+      {
+        "text": "Any number of models can each have their autopistol and trench club replaced with 1 combat shotgun and 1 close combat weapon.",
+        "choices": []
+      },
+      {
+        "text": "The Krieg Engineer Watchmaster’s autopistol can be replaced with one of the following:",
+        "choices": [
+          "1 bolt pistol",
+          "1 hand flamer",
+          "1 plasma pistol"
+        ]
+      },
+      {
+        "text": "The Krieg Engineer Watchmaster’s trench club can be replaced with one of the following:",
+        "choices": [
+          "1 chainsword",
+          "1 power weapon"
+        ]
+      }
+    ],
+    "canBeLedBy": [
+      "000002605",
+      "000003889",
+      "000001394",
+      "000001396",
+      "000000889",
+      "000000716",
+      "000004216",
+      "000004218"
     ]
   },
   {
     "id": "000003889",
     "name": "Krieg Command Squad",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "The Lord Commissar is equipped with: laspistol; power weapon. One Veteran Guardsman is equipped with: laspistol; chainsword. One Veteran Guardsman is equipped with: laspistol; close combat weapon; alchemyk counteragents; servo-scribes. One Veteran Guardsman is equipped with: lasgun; close combat weapon; master vox. One Veteran Guardsman is equipped with: lasgun; close combat weapon; regimental standard. One Veteran Guardsman is equipped with: boltgun; close combat weapon.",
     "models": [
       {
         "name": "LORD COMMISSAR",
@@ -10851,12 +13656,61 @@
     "abilityIds": [
       "000008346",
       "000008377"
+    ],
+    "points": [
+      {
+        "models": 6,
+        "cost": 65
+      }
+    ],
+    "composition": [
+      "1 Lord Commissar",
+      "5 Veteran Guardsmen"
+    ],
+    "wargearOptions": [
+      {
+        "text": "1 Veteran Guardsman’s boltgun can be replaced with one of the following:",
+        "choices": [
+          "1 flamer",
+          "1 grenade launcher",
+          "1 meltagun",
+          "1 plasma gun"
+        ]
+      },
+      {
+        "text": "The Lord Commissar's power weapon can be replaced with 1 power fist.",
+        "choices": []
+      },
+      {
+        "text": "The Lord Commissar can be equipped with 1 plasma pistol.",
+        "choices": []
+      },
+      {
+        "text": "1 Veteran Guardsman’s chainsword can be replaced with one of the following:",
+        "choices": [
+          "1 trench club",
+          "1 power weapon"
+        ]
+      },
+      {
+        "text": "1 Veteran Guardsman not equipped with alchemyk counteragents can replace its laspistol with one of the following:",
+        "choices": [
+          "1 bolt pistol",
+          "1 plasma pistol"
+        ]
+      }
+    ],
+    "canLead": [
+      "000003893",
+      "000002613"
     ]
   },
   {
     "id": "000003895",
     "name": "Krieg Heavy Weapons Squad",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "Each Heavy Weapons Gunner is equipped with: lascannon; laspistol; close combat weapon. The Fire Coordinator is equipped with: laspistol; close combat weapon.",
     "models": [
       {
         "name": "HEAVY WEAPONS GUNNER",
@@ -10956,12 +13810,33 @@
       "Regiment",
       "Krieg Heavy Weapons Squad"
     ],
-    "abilityIds": []
+    "abilityIds": [],
+    "points": [
+      {
+        "models": 4,
+        "cost": 75
+      }
+    ],
+    "composition": [
+      "3 Heavy Weapons Gunners",
+      "1 Fire Coordinator"
+    ],
+    "wargearOptions": [
+      {
+        "text": "Any number of Heavy Weapons Gunners can each have their lascannon replaced with one of the following:",
+        "choices": [
+          "1 Krieg heavy flamer",
+          "1 twin Krieg heavy stubber"
+        ]
+      }
+    ]
   },
   {
     "id": "000000700",
     "name": "Leman Russ Battle Tank",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: lascannon; Leman Russ battle cannon; armoured tracks.",
     "models": [
       {
         "name": "Leman Russ Battle Tank",
@@ -11130,12 +14005,52 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 185
+      }
+    ],
+    "composition": [
+      "1 Leman Russ Battle Tank"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s lascannon can be replaced with one of the following:",
+        "choices": [
+          "1 heavy bolter",
+          "1 heavy flamer"
+        ]
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "2 heavy bolters",
+          "2 heavy flamers",
+          "2 multi-meltas",
+          "2 plasma cannons"
+        ]
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000000680",
     "name": "Leman Russ Commander",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "This model is equipped with: lascannon; Leman Russ battle cannon; armoured tracks.",
     "models": [
       {
         "name": "Leman Russ Commander",
@@ -11372,12 +14287,63 @@
     "abilityIds": [
       "000008339",
       "000008377"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 235
+      }
+    ],
+    "composition": [
+      "1 Leman Russ Commander"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s Leman Russ battle cannon can be replaced with one of the following:",
+        "choices": [
+          "1 demolisher battle cannon",
+          "1 eradicator nova cannon",
+          "1 executioner plasma cannon",
+          "1 exterminator autocannon",
+          "1 punisher gatling cannon",
+          "1 vanquisher battle cannon"
+        ]
+      },
+      {
+        "text": "This model’s lascannon can be replaced with one of the following:",
+        "choices": [
+          "1 heavy bolter",
+          "1 heavy flamer"
+        ]
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "2 heavy bolters",
+          "2 heavy flamers",
+          "2 multi-meltas",
+          "2 plasma cannons"
+        ]
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000000701",
     "name": "Leman Russ Demolisher",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: demolisher battle cannon; lascannon; armoured tracks.",
     "models": [
       {
         "name": "Leman Russ Demolisher",
@@ -11546,12 +14512,52 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 190
+      }
+    ],
+    "composition": [
+      "1 Leman Russ Demolisher"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s lascannon can be replaced with one of the following:",
+        "choices": [
+          "1 heavy bolter",
+          "1 heavy flamer"
+        ]
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "2 heavy bolters",
+          "2 heavy flamers",
+          "2 multi-meltas",
+          "2 plasma cannons"
+        ]
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000002741",
     "name": "Leman Russ Eradicator",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: eradicator nova cannon; lascannon; armoured tracks.",
     "models": [
       {
         "name": "Leman Russ Eradicator",
@@ -11721,12 +14727,52 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 170
+      }
+    ],
+    "composition": [
+      "1 Leman Russ Eradicator"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s lascannon can be replaced with one of the following:",
+        "choices": [
+          "1 heavy bolter",
+          "1 heavy flamer"
+        ]
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "2 heavy bolters",
+          "2 heavy flamers",
+          "2 multi-meltas",
+          "2 plasma cannons"
+        ]
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000002742",
     "name": "Leman Russ Executioner",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: executioner plasma cannon; lascannon; armoured tracks.",
     "models": [
       {
         "name": "Leman Russ Executioner",
@@ -11909,12 +14955,52 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 170
+      }
+    ],
+    "composition": [
+      "1 Leman Russ Executioner"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s lascannon can be replaced with one of the following:",
+        "choices": [
+          "1 heavy bolter",
+          "1 heavy flamer"
+        ]
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "2 heavy bolters",
+          "2 heavy flamers",
+          "2 multi-meltas",
+          "2 plasma cannons"
+        ]
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000002743",
     "name": "Leman Russ Exterminator",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: exterminator autocannon; lascannon; armoured tracks.",
     "models": [
       {
         "name": "Leman Russ Exterminator",
@@ -12084,12 +15170,52 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 180
+      }
+    ],
+    "composition": [
+      "1 Leman Russ Exterminator"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s lascannon can be replaced with one of the following:",
+        "choices": [
+          "1 heavy bolter",
+          "1 heavy flamer"
+        ]
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "2 heavy bolters",
+          "2 heavy flamers",
+          "2 multi-meltas",
+          "2 plasma cannons"
+        ]
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000002744",
     "name": "Leman Russ Punisher",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: lascannon; punisher gatling cannon; armoured tracks.",
     "models": [
       {
         "name": "Leman Russ Punisher",
@@ -12256,12 +15382,52 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 150
+      }
+    ],
+    "composition": [
+      "1 Leman Russ Punisher"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s lascannon can be replaced with one of the following:",
+        "choices": [
+          "1 heavy bolter",
+          "1 heavy flamer"
+        ]
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "2 heavy bolters",
+          "2 heavy flamers",
+          "2 multi-meltas",
+          "2 plasma cannons"
+        ]
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000002745",
     "name": "Leman Russ Vanquisher",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: lascannon; vanquisher battle cannon; armoured tracks.",
     "models": [
       {
         "name": "Leman Russ Vanquisher",
@@ -12430,12 +15596,52 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 145
+      }
+    ],
+    "composition": [
+      "1 Leman Russ Vanquisher"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s lascannon can be replaced with one of the following:",
+        "choices": [
+          "1 heavy bolter",
+          "1 heavy flamer"
+        ]
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "2 heavy bolters",
+          "2 heavy flamers",
+          "2 multi-meltas",
+          "2 plasma cannons"
+        ]
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000003890",
     "name": "Lord Marshal Dreir",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "This model is equipped with: laspistol; Sabre of Sacrifice; savage claws.",
     "models": [
       {
         "name": "Lord Marshal Dreir",
@@ -12506,12 +15712,27 @@
       "000008346",
       "000008338",
       "000008377"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 100
+      }
+    ],
+    "composition": [
+      "1 Lord Marshal Dreir – EPIC HERO"
+    ],
+    "wargearOptions": [],
+    "canLead": [
+      "000003898"
     ]
   },
   {
     "id": "000002605",
     "name": "Lord Solar Leontus",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "This model is equipped with: Sol’s Righteous Gaze; Conquest; Konstantin’s hooves.",
     "models": [
       {
         "name": "Lord Solar Leontus",
@@ -12577,12 +15798,33 @@
     "abilityIds": [
       "000008346",
       "000008377"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 130
+      }
+    ],
+    "composition": [
+      "1 Lord Solar Leontus – EPIC HERO"
+    ],
+    "wargearOptions": [],
+    "canLead": [
+      "000002612",
+      "000002613",
+      "000002614",
+      "000002615",
+      "000003893",
+      "000003898",
+      "000002616"
     ]
   },
   {
     "id": "000000769",
     "name": "Macharius",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: 2 heavy stubbers; Macharius twin battle cannon; twin heavy stubber; armoured tracks.",
     "models": [
       {
         "name": "Macharius",
@@ -12715,12 +15957,43 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 310
+      }
+    ],
+    "composition": [
+      "1 Macharius"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s 2 heavy stubbers can be replaced with one of the following:",
+        "choices": [
+          "2 heavy bolters",
+          "2 heavy flamers"
+        ]
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      }
     ]
   },
   {
     "id": "000000770",
     "name": "Macharius Omega",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: omega-pattern plasma blastgun; armoured tracks.",
     "models": [
       {
         "name": "Macharius Omega",
@@ -12863,12 +16136,44 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 310
+      }
+    ],
+    "composition": [
+      "1 Macharius Omega"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "2 autocannons",
+          "2 heavy bolters",
+          "2 heavy flamers"
+        ]
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      }
     ]
   },
   {
     "id": "000000771",
     "name": "Macharius Vanquisher",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: 2 heavy stubbers; Macharius twin vanquisher cannon; twin heavy stubber; armoured tracks.",
     "models": [
       {
         "name": "Macharius Vanquisher",
@@ -13001,12 +16306,43 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 285
+      }
+    ],
+    "composition": [
+      "1 Macharius Vanquisher"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s 2 heavy stubbers can be replaced with one of the following:",
+        "choices": [
+          "2 heavy bolters",
+          "2 heavy flamers"
+        ]
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      }
     ]
   },
   {
     "id": "000000772",
     "name": "Macharius Vulcan",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: 2 heavy stubbers; Macharius vulcan mega-bolter; twin heavy stubber; armoured tracks",
     "models": [
       {
         "name": "Macharius Vulcan",
@@ -13138,12 +16474,43 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 310
+      }
+    ],
+    "composition": [
+      "1 Macharius Vulcan"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s 2 heavy stubbers can be replaced with one of the following:",
+        "choices": [
+          "2 heavy bolters",
+          "2 heavy flamers"
+        ]
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      }
     ]
   },
   {
     "id": "000000753",
     "name": "Malcador",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: 2 autocannons; heavy bolter; Malcador battle cannon; armoured tracks.",
     "models": [
       {
         "name": "Malcador",
@@ -13269,12 +16636,50 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 250
+      }
+    ],
+    "composition": [
+      "1 Malcador"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s 2 autocannons can be replaced with one of the following:",
+        "choices": [
+          "2 heavy bolters",
+          "2 lascannons"
+        ]
+      },
+      {
+        "text": "This model’s heavy bolter can be replaced with one of the following:",
+        "choices": [
+          "1 autocannon",
+          "1 lascannon"
+        ]
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      }
     ]
   },
   {
     "id": "000000751",
     "name": "Malcador Annihilator",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: demolisher cannon; 2 heavy bolters; Malcador twin lascannon; armoured tracks.",
     "models": [
       {
         "name": "Malcador Annihilator",
@@ -13413,12 +16818,43 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 270
+      }
+    ],
+    "composition": [
+      "1 Malcador Annihilator"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s 2 heavy bolters can be replaced with one of the following:",
+        "choices": [
+          "2 autocannons",
+          "2 lascannons"
+        ]
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      }
     ]
   },
   {
     "id": "000000752",
     "name": "Malcador Defender",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: demolisher cannon; 7 heavy bolters; armoured tracks.",
     "models": [
       {
         "name": "Malcador Defender",
@@ -13544,12 +16980,43 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 310
+      }
+    ],
+    "composition": [
+      "1 Malcador Defender"
+    ],
+    "wargearOptions": [
+      {
+        "text": "2 of this model’s heavy bolters can be replaced with one of the following:",
+        "choices": [
+          "2 autocannons",
+          "2 lascannons"
+        ]
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      }
     ]
   },
   {
     "id": "000000754",
     "name": "Malcador Infernus",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: 2 heavy stubbers; inferno gun; armoured tracks.",
     "models": [
       {
         "name": "Malcador Infernus",
@@ -13690,12 +17157,45 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 235
+      }
+    ],
+    "composition": [
+      "1 Malcador Infernus"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s 2 heavy stubbers can be replaced with one of the following:",
+        "choices": [
+          "2 autocannons",
+          "2 heavy bolters",
+          "2 heavy flamers",
+          "2 lascannons"
+        ]
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      }
     ]
   },
   {
     "id": "000000698",
     "name": "Manticore",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: heavy bolter; storm eagle rockets; armoured tracks.",
     "models": [
       {
         "name": "Manticore",
@@ -13790,12 +17290,33 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 165
+      }
+    ],
+    "composition": [
+      "1 Manticore"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s heavy bolter can be replaced with 1 heavy flamer.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000000755",
     "name": "Manticore Platform",
     "faction": "AM",
+    "role": "Fortifications",
+    "loadout": "This model is equipped with: storm eagle rockets; close combat weapons.",
     "models": [
       {
         "name": "Manticore Platform",
@@ -13846,12 +17367,29 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 95
+      }
+    ],
+    "composition": [
+      "1 Manticore Platform"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000000773",
     "name": "Marauder Bomber",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: heavy bombs; 2 heavy bolters; 2 lascannons; armoured hull.",
     "models": [
       {
         "name": "Marauder Bomber",
@@ -13915,12 +17453,29 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 345
+      }
+    ],
+    "composition": [
+      "1 Marauder Bomber"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s heavy bombs can be replaced with 1 inferno bombs.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000000774",
     "name": "Marauder Destroyer",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: 2 assault cannons; 2 heavy bolters; Marauder nose autocannons; armoured hull.",
     "models": [
       {
         "name": "Marauder Destroyer",
@@ -14012,12 +17567,29 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 375
+      }
+    ],
+    "composition": [
+      "1 Marauder Destroyer"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model can be equipped with 1 hellstrike missile rack.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000000756",
     "name": "Medusa Carriage Battery",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: Medusa siege cannon; battery close combat weapons. Designer’s Note: Place five Heavy Artillery Crew tokens next to each Medusa Carriage model when this unit is first set up, removing one each time its Medusa Carriage model loses a wound (a Medusa Carriage model itself is considered to represent its final wound). These do not count as models for any rules purposes.",
     "models": [
       {
         "name": "Medusa Carriage Battery",
@@ -14069,12 +17641,29 @@
       "Medusa Carriage Battery",
       "Grenades"
     ],
-    "abilityIds": []
+    "abilityIds": [],
+    "points": [
+      {
+        "models": 1,
+        "cost": 125
+      }
+    ],
+    "composition": [
+      "1 Medusa Carriage"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
+    ]
   },
   {
     "id": "000000719",
     "name": "Militarum Tempestus Command Squad",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "The Tempestor Prime is equipped with: bolt pistol; Tempestus dagger. Every Tempestus Scion is equipped with: hot-shot lasgun; close combat weapon.",
     "models": [
       {
         "name": "TEMPESTUS SCION",
@@ -14292,12 +17881,64 @@
       "000008343",
       "000008346",
       "000008377"
+    ],
+    "points": [
+      {
+        "models": 5,
+        "cost": 85
+      }
+    ],
+    "composition": [
+      "1 Tempestor Prime",
+      "4 Tempestus Scions"
+    ],
+    "wargearOptions": [
+      {
+        "text": "Any number of Tempestus Scions can each have their hot-shot lasgun replaced with one of the following*:",
+        "choices": [
+          "1 flamer",
+          "1 grenade launcher",
+          "1 hot-shot volley gun",
+          "1 meltagun",
+          "1 plasma gun"
+        ]
+      },
+      {
+        "text": "1 Tempestus Scion equipped with a hot-shot lasgun can be equipped with 1 regimental standard (that model’s hot-shot lasgun cannot be replaced).",
+        "choices": []
+      },
+      {
+        "text": "1 Tempestus Scion’s hot-shot lasgun can be replaced with 1 hot-shot laspistol and 1 master vox.",
+        "choices": []
+      },
+      {
+        "text": "1 Tempestus Scion’s hot-shot lasgun can be replaced with one of the following:",
+        "choices": [
+          "1 hot-shot laspistol and 1 medi-pack",
+          "1 hot-shot lasgun, 1 hot-shot laspistol and 1 medi-pack [that model's hot-shot lasgun cannot be replaced]"
+        ]
+      },
+      {
+        "text": "The Tempestor Prime’s bolt pistol can be replaced with one of the following:",
+        "choices": [
+          "1 plasma pistol",
+          "1 command rod"
+        ]
+      }
+    ],
+    "wargearNotes": [
+      "* You cannot select the same weapon from this list more than once per unit."
+    ],
+    "canLead": [
+      "000002746"
     ]
   },
   {
     "id": "000001394",
     "name": "Ministorum Priest",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "This model is equipped with: zealot’s vindictor.",
     "models": [
       {
         "name": "Ministorum Priest",
@@ -14373,12 +18014,37 @@
     ],
     "abilityIds": [
       "000008346"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 35
+      }
+    ],
+    "composition": [
+      "1 Ministorum Priest"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s zealot’s vindictor can be replaced with 1 holy pistol and 1 power weapon.",
+        "choices": []
+      }
+    ],
+    "canLead": [
+      "000003893",
+      "000002615",
+      "000002746",
+      "000002614",
+      "000002612",
+      "000002613"
     ]
   },
   {
     "id": "000003812",
     "name": "Ministorum Priest",
     "faction": "AoI",
+    "role": "Characters",
+    "loadout": "This model is equipped with: zealot’s vindictor.",
     "models": [
       {
         "name": "Ministorum Priest",
@@ -14455,12 +18121,38 @@
     "abilityIds": [
       "000008346",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 40
+      }
+    ],
+    "composition": [
+      "1 Ministorum Priest"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s zealot’s vindictor can be replaced with 1 holy pistol and 1 power weapon",
+        "choices": []
+      }
+    ],
+    "canLead": [
+      "000002767",
+      "000002587",
+      "000004074",
+      "000002683",
+      "000002684",
+      "000002685",
+      "000003818"
     ]
   },
   {
     "id": "000000775",
     "name": "Minotaur",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: Minotaur twin earthshaker cannon; armoured tracks.",
     "models": [
       {
         "name": "Minotaur",
@@ -14516,12 +18208,29 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 225
+      }
+    ],
+    "composition": [
+      "1 Minotaur"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000001383",
     "name": "Mukaali Riders",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "Every model is equipped with: laspistol; hunting lance; stomping feet.",
     "models": [
       {
         "name": "Mukaali Riders",
@@ -14711,12 +18420,46 @@
     ],
     "abilityIds": [
       "000008344"
+    ],
+    "points": [
+      {
+        "models": 3,
+        "cost": 110
+      }
+    ],
+    "composition": [
+      "1 Mukaali Rider Sergeant",
+      "2 Mukaali Riders"
+    ],
+    "wargearOptions": [
+      {
+        "text": "The Mukaali Rider Sergeant’s laspistol can be replaced with 1 plasma pistol.",
+        "choices": []
+      },
+      {
+        "text": "The Mukaali Rider Sergeant’s hunting lance can be replaced with one of the following:",
+        "choices": [
+          "1 chainsword",
+          "1 power weapon"
+        ]
+      },
+      {
+        "text": "Up to 2 Mukaali Riders can each have their hunting lance replaced with one of the following:",
+        "choices": [
+          "1 flamer",
+          "1 grenade launcher",
+          "1 meltagun",
+          "1 plasma gun"
+        ]
+      }
     ]
   },
   {
     "id": "000001397",
     "name": "Munitorum Servitors",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "Every model is equipped with: Servitor’s servo-arm.",
     "models": [
       {
         "name": "Munitorum Servitors",
@@ -14818,12 +18561,33 @@
       "Imperium",
       "Munitorum Servitors"
     ],
-    "abilityIds": []
+    "abilityIds": [],
+    "points": [
+      {
+        "models": 4,
+        "cost": 35
+      }
+    ],
+    "composition": [
+      "4 Munitorum Servitors"
+    ],
+    "wargearOptions": [
+      {
+        "text": "Up to 2 models can each have their Servitor’s servo-arm replaced with one of the following:",
+        "choices": [
+          "1 heavy bolter",
+          "1 multi-melta",
+          "1 plasma cannon"
+        ]
+      }
+    ]
   },
   {
     "id": "000002765",
     "name": "Navigator",
     "faction": "AoI",
+    "role": "Characters",
+    "loadout": "This model is equipped with: laspistol; force-orb cane.",
     "models": [
       {
         "name": "Navigator",
@@ -14879,12 +18643,34 @@
     "abilityIds": [
       "000008346",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 60,
+        "note": "AGENTS OF THE IMPERIUM Detachment"
+      },
+      {
+        "models": 1,
+        "cost": 75,
+        "note": "Assigned Agent"
+      }
+    ],
+    "composition": [
+      "1 Navigator"
+    ],
+    "wargearOptions": [],
+    "canLead": [
+      "000002509",
+      "000002587"
     ]
   },
   {
     "id": "000002764",
     "name": "Neyam Shai Murad",
     "faction": "AoI",
+    "role": "Characters",
+    "loadout": "This model is equipped with: negotiator pistols; close combat weapon.",
     "models": [
       {
         "name": "Neyam Shai Murad",
@@ -14940,12 +18726,33 @@
       "000008345",
       "000008346",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 40
+      }
+    ],
+    "composition": [
+      "1 Neyam Shai Murad – EPIC HERO"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
+    ],
+    "canLead": [
+      "000002509",
+      "000002587"
     ]
   },
   {
     "id": "000000725",
     "name": "Nork Deddog",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "This model is equipped with: ripper gun; huge knife.",
     "models": [
       {
         "name": "Nork Deddog",
@@ -15001,12 +18808,24 @@
     ],
     "abilityIds": [
       "000008338"
-    ]
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 60
+      }
+    ],
+    "composition": [
+      "1 Nork Deddog – EPIC HERO"
+    ],
+    "wargearOptions": []
   },
   {
     "id": "000001398",
     "name": "Ogryn Bodyguard",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "This model is equipped with: ripper gun; close combat weapon; huge knife.",
     "models": [
       {
         "name": "Ogryn Bodyguard",
@@ -15102,12 +18921,39 @@
     ],
     "abilityIds": [
       "000008338"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 40
+      }
+    ],
+    "composition": [
+      "1 Ogryn Bodyguard"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s ripper gun can be replaced with one of the following:",
+        "choices": [
+          "1 grenadier gauntlet",
+          "1 Bullgryn maul"
+        ]
+      },
+      {
+        "text": "This model’s huge knife can be replaced with one of the following:",
+        "choices": [
+          "1 brute shield",
+          "1 slabshield"
+        ]
+      }
     ]
   },
   {
     "id": "000000722",
     "name": "Ogryn Squad",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "Every model is equipped with: ripper gun.",
     "models": [
       {
         "name": "Ogryn Squad",
@@ -15158,12 +19004,34 @@
     ],
     "abilityIds": [
       "000008338"
+    ],
+    "points": [
+      {
+        "models": 3,
+        "cost": 60
+      },
+      {
+        "models": 6,
+        "cost": 130
+      }
+    ],
+    "composition": [
+      "1 Ogryn Bone ‘ead",
+      "2-5 Ogryns"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000000776",
     "name": "Praetor",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: 2 heavy bolters; Praetor launcher; armoured tracks",
     "models": [
       {
         "name": "Praetor",
@@ -15274,12 +19142,32 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 275
+      }
+    ],
+    "composition": [
+      "1 Praetor"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      }
     ]
   },
   {
     "id": "000000889",
     "name": "Primaris Psyker",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "This model is equipped with: laspistol; Psychic Maelstrom; force weapon.",
     "models": [
       {
         "name": "Primaris Psyker",
@@ -15363,12 +19251,32 @@
     ],
     "abilityIds": [
       "000008346"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 60
+      }
+    ],
+    "composition": [
+      "1 Primaris Psyker"
+    ],
+    "wargearOptions": [],
+    "canLead": [
+      "000003893",
+      "000002615",
+      "000002746",
+      "000002614",
+      "000002612",
+      "000002613"
     ]
   },
   {
     "id": "000003824",
     "name": "Proteus Kill Team",
     "faction": "AoI",
+    "role": "Other",
+    "loadout": "Every Kill Team Veteran is equipped with: boltgun; Long Vigil melee weapon; close combat weapon. Every Kill Team Veteran with Jump Pack is equipped with: Long Vigil melee weapon; close combat weapon; jump pack. Every Kill Team Biker is equipped with: twin boltgun; close combat weapon. Every Kill Team Terminator is equipped with: storm bolter; power fist.",
     "models": [
       {
         "name": "KILL TEAM VETERANS",
@@ -15682,12 +19590,92 @@
     "abilityIds": [
       "000008519",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 5,
+        "cost": 160
+      },
+      {
+        "models": 10,
+        "cost": 320
+      }
+    ],
+    "composition": [
+      "10 MODELS MAXIMUM",
+      "5-10 Kill Team Veterans",
+      "0-4 Kill Team Veterans with Jump Packs",
+      "0-2 Kill Team Bikers",
+      "0-4 Kill Team Terminators"
+    ],
+    "wargearOptions": [
+      {
+        "text": "Any number of Kill Team Veterans can replace their boltgun and Long Vigil melee weapon with:",
+        "choices": [
+          "1 Long Vigil ranged weapon",
+          "1 boltgun and 1 Astartes shield",
+          "1 Long Vigil melee weapon and 1 Astartes shield"
+        ]
+      },
+      {
+        "text": "For every 5 models in this unit, up to 2 models can replace their boltgun and Long Vigil melee weapon with 1 Deathwatch thunder hammer.",
+        "choices": []
+      },
+      {
+        "text": "For every 5 models in the unit, up to 2 models can replace their boltgun and Long Vigil melee weapon with one of the following:",
+        "choices": [
+          "1 frag cannon",
+          "1 Infernus heavy bolter"
+        ]
+      },
+      {
+        "text": "Any number of Kill Team Biker models can be equipped with one of the following:",
+        "choices": [
+          "1 bolt pistol",
+          "1 Long Vigil melee weapon"
+        ]
+      },
+      {
+        "text": "For every 5 models in this unit, up to 2 models can replace their boltgun and Long Vigil melee weapon with 1 Deathwatch thunder hammer.",
+        "choices": []
+      },
+      {
+        "text": "Up to 3 models can each have their storm bolter replaced with one of the following:",
+        "choices": [
+          "1 assault cannon",
+          "1 heavy flamer",
+          "1 plasma cannon",
+          "1 cyclone missile launcher and 1 storm bolter (this model’s storm bolter cannot be replaced)"
+        ]
+      },
+      {
+        "text": "Any number of Kill Team Terminator models can replace their power fist and storm bolter with one of the following:",
+        "choices": [
+          "1 storm bolter and 1 power weapon",
+          "1 storm bolter and 1 chainfist",
+          "1 twin lightning claws",
+          "1 Terminator thunder hammer and 1 storm shield"
+        ]
+      }
+    ],
+    "canBeLedBy": [
+      "000002090",
+      "000002760",
+      "000000874",
+      "000000876",
+      "000000877",
+      "000003814",
+      "000003815",
+      "000001579",
+      "000004173"
     ]
   },
   {
     "id": "000003937",
     "name": "Provisionally Prepared",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "This model is equipped with: sniper rifle; close combat weapons.",
     "models": [
       {
         "name": "Ratlings",
@@ -15742,12 +19730,32 @@
       "000008345",
       "000008346",
       "000008337"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 40
+      }
+    ],
+    "composition": [
+      "1 Provisionally Prepared – EPIC HERO"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
+    ],
+    "canLead": [
+      "000000724"
     ]
   },
   {
     "id": "000002375",
     "name": "Quartermaster Cadre Squad",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "The Quartermaster Revenant is equipped with: Quartermaster’s pistol; Quartermaster’s close combat weapon. Every Medicae Servitor is equipped with: medical scalpels",
     "models": [
       {
         "name": "QUARTERMASTER REVENANT",
@@ -15818,12 +19826,34 @@
     ],
     "abilityIds": [
       "000008346"
+    ],
+    "points": [
+      {
+        "models": 5,
+        "cost": 45
+      }
+    ],
+    "composition": [
+      "1 Quartermaster Revenant",
+      "4 Medicae Servitors"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
+    ],
+    "canLead": [
+      "000002374",
+      "000002613"
     ]
   },
   {
     "id": "000000757",
     "name": "Rapier Laser Destroyer Battery",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "Every model is equipped with: laser destroyer; close combat weapon. Designer’s Note: Place two Artillery Crew tokens next to each Rapier Laser Destroyer model when this unit is first set up, removing one each time its Rapier Laser Destroyer model loses a wound (a Rapier Laser Destroyer model itself is considered to represent its final wound).",
     "models": [
       {
         "name": "Rapier Laser Destroyer Battery",
@@ -15874,12 +19904,37 @@
       "Grenades",
       "Imperium"
     ],
-    "abilityIds": []
+    "abilityIds": [],
+    "points": [
+      {
+        "models": 1,
+        "cost": 35
+      },
+      {
+        "models": 2,
+        "cost": 70
+      },
+      {
+        "models": 3,
+        "cost": 105
+      }
+    ],
+    "composition": [
+      "1-3 Rapier Laser Destroyers"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
+    ]
   },
   {
     "id": "000000724",
     "name": "Ratlings",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "Every model is equipped with: sniper rifle; close combat weapon.",
     "models": [
       {
         "name": "Ratlings",
@@ -15943,12 +19998,44 @@
     "abilityIds": [
       "000008345",
       "000008337"
+    ],
+    "points": [
+      {
+        "models": 5,
+        "cost": 60
+      },
+      {
+        "models": 10,
+        "cost": 100
+      }
+    ],
+    "composition": [
+      "5-10 Ratlings"
+    ],
+    "wargearOptions": [
+      {
+        "text": "If this unit contains 10 models, one model’s sniper rifle can be replaced with 1 tankstopper rifle.",
+        "choices": []
+      },
+      {
+        "text": "If this unit contains 10 models, one model can be equipped with demolition gear.",
+        "choices": []
+      },
+      {
+        "text": "If this unit contains 10 models, it can be equipped with one Ratling Battlemutt.",
+        "choices": []
+      }
+    ],
+    "canBeLedBy": [
+      "000003937"
     ]
   },
   {
     "id": "000002610",
     "name": "Regimental Attachés",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "The Master of Ordnance and Officer of the Fleet are both equipped with: laspistol; close combat weapon. The Astropath is equipped with: laspistol; Astropath’s stave.",
     "models": [
       {
         "name": "Regimental Attachés",
@@ -16008,12 +20095,29 @@
       "Infantry",
       "Psyker"
     ],
-    "abilityIds": []
+    "abilityIds": [],
+    "points": [
+      {
+        "models": 3,
+        "cost": 40
+      }
+    ],
+    "composition": [
+      "1 Master of Ordnance, 1 Officer of the Fleet and 1 Astropath."
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
+    ]
   },
   {
     "id": "000001596",
     "name": "Rein And Raus",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "Rein is equipped with: sniper rifle; stub pistol; close combat weapon. Raus is equipped with: demolition charge; stub pistol; close combat weapon.",
     "models": [
       {
         "name": "Rein And Raus",
@@ -16095,12 +20199,30 @@
       "000008345",
       "000008336",
       "000008337"
+    ],
+    "points": [
+      {
+        "models": 2,
+        "cost": 50
+      }
+    ],
+    "composition": [
+      "1 Rein – EPIC HERO",
+      "1 Raus – EPIC HERO"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000002617",
     "name": "Rogal Dorn Battle Tank",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: castigator gatling cannon; heavy stubber; twin battle cannon; armoured tracks.",
     "models": [
       {
         "name": "Rogal Dorn Battle Tank",
@@ -16253,12 +20375,47 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 260
+      }
+    ],
+    "composition": [
+      "1 Rogal Dorn Battle Tank"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s twin battle cannon can be replaced with 1 oppressor cannon and 1 coaxial autocannon.",
+        "choices": []
+      },
+      {
+        "text": "This model’s castigator gatling cannon can be replaced with 1 pulveriser cannon.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "2 meltaguns",
+          "2 additional heavy stubbers"
+        ]
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "2 heavy bolters",
+          "2 multi-meltas"
+        ]
+      }
     ]
   },
   {
     "id": "000003892",
     "name": "Rogal Dorn Commander",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "This model is equipped with: castigator gatling cannon; heavy stubber; twin battle cannon; armoured tracks.",
     "models": [
       {
         "name": "Rogal Dorn Tank Commander",
@@ -16401,12 +20558,47 @@
     "abilityIds": [
       "000008339",
       "000008377"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 290
+      }
+    ],
+    "composition": [
+      "1 Rogal Dorn Tank Commander"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model's twin battle cannon can be replaced with 1 oppressor cannon and 1 coaxial autocannon.",
+        "choices": []
+      },
+      {
+        "text": "This model’s castigator gatling cannon can be replaced with 1 pulveriser cannon.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "2 meltaguns",
+          "2 additional heavy stubbers"
+        ]
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "2 heavy bolters",
+          "2 multi-meltas"
+        ]
+      }
     ]
   },
   {
     "id": "000002762",
     "name": "Rogue Trader Entourage",
     "faction": "AoI",
+    "role": "Characters",
+    "loadout": "The Rogue Trader is equipped with: household pistol; monomolecular cane-rapier. The Death Cult Assassin is equipped with: dartmask; Death Cult power blade. The Lectro-Maester is equipped with: voltaic pistol; close combat weapon. The Rejuvenat Adept is equipped with: laspistol; close combat weapon; healing serum.",
     "models": [
       {
         "name": "ROGUE TRADER",
@@ -16535,12 +20727,37 @@
     "abilityIds": [
       "000008346",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 4,
+        "cost": 75,
+        "note": "AGENTS OF THE IMPERIUM Detachment"
+      },
+      {
+        "models": 4,
+        "cost": 105,
+        "note": "Assigned Agent"
+      }
+    ],
+    "composition": [
+      "1 Rogue Trader",
+      "1 Death Cult Assassin",
+      "1 Lectro-Maester",
+      "1 Rejuvenat Adept"
+    ],
+    "wargearOptions": [],
+    "canLead": [
+      "000002509",
+      "000002587"
     ]
   },
   {
     "id": "000000758",
     "name": "Sabre Weapons Battery",
     "faction": "AM",
+    "role": "Fortifications",
+    "loadout": "Every model is equipped with: twin heavy bolter; close combat weapon.",
     "models": [
       {
         "name": "Sabre Weapons Battery",
@@ -16629,12 +20846,38 @@
       "Sabre Weapons Battery",
       "Imperium"
     ],
-    "abilityIds": []
+    "abilityIds": [],
+    "points": [
+      {
+        "models": 1,
+        "cost": 45
+      },
+      {
+        "models": 2,
+        "cost": 90
+      }
+    ],
+    "composition": [
+      "1-2 Sabre Gun Platforms"
+    ],
+    "wargearOptions": [
+      {
+        "text": "Any number of models’ twin heavy bolters can each be replaced with one of the following:",
+        "choices": [
+          "1 defence searchlight",
+          "1 twin autocannon",
+          "1 twin heavy stubber",
+          "1 twin lascannon"
+        ]
+      }
+    ]
   },
   {
     "id": "000000729",
     "name": "Salamander Command Vehicle",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: heavy bolter; heavy flamer; armoured tracks.",
     "models": [
       {
         "name": "Salamander Command Vehicle",
@@ -16739,12 +20982,36 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 80
+      }
+    ],
+    "composition": [
+      "1 Salamander Command Vehicle"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      }
     ]
   },
   {
     "id": "000000735",
     "name": "Salamander Scout Vehicle",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: autocannon; heavy bolter; armoured tracks.",
     "models": [
       {
         "name": "Salamander Scout Vehicle",
@@ -16847,12 +21114,36 @@
     "abilityIds": [
       "000008339",
       "000008344"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 95
+      }
+    ],
+    "composition": [
+      "1 Salamander Scout Vehicle"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      }
     ]
   },
   {
     "id": "000004074",
     "name": "Sanctifiers",
     "faction": "AoI",
+    "role": "Other",
+    "loadout": "The Miraculist is equipped with: holy fire; burning hands. The Salvationist is equipped with: close combat weapon; Salvationist medikit. The Death Cult Assassin is equipped with: Death Cult blades. 1 Missionary is equipped with: plasma gun; Sanctifier melee weapon. 1 Missionary is equipped with: Ministorum flamer; Sanctifier melee weapon. Every Sanctifier is equipped with: Ministorum hand flamer; Sanctifier melee weapon.",
     "models": [
       {
         "name": "Sanctifiers",
@@ -17010,12 +21301,51 @@
     "abilityIds": [
       "000008344",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 9,
+        "cost": 100
+      }
+    ],
+    "composition": [
+      "1 Miraculist",
+      "1 Salvationist",
+      "1 Death Cult Assassin",
+      "2 Missionaries",
+      "4 Sanctifiers"
+    ],
+    "wargearOptions": [
+      {
+        "text": "1 Missionary model can have its 1 plasma gun replaced with 1 meltagun.",
+        "choices": []
+      },
+      {
+        "text": "1 Missionary model equipped with 1 plasma gun can be equipped with 1 holy fire (this model’s plasma gun cannot be replaced).",
+        "choices": []
+      },
+      {
+        "text": "1 Sanctifier model can have its 1 Sanctifier melee weapon replaced with 1 Ministorum hand flamer and 1 close combat weapon.",
+        "choices": []
+      },
+      {
+        "text": "1 Sanctifier model can have its 1 Sanctifier melee weapon replaced with 1 close combat weapon and 1 simulacrum imperialis.",
+        "choices": []
+      }
+    ],
+    "canBeLedBy": [
+      "000002760",
+      "000000874",
+      "000000877",
+      "000003812"
     ]
   },
   {
     "id": "000000690",
     "name": "Scout Sentinels",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "Every model is equipped with: multi-laser; close combat weapon.",
     "models": [
       {
         "name": "Scout Sentinels",
@@ -17180,12 +21510,47 @@
     "abilityIds": [
       "000008339",
       "000008344"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 55
+      },
+      {
+        "models": 2,
+        "cost": 110
+      }
+    ],
+    "composition": [
+      "1-2 Scout Sentinels"
+    ],
+    "wargearOptions": [
+      {
+        "text": "Any number of models can each have their multi-laser replaced with one of the following:",
+        "choices": [
+          "1 autocannon",
+          "1 heavy flamer",
+          "1 lascannon",
+          "1 missile launcher",
+          "1 plasma cannon"
+        ]
+      },
+      {
+        "text": "Any number of models can each be equipped with 1 Sentinel chainsaw.",
+        "choices": []
+      },
+      {
+        "text": "Any number of models can each be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000000759",
     "name": "Sentinel Powerlifter",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: powerlifter.",
     "models": [
       {
         "name": "Sentinel Powerlifter",
@@ -17226,12 +21591,29 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 55
+      }
+    ],
+    "composition": [
+      "1 Sentinel Powerlifter"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000000714",
     "name": "Sergeant Harker",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "This model is equipped with: Payback; close combat weapon.",
     "models": [
       {
         "name": "Sergeant Harker",
@@ -17287,12 +21669,32 @@
       "000008346",
       "000008344",
       "000008377"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 40
+      }
+    ],
+    "composition": [
+      "1 Sergeant Harker – EPIC HERO"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
+    ],
+    "canLead": [
+      "000002614"
     ]
   },
   {
     "id": "000000707",
     "name": "Shadowsword",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: 2 lascannons; twin heavy bolter; 2 twin heavy flamers; volcano cannon; armoured tracks.",
     "models": [
       {
         "name": "Shadowsword",
@@ -17385,12 +21787,36 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 410
+      }
+    ],
+    "composition": [
+      "1 Shadowsword"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s 2 twin heavy flamers can be replaced with 2 twin heavy bolters.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "2 lascannons and 2 twin heavy bolters",
+          "2 lascannons and 2 twin heavy flamers"
+        ]
+      }
     ]
   },
   {
     "id": "000003819",
     "name": "Sisters of Battle Immolator",
     "faction": "AoI",
+    "role": "Dedicated Transports",
+    "loadout": "This model is equipped with: heavy bolter; immolation flamers; armoured tracks.",
     "models": [
       {
         "name": "Immolator",
@@ -17501,12 +21927,42 @@
     "abilityIds": [
       "000008339",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 100,
+        "note": "AGENTS OF THE IMPERIUM Detachment"
+      },
+      {
+        "models": 1,
+        "cost": 115,
+        "note": "Assigned Agent"
+      }
+    ],
+    "composition": [
+      "1 Immolator"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s immolation flamers can be replaced with one of the following:",
+        "choices": [
+          "1 twin heavy bolter",
+          "1 twin multi-melta"
+        ]
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000003818",
     "name": "Sisters of Battle Squad",
     "faction": "AoI",
+    "role": "Other",
+    "loadout": "Every model is equipped with: bolt pistol; boltgun; close combat weapon.",
     "models": [
       {
         "name": "Battle Sisters Squad",
@@ -17761,12 +22217,80 @@
     ],
     "abilityIds": [
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 10,
+        "cost": 100,
+        "note": "AGENTS OF THE IMPERIUM Detachment"
+      },
+      {
+        "models": 1,
+        "cost": 115,
+        "note": "Assigned Agent"
+      }
+    ],
+    "composition": [
+      "1 Sister Superior",
+      "9 Battle Sisters"
+    ],
+    "wargearOptions": [
+      {
+        "text": "The Sister Superior’s boltgun can be replaced with one of the following:",
+        "choices": [
+          "1 bolt pistol",
+          "1 combi-weapon",
+          "1 condemnor boltgun",
+          "1 inferno pistol",
+          "1 Ministorum hand flamer",
+          "1 plasma pistol"
+        ]
+      },
+      {
+        "text": "The Sister Superior can be equipped with one of the following:",
+        "choices": [
+          "1 chainsword",
+          "1 power weapon"
+        ]
+      },
+      {
+        "text": "1 Battle Sister’s boltgun can be replaced with one of the following:",
+        "choices": [
+          "1 artificer-crafted storm bolter",
+          "1 meltagun",
+          "1 Ministorum flamer"
+        ]
+      },
+      {
+        "text": "1 Battle Sister’s boltgun can be replaced with one of the following:",
+        "choices": [
+          "1 artificer-crafted storm bolter",
+          "1 heavy bolter",
+          "1 meltagun",
+          "1 Ministorum flamer",
+          "1 Ministorum heavy flamer",
+          "1 multi-melta"
+        ]
+      },
+      {
+        "text": "1 Battle Sister equipped with 1 boltgun can be equipped with 1 simulacrum imperialis (that model’s boltgun cannot be replaced).",
+        "choices": []
+      }
+    ],
+    "canBeLedBy": [
+      "000002760",
+      "000000874",
+      "000000877",
+      "000003812",
+      "000004173"
     ]
   },
   {
     "id": "000001406",
     "name": "Sly Marbo",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "This model is equipped with: ripper pistol; envenomed blade.",
     "models": [
       {
         "name": "Sly Marbo",
@@ -17826,12 +22350,24 @@
       "000008345",
       "000008336",
       "000008337"
-    ]
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 55
+      }
+    ],
+    "composition": [
+      "1 Sly Marbo – EPIC HERO"
+    ],
+    "wargearOptions": []
   },
   {
     "id": "000003827",
     "name": "Spectrus Kill Team",
     "faction": "AoI",
+    "role": "Other",
+    "loadout": "Every Kill Team Infiltrator is equipped with: bolt pistol; marksman bolt carbine; close combat weapon. Every Kill Team Infiltrator with bolt sniper rifle is equipped with: bolt pistol; bolt sniper rifle; close combat weapon. Every Kill Team Infiltrator with jump pack is equipped with: bolt pistol; accelerator autocannon; close combat weapon; jump pack. Every Kill Team Infiltrator with occulus bolt carbine is equipped with: bolt pistol; occulus bolt carbine; paired combat blades. Every Kill Team Infiltrator with combat knife is equipped with: special-issue bolt pistol; combat knife.",
     "models": [
       {
         "name": "Spectrus Kill Team",
@@ -18007,12 +22543,68 @@
       "000008344",
       "000008519",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 5,
+        "cost": 90
+      },
+      {
+        "models": 10,
+        "cost": 180
+      }
+    ],
+    "composition": [
+      "10 MODELS MAXIMUM",
+      "5-10 Kill Team Infiltrators",
+      "0-2 Kill Team Infiltrators with bolt sniper rifles",
+      "0-2 Kill Team Infiltrators with jump packs",
+      "0-4 Kill Team Infiltrators with occulus bolt carbines",
+      "0-4 Kill Team Infiltrators with combat knives"
+    ],
+    "wargearOptions": [
+      {
+        "text": "One model equipped with a marksman bolt carbine can be equipped with 1 helix gauntlet.*",
+        "choices": []
+      },
+      {
+        "text": "One model equipped with a marksman bolt carbine can be equipped with 1 Infiltrator comms array.*",
+        "choices": []
+      },
+      {
+        "text": "One model can replace its bolt sniper rifle with 1 bolt carbine.",
+        "choices": []
+      },
+      {
+        "text": "Any number of models can each replace their bolt sniper rifle with 1 las fusil.",
+        "choices": []
+      },
+      {
+        "text": "Any number of models can each replace their combat knife with 1 bolt carbine and 1 close combat weapon.",
+        "choices": []
+      }
+    ],
+    "wargearNotes": [
+      "* These options cannot be taken on the same model."
+    ],
+    "canBeLedBy": [
+      "000002090",
+      "000002760",
+      "000000874",
+      "000000876",
+      "000000877",
+      "000003814",
+      "000003815",
+      "000001579",
+      "000004173"
     ]
   },
   {
     "id": "000002379",
     "name": "Storm Chimera",
     "faction": "AM",
+    "role": "Dedicated Transports",
+    "loadout": "This model is equipped with: autocannon; heavy bolter; armoured tracks.",
     "models": [
       {
         "name": "Storm Chimera",
@@ -18131,12 +22723,40 @@
     "abilityIds": [
       "000008339",
       "000008334"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 90
+      }
+    ],
+    "composition": [
+      "1 Storm Chimera"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s heavy bolter can be replaced with 1 heavy flamer.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      }
     ]
   },
   {
     "id": "000000763",
     "name": "Stormblade",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: 2 lascannons; 1 Stormblade plasma blastgun; 2 twin heavy bolters; armoured tracks.",
     "models": [
       {
         "name": "Stormblade",
@@ -18281,12 +22901,47 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 415
+      }
+    ],
+    "composition": [
+      "1 Stormblade"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s 2 twin heavy bolters can be replaced with 2 twin heavy flamers.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "2 lascannons and 2 twin heavy bolters",
+          "2 lascannons and 2 twin heavy flamers"
+        ]
+      }
     ]
   },
   {
     "id": "000000708",
     "name": "Stormlord",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: 2 heavy stubbers; 2 lascannons; twin heavy bolter; 2 twin heavy flamers; vulcan mega-bolter; armoured tracks",
     "models": [
       {
         "name": "Stormlord",
@@ -18393,12 +23048,36 @@
     "abilityIds": [
       "000008339",
       "000008334"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 430
+      }
+    ],
+    "composition": [
+      "1 Stormlord"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s 2 twin heavy flamers can be replaced with 2 twin heavy bolters.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "2 lascannons and 2 twin heavy bolters",
+          "2 lascannons and 2 twin heavy flamers"
+        ]
+      }
     ]
   },
   {
     "id": "000000709",
     "name": "Stormsword",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: 2 lascannons; Stormsword siege cannon; twin heavy bolter; 2 twin heavy flamers; armoured tracks.",
     "models": [
       {
         "name": "Stormsword",
@@ -18491,12 +23170,36 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 465
+      }
+    ],
+    "composition": [
+      "1 Stormsword"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s 2 twin heavy flamers can be replaced with 2 twin heavy bolters.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "2 lascannons and 2 twin heavy bolters",
+          "2 lascannons and 2 twin heavy flamers"
+        ]
+      }
     ]
   },
   {
     "id": "000000760",
     "name": "Stygies Destroyer Tank Hunter",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: Stygies laser destroyer; armoured tracks.",
     "models": [
       {
         "name": "Stygies Destroyer Tank Hunter",
@@ -18587,12 +23290,36 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 180
+      }
+    ],
+    "composition": [
+      "1 Stygies Destroyer Tank Hunter"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      }
     ]
   },
   {
     "id": "000002684",
     "name": "Subductor Squad",
     "faction": "AoI",
+    "role": "Other",
+    "loadout": "Every Proctor-Subductor and Subductor is equipped with: Arbites shotpistol; shock maul. The Cyber-mastiff is equipped with: mechanical bite.",
     "models": [
       {
         "name": "Subductor Squad",
@@ -18655,12 +23382,47 @@
     ],
     "abilityIds": [
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 11,
+        "cost": 85,
+        "note": "AGENTS OF THE IMPERIUM Detachment"
+      },
+      {
+        "models": 11,
+        "cost": 100,
+        "note": "Assigned Agent"
+      }
+    ],
+    "composition": [
+      "1 Proctor-Subductor",
+      "9 Subductors",
+      "1 Cyber-mastiff"
+    ],
+    "wargearOptions": [
+      {
+        "text": "The Proctor-Subductor can be equipped with 1 nuncio aquila.",
+        "choices": []
+      }
+    ],
+    "canBeLedBy": [
+      "000002090",
+      "000000874",
+      "000000876",
+      "000000877",
+      "000003812",
+      "000001579",
+      "000004173",
+      "000002760"
     ]
   },
   {
     "id": "000000762",
     "name": "Tarantula Battery",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "Every model is equipped with: twin heavy bolter; close combat weapon.",
     "models": [
       {
         "name": "Tarantula Battery",
@@ -18724,12 +23486,37 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 40
+      },
+      {
+        "models": 2,
+        "cost": 80
+      },
+      {
+        "models": 3,
+        "cost": 120
+      }
+    ],
+    "composition": [
+      "1-3 Tarantula Sentry Guns"
+    ],
+    "wargearOptions": [
+      {
+        "text": "Any number of models can each have their twin heavy bolter replaced with 1 twin lascannon.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000000736",
     "name": "Tauros Assault Vehicle",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: heavy flamer; armoured frame.",
     "models": [
       {
         "name": "Tauros Assault Vehicle",
@@ -18819,12 +23606,33 @@
     "abilityIds": [
       "000008339",
       "000008344"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 50
+      }
+    ],
+    "composition": [
+      "1 Tauros Assault Vehicle"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s heavy flamer can be replaced with 1 Tauros grenade launcher.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000000737",
     "name": "Tauros Venator",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: twin multi-laser; armoured frame.",
     "models": [
       {
         "name": "Tauros Venator",
@@ -18901,12 +23709,33 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 50
+      }
+    ],
+    "composition": [
+      "1 Tauros Venator"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s twin multi-laser can be replaced with 1 twin lascannon.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000000693",
     "name": "Taurox",
     "faction": "AM",
+    "role": "Dedicated Transports",
+    "loadout": "This model is equipped with: twin autocannon; armoured tracks.",
     "models": [
       {
         "name": "Taurox",
@@ -18972,12 +23801,29 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 75
+      }
+    ],
+    "composition": [
+      "1 Taurox"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model can be equipped with 1 storm bolter.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000000721",
     "name": "Taurox Prime",
     "faction": "AM",
+    "role": "Dedicated Transports",
+    "loadout": "This model is equipped with: Taurox battle cannon; twin Taurox hot-shot volley gun; armoured tracks.",
     "models": [
       {
         "name": "Taurox Prime",
@@ -19111,12 +23957,40 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 90
+      }
+    ],
+    "composition": [
+      "1 Taurox Prime"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s Taurox battle cannon can be replaced with one of the following:",
+        "choices": [
+          "1 Taurox gatling cannon",
+          "1 Taurox missile launcher"
+        ]
+      },
+      {
+        "text": "This model’s twin Taurox hot-shot volley gun can be replaced with 1 twin autocannon.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with 1 storm bolter.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000001396",
     "name": "Tech-Priest Enginseer",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "This model is equipped with: Mechanicus pistol; Enginseer axe; servo-arm.",
     "models": [
       {
         "name": "Tech-Priest Enginseer",
@@ -19180,12 +24054,36 @@
     ],
     "abilityIds": [
       "000008346"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 45
+      }
+    ],
+    "composition": [
+      "1 Tech-Priest Enginseer"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
+    ],
+    "canLead": [
+      "000003893",
+      "000002614",
+      "000002615",
+      "000002613",
+      "000002612"
     ]
   },
   {
     "id": "000003834",
     "name": "Tempestus Aquilons",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "The Tempestor Aquilon is equipped with: hot-shot lascarbine; sentry flamer; close combat weapon. Every Tempestus Aquilon is equipped with: hot-shot lascarbine; close combat weapon.",
     "models": [
       {
         "name": "Tempestus Aquilons",
@@ -19390,12 +24288,67 @@
     ],
     "abilityIds": [
       "000008343"
+    ],
+    "points": [
+      {
+        "models": 10,
+        "cost": 100
+      }
+    ],
+    "composition": [
+      "1 Tempestor Aquilon",
+      "9 Tempestus Aquilons"
+    ],
+    "wargearOptions": [
+      {
+        "text": "The Tempestor Aquilon’s sentry flamer can be replaced with one of the following:",
+        "choices": [
+          "1 sentry hot-shot volley gun",
+          "1 sentry grenade launcher"
+        ]
+      },
+      {
+        "text": "The Tempestor Aquilon’s hot-shot lascarbine can be replaced with one of the following:",
+        "choices": [
+          "1 chainsword",
+          "1 power weapon",
+          "1 hot-shot laspistol"
+        ]
+      },
+      {
+        "text": "The Tempestor Aquilon can be equipped with one of the following:",
+        "choices": [
+          "1 bolt pistol",
+          "1 hot-shot laspistol"
+        ]
+      },
+      {
+        "text": "One Tempestus Aquilon’s hot‑shot lascarbine can be replaced with 1 of the following:",
+        "choices": [
+          "1 melta carbine",
+          "1 plasma carbine"
+        ]
+      },
+      {
+        "text": "One Tempestus Aquilon’s hot-shot lascarbine can be replaced with 2 hot-shot laspistols.",
+        "choices": []
+      },
+      {
+        "text": "One Tempestus Aquilon’s hot-shot lascarbine can be replaced with 1 hot-shot long-las.",
+        "choices": []
+      },
+      {
+        "text": "Up to two Tempestus Aquilons can each have their hot-shot lascarbine replaced with 1 hot-shot laspistol.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000002746",
     "name": "Tempestus Scions",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "The Tempestor is equipped with: hot-shot laspistol; chainsword. Every Tempestus Scion is equipped with: hot-shot lasgun; close combat weapon. This unit can have up to two Leader units attached to it, provided no more than one of those units is a Command Squad unit. If it does, and this Bodyguard unit is destroyed, the Leader units attached to it become separate units, with their original Starting Strengths.",
     "models": [
       {
         "name": "Tempestus Scions",
@@ -19621,12 +24574,69 @@
     ],
     "abilityIds": [
       "000008343"
+    ],
+    "points": [
+      {
+        "models": 5,
+        "cost": 70
+      },
+      {
+        "models": 10,
+        "cost": 140
+      }
+    ],
+    "composition": [
+      "1 Tempestor",
+      "4-9 Tempestus Scions"
+    ],
+    "wargearOptions": [
+      {
+        "text": "For every 5 models in this unit, up to two Tempestus Scions can each have their hot-shot lasgun replaced with one of the following*:",
+        "choices": [
+          "1 flamer",
+          "1 grenade launcher",
+          "1 hot-shot volley gun",
+          "1 meltagun",
+          "1 plasma gun"
+        ]
+      },
+      {
+        "text": "1 Tempestus Scion’s hot-shot lasgun can be replaced with 1 hot-shot laspistol and 1 vox-caster.",
+        "choices": []
+      },
+      {
+        "text": "The Tempestor’s chainsword can be replaced with one of the following:",
+        "choices": [
+          "1 power fist",
+          "1 power weapon"
+        ]
+      },
+      {
+        "text": "The Tempestor’s hot-shot laspistol can be replaced with one of the following:",
+        "choices": [
+          "1 bolt pistol",
+          "1 plasma pistol"
+        ]
+      }
+    ],
+    "wargearNotes": [
+      "* You cannot select the same weapon from this list more than once per unit, unless this unit contains 10 models, in which case you cannot select the same weapon more than twice per unit."
+    ],
+    "canBeLedBy": [
+      "000001394",
+      "000000889",
+      "000000716",
+      "000000719",
+      "000004216",
+      "000004218"
     ]
   },
   {
     "id": "000000733",
     "name": "Trojan Support Vehicle",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: heavy bolter; armoured tracks.",
     "models": [
       {
         "name": "Trojan Support Vehicle",
@@ -19705,12 +24715,33 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 80
+      }
+    ],
+    "composition": [
+      "1 Trojan Support Vehicle"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s heavy bolter can be replaced with 1 heavy flamer.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000002766",
     "name": "UR-025",
     "faction": "AoI",
+    "role": "Characters",
+    "loadout": "This model is equipped with: Mk 1 assault weapon; power claw.",
     "models": [
       {
         "name": "Ur-025",
@@ -19762,12 +24793,29 @@
     "abilityIds": [
       "000008336",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 55
+      }
+    ],
+    "composition": [
+      "1 UR-025 – EPIC HERO"
+    ],
+    "wargearOptions": [
+      {
+        "text": "None",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000002606",
     "name": "Ursula Creed",
     "faction": "AM",
+    "role": "Characters",
+    "loadout": "This model is equipped with: Duty and Vengeance; power weapon.",
     "models": [
       {
         "name": "Ursula Creed",
@@ -19821,12 +24869,28 @@
     "abilityIds": [
       "000008346",
       "000008377"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 85
+      }
+    ],
+    "composition": [
+      "1 Ursula Creed – EPIC HERO"
+    ],
+    "wargearOptions": [],
+    "canLead": [
+      "000002615",
+      "000002612"
     ]
   },
   {
     "id": "000000777",
     "name": "Valdor",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: autocannon; Valdor neutron laser; armoured tracks.",
     "models": [
       {
         "name": "Valdor",
@@ -19966,12 +25030,44 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 285
+      }
+    ],
+    "composition": [
+      "1 Valdor"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s autocannon can be replaced with one of the following:",
+        "choices": [
+          "1 heavy bolter",
+          "1 heavy flamer",
+          "1 lascannon"
+        ]
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with one of the following:",
+        "choices": [
+          "1 heavy stubber",
+          "1 storm bolter"
+        ]
+      }
     ]
   },
   {
     "id": "000000727",
     "name": "Valkyrie",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: hellstrike missiles; multi-laser; armoured hull.",
     "models": [
       {
         "name": "Valkyrie",
@@ -20073,12 +25169,37 @@
     "abilityIds": [
       "000008339",
       "000008342"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 190
+      }
+    ],
+    "composition": [
+      "1 Valkyrie"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s multi-laser can be replaced with 1 lascannon.",
+        "choices": []
+      },
+      {
+        "text": "This model’s hellstrike missiles can be replaced with 2 multiple rocket pods.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with 2 heavy bolters.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000001237",
     "name": "Valkyrie Sky Talon",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: heavy bolter; 2 hellstrike missiles; armoured hull.",
     "models": [
       {
         "name": "Valkyrie Sky Talon",
@@ -20158,12 +25279,29 @@
     "abilityIds": [
       "000008339",
       "000008342"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 185
+      }
+    ],
+    "composition": [
+      "1 Valkyrie Sky Talon"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s 2 hellstrike missiles can be replaced with 2 multiple rocket pods.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000000783",
     "name": "Vendetta Gunship",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: 3 Vendetta twin lascannons; armoured hull.",
     "models": [
       {
         "name": "Vendetta Gunship",
@@ -20243,12 +25381,33 @@
     "abilityIds": [
       "000008339",
       "000008342"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 255
+      }
+    ],
+    "composition": [
+      "1 Vendetta Gunship"
+    ],
+    "wargearOptions": [
+      {
+        "text": "2 of this model’s Vendetta twin lascannons can be replaced with 1 Vendetta hellstrike rack.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with 2 heavy bolters.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000003823",
     "name": "Veteran Bike Squad",
     "faction": "AoI",
+    "role": "Other",
+    "loadout": "Every model is equipped with: bolt pistol; close combat weapon; twin boltgun.",
     "models": [
       {
         "name": "Veteran Bike Squad",
@@ -20352,12 +25511,43 @@
     ],
     "abilityIds": [
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 3,
+        "cost": 70
+      },
+      {
+        "models": 6,
+        "cost": 140
+      }
+    ],
+    "composition": [
+      "1 Veteran Biker Sergeant",
+      "2-5 Veteran Bikers"
+    ],
+    "wargearOptions": [
+      {
+        "text": "The Veteran Biker Sergeant can be equipped with one of the following:",
+        "choices": [
+          "1 Long Vigil ranged weapon",
+          "1 Long Vigil melee weapon",
+          "1 xenophase blade",
+          "1 Astartes shield"
+        ]
+      },
+      {
+        "text": "Any number of Veteran Biker models can each be equipped with 1 Long Vigil melee weapon.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000002683",
     "name": "Vigilant Squad",
     "faction": "AoI",
+    "role": "Battleline",
+    "loadout": "Every Proctor-Vigilant and Vigilant is equipped with: Arbites combat shotgun; Arbites shotpistol; close combat weapon. The Cyber-mastiff is equipped with: mechanical bite.",
     "models": [
       {
         "name": "Vigilant Squad",
@@ -20499,12 +25689,57 @@
     ],
     "abilityIds": [
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 11,
+        "cost": 85
+      }
+    ],
+    "composition": [
+      "1 Proctor-Vigilant",
+      "9 Vigilants",
+      "1 Cyber-mastiff"
+    ],
+    "wargearOptions": [
+      {
+        "text": "Up to 2 Vigilants can each have their Arbites combat shotgun replaced with one of the following (duplicates are not allowed):",
+        "choices": [
+          "1 executioner shotgun",
+          "1 Arbites grenade launcher",
+          "1 heavy stubber",
+          "1 webber"
+        ]
+      },
+      {
+        "text": "The Proctor-Vigilant can be equipped with 1 nuncio aquila.",
+        "choices": []
+      }
+    ],
+    "canBeLedBy": [
+      "000002090",
+      "000002090",
+      "000002760",
+      "000002760",
+      "000000874",
+      "000000874",
+      "000000876",
+      "000000876",
+      "000000877",
+      "000003812",
+      "000001579",
+      "000001579",
+      "000000877",
+      "000004173",
+      "000004173"
     ]
   },
   {
     "id": "000000870",
     "name": "Vindicare Assassin",
     "faction": "AoI",
+    "role": "Characters",
+    "loadout": "This model is equipped with: exitus pistol; exitus rifle; Vindicare combat knife.",
     "models": [
       {
         "name": "Vindicare Assassin",
@@ -20580,12 +25815,30 @@
       "000008336",
       "000008337",
       "000008452"
-    ]
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 110,
+        "note": "AGENTS OF THE IMPERIUM Detachment"
+      },
+      {
+        "models": 1,
+        "cost": 125,
+        "note": "Assigned Agent"
+      }
+    ],
+    "composition": [
+      "1 Vindicare Assassin – EPIC HERO"
+    ],
+    "wargearOptions": []
   },
   {
     "id": "000002509",
     "name": "Voidsmen-at-arms",
     "faction": "AoI",
+    "role": "Other",
+    "loadout": "The Voidmaster is equipped with: artificer shotgun; laspistol; close combat weapon. One Voidsman is equipped with: laspistol; Voidsman rotor cannon; close combat weapon. Every other Voidsman is equipped with: lasgun; laspistol; close combat weapon. The Canid is equipped with: vicious bite.",
     "models": [
       {
         "name": "Voidsmen-at-arms",
@@ -20687,12 +25940,38 @@
     ],
     "abilityIds": [
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 6,
+        "cost": 50,
+        "note": "AGENTS OF THE IMPERIUM Detachment"
+      },
+      {
+        "models": 6,
+        "cost": 70,
+        "note": "Assigned Agent"
+      }
+    ],
+    "composition": [
+      "1 Voidmaster",
+      "4 Voidsmen",
+      "1 Canid"
+    ],
+    "wargearOptions": [],
+    "canBeLedBy": [
+      "000002762",
+      "000002763",
+      "000002764",
+      "000002765"
     ]
   },
   {
     "id": "000000781",
     "name": "Voss-pattern Lightning",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: 2 lascannons; armoured hull.",
     "models": [
       {
         "name": "Voss-pattern Lightning",
@@ -20755,12 +26034,29 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 130
+      }
+    ],
+    "composition": [
+      "1 Voss-pattern Lightning"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model can be equipped with 1 Lightning hellstrike rack.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000000784",
     "name": "Vulture Gunship",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: heavy bolter; 2 multiple rocket pods; Vulture hellstrike racks; armoured hull.",
     "models": [
       {
         "name": "Vulture Gunship",
@@ -20852,12 +26148,29 @@
     "abilityIds": [
       "000008339",
       "000008342"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 225
+      }
+    ],
+    "composition": [
+      "1 Vulture Gunship"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s 2 multiple rocket pods and Vulture hellstrike rack can be replaced with 2 Vulture gatling cannons.",
+        "choices": []
+      }
     ]
   },
   {
     "id": "000003814",
     "name": "Watch Captain Artemis",
     "faction": "AoI",
+    "role": "Characters",
+    "loadout": "This model is equipped with: Hellfire Extremis; master-crafted power weapon.",
     "models": [
       {
         "name": "Watch Captain Artemis",
@@ -20917,12 +26230,34 @@
       "000008338",
       "000008346",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 65
+      }
+    ],
+    "composition": [
+      "1 Watch Captain Artemis"
+    ],
+    "wargearOptions": [],
+    "canLead": [
+      "000003816",
+      "000003821",
+      "000003822",
+      "000003824",
+      "000003825",
+      "000003826",
+      "000003827",
+      "000004174"
     ]
   },
   {
     "id": "000003815",
     "name": "Watch Master",
     "faction": "AoI",
+    "role": "Characters",
+    "loadout": "This model is equipped with: vigil spear.",
     "models": [
       {
         "name": "Watch Master",
@@ -20977,12 +26312,40 @@
     "abilityIds": [
       "000008346",
       "000008452"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 95,
+        "note": "AGENTS OF THE IMPERIUM Detachment"
+      },
+      {
+        "models": 1,
+        "cost": 105,
+        "note": "Assigned Agent"
+      }
+    ],
+    "composition": [
+      "1 Watch Master"
+    ],
+    "wargearOptions": [],
+    "canLead": [
+      "000003822",
+      "000003827",
+      "000003824",
+      "000003826",
+      "000003825",
+      "000003816",
+      "000003821",
+      "000004174"
     ]
   },
   {
     "id": "000000697",
     "name": "Wyvern",
     "faction": "AM",
+    "role": "Other",
+    "loadout": "This model is equipped with: heavy bolter; Wyvern quad stormshard mortar; armoured tracks.",
     "models": [
       {
         "name": "Wyvern",
@@ -21077,6 +26440,25 @@
     ],
     "abilityIds": [
       "000008339"
+    ],
+    "points": [
+      {
+        "models": 1,
+        "cost": 110
+      }
+    ],
+    "composition": [
+      "1 Wyvern"
+    ],
+    "wargearOptions": [
+      {
+        "text": "This model’s heavy bolter can be replaced with 1 heavy flamer.",
+        "choices": []
+      },
+      {
+        "text": "This model can be equipped with 1 hunter-killer missile.",
+        "choices": []
+      }
     ]
   }
 ]
