@@ -330,6 +330,23 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-06-09] — Fidelity pass: fight pile-in/consolidate, leaders move together, battle-shock dice.**
+  Closed three of the gaps the previous entry left open. All gates green: `pnpm typecheck`,
+  `pnpm test` (**192 tests**), `pnpm build`.
+  - **Fight phase moves** — `engine.resolveFightMove` + the `FightMove` intent: **Pile In** and
+    **Consolidate** move a unit up to **3" toward the nearest enemy** (coherency-preserving rigid
+    translate, capped at base contact). `GamePanel`'s Fight block shows the **activation order**
+    (Fights First then alternating) with each unit's fought/charged state, plus Pile In / Consolidate
+    buttons. So a fight now reads: pick the unit → Pile In → resolve melee → Consolidate.
+  - **Leaders move together** — selecting a unit for movement now also selects its **attached Leader /
+    Bodyguard** (drag-box or click), so an Attached unit moves as one. (Targeting protection was
+    already in via `isLeaderProtected`.)
+  - **Battle-shock dice** — `runCommandPhase` records a `BattleShockReport[]` (unit, 2D6, Ld,
+    pass/fail) on the state; the Command-phase panel renders the **2D6 as dice**.
+  - **Still open (next):** multi-target charge pathing / not ending in a non-target's ER; a true
+    single-activation Leader+Bodyguard *merge* (they're linked + move together, but still two unit
+    instances); AM **Orders** + the 3 **detachment rules** + per-unit specials (need `docs/lists/*.md`).
+
 - **[2026-06-09] — A playable game: deployment → all five phases, deeply programmed for the AI.**
   Turned the Measuring Board into an actual 10e game flow. The whole game-logic layer is **pure,
   framework-free, and AI-callable** (the explicit goal: an AI just calls functions). All gates green:
