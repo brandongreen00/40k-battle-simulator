@@ -10,6 +10,7 @@ import {
 } from '../core/phases';
 import { usableStratagems } from '../core/stratagems';
 import { stratagems } from '../data/loaders';
+import { Die } from './Dice';
 import { OWNER_COLOR } from './view';
 import type { Side } from '../core/types';
 
@@ -131,6 +132,22 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
           </div>
         ))}
       </div>
+
+      {/* Command phase — Battle-shock dice */}
+      {state.phase === 'Command' && state.lastBattleShock && state.lastBattleShock.length > 0 && (
+        <div className="phase-block">
+          <h3>Battle-shock</h3>
+          {state.lastBattleShock.map((r) => (
+            <div key={r.unitId} className="bs-row">
+              <Die value={r.roll[0]} size={24} />
+              <Die value={r.roll[1]} size={24} />
+              <span className={r.passed ? 'ok' : 'coh-bad'}>
+                {r.unitName}: {r.total} vs Ld {r.ld}+ → {r.passed ? 'passed' : 'BATTLE-SHOCKED'}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Movement phase */}
       {state.phase === 'Movement' && (

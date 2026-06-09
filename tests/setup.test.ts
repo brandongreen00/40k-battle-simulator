@@ -185,6 +185,20 @@ describe('movement budget + coherency gate', () => {
   });
 });
 
+describe('command phase battle-shock report', () => {
+  it('records the 2D6 dice for a below-half unit so the UI can render them', () => {
+    const u: UnitInstance = {
+      id: 'u', owner: 'player', datasheetId: 'trooper', startingModels: 4, status: {},
+      models: [{ id: 'u:m0', unitId: 'u', pos: { x: 5, y: 5 }, wounds: 1, alive: true }], // 1 of 4 -> below half
+    };
+    const s: GameState = { ...createInitialState(layout), units: [u], activePlayer: 'player', round: 2 };
+    const r = reduce(s, { type: 'RunCommandPhase' }, makeRNG(2), ctx);
+    expect(r.lastBattleShock?.length).toBeGreaterThan(0);
+    expect(r.lastBattleShock![0]!.roll).toHaveLength(2);
+    expect(r.lastBattleShock![0]!.unitName).toBe('trooper');
+  });
+});
+
 describe('reserves / deep strike arrival', () => {
   const reserveUnit = (): UnitInstance => ({
     id: 'ds', owner: 'player', datasheetId: 'trooper',

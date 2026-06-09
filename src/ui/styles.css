@@ -968,3 +968,14 @@ button.remove {
   height: 8px;
   margin-right: 4px;
 }
+
+.bs-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0;
+  font-size: 12px;
+}
+.bs-row .ok {
+  color: #8fd98f;
+}

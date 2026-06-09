@@ -196,6 +196,16 @@ export interface UnitInstance {
   leaderUnitIds?: string[];
 }
 
+/** A resolved Battle-shock test, kept on the state so the UI can render its 2D6 as dice. */
+export interface BattleShockReport {
+  unitId: string;
+  unitName: string;
+  roll: [number, number];
+  total: number;
+  ld: number;
+  passed: boolean;
+}
+
 // ── Pre-battle setup / deployment ────────────────────────────────────────────
 export type Stage = 'setup' | 'battle' | 'done';
 
@@ -239,4 +249,6 @@ export interface GameState {
   ended: boolean;
   /** Human-readable event/dice log, newest last. */
   log: string[];
+  /** Battle-shock tests from the most recent Command phase (for the dice display). */
+  lastBattleShock?: BattleShockReport[];
 }

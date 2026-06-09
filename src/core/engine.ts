@@ -267,6 +267,7 @@ export function runCommandPhase(state: GameState, ctx: EngineContext, rng: RNG):
   log.push(`${side} gains 1 CP (now ${cp[side]})`);
 
   // 2. Battle-shock tests for the active player's below-half units.
+  const reports: import('./types').BattleShockReport[] = [];
   const units = state.units.map((u) => {
     if (u.owner !== side) return u;
     const ds = ctx.datasheets.get(u.datasheetId);
@@ -278,6 +279,7 @@ export function runCommandPhase(state: GameState, ctx: EngineContext, rng: RNG):
       u.startingModels === 1 ? u.models[0]!.wounds / Math.max(1, ds.models[0]!.W) : undefined;
     const test = battleShockTest(alive, u.startingModels, ld, rng, woundsFraction);
     if (test.required) {
+      reports.push({ unitId: u.id, unitName: ds.name, roll: [test.roll[0]!, test.roll[1]!], total: test.total, ld, passed: test.passed });
       log.push(
         `${ds.name} Battle-shock: ${test.roll.join('+')}=${test.total} vs Ld ${ld}+ → ${test.passed ? 'passed' : 'BATTLE-SHOCKED'}`,
       );
@@ -297,7 +299,7 @@ export function runCommandPhase(state: GameState, ctx: EngineContext, rng: RNG):
     }
   }
 
-  return { ...state, units, cp, score, log: [...state.log, ...log] };
+  return { ...state, units, cp, score, lastBattleShock: reports, log: [...state.log, ...log] };
 }
 
 // ── Charges (Phase 2) ───────────────────────────────────────────────────────────
