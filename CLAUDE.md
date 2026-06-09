@@ -323,6 +323,41 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-06-09] — Army List Builder (Imperial Agents + Astra Militarum).** Built on a separate
+  branch/PR off merged main. All gates green: `pnpm typecheck`, `pnpm test` (37 tests), `pnpm build`.
+
+  **Done:**
+  - **Data ingest extended** — now also pulls `Datasheets_models_cost` (points per model-count
+    tier), `Datasheets_options` (parsed into lead-in text + `<li>` choices), `Datasheets_unit_composition`,
+    `Datasheets_leader`, plus `role` and default `loadout` from `Datasheets`. Added an HTML-stripper.
+    Reshaped `enhancements.json` into a typed `Enhancement` (numeric cost). Datasheet type extended
+    with `role/loadout/points/composition/wargearOptions/wargearNotes/canLead/canBeLedBy`.
+  - **Pure army engine** (`src/core/army.ts`) — `unitCost`/`listPoints`, `validate` (points limit,
+    enhancement legality [Character & not Epic Hero, ≤1/unit, ≤3/army, detachment-scoped], datasheet
+    copy limits by battle size, Epic-Hero uniqueness, Warlord), pure list edits, and `toRoster()`.
+    10 unit tests.
+  - **List builder UI** (`src/ui/listbuilder/`, reachable from a new top-nav) — searchable catalog
+    grouped by role; add units; model-count tier selector (points-correct); detachment-scoped
+    enhancement picker; Warlord; leader attach; wargear-swap selection. Live points bar + validation
+    panel. Save to localStorage, export Roster JSON, "Open in board". The board was refactored into
+    `MeasuringBoard.tsx` and accepts a built roster.
+
+  **Decisions:**
+  - **Wargear is free in 10e** — confirmed from the cost data (tiers are purely "N models"). Points
+    come only from unit size + enhancements. Weapon swaps are tracked as advisory loadout choices
+    (official option text shown) but never change points. Communicated in-UI and in the README.
+  - Wargear swap *limits* (e.g. "1 per 5 models") are natural-language in Wahapedia and are NOT
+    hard-enforced — the builder shows the rule text and lets you select; enforcement would need
+    hand-curated data (BattleScribe-style). Flagged as advisory.
+  - Battle-size copy limits: Incursion 3 Battleline / 2 other, Strike Force 6/3, Combat Patrol
+    treated as a 500pt cap. Epic Heroes 0-1. Imperial-Agents *allying* into other armies is not
+    modelled (each list is single-faction).
+  - The 4 new CSVs are downloaded by `pnpm ingest`; re-run with `REFRESH=1` to refresh.
+
+  **Handoff / possible next:** weapon-swap limit enforcement would need curated data; the board
+  could preserve spawned units across tab switches; and the three owned `docs/lists/*.md` are still
+  missing (rosters remain empty scaffolds — the builder is now the fastest way to create lists).
+
 - **[2026-06-09] — Stage 1 (Phase 0) implemented: the measuring board.**
   Built the foundation end-to-end. All gates green: `pnpm typecheck`, `pnpm test` (26 tests),
   `pnpm build` all pass, and the production build uses the correct Pages base path.
