@@ -9,6 +9,9 @@ const base = process.env.BASE_PATH ?? '/40k-battle-simulator/';
 export default defineConfig({
   base,
   plugins: [react()],
+  // We intentionally bundle the committed game data (datasheets/enhancements) for offline use;
+  // raise the warning threshold so the expected single large chunk isn't flagged.
+  build: { chunkSizeWarningLimit: 1500 },
   test: {
     environment: 'jsdom',
     globals: true,
