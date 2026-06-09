@@ -17,12 +17,24 @@ interface Props {
 }
 
 export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) {
-  const layout = layouts[0];
   const [state, dispatch] = useReducer(
     (s: ReturnType<typeof createInitialState>, i: Intent) => reduce(s, i, rng),
-    layout,
+    layouts[0],
     createInitialState,
   );
+  // The reducer owns the active layout; the selector drives it via SetLayout.
+  const layout = state.layout;
+
+  // Group the layouts by deployment for the map picker (8 terrain layouts per deployment).
+  const layoutGroups = useMemo(() => {
+    const groups = new Map<string, typeof layouts>();
+    for (const l of layouts) {
+      const key = l.deployment;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(l);
+    }
+    return [...groups.entries()];
+  }, []);
 
   const allRosters = useMemo(() => [...extraRosters, ...rosters], [extraRosters]);
   const [rosterName, setRosterName] = useState<string>(
@@ -65,10 +77,31 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
     <div className="layout">
       <aside className="sidebar">
         <p className="muted">
-          {layout.name ?? layout.id} · {layout.deployment} · {layout.boardWidth}"×{layout.boardHeight}"
+          {layout.deployment} · {layout.boardWidth}"×{layout.boardHeight}"
         </p>
 
         <section>
+          <label className="field">
+            <span>Map</span>
+            <select
+              value={layout.id}
+              onChange={(e) => {
+                const next = layouts.find((l) => l.id === e.target.value);
+                if (next) dispatch({ type: 'SetLayout', layout: next });
+              }}
+            >
+              {layoutGroups.map(([deployment, group]) => (
+                <optgroup key={deployment} label={deployment}>
+                  {group.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.name?.split('·').pop()?.trim() ?? l.id}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </label>
+
           <label className="field">
             <span>Roster</span>
             <select value={rosterName} onChange={(e) => setRosterName(e.target.value)}>

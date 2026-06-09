@@ -115,6 +115,10 @@ export interface TerrainPiece {
   id: string;
   type: TerrainType;
   polygon: Vec2[]; // footprint, inches, board coords
+  /** Tall = blocks line of sight (grey ruin); low = ≤2" area terrain (blue). */
+  height?: 'tall' | 'low';
+  /** Provenance of the footprint, e.g. "L 12x6" (labrador feature + dimensions). */
+  source?: string;
   /** Optional human note (e.g. transcription assumption). */
   note?: string;
 }
@@ -125,9 +129,17 @@ export interface Layout {
   boardWidth: number; // 60
   boardHeight: number; // 44
   deployment: string; // "Hammer and Anvil"
+  /** Stable deployment id from the source pack, e.g. "hammer-and-anvil-sf-2025". */
+  deploymentId?: string;
+  /** Where the layout came from (e.g. labrador.dev + extractor). */
+  source?: string;
   terrain: TerrainPiece[];
-  objectives: Vec2[]; // marker centres (40mm markers)
-  deploymentZones: { player: Vec2[]; opponent: Vec2[] }; // polygons
+  objectives: Vec2[]; // marker centres
+  /** Objective marker diameter in inches (40mm ≈ 1.575"). Uniform across GW maps. */
+  objectiveMarkerDiameterIn?: number;
+  /** Horizontal objective-control range in inches (3" in Pariah Nexus / Chapter Approved). */
+  objectiveControlRadiusIn?: number;
+  deploymentZones: { player: Vec2[]; opponent: Vec2[] }; // polygons (attacker→player, defender→opponent)
 }
 
 // ── Live game state (skeleton; grows in later stages) ────────────────────────

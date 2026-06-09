@@ -1,10 +1,10 @@
 {
-  "id": "ca2025-hammer-and-anvil-1",
-  "name": "GW Chapter Approved 2025–2026 · Hammer and Anvil · Terrain Layout 1",
+  "id": "ca2025-tipping-point-1",
+  "name": "GW Chapter Approved 2025–2026 · Tipping Point · Terrain Layout 1",
   "boardWidth": 60,
   "boardHeight": 44,
-  "deployment": "Hammer and Anvil",
-  "deploymentId": "hammer-and-anvil-sf-2025",
+  "deployment": "Tipping Point",
+  "deploymentId": "tipping-point-sf-2025",
   "source": "labrador.dev (gw-chapter-approved-2025-2026), Strike Force; extracted by tools/layouts/extract-gw-ca-2025.ts",
   "objectiveMarkerDiameterIn": 1.575,
   "objectiveControlRadiusIn": 3,
@@ -396,33 +396,29 @@
   ],
   "objectives": [
     {
+      "x": 22,
+      "y": 36
+    },
+    {
+      "x": 46,
+      "y": 34
+    },
+    {
       "x": 30,
       "y": 22
     },
     {
-      "x": 30,
-      "y": 6
+      "x": 14,
+      "y": 10
     },
     {
-      "x": 30,
-      "y": 38
-    },
-    {
-      "x": 50,
-      "y": 22
-    },
-    {
-      "x": 10,
-      "y": 22
+      "x": 38,
+      "y": 8
     }
   ],
   "deploymentZones": {
     "player": [
       {
-        "x": 42,
-        "y": 44
-      },
-      {
         "x": 60,
         "y": 44
       },
@@ -431,8 +427,20 @@
         "y": 0
       },
       {
-        "x": 42,
+        "x": 48,
         "y": 0
+      },
+      {
+        "x": 48,
+        "y": 22
+      },
+      {
+        "x": 40,
+        "y": 22
+      },
+      {
+        "x": 40,
+        "y": 44
       }
     ],
     "opponent": [
@@ -441,11 +449,19 @@
         "y": 44
       },
       {
-        "x": 18,
+        "x": 12,
         "y": 44
       },
       {
-        "x": 18,
+        "x": 12,
+        "y": 22
+      },
+      {
+        "x": 20,
+        "y": 22
+      },
+      {
+        "x": 20,
         "y": 0
       },
       {

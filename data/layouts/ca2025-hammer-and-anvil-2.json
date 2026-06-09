@@ -1,6 +1,6 @@
 {
-  "id": "ca2025-hammer-and-anvil-1",
-  "name": "GW Chapter Approved 2025–2026 · Hammer and Anvil · Terrain Layout 1",
+  "id": "ca2025-hammer-and-anvil-2",
+  "name": "GW Chapter Approved 2025–2026 · Hammer and Anvil · Terrain Layout 2",
   "boardWidth": 60,
   "boardHeight": 44,
   "deployment": "Hammer and Anvil",
@@ -13,23 +13,23 @@
       "id": "t0",
       "type": "ruin_blocking",
       "height": "tall",
-      "source": "L 12x6",
+      "source": "z 8x6",
       "polygon": [
         {
-          "x": 12,
-          "y": 39
+          "x": 11,
+          "y": 40
         },
         {
-          "x": 12,
-          "y": 27
+          "x": 11,
+          "y": 32
         },
         {
-          "x": 6,
-          "y": 27
+          "x": 5,
+          "y": 32
         },
         {
-          "x": 6,
-          "y": 39
+          "x": 5,
+          "y": 40
         }
       ]
     },
@@ -37,71 +37,71 @@
       "id": "t0m",
       "type": "ruin_blocking",
       "height": "tall",
-      "source": "L 12x6 (180° partner)",
+      "source": "z 8x6 (180° partner)",
       "polygon": [
         {
-          "x": 48,
-          "y": 5
+          "x": 49,
+          "y": 4
         },
         {
-          "x": 48,
-          "y": 17
+          "x": 49,
+          "y": 12
         },
         {
-          "x": 54,
-          "y": 17
+          "x": 55,
+          "y": 12
         },
         {
-          "x": 54,
-          "y": 5
+          "x": 55,
+          "y": 4
         }
       ]
     },
     {
       "id": "t1",
-      "type": "ruin_blocking",
-      "height": "tall",
-      "source": "O 12x6",
+      "type": "area_cover",
+      "height": "low",
+      "source": "y 4x6",
       "polygon": [
         {
-          "x": 22,
-          "y": 16
+          "x": 11,
+          "y": 32
         },
         {
-          "x": 22,
-          "y": 4
+          "x": 11,
+          "y": 28
         },
         {
-          "x": 16,
-          "y": 4
+          "x": 5,
+          "y": 28
         },
         {
-          "x": 16,
-          "y": 16
+          "x": 5,
+          "y": 32
         }
       ]
     },
     {
       "id": "t1m",
-      "type": "ruin_blocking",
-      "height": "tall",
-      "source": "O 12x6 (180° partner)",
+      "type": "area_cover",
+      "height": "low",
+      "source": "y 4x6 (180° partner)",
       "polygon": [
         {
-          "x": 38,
-          "y": 28
+          "x": 49,
+          "y": 12
         },
         {
-          "x": 38,
-          "y": 40
+          "x": 49,
+          "y": 16
         },
         {
-          "x": 44,
-          "y": 40
+          "x": 55,
+          "y": 16
         },
         {
-          "x": 44,
-          "y": 28
+          "x": 55,
+          "y": 12
         }
       ]
     },
@@ -109,23 +109,23 @@
       "id": "t2",
       "type": "ruin_blocking",
       "height": "tall",
-      "source": "z 8x6",
+      "source": "O 12x6",
       "polygon": [
         {
-          "x": 16,
-          "y": 22
+          "x": 17,
+          "y": 28.45
         },
         {
-          "x": 8,
-          "y": 22
+          "x": 25.918,
+          "y": 20.42
         },
         {
-          "x": 8,
-          "y": 16
+          "x": 21.903,
+          "y": 15.962
         },
         {
-          "x": 16,
-          "y": 16
+          "x": 12.985,
+          "y": 23.991
         }
       ]
     },
@@ -133,23 +133,23 @@
       "id": "t2m",
       "type": "ruin_blocking",
       "height": "tall",
-      "source": "z 8x6 (180° partner)",
+      "source": "O 12x6 (180° partner)",
       "polygon": [
         {
-          "x": 44,
-          "y": 22
+          "x": 43,
+          "y": 15.55
         },
         {
-          "x": 52,
-          "y": 22
+          "x": 34.082,
+          "y": 23.58
         },
         {
-          "x": 52,
-          "y": 28
+          "x": 38.097,
+          "y": 28.038
         },
         {
-          "x": 44,
-          "y": 28
+          "x": 47.015,
+          "y": 20.009
         }
       ]
     },
@@ -160,19 +160,19 @@
       "source": "y 4x6",
       "polygon": [
         {
-          "x": 4,
-          "y": 22
-        },
-        {
-          "x": 8,
-          "y": 22
-        },
-        {
-          "x": 8,
+          "x": 2,
           "y": 16
         },
         {
-          "x": 4,
+          "x": 2,
+          "y": 20
+        },
+        {
+          "x": 8,
+          "y": 20
+        },
+        {
+          "x": 8,
           "y": 16
         }
       ]
@@ -184,116 +184,116 @@
       "source": "y 4x6 (180° partner)",
       "polygon": [
         {
-          "x": 56,
-          "y": 22
-        },
-        {
-          "x": 52,
-          "y": 22
-        },
-        {
-          "x": 52,
+          "x": 58,
           "y": 28
         },
         {
-          "x": 56,
+          "x": 58,
+          "y": 24
+        },
+        {
+          "x": 52,
+          "y": 24
+        },
+        {
+          "x": 52,
           "y": 28
         }
       ]
     },
     {
       "id": "t4",
-      "type": "area_cover",
-      "height": "low",
-      "source": "y 4x6",
+      "type": "ruin_blocking",
+      "height": "tall",
+      "source": "L 12x6",
       "polygon": [
         {
-          "x": 28,
-          "y": 44
+          "x": 14,
+          "y": 16
         },
         {
-          "x": 32,
-          "y": 44
+          "x": 14,
+          "y": 4
         },
         {
-          "x": 32,
-          "y": 38
+          "x": 8,
+          "y": 4
         },
         {
-          "x": 28,
-          "y": 38
+          "x": 8,
+          "y": 16
         }
       ]
     },
     {
       "id": "t4m",
-      "type": "area_cover",
-      "height": "low",
-      "source": "y 4x6 (180° partner)",
+      "type": "ruin_blocking",
+      "height": "tall",
+      "source": "L 12x6 (180° partner)",
       "polygon": [
         {
-          "x": 32,
-          "y": 0
+          "x": 46,
+          "y": 28
         },
         {
-          "x": 28,
-          "y": 0
+          "x": 46,
+          "y": 40
         },
         {
-          "x": 28,
-          "y": 6
+          "x": 52,
+          "y": 40
         },
         {
-          "x": 32,
-          "y": 6
+          "x": 52,
+          "y": 28
         }
       ]
     },
     {
       "id": "t5",
-      "type": "ruin_blocking",
-      "height": "tall",
-      "source": "T 6.5x5",
+      "type": "area_cover",
+      "height": "low",
+      "source": "y 4x6",
       "polygon": [
         {
+          "x": 24,
+          "y": 9
+        },
+        {
+          "x": 24,
+          "y": 13
+        },
+        {
           "x": 30,
-          "y": 27
+          "y": 13
         },
         {
-          "x": 25.404,
-          "y": 31.596
-        },
-        {
-          "x": 21.868,
-          "y": 28.061
-        },
-        {
-          "x": 26.464,
-          "y": 23.464
+          "x": 30,
+          "y": 9
         }
       ]
     },
     {
       "id": "t5m",
-      "type": "ruin_blocking",
-      "height": "tall",
-      "source": "T 6.5x5 (180° partner)",
+      "type": "area_cover",
+      "height": "low",
+      "source": "y 4x6 (180° partner)",
       "polygon": [
         {
+          "x": 36,
+          "y": 35
+        },
+        {
+          "x": 36,
+          "y": 31
+        },
+        {
           "x": 30,
-          "y": 17
+          "y": 31
         },
         {
-          "x": 34.596,
-          "y": 12.404
-        },
-        {
-          "x": 38.132,
-          "y": 15.939
-        },
-        {
-          "x": 33.536,
-          "y": 20.536
+          "x": 30,
+          "y": 35
         }
       ]
     },
@@ -304,20 +304,20 @@
       "source": "R 3.5x5",
       "polygon": [
         {
-          "x": 25.4,
-          "y": 31.6
+          "x": 20,
+          "y": 40
         },
         {
-          "x": 22.925,
-          "y": 34.075
+          "x": 23.5,
+          "y": 40
         },
         {
-          "x": 19.39,
-          "y": 30.539
+          "x": 23.5,
+          "y": 35
         },
         {
-          "x": 21.864,
-          "y": 28.064
+          "x": 20,
+          "y": 35
         }
       ]
     },
@@ -328,68 +328,68 @@
       "source": "R 3.5x5 (180° partner)",
       "polygon": [
         {
-          "x": 34.6,
-          "y": 12.4
+          "x": 40,
+          "y": 4
         },
         {
-          "x": 37.075,
-          "y": 9.925
+          "x": 36.5,
+          "y": 4
         },
         {
-          "x": 40.61,
-          "y": 13.461
+          "x": 36.5,
+          "y": 9
         },
         {
-          "x": 38.136,
-          "y": 15.936
+          "x": 40,
+          "y": 9
         }
       ]
     },
     {
       "id": "t7",
-      "type": "area_cover",
-      "height": "low",
-      "source": "y 4x6",
+      "type": "ruin_blocking",
+      "height": "tall",
+      "source": "T 6.5x5",
       "polygon": [
         {
-          "x": 26.48,
-          "y": 23.4
+          "x": 23.5,
+          "y": 35
         },
         {
-          "x": 23.652,
-          "y": 26.228
+          "x": 30,
+          "y": 35
         },
         {
-          "x": 19.409,
-          "y": 21.986
+          "x": 30,
+          "y": 40
         },
         {
-          "x": 22.237,
-          "y": 19.157
+          "x": 23.5,
+          "y": 40
         }
       ]
     },
     {
       "id": "t7m",
-      "type": "area_cover",
-      "height": "low",
-      "source": "y 4x6 (180° partner)",
+      "type": "ruin_blocking",
+      "height": "tall",
+      "source": "T 6.5x5 (180° partner)",
       "polygon": [
         {
-          "x": 33.52,
-          "y": 20.6
+          "x": 36.5,
+          "y": 9
         },
         {
-          "x": 36.348,
-          "y": 17.772
+          "x": 30,
+          "y": 9
         },
         {
-          "x": 40.591,
-          "y": 22.014
+          "x": 30,
+          "y": 4
         },
         {
-          "x": 37.763,
-          "y": 24.843
+          "x": 36.5,
+          "y": 4
         }
       ]
     }

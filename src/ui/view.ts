@@ -24,9 +24,11 @@ export function polygonPoints(poly: Vec2[], boardHeight: number): string {
   return poly.map((p) => `${pxX(p.x)},${pxY(p.y, boardHeight)}`).join(' ');
 }
 
+// Colors follow the GW / labrador convention: grey = tall ruin that blocks line of sight,
+// blue = terrain ≤2" high (area / cover).
 export const TERRAIN_STYLE: Record<TerrainType, { fill: string; stroke: string; label: string }> = {
-  ruin_blocking: { fill: 'rgba(120, 90, 70, 0.55)', stroke: '#8a6a52', label: 'Ruin (blocks LoS)' },
-  area_cover: { fill: 'rgba(70, 120, 70, 0.40)', stroke: '#5a8a5a', label: 'Area (cover)' },
+  ruin_blocking: { fill: 'rgba(120, 124, 128, 0.62)', stroke: '#5c6061', label: 'Ruin — tall, blocks LoS (grey)' },
+  area_cover: { fill: 'rgba(96, 170, 210, 0.38)', stroke: '#2f7da5', label: 'Area terrain — ≤2" (blue)' },
   obstacle: { fill: 'rgba(140, 120, 60, 0.55)', stroke: '#a89436', label: 'Obstacle' },
 };
 

@@ -1,0 +1,545 @@
+{
+  "id": "ca2025-crucible-of-battle-7",
+  "name": "GW Chapter Approved 2025–2026 · Crucible of Battle · Terrain Layout 7",
+  "boardWidth": 60,
+  "boardHeight": 44,
+  "deployment": "Crucible of Battle",
+  "deploymentId": "crucible-of-battle-sf-2025",
+  "source": "labrador.dev (gw-chapter-approved-2025-2026), Strike Force; extracted by tools/layouts/extract-gw-ca-2025.ts",
+  "objectiveMarkerDiameterIn": 1.575,
+  "objectiveControlRadiusIn": 3,
+  "terrain": [
+    {
+      "id": "t0",
+      "type": "ruin_blocking",
+      "height": "tall",
+      "source": "O 12x6",
+      "polygon": [
+        {
+          "x": 29,
+          "y": 41
+        },
+        {
+          "x": 29,
+          "y": 29
+        },
+        {
+          "x": 23,
+          "y": 29
+        },
+        {
+          "x": 23,
+          "y": 41
+        }
+      ]
+    },
+    {
+      "id": "t0m",
+      "type": "ruin_blocking",
+      "height": "tall",
+      "source": "O 12x6 (180° partner)",
+      "polygon": [
+        {
+          "x": 31,
+          "y": 3
+        },
+        {
+          "x": 31,
+          "y": 15
+        },
+        {
+          "x": 37,
+          "y": 15
+        },
+        {
+          "x": 37,
+          "y": 3
+        }
+      ]
+    },
+    {
+      "id": "t1",
+      "type": "ruin_blocking",
+      "height": "tall",
+      "source": "z 8x6",
+      "polygon": [
+        {
+          "x": 12,
+          "y": 4
+        },
+        {
+          "x": 12,
+          "y": 12
+        },
+        {
+          "x": 6,
+          "y": 12
+        },
+        {
+          "x": 6,
+          "y": 4
+        }
+      ]
+    },
+    {
+      "id": "t1m",
+      "type": "ruin_blocking",
+      "height": "tall",
+      "source": "z 8x6 (180° partner)",
+      "polygon": [
+        {
+          "x": 48,
+          "y": 40
+        },
+        {
+          "x": 48,
+          "y": 32
+        },
+        {
+          "x": 54,
+          "y": 32
+        },
+        {
+          "x": 54,
+          "y": 40
+        }
+      ]
+    },
+    {
+      "id": "t2",
+      "type": "area_cover",
+      "height": "low",
+      "source": "y 4x6",
+      "polygon": [
+        {
+          "x": 12,
+          "y": 12
+        },
+        {
+          "x": 12,
+          "y": 16
+        },
+        {
+          "x": 6,
+          "y": 16
+        },
+        {
+          "x": 6,
+          "y": 12
+        }
+      ]
+    },
+    {
+      "id": "t2m",
+      "type": "area_cover",
+      "height": "low",
+      "source": "y 4x6 (180° partner)",
+      "polygon": [
+        {
+          "x": 48,
+          "y": 32
+        },
+        {
+          "x": 48,
+          "y": 28
+        },
+        {
+          "x": 54,
+          "y": 28
+        },
+        {
+          "x": 54,
+          "y": 32
+        }
+      ]
+    },
+    {
+      "id": "t3",
+      "type": "area_cover",
+      "height": "low",
+      "source": "y 4x6",
+      "polygon": [
+        {
+          "x": 12,
+          "y": 0
+        },
+        {
+          "x": 12,
+          "y": 4
+        },
+        {
+          "x": 6,
+          "y": 4
+        },
+        {
+          "x": 6,
+          "y": 0
+        }
+      ]
+    },
+    {
+      "id": "t3m",
+      "type": "area_cover",
+      "height": "low",
+      "source": "y 4x6 (180° partner)",
+      "polygon": [
+        {
+          "x": 48,
+          "y": 44
+        },
+        {
+          "x": 48,
+          "y": 40
+        },
+        {
+          "x": 54,
+          "y": 40
+        },
+        {
+          "x": 54,
+          "y": 44
+        }
+      ]
+    },
+    {
+      "id": "t4",
+      "type": "ruin_blocking",
+      "height": "tall",
+      "source": "T 6.5x5",
+      "polygon": [
+        {
+          "x": 23,
+          "y": 8
+        },
+        {
+          "x": 23,
+          "y": 14.5
+        },
+        {
+          "x": 18,
+          "y": 14.5
+        },
+        {
+          "x": 18,
+          "y": 8
+        }
+      ]
+    },
+    {
+      "id": "t4m",
+      "type": "ruin_blocking",
+      "height": "tall",
+      "source": "T 6.5x5 (180° partner)",
+      "polygon": [
+        {
+          "x": 37,
+          "y": 36
+        },
+        {
+          "x": 37,
+          "y": 29.5
+        },
+        {
+          "x": 42,
+          "y": 29.5
+        },
+        {
+          "x": 42,
+          "y": 36
+        }
+      ]
+    },
+    {
+      "id": "t5",
+      "type": "area_cover",
+      "height": "low",
+      "source": "R 3.5x5",
+      "polygon": [
+        {
+          "x": 18,
+          "y": 18
+        },
+        {
+          "x": 18,
+          "y": 14.5
+        },
+        {
+          "x": 23,
+          "y": 14.5
+        },
+        {
+          "x": 23,
+          "y": 18
+        }
+      ]
+    },
+    {
+      "id": "t5m",
+      "type": "area_cover",
+      "height": "low",
+      "source": "R 3.5x5 (180° partner)",
+      "polygon": [
+        {
+          "x": 42,
+          "y": 26
+        },
+        {
+          "x": 42,
+          "y": 29.5
+        },
+        {
+          "x": 37,
+          "y": 29.5
+        },
+        {
+          "x": 37,
+          "y": 26
+        }
+      ]
+    },
+    {
+      "id": "t6",
+      "type": "ruin_blocking",
+      "height": "tall",
+      "source": "Fe 6x4",
+      "polygon": [
+        {
+          "x": 23,
+          "y": 24
+        },
+        {
+          "x": 23,
+          "y": 18
+        },
+        {
+          "x": 19,
+          "y": 18
+        },
+        {
+          "x": 19,
+          "y": 24
+        }
+      ]
+    },
+    {
+      "id": "t6m",
+      "type": "ruin_blocking",
+      "height": "tall",
+      "source": "Fe 6x4 (180° partner)",
+      "polygon": [
+        {
+          "x": 37,
+          "y": 20
+        },
+        {
+          "x": 37,
+          "y": 26
+        },
+        {
+          "x": 41,
+          "y": 26
+        },
+        {
+          "x": 41,
+          "y": 20
+        }
+      ]
+    },
+    {
+      "id": "t7",
+      "type": "ruin_blocking",
+      "height": "tall",
+      "source": "E 8x6",
+      "polygon": [
+        {
+          "x": 14,
+          "y": 34
+        },
+        {
+          "x": 14,
+          "y": 26
+        },
+        {
+          "x": 8,
+          "y": 26
+        },
+        {
+          "x": 8,
+          "y": 34
+        }
+      ]
+    },
+    {
+      "id": "t7m",
+      "type": "ruin_blocking",
+      "height": "tall",
+      "source": "E 8x6 (180° partner)",
+      "polygon": [
+        {
+          "x": 46,
+          "y": 10
+        },
+        {
+          "x": 46,
+          "y": 18
+        },
+        {
+          "x": 52,
+          "y": 18
+        },
+        {
+          "x": 52,
+          "y": 10
+        }
+      ]
+    },
+    {
+      "id": "t8",
+      "type": "area_cover",
+      "height": "low",
+      "source": "D 6x2",
+      "polygon": [
+        {
+          "x": 8,
+          "y": 36
+        },
+        {
+          "x": 14,
+          "y": 36
+        },
+        {
+          "x": 14,
+          "y": 34
+        },
+        {
+          "x": 8,
+          "y": 34
+        }
+      ]
+    },
+    {
+      "id": "t8m",
+      "type": "area_cover",
+      "height": "low",
+      "source": "D 6x2 (180° partner)",
+      "polygon": [
+        {
+          "x": 52,
+          "y": 8
+        },
+        {
+          "x": 46,
+          "y": 8
+        },
+        {
+          "x": 46,
+          "y": 10
+        },
+        {
+          "x": 52,
+          "y": 10
+        }
+      ]
+    },
+    {
+      "id": "t9",
+      "type": "area_cover",
+      "height": "low",
+      "source": "D 6x2",
+      "polygon": [
+        {
+          "x": 8,
+          "y": 26
+        },
+        {
+          "x": 14,
+          "y": 26
+        },
+        {
+          "x": 14,
+          "y": 24
+        },
+        {
+          "x": 8,
+          "y": 24
+        }
+      ]
+    },
+    {
+      "id": "t9m",
+      "type": "area_cover",
+      "height": "low",
+      "source": "D 6x2 (180° partner)",
+      "polygon": [
+        {
+          "x": 52,
+          "y": 18
+        },
+        {
+          "x": 46,
+          "y": 18
+        },
+        {
+          "x": 46,
+          "y": 20
+        },
+        {
+          "x": 52,
+          "y": 20
+        }
+      ]
+    }
+  ],
+  "objectives": [
+    {
+      "x": 30,
+      "y": 22
+    },
+    {
+      "x": 20,
+      "y": 36
+    },
+    {
+      "x": 14,
+      "y": 10
+    },
+    {
+      "x": 40,
+      "y": 8
+    },
+    {
+      "x": 46,
+      "y": 34
+    }
+  ],
+  "deploymentZones": {
+    "player": [
+      {
+        "x": 0,
+        "y": 44
+      },
+      {
+        "x": 30,
+        "y": 0
+      },
+      {
+        "x": 0,
+        "y": 0
+      }
+    ],
+    "opponent": [
+      {
+        "x": 30,
+        "y": 44
+      },
+      {
+        "x": 60,
+        "y": 44
+      },
+      {
+        "x": 60,
+        "y": 0
+      }
+    ]
+  }
+}

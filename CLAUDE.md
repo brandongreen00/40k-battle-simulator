@@ -323,6 +323,48 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-06-09] — Real terrain layouts extracted (all 48 GW Chapter Approved 2025-26 maps).**
+  Replaces the single approximate Hammer-and-Anvil stand-in with the real data. All gates green:
+  `pnpm typecheck`, `pnpm test` (43 tests), `pnpm build`.
+
+  **Done:**
+  - **Extractor** (`tools/layouts/extract-gw-ca-2025.ts`, `pnpm extract:layouts`) — reads the
+    GW CA 2025-26 layout data out of labrador.dev's client JS bundle (SvelteKit; no API) and emits
+    **48 `Layout` JSON** files to `data/layouts/` (`ca2025-<deployment>-<1..8>.json`): the 6 Strike
+    Force deployments (Crucible of Battle, Search and Destroy, Dawn of War, Hammer and Anvil,
+    Sweeping Engagement, Tipping Point) × 8 terrain layouts. Source symbols + method documented in
+    `tools/layouts/README.md`. No network needed (values embedded verbatim).
+  - **Faithful geometry** — reproduces labrador's model exactly: a layout stores half the terrain and
+    is mirrored **180° about (30,22)**; each piece is `{feature, point, rotation°, flip}` rendered as
+    `point + flipX(rotate(rotation, localFootprintCorner))`. Splits are two adjacent features that
+    butt into a clean rectangle (verified: edges coincide): **12×6 = 8×6 grey `z` + 4×6 blue `y`**
+    (4" line); **10×5 = 6.5×5 grey `T` + 3.5×5 blue `R`** (3.5" line). grey `#5C6061` ⇒
+    `ruin_blocking`/`tall`; blue `#065475` ⇒ `area_cover`/`low`. Composition for layouts 1-6,8 is
+    exactly 6×12×6 + 2×10×5 + 4×6×4; layout 7 is a denser GW variant, reproduced as-is.
+  - **Deployment zones + objectives per deployment** — zones parsed from the source SVG paths
+    (`attacker→player`, `defender→opponent`; Search-and-Destroy's 9" arcs tessellated). Objectives
+    taken from the deployment data; every marker is 40mm with a 3" control range
+    (`objectiveMarkerDiameterIn`/`objectiveControlRadiusIn` on `Layout`).
+  - **Schema** — `TerrainPiece` gained optional `height`('tall'|'low') + `source`; `Layout` gained
+    `deploymentId`, `source`, and the two objective fields (all optional, backward compatible).
+  - **Core** — added a `SetLayout` intent so the board can switch maps (resets the board).
+  - **UI** — `MeasuringBoard` now has a **Map picker** (48 maps grouped by deployment); terrain is
+    recoloured grey(ruin)/blue(area) to match GW/labrador; objectives now draw the **3" control ring**
+    plus the 40mm marker. `tools/layouts/preview.ts` (`pnpm preview:layouts`) renders a contact-sheet
+    `preview.svg` of all 48.
+  - **Tests** — `tests/layouts.test.ts` (6 tests) asserts 48 maps, on-board 4-corner footprints,
+    grey/blue+height, the objective spec, 180° symmetry, and that the 8 terrain layouts are shared
+    across deployments.
+
+  **Decisions:** coords converted to our bottom-left origin via `(x,y)→(x,44−y)` so maps render
+  identically to labrador; objective control radius set to 3" (Pariah Nexus / CA range), marker 40mm.
+  Only the **Strike Force** deployments were extracted (the user's `-sf-2025` URLs); the source also
+  has Incursion (`-inc-2025`) and asymmetric (`-asym-2025`) variants with different objectives — easy
+  to add to the extractor's `DEPLOYMENTS` table if wanted later.
+
+  **Handoff:** terrain-layout approximation blocker (below) is **resolved**. Still open: the three
+  owned `docs/lists/*.md` rosters. Next: encode those, or start Stage 2 (combat core) per the roadmap.
+
 - **[2026-06-09] — Army List Builder (Imperial Agents + Astra Militarum).** Built on a separate
   branch/PR off merged main. All gates green: `pnpm typecheck`, `pnpm test` (37 tests), `pnpm build`.
 
@@ -404,11 +446,9 @@ ability-system design that these stages depend on.
      exists so the board is usable. **Next session: once the .md lists are provided, encode their
      units** (datasheetId + modelCount + wargear + enhancementId), flagging any unresolved unit.
      Bane's detachment is unset (likely "Siege Regiment" — confirm from the list).
-  2. **Terrain layout is an approximation.** The exact labrador.dev corner-offset measurements for
-     "GW CA 2025–2026, Hammer and Anvil, Terrain Layout 1" were not provided, so
-     `data/layouts/ca2025-hammer-and-anvil-1.json` is a correctly-shaped, to-scale *stand-in*
-     (flagged in its `_note`/`_assumptions`). **Replace the coordinates with the real numbers**
-     when available — the schema won't change.
+  2. **Terrain layout is an approximation.** ✅ RESOLVED 2026-06-09 — see the top Progress Log entry.
+     The stand-in was replaced by all 48 real GW CA 2025-26 layouts, extracted from labrador.dev via
+     `tools/layouts/extract-gw-ca-2025.ts`.
 
   **Handoff:** Foundation is solid and in scope. The next concrete work is (a) drop in the two
   missing inputs above, then (b) begin Stage 2 (deterministic combat core) per the roadmap —
