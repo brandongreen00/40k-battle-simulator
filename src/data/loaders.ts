@@ -3,8 +3,10 @@
 
 import type { Datasheet, Enhancement, Layout, Roster } from '../core/types';
 import type { DataIndex } from '../core/army';
+import { deployAbilityFromKeywords, type DeployAbility } from '../core/deployment';
 import datasheetsJson from '../../data/game/datasheets.json';
 import enhancementsJson from '../../data/game/enhancements.json';
+import abilitiesJson from '../../data/game/abilities.json';
 
 export const datasheets = datasheetsJson as unknown as Datasheet[];
 
@@ -20,6 +22,21 @@ export const enhancements = enhancementsJson as unknown as Enhancement[];
 export const enhancementsById: Map<string, Enhancement> = new Map(
   enhancements.map((e) => [e.id, e]),
 );
+
+// ── Abilities (used to resolve deployment specials: Infiltrators / Deep Strike / Scouts) ──
+interface AbilityRow { id: string; name: string; description?: string }
+export const abilities = abilitiesJson as unknown as AbilityRow[];
+const abilityNameById = new Map(abilities.map((a) => [a.id, a.name]));
+
+/** Resolve a datasheet's referenced ability names (from its abilityIds). */
+export function abilityNamesFor(ds: Datasheet): string[] {
+  return (ds.abilityIds ?? []).map((id) => abilityNameById.get(id) ?? '').filter(Boolean);
+}
+
+/** A datasheet's deployment ability (standard / infiltrators / deep_strike), from keywords + abilities. */
+export function deployAbilityForDatasheet(ds: Datasheet): DeployAbility {
+  return deployAbilityFromKeywords(ds.keywords, abilityNamesFor(ds));
+}
 
 /** The lookup bundle the pure army engine expects. */
 export const dataIndex: DataIndex = {

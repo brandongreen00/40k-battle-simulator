@@ -14,6 +14,8 @@ export interface Placement {
   owner: Side;
   formation: Formation;
   rotation: number;
+  /** Optional legality predicate (deployment zone / Infiltrators). Red ghost + no-drop when false. */
+  legal?: (positions: Vec2[]) => boolean;
 }
 
 const ROTATE_STEP = Math.PI / 12; // 15° per scroll notch / R keypress
@@ -130,7 +132,16 @@ export function Board({
 
   function handleBoardDown(e: PointerEvent) {
     if (placement) {
-      onPlacementCommit?.(clientToInches(e));
+      const anchor = clientToInches(e);
+      // Block illegal drops (outside the deployment zone, etc.).
+      if (placement.legal) {
+        const positions = formationPositions({
+          anchor, count: placement.modelCount, baseShape: placement.baseShape,
+          formation: placement.formation, rotation: placement.rotation,
+        });
+        if (!placement.legal(positions)) return;
+      }
+      onPlacementCommit?.(anchor);
       return;
     }
     setSelectedIds([]);
@@ -159,6 +170,9 @@ export function Board({
     });
   }, [placement, cursor]);
 
+  // Is the current ghost a legal placement? (deployment zone / Infiltrators)
+  const ghostLegal = ghost && placement?.legal ? placement.legal(ghost) : true;
+
   // ── measurement (suppressed while placing) ──
   const a = !placement && selectedIds[0] ? index.get(selectedIds[0]) : undefined;
   const b = !placement && selectedIds[1] ? index.get(selectedIds[1]) : undefined;
@@ -183,7 +197,7 @@ export function Board({
   const placementHud = placement
     ? `Placing ${placement.modelCount}-model unit · ${FORMATION_LABEL[placement.formation]} · ${Math.round(
         (((placement.rotation * 180) / Math.PI) % 360 + 360) % 360,
-      )}° — click to drop · scroll to rotate · C to change formation · Esc to cancel`
+      )}° — ${ghostLegal ? 'click to drop' : '✗ illegal here (outside your zone)'} · scroll to rotate · C to change formation · Esc to cancel`
     : null;
 
   const hud =
@@ -235,8 +249,8 @@ export function Board({
               const s = placement.baseShape;
               const cx = pxX(p.x);
               const cy = pxY(p.y, layout.boardHeight);
-              const stroke = OWNER_COLOR[placement.owner].stroke;
-              const fill = OWNER_COLOR[placement.owner].fill;
+              const stroke = ghostLegal ? OWNER_COLOR[placement.owner].stroke : '#fca5a5';
+              const fill = ghostLegal ? OWNER_COLOR[placement.owner].fill : '#ef4444';
               return s.kind === 'circle' ? (
                 <circle
                   key={i}

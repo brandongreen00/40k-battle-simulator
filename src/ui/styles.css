@@ -710,3 +710,139 @@ button.remove {
 .dicelog .log-line {
   color: var(--text);
 }
+
+/* ── Deployment / setup ─────────────────────────────────────────────── */
+.sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.newbattle {
+  background: #2a3550;
+  color: #dbe6ff;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.newbattle:hover {
+  background: #34406080;
+}
+.dep-rosters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.dep-step {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+  margin-top: 10px;
+}
+.dep-step h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+.dep-step h4 {
+  margin: 8px 0 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.dep-leaders .field,
+.dep-rosters .field {
+  margin-bottom: 6px;
+}
+.dep-attached {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+.dep-attached li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+.hint {
+  font-size: 11px;
+  color: var(--muted);
+  font-style: italic;
+  margin: 4px 0;
+}
+.primary {
+  background: #3b6e3b;
+  border: 1px solid #5bbf5b;
+  color: #e9ffe9;
+  font-weight: 700;
+}
+
+/* ── Dice ────────────────────────────────────────────────────────────── */
+.die {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+.die-hi {
+  outline: 2px solid var(--accent);
+  border-radius: 7px;
+}
+.rolloff {
+  margin: 6px 0;
+}
+.rolloff-label {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.rolloff-dice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+.rolloff-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0.55;
+}
+.rolloff-side.won {
+  opacity: 1;
+}
+.rolloff-side em {
+  font-size: 10px;
+  color: var(--muted);
+  font-style: normal;
+}
+.rolloff-vs {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ── Deployment unit list states ─────────────────────────────────────── */
+.unit-list li.placed .unit-name {
+  color: var(--muted);
+}
+.spawn.done {
+  display: inline-block;
+  min-width: 56px;
+  text-align: center;
+  color: #5bbf5b;
+  font-size: 11px;
+}
+.reserve-btn {
+  background: #2b313d;
+  border: 1px solid var(--line);
+  color: #cbb26b;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 2px 6px;
+  margin-left: 2px;
+}
+.reserve-btn:hover {
+  border-color: var(--accent);
+}

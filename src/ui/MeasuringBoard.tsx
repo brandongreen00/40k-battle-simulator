@@ -1,11 +1,13 @@
 import { useMemo, useReducer, useRef, useState } from 'react';
-import type { Datasheet, Roster, RosterUnit, Side, Vec2 } from '../core/types';
+import type { BaseShape, Datasheet, Roster, RosterUnit, Side, Vec2 } from '../core/types';
 import { reduce, createInitialState, type Intent } from '../core/state';
 import { makeRNG } from '../core/rng';
 import { nextFormation, type Formation } from '../core/formation';
-import { datasheetsById, getDatasheet, layouts, rosters } from '../data/loaders';
+import { checkUnitDeployment, type DeployAbility } from '../core/deployment';
+import { datasheetsById, deployAbilityForDatasheet, getDatasheet, layouts, rosters } from '../data/loaders';
 import { Board, type Placement } from './Board';
 import { GamePanel } from './GamePanel';
+import { DeploymentPanel, effectiveSide } from './DeploymentPanel';
 import { OWNER_COLOR, TERRAIN_STYLE } from './view';
 
 /** A unit the user has picked up and is positioning with the ghost preview. */
@@ -14,9 +16,20 @@ interface Placing {
   ds: Datasheet;
   formation: Formation;
   rotation: number;
+  /** Who the unit belongs to (deployment side, or the sandbox spawn-as owner). */
+  side: Side;
+  /** Set during deployment: the roster entry key used as the unit id (so it can't be double-placed). */
+  entryKey?: string;
+  ability: DeployAbility;
 }
 
-// Seeded RNG for reproducibility (Stage 1 intents are deterministic; the seam is what matters).
+interface DeployEntry {
+  key: string;
+  unit: RosterUnit;
+  ds: Datasheet;
+}
+
+// Seeded RNG for reproducibility (the seam is what matters; dice roll-offs use it).
 const rng = makeRNG(0xc0ffee);
 
 interface Props {
@@ -31,184 +44,219 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
     layouts[0],
     createInitialState,
   );
-  // The reducer owns the active layout; the selector drives it via SetLayout.
   const layout = state.layout;
+  const inSetup = state.stage === 'setup';
 
   // Group the layouts by deployment for the map picker (8 terrain layouts per deployment).
   const layoutGroups = useMemo(() => {
     const groups = new Map<string, typeof layouts>();
     for (const l of layouts) {
-      const key = l.deployment;
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key)!.push(l);
+      if (!groups.has(l.deployment)) groups.set(l.deployment, []);
+      groups.get(l.deployment)!.push(l);
     }
     return [...groups.entries()];
   }, []);
 
   const allRosters = useMemo(() => [...extraRosters, ...rosters], [extraRosters]);
-  const [rosterName, setRosterName] = useState<string>(
-    initialRosterName ?? (allRosters.find((r) => r.units.length > 0) ?? allRosters[0])?.name ?? '',
-  );
-  const [owner, setOwner] = useState<Side>('player');
+  const firstWithUnits = allRosters.find((r) => r.units.length > 0) ?? allRosters[0];
+  const [rosterNameBySide, setRosterNameBySide] = useState<Record<Side, string>>({
+    player: initialRosterName ?? firstWithUnits?.name ?? '',
+    ai: firstWithUnits?.name ?? '',
+  });
+  const [owner, setOwner] = useState<Side>('player'); // sandbox spawn-as
   const [placing, setPlacing] = useState<Placing | null>(null);
   const spawnCount = useRef(0);
 
-  const roster: Roster | undefined = useMemo(
-    () => allRosters.find((r) => r.name === rosterName),
-    [allRosters, rosterName],
-  );
+  const rosterFor = (side: Side): Roster | undefined => allRosters.find((r) => r.name === rosterNameBySide[side]);
+  const setRosterName = (side: Side, name: string) => setRosterNameBySide((m) => ({ ...m, [side]: name }));
 
-  if (!layout) {
-    return <div className="app-shell">No layout found in data/layouts.</div>;
+  // Deployment entries per side, and which are already on the board / in reserves.
+  const entriesFor = (side: Side): DeployEntry[] => {
+    const r = rosterFor(side);
+    if (!r) return [];
+    return r.units
+      .map((unit, i) => ({ key: `${side}:${i}`, unit, ds: getDatasheet(unit.datasheetId)! }))
+      .filter((e) => e.ds);
+  };
+  const isPlaced = (key: string) => state.units.some((u) => u.id === key);
+  const remaining: Record<Side, number> = {
+    player: entriesFor('player').filter((e) => !isPlaced(e.key)).length,
+    ai: entriesFor('ai').filter((e) => !isPlaced(e.key)).length,
+  };
+  const sideToPlace = inSetup && state.setup?.attacker ? effectiveSide(state.setup, remaining) : owner;
+
+  if (!layout) return <div className="app-shell">No layout found in data/layouts.</div>;
+
+  // Enemy models on the board, for the deployment legality (Infiltrators 9" / zone checks).
+  function enemyModels(side: Side): { pos: Vec2; shape: BaseShape }[] {
+    const out: { pos: Vec2; shape: BaseShape }[] = [];
+    for (const u of state.units) {
+      if (u.owner === side || u.inReserves) continue;
+      const shape = getDatasheet(u.datasheetId)?.baseShape ?? { kind: 'circle', radius: 0.63 };
+      for (const m of u.models) if (m.alive) out.push({ pos: m.pos, shape });
+    }
+    return out;
   }
 
-  /** Pick a unit up for placement: the ghost then tracks the cursor until the user clicks. */
-  function beginPlacing(unit: RosterUnit) {
+  /** Pick a unit up for deployment placement (ghost tracks the cursor, zone-limited). */
+  function beginDeploy(entry: DeployEntry, side: Side) {
+    setPlacing({ unit: entry.unit, ds: entry.ds, formation: 'block', rotation: 0, side, entryKey: entry.key, ability: deployAbilityForDatasheet(entry.ds) });
+  }
+  /** Pick a unit up for free sandbox placement (no zone restriction). */
+  function beginSandbox(unit: RosterUnit) {
     const ds = getDatasheet(unit.datasheetId);
     if (!ds) return;
-    setPlacing({ unit, ds, formation: 'block', rotation: 0 });
+    setPlacing({ unit, ds, formation: 'block', rotation: 0, side: owner, ability: 'standard' });
   }
 
-  /** Drop the held unit at `anchor`, in its current formation/rotation. */
   function commitPlacement(anchor: Vec2) {
     if (!placing) return;
-    const n = spawnCount.current++;
-    dispatch({
-      type: 'SpawnUnit',
-      unitId: `u${n}`,
-      owner,
+    const common = {
       datasheetId: placing.ds.id,
       baseShape: placing.ds.baseShape,
       modelCount: placing.unit.modelCount,
       wounds: placing.ds.models[0]?.W ?? 1,
-      anchor,
-      formation: placing.formation,
-      rotation: placing.rotation,
       ...(placing.unit.wargearCounts ? { wargear: placing.unit.wargearCounts } : {}),
-    });
+    };
+    if (placing.entryKey) {
+      dispatch({ type: 'DeployUnit', unitId: placing.entryKey, owner: placing.side, anchor, formation: placing.formation, rotation: placing.rotation, ability: placing.ability, ...common });
+    } else {
+      dispatch({ type: 'SpawnUnit', unitId: `u${spawnCount.current++}`, owner: placing.side, anchor, formation: placing.formation, rotation: placing.rotation, ...common });
+    }
     setPlacing(null);
   }
 
-  // Ghost the board renders: owner reflects the live "Spawn as" toggle.
+  function placeReserves(entry: DeployEntry, side: Side) {
+    const ds = entry.ds;
+    dispatch({ type: 'PlaceInReserves', unitId: entry.key, owner: side, datasheetId: ds.id, baseShape: ds.baseShape, modelCount: entry.unit.modelCount, wounds: ds.models[0]?.W ?? 1, ...(entry.unit.wargearCounts ? { wargear: entry.unit.wargearCounts } : {}) });
+  }
+
+  // The ghost the board renders; in setup it carries a zone-legality predicate.
   const placement: Placement | null = placing
     ? {
         baseShape: placing.ds.baseShape,
         modelCount: placing.unit.modelCount,
-        owner,
+        owner: placing.side,
         formation: placing.formation,
         rotation: placing.rotation,
+        ...(placing.entryKey
+          ? { legal: (positions: Vec2[]) => checkUnitDeployment(positions, placing.ds.baseShape, layout, placing.side, placing.ability, enemyModels(placing.side)).legal }
+          : {}),
       }
     : null;
+
+  const sandboxRoster = rosterFor('player');
 
   return (
     <div className="layout">
       <aside className="sidebar">
-        <p className="muted">
-          {layout.deployment} · {layout.boardWidth}"×{layout.boardHeight}"
-        </p>
+        <div className="sidebar-head">
+          <p className="muted">{layout.deployment} · {layout.boardWidth}"×{layout.boardHeight}"</p>
+          <button className="newbattle" onClick={() => { setPlacing(null); dispatch({ type: 'NewBattle' }); }}>
+            {inSetup ? '↻ Restart deployment' : '⚔ New battle'}
+          </button>
+        </div>
 
         <section>
           <label className="field">
             <span>Map</span>
-            <select
-              value={layout.id}
-              onChange={(e) => {
-                const next = layouts.find((l) => l.id === e.target.value);
-                if (next) dispatch({ type: 'SetLayout', layout: next });
-              }}
-            >
+            <select value={layout.id} onChange={(e) => { const next = layouts.find((l) => l.id === e.target.value); if (next) dispatch({ type: 'SetLayout', layout: next }); }}>
               {layoutGroups.map(([deployment, group]) => (
                 <optgroup key={deployment} label={deployment}>
-                  {group.map((l) => (
-                    <option key={l.id} value={l.id}>
-                      {l.name?.split('·').pop()?.trim() ?? l.id}
-                    </option>
-                  ))}
+                  {group.map((l) => <option key={l.id} value={l.id}>{l.name?.split('·').pop()?.trim() ?? l.id}</option>)}
                 </optgroup>
               ))}
             </select>
           </label>
 
-          <label className="field">
-            <span>Roster</span>
-            <select value={rosterName} onChange={(e) => setRosterName(e.target.value)}>
-              {allRosters.map((r) => (
-                <option key={r.name} value={r.name}>
-                  {r.name}
-                  {r.sample ? ' (demo)' : ''}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <div className="field">
-            <span>Spawn as</span>
-            <div className="seg">
-              {(['player', 'ai'] as const).map((o) => (
-                <button
-                  key={o}
-                  className={owner === o ? 'seg-on' : ''}
-                  style={{ borderColor: OWNER_COLOR[o].fill }}
-                  onClick={() => setOwner(o)}
-                >
-                  {o}
-                </button>
-              ))}
-            </div>
-          </div>
+          {!inSetup && (
+            <>
+              <label className="field">
+                <span>Roster</span>
+                <select value={rosterNameBySide.player} onChange={(e) => setRosterName('player', e.target.value)}>
+                  {allRosters.map((r) => <option key={r.name} value={r.name}>{r.name}{r.sample ? ' (demo)' : ''}</option>)}
+                </select>
+              </label>
+              <div className="field">
+                <span>Spawn as</span>
+                <div className="seg">
+                  {(['player', 'ai'] as const).map((o) => (
+                    <button key={o} className={owner === o ? 'seg-on' : ''} style={{ borderColor: OWNER_COLOR[o].fill }} onClick={() => setOwner(o)}>{o}</button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </section>
 
-        {roster?.note && <p className="note">{roster.note}</p>}
-
-        <section>
-          <h2>Units</h2>
-          {roster && roster.units.length > 0 ? (
+        {/* Units to place */}
+        {inSetup && state.setup?.attacker ? (
+          <section>
+            <h2>Deploy · <span style={{ color: OWNER_COLOR[sideToPlace].fill }}>{sideToPlace}</span></h2>
             <ul className="unit-list">
-              {roster.units.map((u, i) => {
-                const ds = getDatasheet(u.datasheetId);
-                const m = ds?.models[0];
-                const active = placing?.unit === u;
+              {entriesFor(sideToPlace).map((e) => {
+                const placed = isPlaced(e.key);
+                const active = placing?.entryKey === e.key;
+                const reserve = state.units.find((u) => u.id === e.key)?.inReserves;
                 return (
-                  <li key={i}>
-                    <button
-                      className={`spawn${active ? ' seg-on' : ''}`}
-                      onClick={() => (active ? setPlacing(null) : beginPlacing(u))}
-                      disabled={!ds}
-                    >
-                      {active ? 'Placing…' : '+ Place'}
-                    </button>
-                    <span className="unit-name">{u.displayName ?? ds?.name ?? u.datasheetId}</span>
-                    <span className="unit-meta">
-                      ×{u.modelCount}
-                      {m ? ` · M${m.M}" T${m.T} Sv${m.Sv}+ W${m.W}` : ds ? '' : ' · UNRESOLVED'}
-                    </span>
+                  <li key={e.key} className={placed ? 'placed' : ''}>
+                    {placed ? (
+                      <span className="spawn done">{reserve ? 'Reserves' : '✓'}</span>
+                    ) : (
+                      <>
+                        <button className={`spawn${active ? ' seg-on' : ''}`} onClick={() => (active ? setPlacing(null) : beginDeploy(e, sideToPlace))}>
+                          {active ? 'Placing…' : '+ Deploy'}
+                        </button>
+                        <button className="reserve-btn" title="Place in Reserves (Deep Strike, arrives round 2+)" onClick={() => placeReserves(e, sideToPlace)}>⤓</button>
+                      </>
+                    )}
+                    <span className="unit-name">{e.ds.name}</span>
+                    <span className="unit-meta">×{e.unit.modelCount}{deployAbilityForDatasheet(e.ds) !== 'standard' ? ` · ${deployAbilityForDatasheet(e.ds) === 'infiltrators' ? 'Infiltrators' : 'Deep Strike'}` : ''}</span>
                   </li>
                 );
               })}
             </ul>
-          ) : (
-            <p className="muted">This roster has no units yet. Pick the demo roster, or build one in the List Builder.</p>
-          )}
-        </section>
+          </section>
+        ) : (
+          <section>
+            <h2>Units</h2>
+            {sandboxRoster && sandboxRoster.units.length > 0 ? (
+              <ul className="unit-list">
+                {sandboxRoster.units.map((u, i) => {
+                  const ds = getDatasheet(u.datasheetId);
+                  const m = ds?.models[0];
+                  const active = placing?.unit === u;
+                  return (
+                    <li key={i}>
+                      <button className={`spawn${active ? ' seg-on' : ''}`} onClick={() => (active ? setPlacing(null) : beginSandbox(u))} disabled={!ds}>
+                        {active ? 'Placing…' : '+ Place'}
+                      </button>
+                      <span className="unit-name">{u.displayName ?? ds?.name ?? u.datasheetId}</span>
+                      <span className="unit-meta">×{u.modelCount}{m ? ` · M${m.M}" T${m.T} Sv${m.Sv}+ W${m.W}` : ds ? '' : ' · UNRESOLVED'}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="muted">This roster has no units yet. Pick the demo roster, or build one in the List Builder.</p>
+            )}
+          </section>
+        )}
 
         <section>
-          <h2>On board ({state.units.length})</h2>
-          {state.units.length > 0 && (
-            <button className="clear" onClick={() => dispatch({ type: 'ClearUnits' })}>
-              Clear all
-            </button>
+          <h2>On board ({state.units.filter((u) => !u.inReserves).length})</h2>
+          {state.units.length > 0 && !inSetup && (
+            <button className="clear" onClick={() => dispatch({ type: 'ClearUnits' })}>Clear all</button>
           )}
           <ul className="unit-list">
             {state.units.map((u) => {
               const ds = getDatasheet(u.datasheetId);
               return (
                 <li key={u.id}>
-                  <button className="remove" onClick={() => dispatch({ type: 'RemoveUnit', unitId: u.id })}>
-                    ×
-                  </button>
+                  {!inSetup && <button className="remove" onClick={() => dispatch({ type: 'RemoveUnit', unitId: u.id })}>×</button>}
                   <span className="dot" style={{ background: OWNER_COLOR[u.owner].fill }} />
-                  <span className="unit-name">{ds?.name ?? u.datasheetId}</span>
-                  <span className="unit-meta">×{u.models.length}</span>
+                  <span className="unit-name">{ds?.name ?? u.datasheetId}{u.attachedTo ? ' ⚑' : ''}</span>
+                  <span className="unit-meta">{u.inReserves ? 'reserves' : `×${u.models.filter((m) => m.alive).length}`}</span>
                 </li>
               );
             })}
@@ -218,15 +266,9 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
         <section className="legend">
           <h2>Legend</h2>
           {Object.values(TERRAIN_STYLE).map((s) => (
-            <div key={s.label} className="legend-row">
-              <span className="swatch" style={{ background: s.fill, borderColor: s.stroke }} />
-              {s.label}
-            </div>
+            <div key={s.label} className="legend-row"><span className="swatch" style={{ background: s.fill, borderColor: s.stroke }} />{s.label}</div>
           ))}
-          <div className="legend-row">
-            <span className="swatch" style={{ background: 'rgba(234,179,8,0.25)', borderColor: '#eab308' }} />
-            Objective marker
-          </div>
+          <div className="legend-row"><span className="swatch" style={{ background: 'rgba(234,179,8,0.25)', borderColor: '#eab308' }} />Objective marker</div>
         </section>
       </aside>
 
@@ -238,18 +280,26 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
           onMoveModel={(id, pos) => dispatch({ type: 'MoveModel', modelId: id, pos })}
           placement={placement}
           onPlacementCommit={commitPlacement}
-          onPlacementRotate={(d) =>
-            setPlacing((p) => (p ? { ...p, rotation: p.rotation + d } : p))
-          }
-          onPlacementCycle={() =>
-            setPlacing((p) => (p ? { ...p, formation: nextFormation(p.formation) } : p))
-          }
+          onPlacementRotate={(d) => setPlacing((p) => (p ? { ...p, rotation: p.rotation + d } : p))}
+          onPlacementCycle={() => setPlacing((p) => (p ? { ...p, formation: nextFormation(p.formation) } : p))}
           onPlacementCancel={() => setPlacing(null)}
         />
       </main>
 
       <aside className="gamerail">
-        <GamePanel state={state} dispatch={dispatch} datasheetsById={datasheetsById} />
+        {inSetup ? (
+          <DeploymentPanel
+            state={state}
+            dispatch={dispatch}
+            datasheetsById={datasheetsById}
+            rosters={allRosters}
+            rosterName={rosterNameBySide}
+            setRosterName={setRosterName}
+            remaining={remaining}
+          />
+        ) : (
+          <GamePanel state={state} dispatch={dispatch} datasheetsById={datasheetsById} />
+        )}
       </aside>
     </div>
   );
