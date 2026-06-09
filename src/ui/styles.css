@@ -182,6 +182,7 @@ button.remove {
 
 .board-main {
   flex: 1;
+  min-width: 0; /* let the board column shrink so the right rail isn't pushed off-screen */
   padding: 16px;
   overflow: auto;
 }
@@ -734,8 +735,17 @@ button.remove {
 }
 .dep-rosters {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* Two columns when there's room, but collapse to one on a narrow rail so the
+     "ai army" picker is never cut off. */
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 8px;
+}
+.dep-rosters .field {
+  min-width: 0; /* grid items default to min-width:auto and won't otherwise shrink */
+}
+.dep-rosters select {
+  width: 100%;
+  min-width: 0;
 }
 .dep-step {
   border-top: 1px solid var(--line);
