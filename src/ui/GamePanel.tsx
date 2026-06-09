@@ -6,7 +6,7 @@ import type { MoveMode } from '../core/movement';
 import { EFFECT_REGISTRY } from '../core/effects';
 import {
   reservesArrivable, unitCoherency, eligibleToShoot, eligibleToCharge, eligibleToFight,
-  validShootingTargets, chargeTargets, engagedEnemies, type Eligibility,
+  validShootingTargets, chargeTargets, engagedEnemies, fightActivationOrder, type Eligibility,
 } from '../core/phases';
 import { usableStratagems } from '../core/stratagems';
 import { stratagems } from '../data/loaders';
@@ -67,8 +67,11 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
   // Phase-aware eligibility: which of my units may act, and which enemies they may target.
   const myUnits = units.filter((u) => u.owner === state.activePlayer && !u.inReserves && u.models.some((m) => m.alive));
   const eligibleAttackers = useMemo(() => {
-    const f = phase === 'Shooting' ? eligibleToShoot : phase === 'Fight' ? eligibleToFight : phase === 'Charge' ? eligibleToCharge : null;
-    return f ? myUnits.filter((u) => f(u, state, ctx).eligible) : myUnits;
+    if (phase === 'Shooting') return myUnits.filter((u) => eligibleToShoot(u, state, ctx).eligible);
+    if (phase === 'Charge') return myUnits.filter((u) => eligibleToCharge(u, state, ctx).eligible);
+    // Fight: any engaged unit (keep just-fought ones selectable so they can still Consolidate).
+    if (phase === 'Fight') return myUnits.filter((u) => engagedEnemies(u, state, ctx).length > 0);
+    return myUnits;
   }, [units, phase, state.activePlayer]);
 
   const attackerEligibility: Eligibility | null = !attacker ? null
@@ -83,6 +86,8 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
     if (phase === 'Fight') return engagedEnemies(attacker, state, ctx);
     return units.filter((u) => u.owner !== attacker.owner && !u.inReserves && u.models.some((m) => m.alive));
   }, [attacker, weaponName, phase, units]);
+
+  const fightOrder = useMemo(() => (phase === 'Fight' ? fightActivationOrder(state, ctx) : []), [phase, units]);
 
   const offensiveEffects = Object.values(EFFECT_REGISTRY).filter((e) => e.side === 'attacker');
   const defensiveEffects = Object.values(EFFECT_REGISTRY).filter((e) => e.side === 'defender');
@@ -184,6 +189,30 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
           {state.round < 2 && state.units.some((u) => u.inReserves && u.owner === state.activePlayer) && (
             <p className="hint">Reserves arrive from battle round 2.</p>
           )}
+        </div>
+      )}
+
+      {/* Fight phase — activation order + pile-in / consolidate */}
+      {phase === 'Fight' && (
+        <div className="phase-block">
+          <h3>Fight — activation order</h3>
+          {fightOrder.length === 0 ? (
+            <p className="muted">No units are in Engagement Range.</p>
+          ) : (
+            <ol className="fight-order">
+              {fightOrder.map((u) => (
+                <li key={u.id} className={u.status.hasFought ? 'fought' : ''}>
+                  <span className="dot" style={{ background: OWNER_COLOR[u.owner].fill }} />
+                  {nameOf(u.id)}{u.status.charged ? ' · Fights First' : ''}{u.status.hasFought ? ' ✓' : ''}
+                </li>
+              ))}
+            </ol>
+          )}
+          <p className="hint">Pick the fighting unit as Attacker below · Pile In → resolve melee → Consolidate.</p>
+          <div className="btnrow">
+            <button disabled={!attackerId} onClick={() => dispatch({ type: 'FightMove', unitId: attackerId, mode: 'pile_in' })}>Pile In 3"</button>
+            <button disabled={!attackerId} onClick={() => dispatch({ type: 'FightMove', unitId: attackerId, mode: 'consolidate' })}>Consolidate 3"</button>
+          </div>
         </div>
       )}
 

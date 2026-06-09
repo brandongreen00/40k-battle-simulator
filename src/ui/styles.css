@@ -949,3 +949,22 @@ button.remove {
   color: #8fd98f;
   border-color: #2f6e2f;
 }
+
+/* ── Fight phase ─────────────────────────────────────────────────────── */
+.fight-order {
+  margin: 4px 0;
+  padding-left: 20px;
+  font-size: 12px;
+}
+.fight-order li {
+  padding: 1px 0;
+}
+.fight-order li.fought {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+.fight-order .dot {
+  width: 8px;
+  height: 8px;
+  margin-right: 4px;
+}

@@ -342,7 +342,7 @@ export function resolveCharge(
 }
 
 /** Unit vector from the charger's closest model to the target's closest model. */
-function closestAxis(a: UnitInstance, b: UnitInstance): Vec2 {
+export function closestAxis(a: UnitInstance, b: UnitInstance): Vec2 {
   let best = Infinity;
   let from = a.models[0]?.pos ?? { x: 0, y: 0 };
   let to = b.models[0]?.pos ?? { x: 0, y: 0 };
@@ -358,4 +358,53 @@ function closestAxis(a: UnitInstance, b: UnitInstance): Vec2 {
   const dy = to.y - from.y;
   const len = Math.hypot(dx, dy) || 1;
   return { x: dx / len, y: dy / len };
+}
+
+// ── Fight-phase moves: Pile In / Consolidate (3") ──────────────────────────────
+export interface FightMoveParams {
+  unitId: string;
+  mode: 'pile_in' | 'consolidate';
+}
+
+/**
+ * Pile In (before attacking) and Consolidate (after) — each lets a unit move every model up to 3"
+ * toward the closest enemy model. Modelled as a coherency-preserving rigid translate toward the
+ * nearest enemy unit, capped at 3" and at base contact (so it never overlaps). A simplification of
+ * the per-model rule that keeps the unit legal; faithful enough for engaged combats.
+ */
+export function resolveFightMove(
+  state: GameState,
+  params: FightMoveParams,
+  ctx: EngineContext,
+): { state: GameState; summary: string } {
+  const unit = state.units.find((u) => u.id === params.unitId);
+  if (!unit) return { state, summary: 'unit not found' };
+  const ds = ctx.datasheets.get(unit.datasheetId);
+  if (!ds) return { state, summary: 'datasheet not found' };
+
+  // Nearest enemy unit by base-to-base gap.
+  let nearest: UnitInstance | undefined;
+  let minGap = Infinity;
+  for (const e of state.units) {
+    if (e.owner === unit.owner || e.inReserves || !e.models.some((m) => m.alive)) continue;
+    const eDs = ctx.datasheets.get(e.datasheetId);
+    if (!eDs) continue;
+    const g = closestGap(unit, ds.baseShape, e, eDs.baseShape);
+    if (g < minGap) { minGap = g; nearest = e; }
+  }
+  if (!nearest) return { state, summary: 'no enemy to move toward' };
+
+  const dir = closestAxis(unit, nearest);
+  const moveDist = Math.min(3, Math.max(0, minGap)); // up to 3", stopping at base contact
+  if (moveDist <= 1e-6) {
+    return { state: { ...state, log: [...state.log, `${ds.name} ${params.mode === 'pile_in' ? 'piles in' : 'consolidates'} (already in base contact)`] }, summary: 'no move' };
+  }
+  const units = state.units.map((u) =>
+    u.id === unit.id
+      ? { ...u, models: u.models.map((m) => (m.alive ? { ...m, pos: { x: m.pos.x + dir.x * moveDist, y: m.pos.y + dir.y * moveDist } } : m)) }
+      : u,
+  );
+  const verb = params.mode === 'pile_in' ? 'piles in' : 'consolidates';
+  const summary = `${ds.name} ${verb} ${moveDist.toFixed(1)}" toward the enemy`;
+  return { state: { ...state, units, log: [...state.log, summary] }, summary };
 }

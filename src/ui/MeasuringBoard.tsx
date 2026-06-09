@@ -172,8 +172,16 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
         selectedUnitIds,
         movingUnitIds: state.units.filter((u) => u.status.moveMode).map((u) => u.id),
         onSelectUnits: (ids, additive) => {
+          // Only your own units, and pull in any attached Leader / Bodyguard so they move together.
           const own = ids.filter((id) => state.units.find((u) => u.id === id)?.owner === state.activePlayer);
-          setSelectedUnitIds((prev) => (additive ? [...new Set([...prev, ...own])] : own));
+          const linked = new Set(own);
+          for (const id of own) {
+            const u = state.units.find((x) => x.id === id);
+            if (u?.attachedTo) linked.add(u.attachedTo);
+            for (const l of u?.leaderUnitIds ?? []) linked.add(l);
+          }
+          const expanded = [...linked];
+          setSelectedUnitIds((prev) => (additive ? [...new Set([...prev, ...expanded])] : expanded));
         },
         onGroupNudge: (delta) => {
           const moving = state.units.filter((u) => u.status.moveMode).map((u) => u.id);

@@ -23,9 +23,11 @@ import { maxMoveDistance, rollAdvance, type MoveMode } from './movement';
 import {
   resolveAttack,
   resolveCharge,
+  resolveFightMove,
   runCommandPhase,
   type AttackParams,
   type ChargeParams,
+  type FightMoveParams,
   type EngineContext,
 } from './engine';
 
@@ -73,6 +75,8 @@ export type Intent =
   | ({ type: 'Attack' } & AttackParams)
   /** Resolve a charge roll (2D6). Requires the EngineContext. */
   | ({ type: 'Charge' } & ChargeParams)
+  /** Pile In / Consolidate (Fight phase): move a unit up to 3" toward the nearest enemy. */
+  | ({ type: 'FightMove' } & FightMoveParams)
   /** Run the active player's Command phase: CP, Battle-shock, Primary scoring. Requires EngineContext. */
   | { type: 'RunCommandPhase' }
   /** Set per-unit status flags (movement/charge bookkeeping that later phases drive). */
@@ -278,6 +282,12 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       if (!ctx) return { ...state, log: [...state.log, 'Charge ignored: no datasheet context supplied'] };
       const { type: _t, ...params } = intent;
       return resolveCharge(state, params, ctx, rng).state;
+    }
+
+    case 'FightMove': {
+      if (!ctx) return { ...state, log: [...state.log, 'Fight move ignored: no datasheet context supplied'] };
+      const { type: _t, ...params } = intent;
+      return resolveFightMove(state, params, ctx).state;
     }
 
     case 'RunCommandPhase': {

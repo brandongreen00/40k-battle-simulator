@@ -100,6 +100,13 @@ describe('fight phase', () => {
     expect(order).toContain('c');
   });
 
+  it('Pile In moves a unit into base contact with the nearest enemy', () => {
+    // centres 3" apart, 0.5" radii -> 2" gap; pile in up to 3" closes to contact.
+    const s = withUnits([unit('a', 'player', 'melee', 10, 22), unit('b', 'ai', 'gun', 13, 22)]);
+    const after = reduce(s, { type: 'FightMove', unitId: 'a', mode: 'pile_in' }, makeRNG(1), ctx);
+    expect(closestGap(after.units.find((u) => u.id === 'a')!, circle, after.units.find((u) => u.id === 'b')!, circle)).toBeLessThanOrEqual(0.2);
+  });
+
   it('a successful charge moves the charger into Engagement Range', () => {
     // centres 4" apart, 0.5" radii -> 3" gap. 2D6 (>=2) always clears it, so the charge succeeds.
     const s = withUnits([unit('a', 'player', 'melee', 10, 22), unit('b', 'ai', 'gun', 14, 22)]);
