@@ -12,7 +12,8 @@
 
 import type { BaseShape, GameState, Layout, ModelInstance, Side, UnitInstance, Vec2 } from './types';
 import type { RNG } from './rng';
-import { baseHalfExtents, clamp } from './geometry';
+import { clamp } from './geometry';
+import { formationPositions, type Formation } from './formation';
 
 /** The Pariah Nexus phase sequence, as data (rule #4). Stage 1 does not advance through it. */
 export const PARIAH_NEXUS_PHASES = [
@@ -35,8 +36,12 @@ export type Intent =
       modelCount: number;
       /** Wounds per model (from the datasheet's first model profile). */
       wounds: number;
-      /** Where to drop the unit; models are laid out in a grid around this point (inches). */
+      /** Where to drop the unit; models are laid out around this point (inches). */
       anchor: Vec2;
+      /** Shape to lay the models out in (defaults to a compact block). */
+      formation?: Formation;
+      /** Rotation of the formation around the anchor, radians (defaults to 0). */
+      rotation?: number;
     }
   | { type: 'MoveModel'; modelId: string; pos: Vec2 }
   | { type: 'RemoveUnit'; unitId: string }
@@ -91,32 +96,22 @@ export function reduce(state: GameState, intent: Intent, _rng: RNG): GameState {
 }
 
 // ── helpers ──────────────────────────────────────────────────────────────────
-/** Lay a unit's models out in a compact grid around `anchor`, spaced by base size. */
+/** Lay a unit's models out in the requested formation around `anchor`, spaced by base size. */
 function layoutModels(intent: Extract<Intent, { type: 'SpawnUnit' }>, layout: Layout): ModelInstance[] {
-  const { hx, hy } = baseHalfExtents(intent.baseShape);
-  const gap = 0.2; // inches between bases
-  const stepX = hx * 2 + gap;
-  const stepY = hy * 2 + gap;
-  const cols = Math.max(1, Math.ceil(Math.sqrt(intent.modelCount)));
-
-  const models: ModelInstance[] = [];
-  for (let i = 0; i < intent.modelCount; i++) {
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    const rows = Math.ceil(intent.modelCount / cols);
-    const pos: Vec2 = {
-      x: intent.anchor.x + (col - (cols - 1) / 2) * stepX,
-      y: intent.anchor.y + (row - (rows - 1) / 2) * stepY,
-    };
-    models.push({
-      id: `${intent.unitId}:m${i}`,
-      unitId: intent.unitId,
-      pos: clampToBoard(pos, layout),
-      wounds: intent.wounds,
-      alive: true,
-    });
-  }
-  return models;
+  const positions = formationPositions({
+    anchor: intent.anchor,
+    count: intent.modelCount,
+    baseShape: intent.baseShape,
+    formation: intent.formation ?? 'block',
+    rotation: intent.rotation ?? 0,
+  });
+  return positions.map((pos, i) => ({
+    id: `${intent.unitId}:m${i}`,
+    unitId: intent.unitId,
+    pos: clampToBoard(pos, layout),
+    wounds: intent.wounds,
+    alive: true,
+  }));
 }
 
 function clampToBoard(p: Vec2, layout: Layout): Vec2 {
