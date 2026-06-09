@@ -218,7 +218,14 @@ export interface GameState {
 
 ---
 
-## 6. CURRENT STAGE — Stage 1: Data & Scaffolding ("the measuring board")
+## 6. STAGE HISTORY — Stage 1: Data & Scaffolding ("the measuring board") — ✅ DONE
+
+> **STATUS (2026-06-09):** Stage 1 is complete, and **Stages 2–4 (Phases 1–3 of the plan) —
+> deterministic combat core, a real game (LoS/cover/objectives/scoring/CP/battle-shock/movement),
+> and the ability/effect hook system — are now implemented and tested.** See the top Progress Log
+> entry for the full breakdown and the remaining work (the three owned lists' *specific* content,
+> enforced movement, and Phases 4–5: AI + polish). The task list below is retained as the Stage 1
+> record.
 
 > **Mapping note:** "Stage 1" = **Phase 0** in `docs/40k_simulator_plan.md`. It is the
 > foundation the combat core (next stage) is built on. **No combat, no line-of-sight, no
@@ -322,6 +329,74 @@ ability-system design that these stages depend on.
 ## 9. Progress Log
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
+
+- **[2026-06-09] — Stages 2–4 (Phases 1–3) combat engine implemented: deterministic combat core,
+  a real game, and the ability/effect hook system.** Owner explicitly authorised starting Phases 1–3
+  (CLAUDE.md rule #6) and said to skip the 3 owned lists + tank-size approximations for now. All
+  gates green: `pnpm typecheck`, `pnpm test` (**126 tests**), `pnpm build`.
+
+  **Phase 1 — deterministic combat core (`src/core/`):**
+  - `dice.ts` — dice-notation parser/roller (`N`, `DN`, `MDN`, `DN±K`) on the injected RNG.
+  - `keywords.ts` — parses the universal 10e weapon abilities out of Wahapedia's inconsistently-cased
+    keyword strings into a structured `ParsedKeywords` (Rapid Fire/Melta/Sustained/Lethal/Devastating/
+    Anti-X/Blast/Torrent/Heavy/Pistol/Ignores Cover/Lance/Precision/Indirect/Hazardous/Twin-linked/…).
+  - `combat.ts` — the full **hit→wound→save→damage** pipeline with criticals, re-rolls, the 10e wound
+    chart, AP/cover/invuln save resolution, Devastating (no-save) wounds, FNP, −1 Damage, and no
+    cross-model spill. Returns a step-by-step dice log. Validated by a **Monte-Carlo test vs analytic
+    expectation**.
+  - `engine.ts` — builds combat profiles from datasheet data (injected via `EngineContext`, not
+    imported — same DI seam as the RNG), derives range/half-range/long-range from real model positions,
+    applies casualties back to the unit, and logs.
+  - `state.ts` — Pariah Nexus **turn/phase/round sequencer** (`AdvancePhase`, alternating turns, ends
+    after round 5), `SetFirstPlayer`, `SetUnitStatus`, and the `Attack` intent. Per-unit `status` flags
+    + `startingModels`; an event/dice `log` on `GameState`.
+
+  **Phase 2 — a real game:**
+  - `los.ts` — the **2D segment-vs-polygon line of sight** (plan §5) with the Ruins carve-out, plus
+    cover from intervening/area terrain. Documented as the deliberate centre-to-centre simplification.
+  - `objectives.ts` — OC-based objective control + Pariah Nexus **Primary scoring** (5/obj, 15/turn,
+    50 cap). `battleshock.ts` — below-half detection + 2D6 Ld test. `movement.ts` — move/advance/
+    fall-back distances, **2D6 charge**, **Deep Strike 9″** legality.
+  - engine wiring: LoS+cover now **gate shooting** (Indirect Fire is the exception, at −1 to hit + forced
+    cover), `runCommandPhase` (+1 CP → Battle-shock tests → Primary scoring; battle-shocked units count
+    OC 0), `resolveCharge`, and `objectiveControl`. New intents: `Charge`, `RunCommandPhase`.
+
+  **Phase 3 — ability/effect hook system (`effects.ts`):**
+  - A **generic effect engine** (the §6 design): the combat pipeline hard-codes no specific rule;
+    before each attack the engine gathers the `EffectOutput`s of every active effect on attacker
+    (offensive) and target (defensive) and merges them into the `CombatSituation`
+    (`gatherAttackModifiers`). Adding an ability is ~a registry entry.
+  - A curated `EFFECT_REGISTRY` of mechanically-correct building blocks (Take Aim!/Fix Bayonets!,
+    re-roll 1s, +1 wound, granted Lethal/Sustained/Ignores-Cover, −1 Damage, FNP 5/6, Stealth,
+    Displacer-Field 4++) and `INNATE_ABILITY_EFFECTS` seam for datasheet specials.
+  - New intents `IssueOrder` + `UseStratagem` with a **CP economy** and **reactive timing** — stratagems
+    are not gated by the active player, so a Displacer-Field-style save buff fires in the opponent's
+    turn (architecture rule #3). Active effects expire on the unit's next turn reset.
+
+  **UI:** `GamePanel.tsx` (new right rail) surfaces the whole core — round/phase/turn controls,
+  `Run Command`, the **CP + VP scoreboard**, attacker/weapon/target pickers with **Resolve attack** /
+  **Charge**, an Order/Stratagem applier, and the **live dice log**. It dispatches the same intents the
+  tests use; the board reducer now injects the datasheet `EngineContext`.
+
+  **Decisions:**
+  - Hit/Wound modifiers clamped to ±1 (10e); criticals read the *unmodified* die; default crit on 6.
+  - **Devastating Wounds** modelled as the current rule (no save allowed, normal damage, FNP applies) —
+    not mortal wounds. **Benefit of Cover** caps at 3+ unless AP 0 (Core rule).
+  - LoS/cover is centre-to-centre single-point (fast, deterministic, competition-style); base-edge
+    sampling is a noted later refinement.
+  - Attacks assume every alive attacker model carries the chosen weapon (per-model wargear isn't tracked
+    yet); `attackerCount` can override. A Phase-1 simplification, flagged for when rosters carry loadouts.
+
+  **Handoff / what's left:**
+  1. **The three owned lists + their *specific* content.** The engine + the *universal* effect set are
+     done, but the named detachment rules, ~25 stratagems, AM Orders, and per-unit specials (Yarrick's
+     Will of Iron, Death Korps Medi-pack, Stormlord Firing Deck, etc.) still need the `docs/lists/*.md`
+     files to enumerate. Each binds to `EFFECT_REGISTRY`/`INNATE_ABILITY_EFFECTS` in ~1 line. Tank-size
+     approximations also still deferred per the owner.
+  2. **Movement is math + flags, not enforced placement.** Drag is still free (prior owner decision);
+     `movement.ts` exposes the legality/distance helpers but the UI doesn't yet snap/forbid moves or
+     enforce coherency. Embark/disembark and Fall-Back/Advance interactions are stubbed via status flags.
+  3. **Secondary missions, save/load, and the AI (Phases 4–5)** are untouched per the roadmap.
 
 - **[2026-06-09] — Real terrain layouts extracted (all 48 GW Chapter Approved 2025-26 maps).**
   Replaces the single approximate Hammer-and-Anvil stand-in with the real data, merged on top of the

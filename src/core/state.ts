@@ -14,6 +14,14 @@ import type { BaseShape, GameState, Layout, ModelInstance, Side, UnitInstance, V
 import type { RNG } from './rng';
 import { clamp } from './geometry';
 import { formationPositions, type Formation } from './formation';
+import {
+  resolveAttack,
+  resolveCharge,
+  runCommandPhase,
+  type AttackParams,
+  type ChargeParams,
+  type EngineContext,
+} from './engine';
 
 /** The Pariah Nexus phase sequence, as data (rule #4). Stage 1 does not advance through it. */
 export const PARIAH_NEXUS_PHASES = [
@@ -47,25 +55,89 @@ export type Intent =
   | { type: 'RemoveUnit'; unitId: string }
   | { type: 'ClearUnits' }
   /** Swap the board to a different layout. Resets the board (model positions are layout-specific). */
-  | { type: 'SetLayout'; layout: Layout };
+  | { type: 'SetLayout'; layout: Layout }
+  // ── Combat core (Phase 1) ────────────────────────────────────────────────────
+  /** Advance the phase/turn/round sequencer one step (Command→…→Fight→next turn). */
+  | { type: 'AdvancePhase' }
+  /** Set the side that takes the first turn (and reset the sequencer to round 1). */
+  | { type: 'SetFirstPlayer'; side: Side }
+  /** One unit attacks another with one weapon. Requires the EngineContext (datasheet lookup). */
+  | ({ type: 'Attack' } & AttackParams)
+  /** Resolve a charge roll (2D6). Requires the EngineContext. */
+  | ({ type: 'Charge' } & ChargeParams)
+  /** Run the active player's Command phase: CP, Battle-shock, Primary scoring. Requires EngineContext. */
+  | { type: 'RunCommandPhase' }
+  /** Set per-unit status flags (movement/charge bookkeeping that later phases drive). */
+  | { type: 'SetUnitStatus'; unitId: string; status: Partial<UnitInstance['status']> }
+  // ── Abilities / Orders / Stratagems (Phase 3) ─────────────────────────────────
+  /** Issue an Order to a unit: applies an effect (from core/effects.ts) until end of turn. */
+  | { type: 'IssueOrder'; unitId: string; effectId: string }
+  /** Use a Stratagem: spend CP for a side and optionally apply an effect to a target unit.
+   *  Not gated by the active player, so reactive stratagems (Displacer Field) work in the
+   *  opponent's turn (architecture rule #3). */
+  | { type: 'UseStratagem'; name: string; side: Side; cost: number; targetUnitId?: string; effectId?: string };
 
 export function createInitialState(layout: Layout): GameState {
   return {
     layout,
     units: [],
     round: 1,
+    firstPlayer: 'player',
     activePlayer: 'player',
     phase: PARIAH_NEXUS_PHASES[0],
     cp: { player: 0, ai: 0 },
     score: { player: 0, ai: 0 },
+    ended: false,
+    log: [],
+  };
+}
+
+const otherSide = (s: Side): Side => (s === 'player' ? 'ai' : 'player');
+
+/** Clear a side's per-unit, per-turn status flags at the start of that side's turn. */
+function beginTurnFor(state: GameState, side: Side): UnitInstance[] {
+  return state.units.map((u) => (u.owner === side ? { ...u, status: {} } : u));
+}
+
+/** Advance the Pariah Nexus sequencer one step. Phases→turns→rounds; ends after round 5. */
+function advancePhase(state: GameState): GameState {
+  if (state.ended) return state;
+  const i = PARIAH_NEXUS_PHASES.indexOf(state.phase as Phase);
+  if (i >= 0 && i < PARIAH_NEXUS_PHASES.length - 1) {
+    return { ...state, phase: PARIAH_NEXUS_PHASES[i + 1]! };
+  }
+  // End of the Fight phase — the active player's turn ends.
+  if (state.activePlayer === state.firstPlayer) {
+    const next = otherSide(state.activePlayer);
+    return {
+      ...state,
+      activePlayer: next,
+      phase: PARIAH_NEXUS_PHASES[0]!,
+      units: beginTurnFor(state, next),
+      log: [...state.log, `— ${next} turn, round ${state.round} —`],
+    };
+  }
+  // Second player just finished: advance the round (or end the battle after round 5).
+  if (state.round >= 5) {
+    return { ...state, ended: true, log: [...state.log, '— battle ends (round 5 complete) —'] };
+  }
+  const round = state.round + 1;
+  const next = state.firstPlayer;
+  return {
+    ...state,
+    round,
+    activePlayer: next,
+    phase: PARIAH_NEXUS_PHASES[0]!,
+    units: beginTurnFor(state, next),
+    log: [...state.log, `— ${next} turn, round ${round} —`],
   };
 }
 
 /**
  * Apply one validated intent, returning a new GameState (never mutates the input).
- * `rng` is accepted for parity with later stages; Stage 1 intents are deterministic.
+ * `ctx` (the datasheet lookup) is required only by intents that read unit stats (Attack).
  */
-export function reduce(state: GameState, intent: Intent, _rng: RNG): GameState {
+export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineContext): GameState {
   switch (intent.type) {
     case 'SpawnUnit': {
       const models = layoutModels(intent, state.layout);
@@ -74,6 +146,8 @@ export function reduce(state: GameState, intent: Intent, _rng: RNG): GameState {
         owner: intent.owner,
         datasheetId: intent.datasheetId,
         models,
+        startingModels: models.length,
+        status: {},
       };
       return { ...state, units: [...state.units, unit] };
     }
@@ -97,7 +171,79 @@ export function reduce(state: GameState, intent: Intent, _rng: RNG): GameState {
 
     case 'SetLayout':
       return createInitialState(intent.layout);
+
+    case 'AdvancePhase':
+      return advancePhase(state);
+
+    case 'SetFirstPlayer':
+      return { ...state, firstPlayer: intent.side, activePlayer: intent.side, round: 1, phase: PARIAH_NEXUS_PHASES[0], ended: false };
+
+    case 'SetUnitStatus':
+      return {
+        ...state,
+        units: state.units.map((u) =>
+          u.id === intent.unitId ? { ...u, status: { ...u.status, ...intent.status } } : u,
+        ),
+      };
+
+    case 'Attack': {
+      if (!ctx) {
+        return { ...state, log: [...state.log, 'Attack ignored: no datasheet context supplied'] };
+      }
+      const { type: _t, ...params } = intent;
+      const outcome = resolveAttack(state, params, ctx, rng);
+      if (outcome.rejected) {
+        return { ...state, log: [...state.log, `Attack rejected: ${outcome.rejected}`] };
+      }
+      return outcome.state;
+    }
+
+    case 'Charge': {
+      if (!ctx) return { ...state, log: [...state.log, 'Charge ignored: no datasheet context supplied'] };
+      const { type: _t, ...params } = intent;
+      return resolveCharge(state, params, ctx, rng).state;
+    }
+
+    case 'RunCommandPhase': {
+      if (!ctx) return { ...state, log: [...state.log, 'Command phase ignored: no datasheet context supplied'] };
+      return runCommandPhase(state, ctx, rng);
+    }
+
+    case 'IssueOrder':
+      return {
+        ...state,
+        units: state.units.map((u) =>
+          u.id === intent.unitId ? { ...u, status: addEffect(u.status, intent.effectId) } : u,
+        ),
+        log: [...state.log, `Order ${intent.effectId} → ${intent.unitId}`],
+      };
+
+    case 'UseStratagem': {
+      if (state.cp[intent.side] < intent.cost) {
+        return { ...state, log: [...state.log, `Stratagem "${intent.name}" rejected: needs ${intent.cost} CP, ${intent.side} has ${state.cp[intent.side]}`] };
+      }
+      const cp = { ...state.cp, [intent.side]: state.cp[intent.side] - intent.cost };
+      const units =
+        intent.targetUnitId && intent.effectId
+          ? state.units.map((u) =>
+              u.id === intent.targetUnitId ? { ...u, status: addEffect(u.status, intent.effectId!) } : u,
+            )
+          : state.units;
+      return {
+        ...state,
+        cp,
+        units,
+        log: [...state.log, `${intent.side} uses Stratagem "${intent.name}" (-${intent.cost} CP)${intent.effectId ? ` → ${intent.effectId}` : ''}`],
+      };
+    }
   }
+}
+
+/** Append an effect id to a unit's active effects (no duplicates). */
+function addEffect(status: UnitInstance['status'], effectId: string): UnitInstance['status'] {
+  const current = status.activeEffects ?? [];
+  if (current.includes(effectId)) return status;
+  return { ...status, activeEffects: [...current, effectId] };
 }
 
 // ── helpers ──────────────────────────────────────────────────────────────────
