@@ -323,6 +323,40 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-06-09] — Deployment placement: ghost preview + rotation + formation cycling.**
+  Replaced instant-spawn with a "pick up a unit, position it, drop it" flow on the measuring
+  board. All gates green: `pnpm typecheck`, `pnpm test` (45 tests), `pnpm build`.
+
+  **Done:**
+  - **New pure core module `src/core/formation.ts`** — `formationPositions({anchor, count,
+    baseShape, formation, rotation})` returns every model's position. Five strategic shapes
+    (`block`/`line`/`column`/`circle`/`wedge`) with `nextFormation` cycling + `FORMATION_LABEL`.
+    Each is centred on the anchor (wedge recentres on its model centroid) and rotated around it.
+    Framework-free; 9 unit tests in `tests/formation.test.ts`.
+  - **Reducer reuses it** — `SpawnUnit` gained optional `formation`/`rotation` and now lays models
+    out via `formationPositions` (block/0 default, so old call-sites are unchanged). The old
+    bespoke grid in `state.ts` is gone — one layout path, shared by preview and commit.
+  - **Board placement mode** (`src/ui/Board.tsx`) — a `Placement` prop drives a translucent,
+    dashed **ghost** of the whole unit that tracks the cursor. **Scroll wheel rotates** (15°/notch,
+    native non-passive listener so the page doesn't scroll), **`c` cycles formation**, `r`/`R`
+    nudge rotation, **click drops**, **Esc cancels**. HUD shows formation + heading + controls;
+    measuring is suppressed while placing.
+  - **Sidebar** — "+ Spawn" became "+ Place" (toggles to "Placing…"); the held unit's owner
+    follows the live "Spawn as" toggle.
+
+  **Decisions:**
+  - **Free placement, by request** — no deployment-zone legality, coherency, or base-overlap
+    enforcement (those are later-stage rules; the owner asked to place units "wherever they want").
+  - Rotation step = 15° (π/12). Formation cycle order is the `FORMATIONS` array order.
+  - `clientToInches` now guards a zero-sized `getBoundingClientRect` (pre-layout / jsdom) so it
+    can't divide by zero. (jsdom's synthetic `PointerEvent` also drops `clientX`; the smoke test
+    fires a `MouseEvent` typed `pointerdown` to carry real coords — a test-env workaround only.)
+
+  **Handoff:** Formation set is easily extended (add to `FORMATIONS` + `localOffsets`). Natural
+  follow-ups when Stage 2/3 land: snap/forbid placement outside the deployment zone, coherency
+  warnings, and re-placing a unit already on the board. Spawned units still don't persist across
+  the board/builder tab switch (pre-existing).
+
 - **[2026-06-09] — Army List Builder (Imperial Agents + Astra Militarum).** Built on a separate
   branch/PR off merged main. All gates green: `pnpm typecheck`, `pnpm test` (37 tests), `pnpm build`.
 
