@@ -17,7 +17,11 @@ export function App() {
     layout,
     createInitialState,
   );
-  const [rosterName, setRosterName] = useState<string>(rosters[0]?.name ?? '');
+  // Default to the first roster that actually has units (the demo) so the board is usable on
+  // first load; the empty owned-list rosters still show their "awaiting list" notes when picked.
+  const [rosterName, setRosterName] = useState<string>(
+    (rosters.find((r) => r.units.length > 0) ?? rosters[0])?.name ?? '',
+  );
   const [owner, setOwner] = useState<Side>('player');
   const spawnCount = useRef(0);
 
