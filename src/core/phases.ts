@@ -7,7 +7,7 @@
 
 import type { Datasheet, GameState, Side, UnitInstance, Vec2 } from './types';
 import type { EngineContext } from './engine';
-import { closestGap } from './engine';
+import { closestGap, unitWeapons } from './engine';
 import { parseKeywords } from './keywords';
 import { unitCanSee } from './los';
 import { checkCoherency, type CoherencyResult } from './coherency';
@@ -103,7 +103,7 @@ export function validShootingTargets(
   ctx: EngineContext,
 ): UnitInstance[] {
   const aDs = dsOf(attacker, ctx);
-  const weapon = aDs?.weapons.find((w) => w.name === weaponName);
+  const weapon = unitWeapons(attacker, ctx).find((w) => w.weapon.name === weaponName)?.weapon;
   if (!aDs || !weapon || weapon.type !== 'ranged') return [];
   const aPts = alivePts(attacker);
   const range = weapon.range ?? 0;

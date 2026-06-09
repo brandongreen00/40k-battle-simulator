@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  AM_ORDERS, isOfficer, canReceiveOrders, hasActiveOrder,
+  isOfficer, canReceiveOrders, hasActiveOrder,
   moveBonusFromOrders, ocBonusFromOrders, ldBonusFromOrders,
 } from '../src/core/orders';
 import { orderableUnits } from '../src/core/phases';

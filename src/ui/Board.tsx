@@ -117,8 +117,10 @@ export function Board({
     const map = new Map<string, Resolved>();
     for (const u of units) {
       const ds = datasheetsById.get(u.datasheetId);
-      const shape = ds?.baseShape ?? FALLBACK_SHAPE;
       for (const m of u.models) {
+        // A merged Leader's model carries its own datasheet → render it at its own base size.
+        const mds = m.datasheetId ? datasheetsById.get(m.datasheetId) : ds;
+        const shape = mds?.baseShape ?? ds?.baseShape ?? FALLBACK_SHAPE;
         map.set(m.id, { model: m, shape, owner: u.owner, unitId: u.id, unitName: ds?.name ?? u.datasheetId });
       }
     }

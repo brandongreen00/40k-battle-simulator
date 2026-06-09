@@ -304,7 +304,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
                 <li key={u.id}>
                   {!inSetup && <button className="remove" onClick={() => dispatch({ type: 'RemoveUnit', unitId: u.id })}>×</button>}
                   <span className="dot" style={{ background: OWNER_COLOR[u.owner].fill }} />
-                  <span className="unit-name">{ds?.name ?? u.datasheetId}{u.attachedTo ? ' ⚑' : ''}</span>
+                  <span className="unit-name">{ds?.name ?? u.datasheetId}{u.attachedLeaders?.length ? ' ⚑' : ''}</span>
                   <span className="unit-meta">{u.inReserves ? 'reserves' : `×${u.models.filter((m) => m.alive).length}`}</span>
                 </li>
               );

@@ -110,14 +110,16 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
             </div>
           )}
 
-          {state.units.some((u) => u.attachedTo) && (
+          {state.units.some((u) => u.attachedLeaders?.length) && (
             <ul className="dep-attached">
-              {state.units.filter((u) => u.attachedTo).map((u) => (
-                <li key={u.id}>
-                  {dsName(u.datasheetId)} → {dsName(state.units.find((b) => b.id === u.attachedTo)!.datasheetId)}
-                  <button className="link" onClick={() => dispatch({ type: 'DetachLeader', leaderUnitId: u.id })}>detach</button>
-                </li>
-              ))}
+              {state.units.flatMap((u) =>
+                (u.attachedLeaders ?? []).map((l) => (
+                  <li key={l.unitId}>
+                    {dsName(l.datasheetId)} → {dsName(u.datasheetId)} (merged)
+                    <button className="link" onClick={() => dispatch({ type: 'DetachLeader', leaderUnitId: l.unitId })}>detach</button>
+                  </li>
+                )),
+              )}
             </ul>
           )}
 

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { Datasheet, GameState } from '../core/types';
 import type { Intent } from '../core/state';
-import type { EngineContext } from '../core/engine';
+import { unitWeapons, type EngineContext } from '../core/engine';
 import type { MoveMode } from '../core/movement';
 import { EFFECT_REGISTRY } from '../core/effects';
 import {
@@ -57,8 +57,8 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
   const nameOfUnit = (id: string) => datasheetsById.get(units.find((u) => u.id === id)?.datasheetId ?? '')?.name ?? id;
 
   const attacker = units.find((u) => u.id === attackerId);
-  const attackerDs = attacker ? datasheetsById.get(attacker.datasheetId) : undefined;
-  const weapons = attackerDs?.weapons ?? [];
+  // Weapons the (possibly merged) attacker can fire — primary datasheet + any merged Leader's.
+  const weapons = useMemo(() => (attacker ? unitWeapons(attacker, ctx).map((w) => w.weapon) : []), [attacker, ctx]);
 
   const nameOf = (id: string) => {
     const u = units.find((x) => x.id === id);

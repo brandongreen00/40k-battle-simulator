@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createInitialState, reduce, type Intent } from '../src/core/state';
 import { makeRNG } from '../src/core/rng';
-import { isLeaderProtected } from '../src/core/phases';
 import type { BaseShape, Datasheet, GameState, Layout, UnitInstance } from '../src/core/types';
 import type { EngineContext } from '../src/core/engine';
 
@@ -93,13 +92,21 @@ describe('leader attachment', () => {
     { type: 'DeployUnit', unitId: 'ldr', owner: 'player', datasheetId: 'leader', baseShape: circle, modelCount: 1, wounds: 1, anchor: { x: 6, y: 22 } },
   ]);
 
-  it('attaches an eligible leader and shields it from targeting', () => {
+  it('merges an eligible leader into ONE unit instance', () => {
     const s = reduce(base(), { type: 'AttachLeader', leaderUnitId: 'ldr', bodyguardUnitId: 'bg' }, rng, ctx);
-    const leader = s.units.find((u) => u.id === 'ldr')!;
+    expect(s.units.find((u) => u.id === 'ldr')).toBeUndefined(); // leader instance absorbed
     const bg = s.units.find((u) => u.id === 'bg')!;
-    expect(leader.attachedTo).toBe('bg');
-    expect(bg.leaderUnitIds).toContain('ldr');
-    expect(isLeaderProtected(leader, s)).toBe(true);
+    expect(bg.models).toHaveLength(6); // 5 bodyguard + 1 leader
+    expect(bg.attachedLeaders?.[0]?.datasheetId).toBe('leader');
+    expect(bg.models.some((m) => m.datasheetId === 'leader')).toBe(true); // leader model tagged
+  });
+
+  it('detaches a merged leader back into its own unit', () => {
+    let s = reduce(base(), { type: 'AttachLeader', leaderUnitId: 'ldr', bodyguardUnitId: 'bg' }, rng, ctx);
+    s = reduce(s, { type: 'DetachLeader', leaderUnitId: 'ldr' }, rng, ctx);
+    expect(s.units.find((u) => u.id === 'ldr')).toBeDefined();
+    expect(s.units.find((u) => u.id === 'bg')!.models).toHaveLength(5);
+    expect(s.units.find((u) => u.id === 'bg')!.attachedLeaders ?? []).toHaveLength(0);
   });
 
   it('rejects an attachment the data does not allow', () => {

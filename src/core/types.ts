@@ -157,6 +157,8 @@ export interface ModelInstance {
   wargear?: string[];
   /** Position this model started its current Movement-phase activation from (for the M" clamp). */
   moveStart?: Vec2;
+  /** Datasheet override for this model (a merged Leader's model uses its own profile/weapons). */
+  datasheetId?: string;
 }
 
 /** Per-unit, per-turn activation + status flags. Reset at the points the rules dictate. */
@@ -194,6 +196,9 @@ export interface UnitInstance {
   attachedTo?: string;
   /** Leader attachment: Leader unit ids attached to this Bodyguard unit. */
   leaderUnitIds?: string[];
+  /** Merged-in Leaders (their models live in this unit, tagged with their datasheetId). Lets the
+   *  merged unit fire the Leader's weapons and be split apart again on detach. */
+  attachedLeaders?: { unitId: string; datasheetId: string; modelCount: number; wounds: number }[];
 }
 
 /** A resolved Battle-shock test, kept on the state so the UI can render its 2D6 as dice. */

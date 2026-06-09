@@ -392,9 +392,15 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
     }
 
     case 'AttachLeader': {
+      // Merge the Leader into the Bodyguard: ONE unit instance. The Leader's models live in the
+      // Bodyguard, tagged with their datasheetId (so the merged unit keeps the Leader's profile and
+      // can fire the Leader's weapons). The Leader unit instance is removed.
       const leader = state.units.find((u) => u.id === intent.leaderUnitId);
       const bodyguard = state.units.find((u) => u.id === intent.bodyguardUnitId);
       if (!leader || !bodyguard) return { ...state, log: [...state.log, 'Attach rejected: unit not found'] };
+      if (leader.attachedTo || (leader.attachedLeaders?.length ?? 0) > 0) {
+        return { ...state, log: [...state.log, 'Attach rejected: leader already merged'] };
+      }
       if (ctx) {
         const lDs = ctx.datasheets.get(leader.datasheetId);
         const bDs = ctx.datasheets.get(bodyguard.datasheetId);
@@ -402,28 +408,46 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
           return { ...state, log: [...state.log, `Attach rejected: ${lDs?.name ?? leader.id} cannot lead ${bDs?.name ?? bodyguard.id}`] };
         }
       }
+      const leaderModels = leader.models.map((m) => ({ ...m, unitId: bodyguard.id, datasheetId: leader.datasheetId }));
+      const merged: UnitInstance = {
+        ...bodyguard,
+        models: [...bodyguard.models, ...leaderModels],
+        startingModels: bodyguard.startingModels + leaderModels.length,
+        attachedLeaders: [
+          ...(bodyguard.attachedLeaders ?? []),
+          { unitId: leader.id, datasheetId: leader.datasheetId, modelCount: leaderModels.length, wounds: leader.models[0]?.wounds ?? 1 },
+        ],
+      };
       return {
         ...state,
-        units: state.units.map((u) => {
-          if (u.id === leader.id) return { ...u, attachedTo: bodyguard.id };
-          if (u.id === bodyguard.id) return { ...u, leaderUnitIds: [...new Set([...(u.leaderUnitIds ?? []), leader.id])] };
-          return u;
-        }),
-        log: [...state.log, `Leader attached to its Bodyguard unit`],
+        units: state.units.filter((u) => u.id !== leader.id).map((u) => (u.id === bodyguard.id ? merged : u)),
+        log: [...state.log, 'Leader merged into its Bodyguard unit (one unit)'],
       };
     }
 
     case 'DetachLeader': {
-      const leader = state.units.find((u) => u.id === intent.leaderUnitId);
-      if (!leader || !leader.attachedTo) return state;
-      const bodyguardId = leader.attachedTo;
+      // Split a merged Leader back out into its own unit instance.
+      const bodyguard = state.units.find((u) => (u.attachedLeaders ?? []).some((l) => l.unitId === intent.leaderUnitId));
+      if (!bodyguard) return state;
+      const rec = bodyguard.attachedLeaders!.find((l) => l.unitId === intent.leaderUnitId)!;
+      const leaderModels = bodyguard.models
+        .filter((m) => m.datasheetId === rec.datasheetId)
+        .map((m) => ({ ...m, unitId: rec.unitId, datasheetId: undefined }));
+      const remaining = bodyguard.models.filter((m) => m.datasheetId !== rec.datasheetId);
+      const newBodyguard: UnitInstance = {
+        ...bodyguard,
+        models: remaining,
+        startingModels: Math.max(0, bodyguard.startingModels - rec.modelCount),
+        attachedLeaders: (bodyguard.attachedLeaders ?? []).filter((l) => l.unitId !== intent.leaderUnitId),
+      };
+      const leaderUnit: UnitInstance = {
+        id: rec.unitId, owner: bodyguard.owner, datasheetId: rec.datasheetId,
+        models: leaderModels, startingModels: rec.modelCount, status: {},
+      };
       return {
         ...state,
-        units: state.units.map((u) => {
-          if (u.id === leader.id) return { ...u, attachedTo: undefined };
-          if (u.id === bodyguardId) return { ...u, leaderUnitIds: (u.leaderUnitIds ?? []).filter((id) => id !== leader.id) };
-          return u;
-        }),
+        units: [...state.units.map((u) => (u.id === bodyguard.id ? newBodyguard : u)), leaderUnit],
+        log: [...state.log, 'Leader detached from its Bodyguard unit'],
       };
     }
 

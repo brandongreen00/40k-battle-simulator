@@ -6,7 +6,7 @@
 // returns a new GameState plus a dice log. Range / half-range / engagement are read from the
 // real model positions via geometry; line-of-sight and cover arrive in Phase 2.
 
-import type { Datasheet, GameState, UnitInstance, Vec2, BaseShape } from './types';
+import type { Datasheet, GameState, ModelInstance, UnitInstance, Vec2, BaseShape, WeaponProfile } from './types';
 import type { RNG } from './rng';
 import { baseRadius, gapBetweenBases } from './geometry';
 import { parseKeywords } from './keywords';
@@ -41,18 +41,31 @@ export interface AttackOutcome {
 
 const ENGAGEMENT_RANGE = 1; // inches
 
-function attackProfileFor(ds: Datasheet, weaponName: string): AttackProfile | undefined {
-  const w = ds.weapons.find((x) => x.name === weaponName);
-  if (!w) return undefined;
-  return {
-    name: w.name,
-    attacks: w.attacks,
-    skill: w.skill,
-    S: w.S,
-    AP: w.AP,
-    D: w.D,
-    keywords: parseKeywords(w.keywords),
-  };
+function attackProfileForWeapon(w: WeaponProfile): AttackProfile {
+  return { name: w.name, attacks: w.attacks, skill: w.skill, S: w.S, AP: w.AP, D: w.D, keywords: parseKeywords(w.keywords) };
+}
+
+/** All datasheet ids contributing models to a unit (its own + any merged-in Leaders). */
+export function unitDatasheetIds(unit: UnitInstance): string[] {
+  return [...new Set([unit.datasheetId, ...(unit.attachedLeaders ?? []).map((l) => l.datasheetId)])];
+}
+
+/** The datasheet governing a specific model (a merged Leader's model uses its own profile). */
+export function modelDatasheet(model: ModelInstance, unit: UnitInstance, ctx: EngineContext): Datasheet | undefined {
+  return ctx.datasheets.get(model.datasheetId ?? unit.datasheetId);
+}
+
+/** The union of weapons a unit can fire (primary + merged Leaders), each with its source datasheet. */
+export function unitWeapons(unit: UnitInstance, ctx: EngineContext): { weapon: WeaponProfile; sourceDsId: string }[] {
+  const out: { weapon: WeaponProfile; sourceDsId: string }[] = [];
+  const seen = new Set<string>();
+  for (const dsId of unitDatasheetIds(unit)) {
+    for (const w of ctx.datasheets.get(dsId)?.weapons ?? []) {
+      const key = `${dsId}:${w.name}`;
+      if (!seen.has(key)) { seen.add(key); out.push({ weapon: w, sourceDsId: dsId }); }
+    }
+  }
+  return out;
 }
 
 /**
@@ -67,26 +80,28 @@ function effectsOf(unit: UnitInstance): string[] {
   return [...(unit.status.activeEffects ?? []), ...(INNATE_ABILITY_EFFECTS[unit.datasheetId] ?? [])];
 }
 
-function defenderProfileFor(ds: Datasheet, unit: UnitInstance): DefenderProfile {
-  const m = ds.models[0]!; // primary profile; multi-profile allocation arrives later
+function defenderProfileFor(unit: UnitInstance, ctx: EngineContext): DefenderProfile {
+  const primary = ctx.datasheets.get(unit.datasheetId)!;
+  const pm = primary.models[0]!; // the unit's main profile (used for the wound roll's Toughness)
   return {
-    T: m.T,
-    save: m.Sv,
-    invuln: m.invuln,
-    keywords: ds.keywords,
+    T: pm.T,
+    save: pm.Sv,
+    invuln: pm.invuln,
+    keywords: primary.keywords,
     models: unit.models
       .filter((x) => x.alive)
       .map((x) => {
-        // A shield-bearer (or other defensive wargear) overrides the unit's save/invuln.
-        let invuln = m.invuln;
-        let save: number | undefined;
+        // Per-model profile: a merged Leader model uses its own datasheet's W / Sv / invuln.
+        const base = (modelDatasheet(x, unit, ctx) ?? primary).models[0]!;
+        let invuln = base.invuln;
+        let save: number | undefined = base.Sv !== pm.Sv ? base.Sv : undefined;
         for (const item of x.wargear ?? []) {
           const def = defensiveProfileForItem(item);
           if (!def) continue;
           if (def.invuln != null) invuln = Math.min(invuln ?? 7, def.invuln);
-          if (def.saveBonus != null) save = Math.max(2, (save ?? m.Sv) - def.saveBonus);
+          if (def.saveBonus != null) save = Math.max(2, (save ?? base.Sv) - def.saveBonus);
         }
-        return { maxW: m.W, wounds: x.wounds, ...(invuln != null ? { invuln } : {}), ...(save != null ? { save } : {}) };
+        return { maxW: base.W, wounds: x.wounds, ...(invuln != null ? { invuln } : {}), ...(save != null ? { save } : {}) };
       }),
   };
 }
@@ -122,11 +137,14 @@ export function resolveAttack(
   const tDs = ctx.datasheets.get(target.datasheetId);
   if (!aDs || !tDs) return { state, summary: '', rejected: 'datasheet not found' };
 
-  const weaponDef = aDs.weapons.find((w) => w.name === params.weaponName);
-  const profile = attackProfileFor(aDs, params.weaponName);
-  if (!weaponDef || !profile) return { state, summary: '', rejected: 'weapon not found' };
+  // Find the weapon across the unit's datasheets (primary + merged Leaders) and count only the
+  // models from that source datasheet as firing it.
+  const found = unitWeapons(attacker, ctx).find((w) => w.weapon.name === params.weaponName);
+  if (!found) return { state, summary: '', rejected: 'weapon not found' };
+  const weaponDef = found.weapon;
+  const profile = attackProfileForWeapon(weaponDef);
 
-  const aliveAttackers = attacker.models.filter((m) => m.alive).length;
+  const aliveAttackers = attacker.models.filter((m) => m.alive && (m.datasheetId ?? attacker.datasheetId) === found.sourceDsId).length;
   const aliveTargets = target.models.filter((m) => m.alive).length;
   if (aliveAttackers === 0 || aliveTargets === 0) return { state, summary: '', rejected: 'no models' };
 
@@ -190,7 +208,7 @@ export function resolveAttack(
     extraAttacks: mods.extraAttacks,
   };
 
-  const defender = defenderProfileFor(tDs, target);
+  const defender = defenderProfileFor(target, ctx);
   if (mods.fnp != null) defender.fnp = mods.fnp;
   if (mods.invulnFloor != null) defender.invuln = Math.min(defender.invuln ?? 7, mods.invulnFloor);
   if (mods.saveBonus) {
@@ -240,11 +258,13 @@ function ocModels(state: GameState, ctx: EngineContext): OcModel[] {
   for (const u of state.units) {
     const ds = ctx.datasheets.get(u.datasheetId);
     if (!ds) continue;
-    // Battle-shocked units have OC 0; otherwise add any Order/detachment OC bonus (Duty and Honour!).
-    const oc = u.status.battleShocked ? 0 : ds.models[0]!.OC + ocBonusFromOrders(u);
-    const radius = baseRadius(ds.baseShape);
+    const ocBonus = ocBonusFromOrders(u);
     for (const m of u.models) {
-      if (m.alive) out.push({ pos: m.pos, oc, radius, owner: u.owner });
+      if (!m.alive) continue;
+      const mds = modelDatasheet(m, u, ctx) ?? ds; // per-model (a merged Leader has its own OC)
+      // Battle-shocked units have OC 0; otherwise add any Order/detachment OC bonus.
+      const oc = u.status.battleShocked ? 0 : mds.models[0]!.OC + ocBonus;
+      out.push({ pos: m.pos, oc, radius: baseRadius(mds.baseShape), owner: u.owner });
     }
   }
   return out;
