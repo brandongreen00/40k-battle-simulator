@@ -3,9 +3,10 @@ import type { BaseShape, Datasheet, Roster, RosterUnit, Side, Vec2 } from '../co
 import { reduce, createInitialState, type Intent } from '../core/state';
 import { makeRNG } from '../core/rng';
 import { nextFormation, type Formation } from '../core/formation';
-import { checkUnitDeployment, type DeployAbility } from '../core/deployment';
+import { checkUnitDeployment, deepStrikeArrivalLegal, type DeployAbility } from '../core/deployment';
+import { unitCoherency, unitCentroid } from '../core/phases';
 import { datasheetsById, deployAbilityForDatasheet, getDatasheet, layouts, rosters } from '../data/loaders';
-import { Board, type Placement } from './Board';
+import { Board, type Placement, type MovementUI } from './Board';
 import { GamePanel } from './GamePanel';
 import { DeploymentPanel, effectiveSide } from './DeploymentPanel';
 import { OWNER_COLOR, TERRAIN_STYLE } from './view';
@@ -20,6 +21,8 @@ interface Placing {
   side: Side;
   /** Set during deployment: the roster entry key used as the unit id (so it can't be double-placed). */
   entryKey?: string;
+  /** Set during a Deep Strike arrival: the Reserves unit id being brought onto the board. */
+  arriveUnitId?: string;
   ability: DeployAbility;
 }
 
@@ -65,6 +68,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
   });
   const [owner, setOwner] = useState<Side>('player'); // sandbox spawn-as
   const [placing, setPlacing] = useState<Placing | null>(null);
+  const [selectedUnitIds, setSelectedUnitIds] = useState<string[]>([]);
   const spawnCount = useRef(0);
 
   const rosterFor = (side: Side): Roster | undefined => allRosters.find((r) => r.name === rosterNameBySide[side]);
@@ -118,7 +122,9 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
       wounds: placing.ds.models[0]?.W ?? 1,
       ...(placing.unit.wargearCounts ? { wargear: placing.unit.wargearCounts } : {}),
     };
-    if (placing.entryKey) {
+    if (placing.arriveUnitId) {
+      dispatch({ type: 'ArriveFromReserves', unitId: placing.arriveUnitId, anchor, formation: placing.formation, rotation: placing.rotation });
+    } else if (placing.entryKey) {
       dispatch({ type: 'DeployUnit', unitId: placing.entryKey, owner: placing.side, anchor, formation: placing.formation, rotation: placing.rotation, ability: placing.ability, ...common });
     } else {
       dispatch({ type: 'SpawnUnit', unitId: `u${spawnCount.current++}`, owner: placing.side, anchor, formation: placing.formation, rotation: placing.rotation, ...common });
@@ -126,12 +132,24 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
     setPlacing(null);
   }
 
+  /** Begin a Deep Strike arrival: ghost the Reserves unit, gated by the > 9" rule. */
+  function beginArrival(unitId: string) {
+    const u = state.units.find((x) => x.id === unitId);
+    const ds = u && getDatasheet(u.datasheetId);
+    if (!u || !ds) return;
+    setSelectedUnitIds([]);
+    setPlacing({
+      unit: { datasheetId: ds.id, modelCount: u.models.length },
+      ds, formation: 'block', rotation: 0, side: u.owner, arriveUnitId: unitId, ability: 'deep_strike',
+    });
+  }
+
   function placeReserves(entry: DeployEntry, side: Side) {
     const ds = entry.ds;
     dispatch({ type: 'PlaceInReserves', unitId: entry.key, owner: side, datasheetId: ds.id, baseShape: ds.baseShape, modelCount: entry.unit.modelCount, wounds: ds.models[0]?.W ?? 1, ...(entry.unit.wargearCounts ? { wargear: entry.unit.wargearCounts } : {}) });
   }
 
-  // The ghost the board renders; in setup it carries a zone-legality predicate.
+  // The ghost the board renders; carries a legality predicate for deployment / Deep Strike arrival.
   const placement: Placement | null = placing
     ? {
         baseShape: placing.ds.baseShape,
@@ -139,9 +157,32 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
         owner: placing.side,
         formation: placing.formation,
         rotation: placing.rotation,
-        ...(placing.entryKey
+        ...(placing.arriveUnitId
+          ? { legal: (positions: Vec2[]) => deepStrikeArrivalLegal(positions, placing.ds.baseShape, enemyModels(placing.side), state.round).legal }
+          : placing.entryKey
           ? { legal: (positions: Vec2[]) => checkUnitDeployment(positions, placing.ds.baseShape, layout, placing.side, placing.ability, enemyModels(placing.side)).legal }
           : {}),
+      }
+    : null;
+
+  // Movement-phase board interaction (drag-select, group move, coherency warnings).
+  const inMovement = state.stage === 'battle' && state.phase === 'Movement' && !placing;
+  const movement: MovementUI | null = inMovement
+    ? {
+        selectedUnitIds,
+        movingUnitIds: state.units.filter((u) => u.status.moveMode).map((u) => u.id),
+        onSelectUnits: (ids, additive) => {
+          const own = ids.filter((id) => state.units.find((u) => u.id === id)?.owner === state.activePlayer);
+          setSelectedUnitIds((prev) => (additive ? [...new Set([...prev, ...own])] : own));
+        },
+        onGroupNudge: (delta) => {
+          const moving = state.units.filter((u) => u.status.moveMode).map((u) => u.id);
+          if (moving.length) dispatch({ type: 'NudgeUnit', unitIds: moving, delta });
+        },
+        warnings: state.units
+          .filter((u) => u.owner === state.activePlayer && !u.inReserves && u.models.some((m) => m.alive))
+          .filter((u) => !unitCoherency(u, { datasheets: datasheetsById }).inCoherency)
+          .map((u) => ({ unitId: u.id, centroid: unitCentroid(u) })),
       }
     : null;
 
@@ -283,6 +324,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
           onPlacementRotate={(d) => setPlacing((p) => (p ? { ...p, rotation: p.rotation + d } : p))}
           onPlacementCycle={() => setPlacing((p) => (p ? { ...p, formation: nextFormation(p.formation) } : p))}
           onPlacementCancel={() => setPlacing(null)}
+          movement={movement}
         />
       </main>
 
@@ -298,7 +340,14 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
             remaining={remaining}
           />
         ) : (
-          <GamePanel state={state} dispatch={dispatch} datasheetsById={datasheetsById} />
+          <GamePanel
+            state={state}
+            dispatch={dispatch}
+            datasheetsById={datasheetsById}
+            selectedUnitIds={selectedUnitIds}
+            setSelectedUnitIds={setSelectedUnitIds}
+            onBeginArrival={beginArrival}
+          />
         )}
       </aside>
     </div>

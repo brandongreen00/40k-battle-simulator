@@ -1,26 +1,47 @@
 import { useMemo, useState } from 'react';
 import type { Datasheet, GameState } from '../core/types';
 import type { Intent } from '../core/state';
+import type { EngineContext } from '../core/engine';
+import type { MoveMode } from '../core/movement';
 import { EFFECT_REGISTRY } from '../core/effects';
+import { reservesArrivable, unitCoherency } from '../core/phases';
 import { OWNER_COLOR } from './view';
 
 interface Props {
   state: GameState;
   dispatch: (i: Intent) => void;
   datasheetsById: Map<string, Datasheet>;
+  /** Units selected on the board (Movement phase); managed by the parent. */
+  selectedUnitIds?: string[];
+  setSelectedUnitIds?: (ids: string[]) => void;
+  /** Begin a Deep Strike arrival placement for a Reserves unit (handled by the board). */
+  onBeginArrival?: (unitId: string) => void;
 }
+
+const MOVE_MODES: { mode: MoveMode; label: string }[] = [
+  { mode: 'normal', label: 'Move' },
+  { mode: 'advance', label: 'Advance' },
+  { mode: 'fall_back', label: 'Fall Back' },
+  { mode: 'stationary', label: 'Remain' },
+];
 
 /**
  * The play surface for the combat core (Phases 1–3): turn/phase/round controls, the CP + VP
  * scoreboard, attack/charge resolution between on-board units, Order/Stratagem application, and the
  * live dice log. All actions go through the same intent reducer the rest of the app uses.
  */
-export function GamePanel({ state, dispatch, datasheetsById }: Props) {
+export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [], setSelectedUnitIds, onBeginArrival }: Props) {
   const units = state.units;
   const [attackerId, setAttackerId] = useState('');
   const [targetId, setTargetId] = useState('');
   const [weaponName, setWeaponName] = useState('');
   const [effectId, setEffectId] = useState('order:take_aim');
+
+  const ctx: EngineContext = useMemo(() => ({ datasheets: datasheetsById }), [datasheetsById]);
+  const movingUnits = units.filter((u) => u.status.moveMode);
+  const coherencyOk = movingUnits.every((u) => unitCoherency(u, ctx).inCoherency);
+  const arrivable = reservesArrivable(state);
+  const nameOfUnit = (id: string) => datasheetsById.get(units.find((u) => u.id === id)?.datasheetId ?? '')?.name ?? id;
 
   const attacker = units.find((u) => u.id === attackerId);
   const attackerDs = attacker ? datasheetsById.get(attacker.datasheetId) : undefined;
@@ -74,6 +95,66 @@ export function GamePanel({ state, dispatch, datasheetsById }: Props) {
           </div>
         ))}
       </div>
+
+      {/* Movement phase */}
+      {state.phase === 'Movement' && (
+        <div className="phase-block">
+          <h3>Movement</h3>
+          {movingUnits.length === 0 ? (
+            <>
+              <p className="muted">
+                {selectedUnitIds.length === 0
+                  ? 'Drag a box on the board to select your units.'
+                  : `${selectedUnitIds.length} unit(s) selected: ${selectedUnitIds.map(nameOfUnit).join(', ')}`}
+              </p>
+              <div className="btnrow">
+                {MOVE_MODES.map(({ mode, label }) => (
+                  <button
+                    key={mode}
+                    disabled={selectedUnitIds.length === 0}
+                    onClick={() => dispatch({ type: 'BeginMove', unitIds: selectedUnitIds, mode })}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <p className={coherencyOk ? 'muted' : 'coh-bad'}>
+                {movingUnits.length} unit(s) moving · {coherencyOk ? 'in coherency ✓' : '⚠ out of coherency'}
+              </p>
+              <div className="btnrow">
+                <button
+                  className="primary"
+                  disabled={!coherencyOk}
+                  title={coherencyOk ? '' : 'A unit is out of coherency — bring its models back together first'}
+                  onClick={() => { dispatch({ type: 'EndMove', unitIds: movingUnits.map((u) => u.id) }); setSelectedUnitIds?.([]); }}
+                >
+                  ✓ Confirm move
+                </button>
+                <button onClick={() => { dispatch({ type: 'CancelMove', unitIds: movingUnits.map((u) => u.id) }); }}>
+                  Cancel
+                </button>
+              </div>
+            </>
+          )}
+
+          {arrivable.length > 0 && (
+            <div className="arrivals">
+              <h4>Reserves (Deep Strike)</h4>
+              {arrivable.map((u) => (
+                <button key={u.id} className="arrive" onClick={() => onBeginArrival?.(u.id)}>
+                  ⤓ Arrive {nameOfUnit(u.id)}
+                </button>
+              ))}
+            </div>
+          )}
+          {state.round < 2 && state.units.some((u) => u.inReserves && u.owner === state.activePlayer) && (
+            <p className="hint">Reserves arrive from battle round 2.</p>
+          )}
+        </div>
+      )}
 
       {/* Attack / charge */}
       <h3>Resolve combat</h3>

@@ -846,3 +846,49 @@ button.remove {
 .reserve-btn:hover {
   border-color: var(--accent);
 }
+
+/* ── Movement phase ──────────────────────────────────────────────────── */
+.phase-block {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 8px 0;
+  background: #171b22;
+}
+.phase-block h3 {
+  margin: 0 0 6px;
+}
+.phase-block h4 {
+  margin: 8px 0 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.coh-bad {
+  color: #f59e0b;
+  font-weight: 700;
+}
+.arrivals {
+  margin-top: 6px;
+}
+.arrive {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: #2b313d;
+  border: 1px solid var(--line);
+  color: #cbb26b;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin: 3px 0;
+}
+.arrive:hover {
+  border-color: var(--accent);
+}
+.board-hud.warn {
+  background: #5a3a12;
+  color: #ffd9a8;
+}
+.coh-warn text {
+  paint-order: stroke;
+}

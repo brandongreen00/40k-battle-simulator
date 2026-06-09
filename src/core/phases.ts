@@ -10,6 +10,9 @@ import type { EngineContext } from './engine';
 import { closestGap } from './engine';
 import { parseKeywords } from './keywords';
 import { unitCanSee } from './los';
+import { checkCoherency, type CoherencyResult } from './coherency';
+
+const FALLBACK_SHAPE = { kind: 'circle' as const, radius: 0.63 };
 
 export const ENGAGEMENT_RANGE = 1; // inches
 export const CHARGE_THREAT = 12; // inches — a unit may declare a charge within 12"
@@ -180,6 +183,23 @@ export function fightActivationOrder(state: GameState, ctx: EngineContext): Unit
   const fightsFirst = eligible.filter((u) => hasFightsFirst(u, ctx));
   const rest = eligible.filter((u) => !hasFightsFirst(u, ctx));
   return [...interleave(fightsFirst), ...interleave(rest)];
+}
+
+// ── Coherency (for the Movement-phase confirm gate + warning markers) ─────────
+/** Coherency status of a unit's current alive-model positions. */
+export function unitCoherency(u: UnitInstance, ctx: EngineContext): CoherencyResult {
+  const shape = dsOf(u, ctx)?.baseShape ?? FALLBACK_SHAPE;
+  return checkCoherency(aliveModels(u).map((m) => m.pos), shape);
+}
+
+/** Centroid of a unit's alive models (for hovering a warning marker). */
+export function unitCentroid(u: UnitInstance): Vec2 {
+  const ms = aliveModels(u);
+  if (ms.length === 0) return { x: 0, y: 0 };
+  return {
+    x: ms.reduce((s, m) => s + m.pos.x, 0) / ms.length,
+    y: ms.reduce((s, m) => s + m.pos.y, 0) / ms.length,
+  };
 }
 
 // ── Reserves ─────────────────────────────────────────────────────────────────

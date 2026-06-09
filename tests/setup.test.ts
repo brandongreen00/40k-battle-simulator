@@ -149,6 +149,30 @@ describe('movement budget + coherency gate', () => {
     expect(s.units[0]!.status.moveMode).toBeUndefined();
   });
 
+  it('NudgeUnit is incremental and clamps the cumulative move to the budget', () => {
+    let s = seed();
+    s = reduce(s, { type: 'BeginMove', unitIds: ['u'], mode: 'normal' }, rng, ctx);
+    const start = s.units[0]!.models[0]!.moveStart!;
+    // Two 4" nudges -> 8" requested, clamped to 6" (M).
+    s = reduce(s, { type: 'NudgeUnit', unitIds: ['u'], delta: { x: 4, y: 0 } }, rng, ctx);
+    s = reduce(s, { type: 'NudgeUnit', unitIds: ['u'], delta: { x: 4, y: 0 } }, rng, ctx);
+    const m0 = s.units[0]!.models[0]!;
+    expect(Math.hypot(m0.pos.x - start.x, m0.pos.y - start.y)).toBeCloseTo(6, 5);
+  });
+
+  it('CancelMove snaps the unit back to its origins and clears the activation', () => {
+    let s = seed();
+    const before = s.units[0]!.models.map((m) => ({ ...m.pos }));
+    s = reduce(s, { type: 'BeginMove', unitIds: ['u'], mode: 'normal' }, rng, ctx);
+    s = reduce(s, { type: 'NudgeUnit', unitIds: ['u'], delta: { x: 5, y: 0 } }, rng, ctx);
+    s = reduce(s, { type: 'CancelMove', unitIds: ['u'] }, rng, ctx);
+    expect(s.units[0]!.status.moveMode).toBeUndefined();
+    s.units[0]!.models.forEach((m, i) => {
+      expect(m.pos.x).toBeCloseTo(before[i]!.x, 5);
+      expect(m.pos.y).toBeCloseTo(before[i]!.y, 5);
+    });
+  });
+
   it('refuses to confirm a move that breaks coherency', () => {
     let s = seed();
     s = reduce(s, { type: 'BeginMove', unitIds: ['u'], mode: 'normal' }, rng, ctx);

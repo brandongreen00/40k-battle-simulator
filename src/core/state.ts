@@ -135,6 +135,8 @@ export type Intent =
   | { type: 'NudgeUnit'; unitIds: string[]; delta: Vec2 }
   /** Finalise a Movement activation: rejects if any unit is out of coherency, else locks in the move. */
   | { type: 'EndMove'; unitIds: string[] }
+  /** Abort a Movement activation: snap the units back to their origins, record no move. */
+  | { type: 'CancelMove'; unitIds: string[] }
   /** Bring a Reserves unit onto the board (Deep Strike), validated > 9" from enemies, round 2+. */
   | { type: 'ArriveFromReserves'; unitId: string; anchor: Vec2; formation?: Formation; rotation?: number };
 
@@ -462,6 +464,8 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
     }
 
     case 'NudgeUnit': {
+      // Incremental translate (delta since the last pointer event), clamped per model to the move
+      // budget measured from its origin. Stateless for the UI — it just streams small deltas.
       const units = state.units.map((u) => {
         if (!intent.unitIds.includes(u.id)) return u;
         const budget = u.status.moveBudget ?? 0;
@@ -469,12 +473,25 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
           ...u,
           models: u.models.map((m) => {
             if (!m.alive || !m.moveStart) return m;
-            const target = { x: m.moveStart.x + intent.delta.x, y: m.moveStart.y + intent.delta.y };
+            const target = { x: m.pos.x + intent.delta.x, y: m.pos.y + intent.delta.y };
             return { ...m, pos: clampToBoard(clampToRange(m.moveStart, target, budget), state.layout) };
           }),
         };
       });
       return { ...state, units };
+    }
+
+    case 'CancelMove': {
+      // Snap the units back to their move origins and clear the activation (no move recorded).
+      const units = state.units.map((u) => {
+        if (!intent.unitIds.includes(u.id)) return u;
+        return {
+          ...u,
+          status: { ...u.status, moveMode: undefined, moveBudget: undefined },
+          models: u.models.map((m) => (m.moveStart ? { ...m, pos: m.moveStart, moveStart: undefined } : m)),
+        };
+      });
+      return { ...state, units, log: [...state.log, 'Move cancelled'] };
     }
 
     case 'EndMove': {
