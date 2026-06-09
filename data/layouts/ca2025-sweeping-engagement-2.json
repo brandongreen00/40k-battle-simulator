@@ -1,0 +1,473 @@
+{
+  "id": "ca2025-sweeping-engagement-2",
+  "name": "GW Chapter Approved 2025–2026 · Sweeping Engagement · Terrain Layout 2",
+  "boardWidth": 60,
+  "boardHeight": 44,
+  "deployment": "Sweeping Engagement",
+  "deploymentId": "sweeping-engagement-sf-2025",
+  "source": "labrador.dev (gw-chapter-approved-2025-2026), Strike Force; extracted by tools/layouts/extract-gw-ca-2025.ts",
+  "objectiveMarkerDiameterIn": 1.575,
+  "objectiveControlRadiusIn": 3,
+  "terrain": [
+    {
+      "id": "t0",
+      "type": "ruin_blocking",
+      "height": "tall",
+      "source": "z 8x6",
+      "polygon": [
+        {
+          "x": 11,
+          "y": 40
+        },
+        {
+          "x": 11,
+          "y": 32
+        },
+        {
+          "x": 5,
+          "y": 32
+        },
+        {
+          "x": 5,
+          "y": 40
+        }
+      ]
+    },
+    {
+      "id": "t0m",
+      "type": "ruin_blocking",
+      "height": "tall",
+      "source": "z 8x6 (180° partner)",
+      "polygon": [
+        {
+          "x": 49,
+          "y": 4
+        },
+        {
+          "x": 49,
+          "y": 12
+        },
+        {
+          "x": 55,
+          "y": 12
+        },
+        {
+          "x": 55,
+          "y": 4
+        }
+      ]
+    },
+    {
+      "id": "t1",
+      "type": "area_cover",
+      "height": "low",
+      "source": "y 4x6",
+      "polygon": [
+        {
+          "x": 11,
+          "y": 32
+        },
+        {
+          "x": 11,
+          "y": 28
+        },
+        {
+          "x": 5,
+          "y": 28
+        },
+        {
+          "x": 5,
+          "y": 32
+        }
+      ]
+    },
+    {
+      "id": "t1m",
+      "type": "area_cover",
+      "height": "low",
+      "source": "y 4x6 (180° partner)",
+      "polygon": [
+        {
+          "x": 49,
+          "y": 12
+        },
+        {
+          "x": 49,
+          "y": 16
+        },
+        {
+          "x": 55,
+          "y": 16
+        },
+        {
+          "x": 55,
+          "y": 12
+        }
+      ]
+    },
+    {
+      "id": "t2",
+      "type": "ruin_blocking",
+      "height": "tall",
+      "source": "O 12x6",
+      "polygon": [
+        {
+          "x": 17,
+          "y": 28.45
+        },
+        {
+          "x": 25.918,
+          "y": 20.42
+        },
+        {
+          "x": 21.903,
+          "y": 15.962
+        },
+        {
+          "x": 12.985,
+          "y": 23.991
+        }
+      ]
+    },
+    {
+      "id": "t2m",
+      "type": "ruin_blocking",
+      "height": "tall",
+      "source": "O 12x6 (180° partner)",
+      "polygon": [
+        {
+          "x": 43,
+          "y": 15.55
+        },
+        {
+          "x": 34.082,
+          "y": 23.58
+        },
+        {
+          "x": 38.097,
+          "y": 28.038
+        },
+        {
+          "x": 47.015,
+          "y": 20.009
+        }
+      ]
+    },
+    {
+      "id": "t3",
+      "type": "area_cover",
+      "height": "low",
+      "source": "y 4x6",
+      "polygon": [
+        {
+          "x": 2,
+          "y": 16
+        },
+        {
+          "x": 2,
+          "y": 20
+        },
+        {
+          "x": 8,
+          "y": 20
+        },
+        {
+          "x": 8,
+          "y": 16
+        }
+      ]
+    },
+    {
+      "id": "t3m",
+      "type": "area_cover",
+      "height": "low",
+      "source": "y 4x6 (180° partner)",
+      "polygon": [
+        {
+          "x": 58,
+          "y": 28
+        },
+        {
+          "x": 58,
+          "y": 24
+        },
+        {
+          "x": 52,
+          "y": 24
+        },
+        {
+          "x": 52,
+          "y": 28
+        }
+      ]
+    },
+    {
+      "id": "t4",
+      "type": "ruin_blocking",
+      "height": "tall",
+      "source": "L 12x6",
+      "polygon": [
+        {
+          "x": 14,
+          "y": 16
+        },
+        {
+          "x": 14,
+          "y": 4
+        },
+        {
+          "x": 8,
+          "y": 4
+        },
+        {
+          "x": 8,
+          "y": 16
+        }
+      ]
+    },
+    {
+      "id": "t4m",
+      "type": "ruin_blocking",
+      "height": "tall",
+      "source": "L 12x6 (180° partner)",
+      "polygon": [
+        {
+          "x": 46,
+          "y": 28
+        },
+        {
+          "x": 46,
+          "y": 40
+        },
+        {
+          "x": 52,
+          "y": 40
+        },
+        {
+          "x": 52,
+          "y": 28
+        }
+      ]
+    },
+    {
+      "id": "t5",
+      "type": "area_cover",
+      "height": "low",
+      "source": "y 4x6",
+      "polygon": [
+        {
+          "x": 24,
+          "y": 9
+        },
+        {
+          "x": 24,
+          "y": 13
+        },
+        {
+          "x": 30,
+          "y": 13
+        },
+        {
+          "x": 30,
+          "y": 9
+        }
+      ]
+    },
+    {
+      "id": "t5m",
+      "type": "area_cover",
+      "height": "low",
+      "source": "y 4x6 (180° partner)",
+      "polygon": [
+        {
+          "x": 36,
+          "y": 35
+        },
+        {
+          "x": 36,
+          "y": 31
+        },
+        {
+          "x": 30,
+          "y": 31
+        },
+        {
+          "x": 30,
+          "y": 35
+        }
+      ]
+    },
+    {
+      "id": "t6",
+      "type": "area_cover",
+      "height": "low",
+      "source": "R 3.5x5",
+      "polygon": [
+        {
+          "x": 20,
+          "y": 40
+        },
+        {
+          "x": 23.5,
+          "y": 40
+        },
+        {
+          "x": 23.5,
+          "y": 35
+        },
+        {
+          "x": 20,
+          "y": 35
+        }
+      ]
+    },
+    {
+      "id": "t6m",
+      "type": "area_cover",
+      "height": "low",
+      "source": "R 3.5x5 (180° partner)",
+      "polygon": [
+        {
+          "x": 40,
+          "y": 4
+        },
+        {
+          "x": 36.5,
+          "y": 4
+        },
+        {
+          "x": 36.5,
+          "y": 9
+        },
+        {
+          "x": 40,
+          "y": 9
+        }
+      ]
+    },
+    {
+      "id": "t7",
+      "type": "ruin_blocking",
+      "height": "tall",
+      "source": "T 6.5x5",
+      "polygon": [
+        {
+          "x": 23.5,
+          "y": 35
+        },
+        {
+          "x": 30,
+          "y": 35
+        },
+        {
+          "x": 30,
+          "y": 40
+        },
+        {
+          "x": 23.5,
+          "y": 40
+        }
+      ]
+    },
+    {
+      "id": "t7m",
+      "type": "ruin_blocking",
+      "height": "tall",
+      "source": "T 6.5x5 (180° partner)",
+      "polygon": [
+        {
+          "x": 36.5,
+          "y": 9
+        },
+        {
+          "x": 30,
+          "y": 9
+        },
+        {
+          "x": 30,
+          "y": 4
+        },
+        {
+          "x": 36.5,
+          "y": 4
+        }
+      ]
+    }
+  ],
+  "objectives": [
+    {
+      "x": 30,
+      "y": 22
+    },
+    {
+      "x": 18,
+      "y": 6
+    },
+    {
+      "x": 10,
+      "y": 26
+    },
+    {
+      "x": 42,
+      "y": 38
+    },
+    {
+      "x": 50,
+      "y": 18
+    }
+  ],
+  "deploymentZones": {
+    "player": [
+      {
+        "x": 0,
+        "y": 44
+      },
+      {
+        "x": 60,
+        "y": 44
+      },
+      {
+        "x": 60,
+        "y": 30
+      },
+      {
+        "x": 30,
+        "y": 30
+      },
+      {
+        "x": 30,
+        "y": 36
+      },
+      {
+        "x": 0,
+        "y": 36
+      }
+    ],
+    "opponent": [
+      {
+        "x": 0,
+        "y": 0
+      },
+      {
+        "x": 60,
+        "y": 0
+      },
+      {
+        "x": 60,
+        "y": 8
+      },
+      {
+        "x": 30,
+        "y": 8
+      },
+      {
+        "x": 30,
+        "y": 14
+      },
+      {
+        "x": 0,
+        "y": 14
+      }
+    ]
+  }
+}

@@ -8,8 +8,9 @@ interface Props {
 /** Static board: deployment zones, terrain polygons (colored by type), and objective markers. */
 export function TerrainLayer({ layout }: Props) {
   const { boardWidth, boardHeight } = layout;
-  // 40mm objective marker radius in inches -> px.
-  const objR = pxLen(20 / 25.4);
+  // Objective marker radius (40mm marker) and 3" horizontal control range, in px.
+  const objR = pxLen((layout.objectiveMarkerDiameterIn ?? 40 / 25.4) / 2);
+  const controlR = pxLen(layout.objectiveControlRadiusIn ?? 3);
 
   return (
     <g>
@@ -53,20 +54,29 @@ export function TerrainLayer({ layout }: Props) {
         );
       })}
 
-      {/* objective markers */}
-      {layout.objectives.map((o, i) => (
-        <circle
-          key={`obj${i}`}
-          cx={pxX(o.x)}
-          cy={pxY(o.y, boardHeight)}
-          r={objR}
-          fill="rgba(234, 179, 8, 0.25)"
-          stroke="#eab308"
-          strokeWidth={2}
-        >
-          <title>{`Objective (${o.x}", ${o.y}")`}</title>
-        </circle>
-      ))}
+      {/* objective markers: 3" control-range ring + 40mm marker */}
+      {layout.objectives.map((o, i) => {
+        const cx = pxX(o.x);
+        const cy = pxY(o.y, boardHeight);
+        return (
+          <g key={`obj${i}`}>
+            <circle
+              cx={cx}
+              cy={cy}
+              r={controlR}
+              fill="rgba(234, 179, 8, 0.07)"
+              stroke="#eab308"
+              strokeOpacity={0.45}
+              strokeDasharray="4 4"
+            >
+              <title>{`Objective control range — 3" (centre ${o.x}", ${o.y}")`}</title>
+            </circle>
+            <circle cx={cx} cy={cy} r={objR} fill="rgba(234, 179, 8, 0.3)" stroke="#eab308" strokeWidth={2}>
+              <title>{`Objective marker — 40mm (${o.x}", ${o.y}")`}</title>
+            </circle>
+          </g>
+        );
+      })}
     </g>
   );
 }

@@ -1,10 +1,10 @@
 {
-  "id": "ca2025-hammer-and-anvil-1",
-  "name": "GW Chapter Approved 2025–2026 · Hammer and Anvil · Terrain Layout 1",
+  "id": "ca2025-crucible-of-battle-1",
+  "name": "GW Chapter Approved 2025–2026 · Crucible of Battle · Terrain Layout 1",
   "boardWidth": 60,
   "boardHeight": 44,
-  "deployment": "Hammer and Anvil",
-  "deploymentId": "hammer-and-anvil-sf-2025",
+  "deployment": "Crucible of Battle",
+  "deploymentId": "crucible-of-battle-sf-2025",
   "source": "labrador.dev (gw-chapter-approved-2025-2026), Strike Force; extracted by tools/layouts/extract-gw-ca-2025.ts",
   "objectiveMarkerDiameterIn": 1.575,
   "objectiveControlRadiusIn": 3,
@@ -400,56 +400,48 @@
       "y": 22
     },
     {
-      "x": 30,
-      "y": 6
+      "x": 20,
+      "y": 36
     },
     {
-      "x": 30,
-      "y": 38
+      "x": 14,
+      "y": 10
     },
     {
-      "x": 50,
-      "y": 22
+      "x": 40,
+      "y": 8
     },
     {
-      "x": 10,
-      "y": 22
+      "x": 46,
+      "y": 34
     }
   ],
   "deploymentZones": {
     "player": [
       {
-        "x": 42,
+        "x": 0,
         "y": 44
       },
       {
-        "x": 60,
-        "y": 44
-      },
-      {
-        "x": 60,
+        "x": 30,
         "y": 0
       },
       {
-        "x": 42,
+        "x": 0,
         "y": 0
       }
     ],
     "opponent": [
       {
-        "x": 0,
+        "x": 30,
         "y": 44
       },
       {
-        "x": 18,
+        "x": 60,
         "y": 44
       },
       {
-        "x": 18,
-        "y": 0
-      },
-      {
-        "x": 0,
+        "x": 60,
         "y": 0
       }
     ]

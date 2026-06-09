@@ -45,7 +45,9 @@ export type Intent =
     }
   | { type: 'MoveModel'; modelId: string; pos: Vec2 }
   | { type: 'RemoveUnit'; unitId: string }
-  | { type: 'ClearUnits' };
+  | { type: 'ClearUnits' }
+  /** Swap the board to a different layout. Resets the board (model positions are layout-specific). */
+  | { type: 'SetLayout'; layout: Layout };
 
 export function createInitialState(layout: Layout): GameState {
   return {
@@ -92,6 +94,9 @@ export function reduce(state: GameState, intent: Intent, _rng: RNG): GameState {
 
     case 'ClearUnits':
       return { ...state, units: [] };
+
+    case 'SetLayout':
+      return createInitialState(intent.layout);
   }
 }
 
