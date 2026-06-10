@@ -330,6 +330,31 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-06-10] — Deep visual review of the whole gameflow (no code changes).** Drove the real app
+  headless (Playwright) through: import of the owner's 985-pt "Rogue Trader's Army" export → list
+  builder checks → New Battle (roll-off, alternating deployment, Reserves, Infiltrators, Leader
+  merge) → 3 scripted rounds of all five phases (group moves, Advance, Deep-Strike arrival,
+  shooting, charges, a melee fight, stratagems, battle-shock) → fast-forward to the round-5 end →
+  reload/persistence. ~64 screenshots reviewed; root causes isolated with targeted probes.
+  **Full findings: `docs/ui_review_2026-06-10.md`.** Headlines:
+  - **CRITICAL (A1):** no `user-select:none`/`preventDefault` on the board → a unit drag arms a
+    native text-selection; the next drag becomes a browser drag + `pointercancel` and box-select
+    dies for the rest of the session. Fix verified by injecting `body{user-select:none}`.
+  - **Missing guards:** Run Command works in any phase and stacks (CP/VP farming); Attack/Charge
+    aren't phase-gated; units can move twice; merged Leaders reappear as deployable (duplicate
+    risk); sandbox spawn/remove/clear stays active mid-battle; the First-turn switcher resets a
+    live game.
+  - **Fidelity:** every alive model fires the unit's chosen weapon (27-attack heavy-bolter
+    volleys decided every game — per-model loadout is on the roster but unread); front-loaded
+    casualty removal breaks coherency (blocked an 8-unit group confirm) and empties Engagement
+    mid-fight; charge path search fails on a 10" roll vs sub-10" target (rigid translate).
+  - **UI defects:** duplicate React keys (`ListUnitCard.tsx:59` cost tiers — causes the
+    "(AGENTS OF THE IMPERIUM Detachment)" size rows; `GamePanel.tsx:323` merged-unit weapon
+    names); StrictMode double-invokes the RNG-impure reducer (dev dice diverge from the seed).
+  - **Works well:** importer round-trips the export perfectly (985/1000, legal, 0 warnings);
+    deployment flow + dice; eligibility messaging; phase/detachment-filtered stratagems incl.
+    reactive use on the opponent's turn; the dice log. Suggested fix order is in the doc (§F).
+
 - **[2026-06-09] — Bugfix: saved lists now appear when starting a game; deployment rail no longer
   clips the "ai army" picker.** Two user-reported UI bugs. All gates green: `pnpm typecheck`,
   `pnpm test` (**208 tests**), `pnpm build`.
