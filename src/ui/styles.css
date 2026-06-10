@@ -17,6 +17,18 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
+  /* Board drags must never start a native text selection: a stale selection turns the next drag
+     into a browser drag-of-selection and Chromium pointercancels the gesture (board goes dead). */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Text the user legitimately selects/copies stays selectable. */
+input,
+textarea,
+.dicelog {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 .app-shell {

@@ -150,6 +150,7 @@ export function createInitialState(layout: Layout): GameState {
     layout,
     units: [],
     stage: 'battle',
+    mode: 'sandbox',
     round: 1,
     firstPlayer: 'player',
     activePlayer: 'player',
@@ -185,6 +186,7 @@ function advancePhase(state: GameState): GameState {
       ...state,
       activePlayer: next,
       phase: PARIAH_NEXUS_PHASES[0]!,
+      commandRun: false,
       units: beginTurnFor(state, next),
       log: [...state.log, `— ${next} turn, round ${state.round} —`],
     };
@@ -200,6 +202,7 @@ function advancePhase(state: GameState): GameState {
     round,
     activePlayer: next,
     phase: PARIAH_NEXUS_PHASES[0]!,
+    commandRun: false,
     units: beginTurnFor(state, next),
     log: [...state.log, `— ${next} turn, round ${round} —`],
   };
@@ -220,11 +223,18 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         models,
         startingModels: models.length,
         status: {},
+        ...(intent.wargear ? { wargearCounts: intent.wargear } : {}),
       };
       return { ...state, units: [...state.units, unit] };
     }
 
     case 'MoveModel': {
+      // In a match, models only move inside a Movement activation (BeginMove sets the budget) —
+      // free dragging outside it would bypass the movement rules. The sandbox/deployment stay free.
+      if (state.mode === 'match' && state.stage === 'battle') {
+        const owner = state.units.find((u) => u.models.some((m) => m.id === intent.modelId));
+        if (owner && owner.status.moveBudget == null) return state;
+      }
       return {
         ...state,
         units: state.units.map((u) => {
@@ -293,7 +303,17 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
 
     case 'RunCommandPhase': {
       if (!ctx) return { ...state, log: [...state.log, 'Command phase ignored: no datasheet context supplied'] };
-      return runCommandPhase(state, ctx, rng);
+      // In a real match, the Command phase runs in the Command phase, once per turn — it grants CP
+      // and scores Primary, so repeats/off-phase runs would farm both.
+      if (state.mode === 'match') {
+        if (state.phase !== 'Command') {
+          return { ...state, log: [...state.log, `Command phase rejected: it is the ${state.phase} phase`] };
+        }
+        if (state.commandRun) {
+          return { ...state, log: [...state.log, 'Command phase rejected: already run this turn'] };
+        }
+      }
+      return { ...runCommandPhase(state, ctx, rng), commandRun: true };
     }
 
     case 'IssueOrder':
@@ -329,6 +349,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       return {
         ...createInitialState(state.layout),
         stage: 'setup',
+        mode: 'match',
         setup: { step: 'roll_roles' },
         log: ['— Deployment — roll off to determine Attacker and Defender —'],
       };
@@ -375,6 +396,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       const unit: UnitInstance = {
         id: intent.unitId, owner: intent.owner, datasheetId: intent.datasheetId,
         models, startingModels: models.length, status: {},
+        ...(intent.wargear ? { wargearCounts: intent.wargear } : {}),
       };
       const setup = state.setup ? { ...state.setup, toDeploy: otherSide(intent.owner) } : state.setup;
       return { ...state, units: [...state.units, unit], setup, log: [...state.log, `${intent.owner} deploys a unit (${models.length} models)`] };
@@ -386,6 +408,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       const unit: UnitInstance = {
         id: intent.unitId, owner: intent.owner, datasheetId: intent.datasheetId,
         models, startingModels: models.length, status: {}, inReserves: true,
+        ...(intent.wargear ? { wargearCounts: intent.wargear } : {}),
       };
       const setup = state.setup ? { ...state.setup, toDeploy: otherSide(intent.owner) } : state.setup;
       return { ...state, units: [...state.units, unit], setup, log: [...state.log, `${intent.owner} places a unit in Reserves`] };
@@ -415,7 +438,11 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         startingModels: bodyguard.startingModels + leaderModels.length,
         attachedLeaders: [
           ...(bodyguard.attachedLeaders ?? []),
-          { unitId: leader.id, datasheetId: leader.datasheetId, modelCount: leaderModels.length, wounds: leader.models[0]?.wounds ?? 1 },
+          {
+            unitId: leader.id, datasheetId: leader.datasheetId, modelCount: leaderModels.length,
+            wounds: leader.models[0]?.wounds ?? 1,
+            ...(leader.wargearCounts ? { wargearCounts: leader.wargearCounts } : {}),
+          },
         ],
       };
       return {
@@ -443,6 +470,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       const leaderUnit: UnitInstance = {
         id: rec.unitId, owner: bodyguard.owner, datasheetId: rec.datasheetId,
         models: leaderModels, startingModels: rec.modelCount, status: {},
+        ...(rec.wargearCounts ? { wargearCounts: rec.wargearCounts } : {}),
       };
       return {
         ...state,
@@ -468,6 +496,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         ...state,
         stage: 'battle',
         setup: undefined,
+        commandRun: false,
         round: 1,
         firstPlayer: first,
         activePlayer: first,
@@ -480,8 +509,22 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
     // ── Movement ───────────────────────────────────────────────────────────────
     case 'BeginMove': {
       let log = state.log;
+      // A unit moves once per Movement phase — in a match, re-activating an already-moved unit
+      // (even after an Advance) is rejected. The flags reset at the start of the unit's next turn.
+      const alreadyMoved = (u: UnitInstance) =>
+        !!(u.status.moved || u.status.advanced || u.status.fellBack || u.status.remainedStationary);
+      const blockedIds =
+        state.mode === 'match'
+          ? new Set(state.units.filter((u) => intent.unitIds.includes(u.id) && alreadyMoved(u)).map((u) => u.id))
+          : new Set<string>();
+      if (blockedIds.size > 0) {
+        const names = state.units
+          .filter((u) => blockedIds.has(u.id))
+          .map((u) => ctx?.datasheets.get(u.datasheetId)?.name ?? u.id);
+        log = [...log, `Already moved this turn: ${names.join(', ')}`];
+      }
       const units = state.units.map((u) => {
-        if (!intent.unitIds.includes(u.id)) return u;
+        if (!intent.unitIds.includes(u.id) || blockedIds.has(u.id)) return u;
         const M = ctx?.datasheets.get(u.datasheetId)?.models[0]?.M ?? 6;
         let advanceRoll = 0;
         if (intent.mode === 'advance') {
@@ -539,7 +582,8 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         const positions = u.models.filter((m) => m.alive).map((m) => m.pos);
         if (!checkCoherency(positions, shape).inCoherency) {
           anyRejected = true;
-          log = [...log, `Move not confirmed: a unit is out of coherency`];
+          const name = ctx?.datasheets.get(u.datasheetId)?.name ?? u.id;
+          log = [...log, `Move not confirmed: ${name} is out of coherency`];
           return u; // stay in the move so the user can fix it
         }
         const mode = u.status.moveMode;

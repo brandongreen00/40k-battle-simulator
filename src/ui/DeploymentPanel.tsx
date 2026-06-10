@@ -95,7 +95,9 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
               <h4>Attach Leaders</h4>
               {attachable.map(({ leader, targets }) => (
                 <div className="field" key={leader.id}>
-                  <span>{dsName(leader.datasheetId)}</span>
+                  <span>
+                    <span style={{ color: OWNER_COLOR[leader.owner].fill }}>{leader.owner}</span> · {dsName(leader.datasheetId)}
+                  </span>
                   <select
                     defaultValue=""
                     onChange={(e) => e.target.value && dispatch({ type: 'AttachLeader', leaderUnitId: leader.id, bodyguardUnitId: e.target.value })}
@@ -115,7 +117,7 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
               {state.units.flatMap((u) =>
                 (u.attachedLeaders ?? []).map((l) => (
                   <li key={l.unitId}>
-                    {dsName(l.datasheetId)} → {dsName(u.datasheetId)} (merged)
+                    <span style={{ color: OWNER_COLOR[u.owner].fill }}>{u.owner}</span> · {dsName(l.datasheetId)} → {dsName(u.datasheetId)} (merged)
                     <button className="link" onClick={() => dispatch({ type: 'DetachLeader', leaderUnitId: l.unitId })}>detach</button>
                   </li>
                 )),
@@ -124,7 +126,11 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
           )}
 
           <div className="btnrow">
-            <button disabled={state.units.length === 0} onClick={() => dispatch({ type: 'RollFirstTurn' })}>
+            <button
+              disabled={state.units.length === 0 || remaining.player + remaining.ai > 0}
+              title={remaining.player + remaining.ai > 0 ? `Still to deploy — player ${remaining.player}, ai ${remaining.ai} (use Reserves ⤓ for units arriving later)` : ''}
+              onClick={() => dispatch({ type: 'RollFirstTurn' })}
+            >
               Finish deploying →
             </button>
           </div>

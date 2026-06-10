@@ -146,6 +146,8 @@ export function Board({
     // While placing, let the click fall through to the board so it commits the ghost.
     if (placement) return;
     e.stopPropagation();
+    e.preventDefault(); // never let a token drag start a native text selection / drag
+
     if (movement) {
       const unitId = index.get(modelId)?.unitId;
       // Grabbing a model of a moving unit drags ALL moving units as a group (Alt = reshape one model).
@@ -169,6 +171,7 @@ export function Board({
   }
 
   function handleBoardDown(e: PointerEvent) {
+    e.preventDefault(); // see handleTokenDown — board drags must stay pointer-only
     if (placement) {
       const anchor = clientToInches(e);
       // Block illegal drops (outside the deployment zone, etc.).
@@ -311,6 +314,7 @@ export function Board({
         onPointerDown={handleBoardDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
         onPointerLeave={() => setCursor(null)}
       >
         <rect x={0} y={0} width={widthPx} height={heightPx} fill="#1f2430" stroke="#3a4150" strokeWidth={2} />

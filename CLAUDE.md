@@ -330,6 +330,58 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-06-10] — All review fixes applied (A1, B1–B6, C1–C5, D1–D3 + E-nits).** Implements every
+  fix from the same-day review below. All gates green: `pnpm typecheck`, `pnpm test` (**228 tests**,
+  20 new in `tests/fixes.test.ts`), `pnpm build`, plus a 29/29-check scripted re-run of the full
+  gameflow against the real dev app (import → deploy → battle → round-5 end) with **zero console
+  errors**.
+  - **A1 (critical):** `user-select: none` on `body` (inputs/textarea/dicelog re-enabled) +
+    `preventDefault()` in the board's pointer-down handlers + an `onPointerCancel` cleanup. Unit
+    drags no longer arm a text selection; box-select verified working after confirmed moves.
+  - **`GameState.mode: 'sandbox' | 'match'`** (decision): `NewBattle` → `'match'`; the default
+    board stays `'sandbox'`. All new rules guards apply ONLY to matches, so the measuring board /
+    tests keep the free dice-calculator behaviour.
+  - **B1:** `RunCommandPhase` rejected outside the Command phase / when already run this turn
+    (`commandRun` flag, reset on turn change); button disabled+labelled. **B2:** `resolveAttack`
+    requires Shooting (ranged) / Fight (melee), `resolveCharge` requires Charge, `resolveFightMove`
+    requires Fight (match only; Overwatch will need a carve-out later). **B3:** `BeginMove` skips
+    already-moved units (logged; movement panel names them and disables Move). Free `MoveModel`
+    drags blocked outside an activation in matches. **B4:** `isEntryPlaced` (deployment.ts) counts
+    merged Leaders as placed — no re-deploy/duplicate; leader rows + merged rows now side-labelled.
+    **B5:** mid-match the sidebar swaps to a "Battle in progress" note (no spawn/remove/clear/
+    spawn-as), map picker locked, "New battle" asks for confirmation. **B6:** First-turn switcher
+    hidden in matches.
+  - **C1 (fidelity):** per-model weapon counts. `UnitInstance.wargearCounts` rides in from the
+    roster (Spawn/Deploy/Reserves), survives Leader merge/detach (`attachedLeaders[].wargearCounts`);
+    `weaponCarrierCount`/`availableUnitWeapons` (engine) cap attacks at the bearers ("9× Infernus
+    heavy bolter: 27 attacks" → "1× …: 3 attacks", verified in-app), reject weapons nobody carries,
+    and the weapon picker shows "×N" + the source datasheet for Leader weapons (D2). Multi-profile
+    names ("Infernus heavy bolter – heavy bolter") match their base item. Units without loadout
+    data (demo/sandbox) keep the old all-models behaviour.
+  - **C2:** casualty allocation is now coherency-aware: defensive-wargear bearers still soak first,
+    then models die furthest-from-attacker first, skipping any whose removal would disconnect the
+    survivors (greedy `casualtyOrder`); damage maps back by model id. EndMove + the movement panel
+    name the out-of-coherency unit.
+  - **C3:** charge pathing fans out over ±45° around the aim line (sidesteps screens — test
+    proves a blocked straight line now succeeds); failure messages distinguish "needed X", rolled Y""
+    from "no clear path".
+  - **C4:** weapons from datasheets with no alive models / no bearers are filtered from pickers
+    (no more "Attack rejected: no models" dead-ends). **C5:** standard deployment now requires
+    bases *wholly within* the zone (clearance from interior zone edges; touching the battlefield
+    edge stays legal).
+  - **D1:** size tiers deduped (first row per size, matching `unitCost`) — the "(AGENTS OF THE
+    IMPERIUM Detachment)" rows and "1 models" plural are gone; single-tier sizes render as text.
+    **D2:** weapon options keyed/valued by `source|name` (+ `weaponSourceDsId` on the Attack
+    intent). **D3:** `MeasuringBoard` now reduces outside React (ref + `setState(next)`) so
+    StrictMode's double-invoke can't consume the RNG twice — in-app dice follow the seed again.
+  - **E-nits:** "Finish deploying" gated until every unit is placed/reserved (tooltip explains);
+    Shooting/Fight weapon pickers filter to the phase's weapon type; "(0 eligible)" no longer
+    falls back to listing every unit in matches; final score + winner line when the game ends;
+    the free effect-applicator block is retitled "Manual effects (debug)".
+  - **Still open** (from the review, by design or deferred): C6 base/terrain overlap, E1 per-unit
+    import confirmation, E3 move-budget rings, E5 single-block fight flow, and the Overwatch
+    carve-out noted in B2.
+
 - **[2026-06-10] — Deep visual review of the whole gameflow (no code changes).** Drove the real app
   headless (Playwright) through: import of the owner's 985-pt "Rogue Trader's Army" export → list
   builder checks → New Battle (roll-off, alternating deployment, Reserves, Infiltrators, Leader

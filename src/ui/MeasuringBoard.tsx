@@ -1,9 +1,9 @@
-import { useMemo, useReducer, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import type { BaseShape, Datasheet, Roster, RosterUnit, Side, Vec2 } from '../core/types';
 import { reduce, createInitialState, type Intent } from '../core/state';
 import { makeRNG } from '../core/rng';
 import { nextFormation, type Formation } from '../core/formation';
-import { checkUnitDeployment, deepStrikeArrivalLegal, type DeployAbility } from '../core/deployment';
+import { checkUnitDeployment, deepStrikeArrivalLegal, isEntryPlaced, type DeployAbility } from '../core/deployment';
 import { unitCoherency, unitCentroid } from '../core/phases';
 import { dataIndex, datasheetsById, deployAbilityForDatasheet, getDatasheet, layouts, rosters } from '../data/loaders';
 import { Board, type Placement, type MovementUI } from './Board';
@@ -43,13 +43,19 @@ interface Props {
 }
 
 export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) {
-  const [state, dispatch] = useReducer(
-    (s: ReturnType<typeof createInitialState>, i: Intent) => reduce(s, i, rng, { datasheets: datasheetsById }),
-    layouts[0],
-    createInitialState,
-  );
+  // The reducer draws from the RNG, so it must run exactly once per intent. React's useReducer
+  // double-invokes reducers in dev StrictMode (the dice would be consumed twice and diverge from
+  // the seed), so we reduce OUTSIDE React — once, in the event handler — and store the result.
+  const [state, setState] = useState(() => createInitialState(layouts[0]!));
+  const stateRef = useRef(state);
+  const dispatch = useCallback((i: Intent) => {
+    const next = reduce(stateRef.current, i, rng, { datasheets: datasheetsById });
+    stateRef.current = next;
+    setState(next);
+  }, []);
   const layout = state.layout;
   const inSetup = state.stage === 'setup';
+  const inMatch = state.mode === 'match';
 
   // Group the layouts by deployment for the map picker (8 terrain layouts per deployment).
   const layoutGroups = useMemo(() => {
@@ -93,7 +99,8 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
       .map((unit, i) => ({ key: `${side}:${i}`, unit, ds: getDatasheet(unit.datasheetId)! }))
       .filter((e) => e.ds);
   };
-  const isPlaced = (key: string) => state.units.some((u) => u.id === key);
+  // A merged Leader's unit instance is removed, but its entry stays placed (no double-deploy).
+  const isPlaced = (key: string) => isEntryPlaced(state, key);
   const remaining: Record<Side, number> = {
     player: entriesFor('player').filter((e) => !isPlaced(e.key)).length,
     ai: entriesFor('ai').filter((e) => !isPlaced(e.key)).length,
@@ -212,15 +219,30 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
       <aside className="sidebar">
         <div className="sidebar-head">
           <p className="muted">{layout.deployment} · {layout.boardWidth}"×{layout.boardHeight}"</p>
-          <button className="newbattle" onClick={() => { setPlacing(null); dispatch({ type: 'NewBattle' }); }}>
+          <button
+            className="newbattle"
+            onClick={() => {
+              // Mid-match this throws the whole game away — make sure it's intentional.
+              if (inMatch && !inSetup && !state.ended && typeof window !== 'undefined' && typeof window.confirm === 'function') {
+                if (!window.confirm('Abandon the battle in progress and start a new one?')) return;
+              }
+              setPlacing(null);
+              dispatch({ type: 'NewBattle' });
+            }}
+          >
             {inSetup ? '↻ Restart deployment' : '⚔ New battle'}
           </button>
         </div>
 
         <section>
           <label className="field">
-            <span>Map</span>
-            <select value={layout.id} onChange={(e) => { const next = layouts.find((l) => l.id === e.target.value); if (next) dispatch({ type: 'SetLayout', layout: next }); }}>
+            <span>Map{inMatch && !inSetup ? ' (locked during battle)' : ''}</span>
+            <select
+              value={layout.id}
+              disabled={inMatch && !inSetup}
+              title={inMatch && !inSetup ? 'Changing the map resets the board — finish or abandon the battle first' : undefined}
+              onChange={(e) => { const next = layouts.find((l) => l.id === e.target.value); if (next) dispatch({ type: 'SetLayout', layout: next }); }}
+            >
               {layoutGroups.map(([deployment, group]) => (
                 <optgroup key={deployment} label={deployment}>
                   {group.map((l) => <option key={l.id} value={l.id}>{l.name?.split('·').pop()?.trim() ?? l.id}</option>)}
@@ -229,7 +251,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
             </select>
           </label>
 
-          {!inSetup && (
+          {!inSetup && !inMatch && (
             <>
               <label className="field">
                 <span>Roster</span>
@@ -277,6 +299,11 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
               })}
             </ul>
           </section>
+        ) : inMatch ? (
+          <section>
+            <h2>Battle in progress</h2>
+            <p className="muted">Units act through the game panel on the right — spawning, removing and clearing are sandbox tools.</p>
+          </section>
         ) : (
           <section>
             <h2>Units</h2>
@@ -305,7 +332,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
 
         <section>
           <h2>On board ({state.units.filter((u) => !u.inReserves).length})</h2>
-          {state.units.length > 0 && !inSetup && (
+          {state.units.length > 0 && !inSetup && !inMatch && (
             <button className="clear" onClick={() => dispatch({ type: 'ClearUnits' })}>Clear all</button>
           )}
           <ul className="unit-list">
@@ -313,7 +340,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
               const ds = getDatasheet(u.datasheetId);
               return (
                 <li key={u.id}>
-                  {!inSetup && <button className="remove" onClick={() => dispatch({ type: 'RemoveUnit', unitId: u.id })}>×</button>}
+                  {!inSetup && !inMatch && <button className="remove" onClick={() => dispatch({ type: 'RemoveUnit', unitId: u.id })}>×</button>}
                   <span className="dot" style={{ background: OWNER_COLOR[u.owner].fill }} />
                   <span className="unit-name">{ds?.name ?? u.datasheetId}{u.attachedLeaders?.length ? ' ⚑' : ''}</span>
                   <span className="unit-meta">{u.inReserves ? 'reserves' : `×${u.models.filter((m) => m.alive).length}`}</span>

@@ -34,6 +34,10 @@ export function ListUnitCard(props: Props) {
   // Real, cap-aware wargear options for this unit's current model count.
   const wargearOptions = unitWargearOptions(ds, unit.modelCount);
 
+  // Wahapedia repeats a size tier for allied pricing ("Agents of the Imperium Detachment") —
+  // keep the first row per size (the one unitCost reads) so the options are unique and clean.
+  const tiers = (ds.points ?? []).filter((t, i, arr) => arr.findIndex((x) => x.models === t.models) === i);
+
   return (
     <div className={`lu-card${hasError ? ' lu-error' : ''}`}>
       <div className="lu-head">
@@ -48,16 +52,16 @@ export function ListUnitCard(props: Props) {
       </div>
 
       <div className="lu-row">
-        {ds.points && ds.points.length > 1 ? (
+        {tiers.length > 1 ? (
           <label className="lu-field">
             <span>Size</span>
             <select
               value={unit.modelCount}
               onChange={(e) => props.onModelCount(unit.uid, Number(e.target.value))}
             >
-              {ds.points.map((t) => (
+              {tiers.map((t) => (
                 <option key={t.models} value={t.models}>
-                  {t.models} models — {t.cost} pts{t.note ? ` (${t.note})` : ''}
+                  {t.models} model{t.models === 1 ? '' : 's'} — {t.cost} pts
                 </option>
               ))}
             </select>
