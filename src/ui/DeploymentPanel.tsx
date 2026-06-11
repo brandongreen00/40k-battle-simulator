@@ -32,6 +32,7 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
       if (!ds || !isCharacter(ds) || u.attachedTo || u.inReserves) continue;
       const targets = state.units.filter((b) => {
         if (b.owner !== u.owner || b.id === u.id || b.inReserves) return false;
+        if ((b.attachedLeaders?.length ?? 0) > 0) return false; // one Leader per unit
         return canAttach(ds, datasheetsById.get(b.datasheetId));
       });
       if (targets.length) out.push({ leader: u, targets });

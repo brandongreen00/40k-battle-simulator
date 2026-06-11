@@ -7,7 +7,7 @@
 
 import type { Datasheet, GameState, Side, UnitInstance, Vec2 } from './types';
 import type { EngineContext } from './engine';
-import { closestGap, unitWeapons } from './engine';
+import { closestGap, planUnitShooting, unitWeapons } from './engine';
 import { parseKeywords } from './keywords';
 import { unitCanSee } from './los';
 import { checkCoherency, type CoherencyResult } from './coherency';
@@ -117,6 +117,31 @@ export function validShootingTargets(
     if (!inRange) continue;
     const visible = kw.indirectFire || unitCanSee(aPts, alivePts(e), state.layout.terrain);
     if (visible) out.push(e);
+  }
+  return out;
+}
+
+/**
+ * Targets the whole unit may shoot at (unit-level shooting: every model fires its weapons).
+ * A unit is a valid target when at least one weapon in the unit's fire plan can reach it
+ * (range + visibility). While the shooter is engaged, only units it is engaged with qualify.
+ */
+export function validUnitShootingTargets(
+  attacker: UnitInstance,
+  state: GameState,
+  ctx: EngineContext,
+): UnitInstance[] {
+  const { fire } = planUnitShooting(state, attacker, ctx);
+  const engaged = engagedEnemies(attacker, state, ctx);
+  const ids = new Set<string>();
+  const out: UnitInstance[] = [];
+  for (const w of fire) {
+    for (const t of validShootingTargets(attacker, w.weapon.name, state, ctx)) {
+      if (ids.has(t.id)) continue;
+      if (engaged.length > 0 && !engaged.some((e) => e.id === t.id)) continue;
+      ids.add(t.id);
+      out.push(t);
+    }
   }
   return out;
 }

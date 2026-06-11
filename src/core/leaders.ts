@@ -11,9 +11,53 @@
 // e.g. a Rogue Trader can lead an Imperial Navy Breachers unit. We treat a pairing as legal if
 // EITHER side lists the other (the export is occasionally one-directional).
 
-import type { Datasheet } from './types';
+import type { BaseShape, Datasheet, Vec2 } from './types';
+import { baseRadius, gapBetweenBases } from './geometry';
 
 const dedupe = (xs: string[] | undefined): string[] => [...new Set(xs ?? [])];
+
+/**
+ * Positions for a Leader's models when it attaches: the Leader physically joins the Bodyguard,
+ * so each Leader model is placed in base-to-base coherency distance (< 2") of the unit, without
+ * overlapping any existing model. Searches rings around the bodyguard models (and around already
+ * placed leader models) at growing gaps; falls back to the first anchor if the area is packed.
+ */
+export function leaderJoinPositions(
+  count: number,
+  leaderShape: BaseShape,
+  bodyguardModels: Vec2[],
+  bodyguardShape: BaseShape,
+  occupied: { pos: Vec2; shape: BaseShape }[],
+  board: { width: number; height: number },
+): Vec2[] {
+  const rL = baseRadius(leaderShape);
+  const placed: Vec2[] = [];
+  const occ = [...occupied];
+  for (let k = 0; k < count; k++) {
+    const anchors = [
+      ...bodyguardModels.map((pos) => ({ pos, shape: bodyguardShape })),
+      ...placed.map((pos) => ({ pos, shape: leaderShape })),
+    ];
+    let found: Vec2 | null = null;
+    outer: for (const gap of [0.2, 0.5, 1, 1.5, 1.9]) {
+      for (const a of anchors) {
+        const dist = baseRadius(a.shape) + rL + gap;
+        for (let i = 0; i < 16; i++) {
+          const ang = (i / 16) * 2 * Math.PI;
+          const c = { x: a.pos.x + Math.cos(ang) * dist, y: a.pos.y + Math.sin(ang) * dist };
+          if (c.x < rL || c.y < rL || c.x > board.width - rL || c.y > board.height - rL) continue;
+          if (occ.some((o) => gapBetweenBases(c, leaderShape, o.pos, o.shape) < 0.05)) continue;
+          found = c;
+          break outer;
+        }
+      }
+    }
+    const c = found ?? bodyguardModels[0] ?? { x: 0, y: 0 };
+    placed.push(c);
+    occ.push({ pos: c, shape: leaderShape });
+  }
+  return placed;
+}
 
 export function isCharacter(ds: Datasheet | undefined): boolean {
   return !!ds?.keywords.some((k) => k.toLowerCase() === 'character');

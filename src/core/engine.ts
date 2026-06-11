@@ -264,6 +264,12 @@ export function resolveAttack(
   const terrain = state.layout.terrain;
   let hitPenalty = 0;
   let forceCover = false;
+  // Big Guns Never Tire: ranged attacks made while within Engagement Range of an enemy take -1 to
+  // hit (Pistols are exempt). Only Monsters/Vehicles/Pistols may shoot while engaged at all —
+  // that eligibility is enforced by phases.ts / resolveUnitShooting.
+  if (!isMelee && !kw.pistol && enemiesInEngagement(state, attacker, ctx).length > 0) {
+    hitPenalty -= 1;
+  }
   if (!isMelee) {
     const visible = unitCanSee(aPts, tPts, terrain);
     if (!visible) {
@@ -351,6 +357,151 @@ export function resolveAttack(
     state: { ...state, units: newUnits, log: [...state.log, summary, ...result.log.map((l) => `  ${l.step}: ${l.detail}`)] },
     summary,
   };
+}
+
+// ── Unit-level shooting: every model fires its equipped weapons ─────────────────
+/** Enemy units within Engagement Range (1") of `unit`. */
+function enemiesInEngagement(state: GameState, unit: UnitInstance, ctx: EngineContext): UnitInstance[] {
+  const ds = ctx.datasheets.get(unit.datasheetId);
+  if (!ds) return [];
+  return state.units.filter((e) => {
+    if (e.owner === unit.owner || e.inReserves || !e.models.some((m) => m.alive)) return false;
+    const eDs = ctx.datasheets.get(e.datasheetId);
+    if (!eDs) return false;
+    return closestGap(unit, ds.baseShape, e, eDs.baseShape) <= ENGAGEMENT_RANGE;
+  });
+}
+
+export interface FirePlan {
+  /** The weapon profiles that will actually fire, with how many models carry each. */
+  fire: { weapon: WeaponProfile; sourceDsId: string; carriers: number }[];
+  /** Human-readable rule notes (Pistols held, profile collapses, engagement restriction). */
+  notes: string[];
+}
+
+/**
+ * Which of a unit's ranged weapons fire when the whole unit shoots (10e: each model shoots all
+ * the ranged weapons it is equipped with). Applies:
+ *  • one profile per multi-profile weapon ("– standard" / "– supercharge" are one gun);
+ *  • the Pistol rule — a model fires either its Pistol or its other weapons, so when the unit
+ *    carries both, the Pistols are held (unit-level simplification, noted in the plan);
+ *  • engagement — while within Engagement Range only Pistols fire, unless the unit is a
+ *    Monster/Vehicle (Big Guns Never Tire — those fire everything at -1 to hit).
+ */
+export function planUnitShooting(state: GameState, attacker: UnitInstance, ctx: EngineContext): FirePlan {
+  const notes: string[] = [];
+  let ranged = availableUnitWeapons(attacker, ctx).filter((w) => w.weapon.type === 'ranged');
+
+  // Multi-profile weapons are ONE weapon: keep the first profile per item, note the rest.
+  const seenItems = new Set<string>();
+  ranged = ranged.filter((w) => {
+    const key = `${w.sourceDsId}|${weaponItemName(w.weapon.name)}`;
+    if (seenItems.has(key)) {
+      notes.push(`${w.weapon.name}: alternate profile not fired (one profile per weapon)`);
+      return false;
+    }
+    seenItems.add(key);
+    return true;
+  });
+
+  const aDs = ctx.datasheets.get(attacker.datasheetId);
+  const isPistol = (w: { weapon: WeaponProfile }) => !!parseKeywords(w.weapon.keywords).pistol;
+  const engaged = enemiesInEngagement(state, attacker, ctx).length > 0;
+  const bigGuns = !!aDs?.keywords.some((k) => /^(monster|vehicle)$/i.test(k));
+
+  if (engaged && !bigGuns) {
+    const pistols = ranged.filter(isPistol);
+    if (pistols.length) notes.push('Within Engagement Range — only Pistols can be fired');
+    return { fire: pistols, notes };
+  }
+  const pistols = ranged.filter(isPistol);
+  const others = ranged.filter((w) => !isPistol(w));
+  if (others.length && pistols.length) {
+    notes.push('Pistols held — a model fires either its Pistol or all its other weapons');
+    return { fire: others, notes };
+  }
+  return { fire: ranged, notes };
+}
+
+export interface UnitShootParams {
+  attackerUnitId: string;
+  targetUnitId: string;
+}
+
+/**
+ * Resolve a whole unit's shooting at one target: every weapon in the fire plan is resolved
+ * SEQUENTIALLY (attacks from one weapon are allocated and casualties removed before the next
+ * weapon fires, per the 10e attack sequence). Marks the unit as having shot.
+ */
+export function resolveUnitShooting(
+  state: GameState,
+  params: UnitShootParams,
+  ctx: EngineContext,
+  rng: RNG,
+): AttackOutcome {
+  const attacker = state.units.find((u) => u.id === params.attackerUnitId);
+  const target = state.units.find((u) => u.id === params.targetUnitId);
+  if (!attacker || !target) return { state, summary: '', rejected: 'unit not found' };
+  const aDs = ctx.datasheets.get(attacker.datasheetId);
+  const tDs = ctx.datasheets.get(target.datasheetId);
+  if (!aDs || !tDs) return { state, summary: '', rejected: 'datasheet not found' };
+
+  if (state.mode === 'match' && state.stage === 'battle' && state.phase !== 'Shooting') {
+    return { state, summary: '', rejected: `shooting only in the Shooting phase (now ${state.phase})` };
+  }
+  if (state.mode === 'match' && attacker.status.hasShot) {
+    return { state, summary: '', rejected: 'this unit has already shot this turn' };
+  }
+
+  // While engaged, ranged attacks (Pistols / Big Guns Never Tire) may only target a unit the
+  // shooter is within Engagement Range of.
+  const engagedUnits = enemiesInEngagement(state, attacker, ctx);
+  if (engagedUnits.length > 0 && !engagedUnits.some((e) => e.id === target.id)) {
+    return { state, summary: '', rejected: 'while within Engagement Range, ranged attacks can only target an enemy unit within Engagement Range' };
+  }
+
+  const { fire, notes } = planUnitShooting(state, attacker, ctx);
+  if (fire.length === 0) return { state, summary: '', rejected: 'no ranged weapons can fire' };
+
+  const aliveBefore = target.models.filter((m) => m.alive).length;
+  let cur: GameState = {
+    ...state,
+    log: [
+      ...state.log,
+      `— ${aDs.name} shoots at ${tDs.name}: ${fire.length} weapon(s), resolved sequentially —`,
+      ...notes.map((n) => `  ${n}`),
+    ],
+  };
+  let firedCount = 0;
+  const skipped: string[] = [];
+  for (const w of fire) {
+    const tNow = cur.units.find((u) => u.id === target.id);
+    if (!tNow || !tNow.models.some((m) => m.alive)) {
+      cur = { ...cur, log: [...cur.log, '  target destroyed — remaining weapons not fired'] };
+      break;
+    }
+    const out = resolveAttack(
+      cur,
+      { attackerUnitId: attacker.id, targetUnitId: target.id, weaponName: w.weapon.name, weaponSourceDsId: w.sourceDsId },
+      ctx,
+      rng,
+    );
+    if (out.rejected) {
+      skipped.push(`  ${w.weapon.name} not fired: ${out.rejected}`);
+      continue;
+    }
+    firedCount++;
+    cur = out.state;
+  }
+  if (skipped.length) cur = { ...cur, log: [...cur.log, ...skipped] };
+  if (firedCount === 0) {
+    return { state, summary: '', rejected: `no weapon could fire (${skipped[0]?.trim() ?? 'nothing in range / line of sight'})` };
+  }
+
+  const units = cur.units.map((u) => (u.id === attacker.id ? { ...u, status: { ...u.status, hasShot: true } } : u));
+  const aliveAfter = units.find((u) => u.id === target.id)?.models.filter((m) => m.alive).length ?? 0;
+  const summary = `${aDs.name} shooting at ${tDs.name}: ${firedCount} weapon(s) fired, ${aliveBefore - aliveAfter} model(s) slain`;
+  return { state: { ...cur, units, log: [...cur.log, summary] }, summary };
 }
 
 // ── Objective control & scoring (Phase 2) ──────────────────────────────────────

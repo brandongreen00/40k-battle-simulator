@@ -94,6 +94,8 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
   const [owner, setOwner] = useState<Side>('player'); // sandbox spawn-as
   const [placing, setPlacing] = useState<Placing | null>(null);
   const [selectedUnitIds, setSelectedUnitIds] = useState<string[]>([]);
+  // Attacker/target picked in the game panel — highlighted on the board (rings + firing line).
+  const [targeting, setTargeting] = useState<{ attackerUnitId?: string; targetUnitId?: string }>({});
   const spawnCount = useRef(0);
 
   const rosterFor = (side: Side): Roster | undefined => allRosters.find((r) => r.name === rosterNameBySide[side]);
@@ -388,6 +390,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
           onPlacementCycle={() => setPlacing((p) => (p ? { ...p, formation: nextFormation(p.formation) } : p))}
           onPlacementCancel={() => setPlacing(null)}
           movement={movement}
+          targeting={inSetup ? null : targeting}
         />
       </main>
 
@@ -411,6 +414,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
             setSelectedUnitIds={setSelectedUnitIds}
             onBeginArrival={beginArrival}
             detachmentBySide={{ player: rosterFor('player')?.detachment ?? '', ai: rosterFor('ai')?.detachment ?? '' }}
+            onTargeting={setTargeting}
           />
         )}
       </aside>

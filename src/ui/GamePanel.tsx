@@ -1,12 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Datasheet, GameState, UnitInstance } from '../core/types';
 import type { Intent } from '../core/state';
-import { availableUnitWeapons, type EngineContext } from '../core/engine';
+import { availableUnitWeapons, planUnitShooting, type EngineContext } from '../core/engine';
 import type { MoveMode } from '../core/movement';
 import { EFFECT_REGISTRY } from '../core/effects';
 import {
   reservesArrivable, unitCoherency, eligibleToShoot, eligibleToCharge, eligibleToFight,
-  validShootingTargets, chargeTargets, engagedEnemies, fightActivationOrder, orderableUnits, type Eligibility,
+  validUnitShootingTargets, chargeTargets, engagedEnemies, fightActivationOrder, orderableUnits, type Eligibility,
 } from '../core/phases';
 import { AM_ORDERS, isOfficer } from '../core/orders';
 import { usableStratagems } from '../core/stratagems';
@@ -26,6 +26,8 @@ interface Props {
   onBeginArrival?: (unitId: string) => void;
   /** Each side's army detachment (drives which detachment stratagems are available). */
   detachmentBySide?: Record<Side, string>;
+  /** Reports the currently selected attacker/target so the board can highlight them. */
+  onTargeting?: (t: { attackerUnitId?: string; targetUnitId?: string }) => void;
 }
 
 const MOVE_MODES: { mode: MoveMode; label: string }[] = [
@@ -40,7 +42,7 @@ const MOVE_MODES: { mode: MoveMode; label: string }[] = [
  * scoreboard, attack/charge resolution between on-board units, Order/Stratagem application, and the
  * live dice log. All actions go through the same intent reducer the rest of the app uses.
  */
-export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [], setSelectedUnitIds, onBeginArrival, detachmentBySide }: Props) {
+export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [], setSelectedUnitIds, onBeginArrival, detachmentBySide, onTargeting }: Props) {
   const units = state.units;
   const phase = state.phase;
   const inMatch = state.mode === 'match';
@@ -105,11 +107,22 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
 
   const validTargets = useMemo(() => {
     if (!attacker) return [];
-    if (phase === 'Shooting') return weaponName ? validShootingTargets(attacker, weaponName, state, ctx) : [];
+    if (phase === 'Shooting') return validUnitShootingTargets(attacker, state, ctx);
     if (phase === 'Charge') return chargeTargets(attacker, state, ctx);
     if (phase === 'Fight') return engagedEnemies(attacker, state, ctx);
     return units.filter((u) => u.owner !== attacker.owner && !u.inReserves && u.models.some((m) => m.alive));
-  }, [attacker, weaponName, phase, units]);
+  }, [attacker, phase, units]);
+
+  // The fire plan when the whole unit shoots (every model fires its weapons, Pistol rule applied).
+  const firePlan = useMemo(
+    () => (attacker && phase === 'Shooting' ? planUnitShooting(state, attacker, ctx) : null),
+    [attacker, phase, units],
+  );
+
+  // Tell the board which units are attacker/target so it can highlight them.
+  useEffect(() => {
+    onTargeting?.({ attackerUnitId: attackerId || undefined, targetUnitId: targetId || undefined });
+  }, [attackerId, targetId, onTargeting]);
 
   const fightOrder = useMemo(() => (phase === 'Fight' ? fightActivationOrder(state, ctx) : []), [phase, units]);
 
@@ -375,18 +388,39 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
       {attackerEligibility && !attackerEligibility.eligible && (
         <p className="coh-bad">⚠ {attackerEligibility.reason}</p>
       )}
-      <label className="field">
-        <span>Weapon</span>
-        <select value={weaponSel} onChange={(e) => { setWeaponSel(e.target.value); setTargetId(''); }} disabled={!attacker}>
-          <option value="">— pick a weapon —</option>
-          {weapons.map((w) => (
-            <option key={`${w.sourceDsId}|${w.weapon.name}`} value={`${w.sourceDsId}|${w.weapon.name}`}>
-              {w.weapon.name} ({w.weapon.type === 'melee' ? 'melee' : `${w.weapon.range}"`}) ×{w.carriers}
-              {attacker && w.sourceDsId !== attacker.datasheetId ? ` — ${datasheetsById.get(w.sourceDsId)?.name ?? w.sourceDsId}` : ''}
-            </option>
-          ))}
-        </select>
-      </label>
+      {/* Shooting is unit-level: every model fires its equipped weapons (no weapon picker). */}
+      {phase !== 'Shooting' && (
+        <label className="field">
+          <span>Weapon</span>
+          <select value={weaponSel} onChange={(e) => { setWeaponSel(e.target.value); setTargetId(''); }} disabled={!attacker}>
+            <option value="">— pick a weapon —</option>
+            {weapons.map((w) => (
+              <option key={`${w.sourceDsId}|${w.weapon.name}`} value={`${w.sourceDsId}|${w.weapon.name}`}>
+                {w.weapon.name} ({w.weapon.type === 'melee' ? 'melee' : `${w.weapon.range}"`}) ×{w.carriers}
+                {attacker && w.sourceDsId !== attacker.datasheetId ? ` — ${datasheetsById.get(w.sourceDsId)?.name ?? w.sourceDsId}` : ''}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {phase === 'Shooting' && attacker && firePlan && (
+        <div className="fire-plan">
+          <span className="muted">Will fire ({firePlan.fire.length} weapon{firePlan.fire.length === 1 ? '' : 's'}, resolved sequentially):</span>
+          {firePlan.fire.length === 0 ? (
+            <p className="coh-bad">No ranged weapons can fire.</p>
+          ) : (
+            <ul>
+              {firePlan.fire.map((w) => (
+                <li key={`${w.sourceDsId}|${w.weapon.name}`}>
+                  {w.carriers}× {w.weapon.name} ({w.weapon.range}", A{w.weapon.attacks})
+                  {w.sourceDsId !== attacker.datasheetId ? ` — ${datasheetsById.get(w.sourceDsId)?.name ?? w.sourceDsId}` : ''}
+                </li>
+              ))}
+            </ul>
+          )}
+          {firePlan.notes.map((n, i) => <p key={i} className="hint">{n}</p>)}
+        </div>
+      )}
       <label className="field">
         <span>Target {attacker ? `(${validTargets.length} valid)` : ''}</span>
         <select value={targetId} onChange={(e) => setTargetId(e.target.value)} disabled={!attacker}>
@@ -416,12 +450,22 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
         </div>
       )}
       <div className="btnrow">
-        <button
-          disabled={!attackerId || !targetId || !weaponName}
-          onClick={() => dispatch({ type: 'Attack', attackerUnitId: attackerId, targetUnitId: targetId, weaponName, weaponSourceDsId })}
-        >
-          Resolve attack
-        </button>
+        {phase === 'Shooting' ? (
+          <button
+            className="primary"
+            disabled={!attackerId || !targetId || !firePlan || firePlan.fire.length === 0}
+            onClick={() => dispatch({ type: 'ShootUnit', attackerUnitId: attackerId, targetUnitId: targetId })}
+          >
+            🔫 Shoot — all weapons
+          </button>
+        ) : (
+          <button
+            disabled={!attackerId || !targetId || !weaponName}
+            onClick={() => dispatch({ type: 'Attack', attackerUnitId: attackerId, targetUnitId: targetId, weaponName, weaponSourceDsId })}
+          >
+            Resolve attack
+          </button>
+        )}
         <button
           disabled={!attackerId || (phase === 'Charge' ? chargeTargetIds.length === 0 : !targetId)}
           onClick={() => dispatch({ type: 'Charge', chargerUnitId: attackerId, targetUnitIds: phase === 'Charge' ? chargeTargetIds : (targetId ? [targetId] : []) })}

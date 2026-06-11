@@ -330,6 +330,38 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-06-11] — 10e mechanics review + fidelity fixes: unit-level shooting, one Leader per unit,
+  Leader joins physically, Benefit of Cover corrected, target highlighting.** Owner-requested review
+  of the rules core against the 10e Core Rules (Wahapedia). All gates green: `pnpm typecheck`,
+  `pnpm test` (**242 tests**, 6 new in `tests/mechanics.test.ts`), `pnpm build`.
+  - **Benefit of Cover was implemented backwards** (`combat.ts effectiveSave`): the code capped the
+    cover bonus at 3+ for AP'd attacks and let AP 0 improve without limit. 10e rule: +1 to the
+    saving throw UNLESS the attack is AP 0 and the model's Save is already 3+ or better. Fixed +
+    tests updated (a 2+ save vs AP-1 in cover now correctly saves on 2+; a 3+ save vs AP 0 gets
+    nothing).
+  - **Unit-level shooting** (`engine.ts planUnitShooting`/`resolveUnitShooting`, new `ShootUnit`
+    intent): selecting a unit to shoot now fires EVERY ranged weapon its models carry, resolved
+    sequentially (casualties from one weapon are removed before the next fires). Applies: one
+    profile per multi-profile weapon (" – standard"/" – supercharge" collapse); the **Pistol rule**
+    (a model fires either its Pistol or its other weapons — unit-level simplification: Pistols held
+    when the unit has other guns, noted in the log); engaged shooters fire Pistols only (Monsters/
+    Vehicles fire everything via **Big Guns Never Tire, now at -1 to hit**, Pistols exempt) and may
+    only target a unit within Engagement Range. The Shooting-phase panel shows the fire plan
+    (weapon × carriers) and a single "Shoot — all weapons" button; the weapon picker remains for
+    the Fight phase / sandbox dice-calculator (`Attack` intent unchanged).
+  - **One Leader per unit** (10e Leader rule): `AttachLeader` rejects a second Leader; the
+    deployment panel no longer offers already-led bodyguards.
+  - **Leader physically joins its unit**: attaching now snaps the Leader's models into base-to-base
+    coherency with the Bodyguard (`leaders.ts leaderJoinPositions` — ring search around the unit,
+    no overlaps, board-clamped), instead of leaving them wherever they were deployed.
+  - **Board target highlighting**: picking an attacker/target in the game panel draws cyan rings on
+    the attacker, pulsing red dashed rings on the target, and a dashed firing line between their
+    closest models (`Board.tsx targeting` prop, wired via `GamePanel.onTargeting`).
+  - **Review notes (unfixed, by scope):** Take Cover! keeps its 3+ cap (order-specific wording to
+    re-check against the owned lists); per-model weapon→target split (a unit firing different
+    weapons at different targets) not modelled — one target per shooting activation; Precision,
+    the Overwatch carve-out (B2 note), and embark/transports still open from prior entries.
+
 - **[2026-06-10] — Mobile (portrait phone) UI overhaul: tabbed layouts, pinch-zoom board, touch
   equivalents for every PC-only interaction.** All gates green: `pnpm typecheck`, `pnpm test`
   (**235 tests**, 7 new in `tests/boardview.test.ts`), `pnpm build`, **28/28 touch checks** in a
