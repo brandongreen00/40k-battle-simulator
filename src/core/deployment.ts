@@ -11,8 +11,8 @@
 // These predicates are what the deployment UI gates placement on (ghost turns red when illegal),
 // and what the AI calls to keep its own deployment legal.
 
-import type { BaseShape, Layout, Side, Vec2 } from './types';
-import { gapBetweenBases, distancePointToPolygon, pointInPolygon } from './geometry';
+import type { BaseShape, GameState, Layout, Side, Vec2 } from './types';
+import { baseRadius, distancePointToPolygon, distancePointToSegment, gapBetweenBases, pointInPolygon } from './geometry';
 
 /** A unit's deployment ability, derived from its datasheet keywords/abilities. */
 export type DeployAbility = 'standard' | 'infiltrators' | 'deep_strike';
@@ -28,6 +28,32 @@ export function inOwnZone(pos: Vec2, layout: Layout, side: Side): boolean {
   const zone = zoneFor(layout, side);
   if (zone.length === 0) return true; // unknown/unspecified zone — don't block (sandbox maps)
   return pointInPolygon(pos, zone);
+}
+
+/** Does a zone-polygon edge lie on the battlefield perimeter? (Bases may touch the table edge —
+ *  "wholly within" clearance only applies to zone edges interior to the board.) */
+function edgeOnBoardPerimeter(a: Vec2, b: Vec2, layout: Layout, eps = 1e-6): boolean {
+  const onLine = (va: number, vb: number, line: number) => Math.abs(va - line) < eps && Math.abs(vb - line) < eps;
+  return (
+    onLine(a.x, b.x, 0) || onLine(a.x, b.x, layout.boardWidth) ||
+    onLine(a.y, b.y, 0) || onLine(a.y, b.y, layout.boardHeight)
+  );
+}
+
+/** "Wholly within" a zone: centre inside AND the base's radius clear of every interior zone edge. */
+export function whollyInOwnZone(pos: Vec2, shape: BaseShape, layout: Layout, side: Side): boolean {
+  const zone = zoneFor(layout, side);
+  if (zone.length === 0) return true;
+  if (!pointInPolygon(pos, zone)) return false;
+  const r = baseRadius(shape);
+  if (r <= 1e-9) return true;
+  for (let i = 0; i < zone.length; i++) {
+    const a = zone[i]!;
+    const b = zone[(i + 1) % zone.length]!;
+    if (edgeOnBoardPerimeter(a, b, layout)) continue;
+    if (distancePointToSegment(pos, a, b) < r - 1e-6) return false;
+  }
+  return true;
 }
 
 export interface DeploymentCheck {
@@ -67,13 +93,24 @@ export function checkUnitDeployment(
     };
   }
 
-  // Standard deployment: every model within the side's own zone.
-  const perModel = positions.map((p) => inOwnZone(p, layout, side));
+  // Standard deployment: every model's base wholly within the side's own zone.
+  const perModel = positions.map((p) => whollyInOwnZone(p, baseShape, layout, side));
   return {
     legal: perModel.every(Boolean),
     perModel,
-    reason: perModel.every(Boolean) ? undefined : 'All models must be within your deployment zone',
+    reason: perModel.every(Boolean) ? undefined : 'All models must be wholly within your deployment zone',
   };
+}
+
+/**
+ * Has a deployment-list entry been placed (or reserved)? Checks live unit ids AND merged Leaders —
+ * an attached Leader's unit instance is removed by the merge, but its entry stays "placed" so it
+ * cannot be deployed a second time.
+ */
+export function isEntryPlaced(state: GameState, entryKey: string): boolean {
+  return state.units.some(
+    (u) => u.id === entryKey || (u.attachedLeaders ?? []).some((l) => l.unitId === entryKey),
+  );
 }
 
 /**

@@ -330,6 +330,114 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-06-10] — Mobile (portrait phone) UI overhaul: tabbed layouts, pinch-zoom board, touch
+  equivalents for every PC-only interaction.** All gates green: `pnpm typecheck`, `pnpm test`
+  (**235 tests**, 7 new in `tests/boardview.test.ts`), `pnpm build`, **28/28 touch checks** in a
+  scripted iPhone-13-emulated walkthrough with REAL touch events (CDP) — import → deploy by touch →
+  battle — plus the desktop suite re-verified (29/29, zero console errors on both).
+  - **Layouts (≤880px):** both views collapse to a single column behind mobile tab bars
+    (`.m-tabs`, hidden on desktop). Board view: the board is **sticky under the nav** (always
+    visible while the panel below scrolls) with tabs *Units & map / Game* that **auto-follow the
+    flow** (roll-off→Game, deployment→Units, battle→Game). List Builder: tabs *My list / Add
+    units / Setup* with a live points chip (e.g. `985/1000`). Touch sizing: 42-44px controls,
+    15px field fonts (stops iOS focus-zoom), `touch-action: manipulation`, no overscroll.
+  - **Board zoom/pan (new `src/ui/boardView.ts`, pure + tested):** the SVG viewBox is now a
+    clamped window — **pinch to zoom** (two-finger, start-anchored math), **two-finger/one-finger
+    pan** (one-finger pans when zoomed outside Movement/placement), **mouse-wheel zoom** (wheel
+    still rotates the ghost while placing), and a +/−/⤢ cluster with a zoom % readout. A second
+    finger always cancels game gestures (no accidental box-selects while pinching). Touch hit
+    areas: invisible ~2%-of-view hit circles on models (coarse pointers only; mouse stays precise).
+  - **Touch equivalents for PC-only actions:** placement on touch is **position-then-confirm**
+    (tap/drag the ghost — pre-seeded at view centre — then **✓ Place**; mouse click-to-commit
+    unchanged); a control row offers **⟲/⟳ rotate** (replaces scroll), **formation cycle**
+    (replaces `C`) and **✕ cancel** (replaces Esc) for ALL devices; Movement gets **"+ add to
+    selection"** (replaces Shift) and **"one model"** (replaces Alt-drag) toggles.
+  - **Decision: board controls live in a row UNDER the board, never overlaid** — the first mobile
+    run proved overlays steal taps exactly where deployment zones sit (bottom/top edges).
+  - Files: `Board.tsx` (rework), `boardView.ts` (new), `ModelToken.tsx` (hit areas),
+    `MeasuringBoard.tsx`/`listbuilder/ListBuilder.tsx` (tab bars), `styles.css` (media query +
+    control row), `index.html` (viewport-fit).
+  - **Known mobile nits (deferred):** the sticky board costs ~340px of viewport on short phones;
+    measure-to-cursor needs a second model on touch (tap two models to measure); landscape phones
+    get the desktop 3-column layout (>880px).
+
+- **[2026-06-10] — All review fixes applied (A1, B1–B6, C1–C5, D1–D3 + E-nits).** Implements every
+  fix from the same-day review below. All gates green: `pnpm typecheck`, `pnpm test` (**228 tests**,
+  20 new in `tests/fixes.test.ts`), `pnpm build`, plus a 29/29-check scripted re-run of the full
+  gameflow against the real dev app (import → deploy → battle → round-5 end) with **zero console
+  errors**.
+  - **A1 (critical):** `user-select: none` on `body` (inputs/textarea/dicelog re-enabled) +
+    `preventDefault()` in the board's pointer-down handlers + an `onPointerCancel` cleanup. Unit
+    drags no longer arm a text selection; box-select verified working after confirmed moves.
+  - **`GameState.mode: 'sandbox' | 'match'`** (decision): `NewBattle` → `'match'`; the default
+    board stays `'sandbox'`. All new rules guards apply ONLY to matches, so the measuring board /
+    tests keep the free dice-calculator behaviour.
+  - **B1:** `RunCommandPhase` rejected outside the Command phase / when already run this turn
+    (`commandRun` flag, reset on turn change); button disabled+labelled. **B2:** `resolveAttack`
+    requires Shooting (ranged) / Fight (melee), `resolveCharge` requires Charge, `resolveFightMove`
+    requires Fight (match only; Overwatch will need a carve-out later). **B3:** `BeginMove` skips
+    already-moved units (logged; movement panel names them and disables Move). Free `MoveModel`
+    drags blocked outside an activation in matches. **B4:** `isEntryPlaced` (deployment.ts) counts
+    merged Leaders as placed — no re-deploy/duplicate; leader rows + merged rows now side-labelled.
+    **B5:** mid-match the sidebar swaps to a "Battle in progress" note (no spawn/remove/clear/
+    spawn-as), map picker locked, "New battle" asks for confirmation. **B6:** First-turn switcher
+    hidden in matches.
+  - **C1 (fidelity):** per-model weapon counts. `UnitInstance.wargearCounts` rides in from the
+    roster (Spawn/Deploy/Reserves), survives Leader merge/detach (`attachedLeaders[].wargearCounts`);
+    `weaponCarrierCount`/`availableUnitWeapons` (engine) cap attacks at the bearers ("9× Infernus
+    heavy bolter: 27 attacks" → "1× …: 3 attacks", verified in-app), reject weapons nobody carries,
+    and the weapon picker shows "×N" + the source datasheet for Leader weapons (D2). Multi-profile
+    names ("Infernus heavy bolter – heavy bolter") match their base item. Units without loadout
+    data (demo/sandbox) keep the old all-models behaviour.
+  - **C2:** casualty allocation is now coherency-aware: defensive-wargear bearers still soak first,
+    then models die furthest-from-attacker first, skipping any whose removal would disconnect the
+    survivors (greedy `casualtyOrder`); damage maps back by model id. EndMove + the movement panel
+    name the out-of-coherency unit.
+  - **C3:** charge pathing fans out over ±45° around the aim line (sidesteps screens — test
+    proves a blocked straight line now succeeds); failure messages distinguish "needed X", rolled Y""
+    from "no clear path".
+  - **C4:** weapons from datasheets with no alive models / no bearers are filtered from pickers
+    (no more "Attack rejected: no models" dead-ends). **C5:** standard deployment now requires
+    bases *wholly within* the zone (clearance from interior zone edges; touching the battlefield
+    edge stays legal).
+  - **D1:** size tiers deduped (first row per size, matching `unitCost`) — the "(AGENTS OF THE
+    IMPERIUM Detachment)" rows and "1 models" plural are gone; single-tier sizes render as text.
+    **D2:** weapon options keyed/valued by `source|name` (+ `weaponSourceDsId` on the Attack
+    intent). **D3:** `MeasuringBoard` now reduces outside React (ref + `setState(next)`) so
+    StrictMode's double-invoke can't consume the RNG twice — in-app dice follow the seed again.
+  - **E-nits:** "Finish deploying" gated until every unit is placed/reserved (tooltip explains);
+    Shooting/Fight weapon pickers filter to the phase's weapon type; "(0 eligible)" no longer
+    falls back to listing every unit in matches; final score + winner line when the game ends;
+    the free effect-applicator block is retitled "Manual effects (debug)".
+  - **Still open** (from the review, by design or deferred): C6 base/terrain overlap, E1 per-unit
+    import confirmation, E3 move-budget rings, E5 single-block fight flow, and the Overwatch
+    carve-out noted in B2.
+
+- **[2026-06-10] — Deep visual review of the whole gameflow (no code changes).** Drove the real app
+  headless (Playwright) through: import of the owner's 985-pt "Rogue Trader's Army" export → list
+  builder checks → New Battle (roll-off, alternating deployment, Reserves, Infiltrators, Leader
+  merge) → 3 scripted rounds of all five phases (group moves, Advance, Deep-Strike arrival,
+  shooting, charges, a melee fight, stratagems, battle-shock) → fast-forward to the round-5 end →
+  reload/persistence. ~64 screenshots reviewed; root causes isolated with targeted probes.
+  **Full findings: `docs/ui_review_2026-06-10.md`.** Headlines:
+  - **CRITICAL (A1):** no `user-select:none`/`preventDefault` on the board → a unit drag arms a
+    native text-selection; the next drag becomes a browser drag + `pointercancel` and box-select
+    dies for the rest of the session. Fix verified by injecting `body{user-select:none}`.
+  - **Missing guards:** Run Command works in any phase and stacks (CP/VP farming); Attack/Charge
+    aren't phase-gated; units can move twice; merged Leaders reappear as deployable (duplicate
+    risk); sandbox spawn/remove/clear stays active mid-battle; the First-turn switcher resets a
+    live game.
+  - **Fidelity:** every alive model fires the unit's chosen weapon (27-attack heavy-bolter
+    volleys decided every game — per-model loadout is on the roster but unread); front-loaded
+    casualty removal breaks coherency (blocked an 8-unit group confirm) and empties Engagement
+    mid-fight; charge path search fails on a 10" roll vs sub-10" target (rigid translate).
+  - **UI defects:** duplicate React keys (`ListUnitCard.tsx:59` cost tiers — causes the
+    "(AGENTS OF THE IMPERIUM Detachment)" size rows; `GamePanel.tsx:323` merged-unit weapon
+    names); StrictMode double-invokes the RNG-impure reducer (dev dice diverge from the seed).
+  - **Works well:** importer round-trips the export perfectly (985/1000, legal, 0 warnings);
+    deployment flow + dice; eligibility messaging; phase/detachment-filtered stratagems incl.
+    reactive use on the opponent's turn; the dice log. Suggested fix order is in the doc (§F).
+
 - **[2026-06-09] — Bugfix: saved lists now appear when starting a game; deployment rail no longer
   clips the "ai army" picker.** Two user-reported UI bugs. All gates green: `pnpm typecheck`,
   `pnpm test` (**208 tests**), `pnpm build`.

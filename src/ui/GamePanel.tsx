@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import type { Datasheet, GameState } from '../core/types';
+import type { Datasheet, GameState, UnitInstance } from '../core/types';
 import type { Intent } from '../core/state';
-import { unitWeapons, type EngineContext } from '../core/engine';
+import { availableUnitWeapons, type EngineContext } from '../core/engine';
 import type { MoveMode } from '../core/movement';
 import { EFFECT_REGISTRY } from '../core/effects';
 import {
@@ -43,22 +43,35 @@ const MOVE_MODES: { mode: MoveMode; label: string }[] = [
 export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [], setSelectedUnitIds, onBeginArrival, detachmentBySide }: Props) {
   const units = state.units;
   const phase = state.phase;
+  const inMatch = state.mode === 'match';
   const [attackerId, setAttackerId] = useState('');
   const [targetId, setTargetId] = useState('');
-  const [weaponName, setWeaponName] = useState('');
+  // Composite weapon selection "<sourceDsId>|<name>" — merged units can carry same-named weapons
+  // from two datasheets, so the name alone is ambiguous.
+  const [weaponSel, setWeaponSel] = useState('');
+  const weaponName = weaponSel.split('|')[1] ?? '';
+  const weaponSourceDsId = weaponSel.split('|')[0] ?? '';
   const [effectId, setEffectId] = useState('order:take_aim');
   const [stratSide, setStratSide] = useState<Side>(state.activePlayer);
   const [chargeTargetIds, setChargeTargetIds] = useState<string[]>([]);
 
   const ctx: EngineContext = useMemo(() => ({ datasheets: datasheetsById }), [datasheetsById]);
   const movingUnits = units.filter((u) => u.status.moveMode);
-  const coherencyOk = movingUnits.every((u) => unitCoherency(u, ctx).inCoherency);
+  const incoherentMoving = movingUnits.filter((u) => !unitCoherency(u, ctx).inCoherency);
+  const coherencyOk = incoherentMoving.length === 0;
   const arrivable = reservesArrivable(state);
   const nameOfUnit = (id: string) => datasheetsById.get(units.find((u) => u.id === id)?.datasheetId ?? '')?.name ?? id;
 
   const attacker = units.find((u) => u.id === attackerId);
-  // Weapons the (possibly merged) attacker can fire — primary datasheet + any merged Leader's.
-  const weapons = useMemo(() => (attacker ? unitWeapons(attacker, ctx).map((w) => w.weapon) : []), [attacker, ctx]);
+  // Weapons the (possibly merged) attacker can fire — only those somebody alive actually carries,
+  // and only the type the current phase resolves (ranged in Shooting, melee in Fight) in a match.
+  const weapons = useMemo(() => {
+    if (!attacker) return [];
+    let ws = availableUnitWeapons(attacker, ctx);
+    if (inMatch && phase === 'Shooting') ws = ws.filter((w) => w.weapon.type !== 'melee');
+    if (inMatch && phase === 'Fight') ws = ws.filter((w) => w.weapon.type === 'melee');
+    return ws;
+  }, [attacker, ctx, inMatch, phase]);
 
   const nameOf = (id: string) => {
     const u = units.find((x) => x.id === id);
@@ -76,6 +89,14 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
     if (phase === 'Fight') return myUnits.filter((u) => engagedEnemies(u, state, ctx).length > 0);
     return myUnits;
   }, [units, phase, state.activePlayer]);
+  // In a match, don't silently fall back to ALL units when none are eligible — the label says
+  // "(0 eligible)" and the list should agree with it. The sandbox keeps the permissive list.
+  const combatPhase = phase === 'Shooting' || phase === 'Charge' || phase === 'Fight';
+  const attackerOptions = eligibleAttackers.length
+    ? eligibleAttackers
+    : inMatch && combatPhase
+      ? []
+      : myUnits;
 
   const attackerEligibility: Eligibility | null = !attacker ? null
     : phase === 'Shooting' ? eligibleToShoot(attacker, state, ctx)
@@ -125,18 +146,39 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
         <strong>Round {state.round}</strong> · {state.activePlayer} · <em>{state.phase}</em>
         {state.ended && <span className="badge">ended</span>}
       </div>
+      {state.ended && (
+        <p className="ok">
+          Final score — player {state.score.player} : {state.score.ai} ai ·{' '}
+          {state.score.player === state.score.ai
+            ? 'draw'
+            : `${state.score.player > state.score.ai ? 'player' : 'ai'} wins`}
+        </p>
+      )}
       <div className="btnrow">
         <button onClick={() => dispatch({ type: 'AdvancePhase' })} disabled={state.ended}>Next phase →</button>
-        <button onClick={() => dispatch({ type: 'RunCommandPhase' })} disabled={state.ended}>Run Command</button>
+        <button
+          onClick={() => dispatch({ type: 'RunCommandPhase' })}
+          disabled={state.ended || (inMatch && (state.phase !== 'Command' || !!state.commandRun))}
+          title={
+            inMatch && state.phase !== 'Command' ? 'Only during the Command phase'
+            : inMatch && state.commandRun ? 'Already run this turn'
+            : 'Gain CP, take Battle-shock tests, score Primary'
+          }
+        >
+          Run Command{inMatch && state.commandRun ? ' ✓' : ''}
+        </button>
       </div>
-      <div className="btnrow">
-        <span className="muted">First turn:</span>
-        {(['player', 'ai'] as const).map((s) => (
-          <button key={s} className={state.firstPlayer === s ? 'seg-on' : ''} onClick={() => dispatch({ type: 'SetFirstPlayer', side: s })}>
-            {s}
-          </button>
-        ))}
-      </div>
+      {/* Switching the first player resets the sequencer — sandbox/debug only. */}
+      {!inMatch && (
+        <div className="btnrow">
+          <span className="muted">First turn:</span>
+          {(['player', 'ai'] as const).map((s) => (
+            <button key={s} className={state.firstPlayer === s ? 'seg-on' : ''} onClick={() => dispatch({ type: 'SetFirstPlayer', side: s })}>
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Scoreboard */}
       <div className="scoreboard">
@@ -223,27 +265,45 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
           <h3>Movement</h3>
           {movingUnits.length === 0 ? (
             <>
-              <p className="muted">
-                {selectedUnitIds.length === 0
-                  ? 'Drag a box on the board to select your units.'
-                  : `${selectedUnitIds.length} unit(s) selected: ${selectedUnitIds.map(nameOfUnit).join(', ')}`}
-              </p>
-              <div className="btnrow">
-                {MOVE_MODES.map(({ mode, label }) => (
-                  <button
-                    key={mode}
-                    disabled={selectedUnitIds.length === 0}
-                    onClick={() => dispatch({ type: 'BeginMove', unitIds: selectedUnitIds, mode })}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
+              {(() => {
+                const hasMoved = (u: UnitInstance | undefined) =>
+                  !!u && !!(u.status.moved || u.status.advanced || u.status.fellBack || u.status.remainedStationary);
+                const selected = selectedUnitIds.map((id) => units.find((u) => u.id === id));
+                const movableIds = selectedUnitIds.filter((_id, i) => !(inMatch && hasMoved(selected[i])));
+                const movedNames = selectedUnitIds.filter((_id, i) => inMatch && hasMoved(selected[i])).map(nameOfUnit);
+                return (
+                  <>
+                    <p className="muted">
+                      {selectedUnitIds.length === 0
+                        ? 'Drag a box on the board to select your units.'
+                        : `${selectedUnitIds.length} unit(s) selected: ${selectedUnitIds.map(nameOfUnit).join(', ')}`}
+                    </p>
+                    {movedNames.length > 0 && (
+                      <p className="hint">Already moved this turn: {movedNames.join(', ')}</p>
+                    )}
+                    <div className="btnrow">
+                      {MOVE_MODES.map(({ mode, label }) => (
+                        <button
+                          key={mode}
+                          disabled={movableIds.length === 0}
+                          title={selectedUnitIds.length > 0 && movableIds.length === 0 ? 'Every selected unit has already moved this turn' : ''}
+                          onClick={() => dispatch({ type: 'BeginMove', unitIds: movableIds, mode })}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                );
+              })()}
             </>
           ) : (
             <>
               <p className={coherencyOk ? 'muted' : 'coh-bad'}>
-                {movingUnits.length} unit(s) moving · {coherencyOk ? 'in coherency ✓' : '⚠ out of coherency'}
+                {movingUnits.length} unit(s) moving ·{' '}
+                {coherencyOk
+                  ? 'in coherency ✓'
+                  : `⚠ out of coherency: ${incoherentMoving.map((u) => nameOfUnit(u.id)).join(', ')}`}
               </p>
               <div className="btnrow">
                 <button
@@ -304,10 +364,10 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
       {/* Attack / charge */}
       <h3>Resolve combat</h3>
       <label className="field">
-        <span>Attacker {phase === 'Shooting' || phase === 'Fight' || phase === 'Charge' ? `(${eligibleAttackers.length} eligible)` : ''}</span>
-        <select value={attackerId} onChange={(e) => { setAttackerId(e.target.value); setWeaponName(''); setTargetId(''); setChargeTargetIds([]); }}>
-          <option value="">— pick a unit —</option>
-          {(eligibleAttackers.length ? eligibleAttackers : myUnits).map((u) => (
+        <span>Attacker {combatPhase ? `(${eligibleAttackers.length} eligible)` : ''}</span>
+        <select value={attackerId} onChange={(e) => { setAttackerId(e.target.value); setWeaponSel(''); setTargetId(''); setChargeTargetIds([]); }}>
+          <option value="">{attackerOptions.length === 0 && combatPhase ? '— no eligible units —' : '— pick a unit —'}</option>
+          {attackerOptions.map((u) => (
             <option key={u.id} value={u.id}>{nameOf(u.id)} ({u.owner}, ×{aliveOf(u.id)})</option>
           ))}
         </select>
@@ -317,10 +377,13 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
       )}
       <label className="field">
         <span>Weapon</span>
-        <select value={weaponName} onChange={(e) => { setWeaponName(e.target.value); setTargetId(''); }} disabled={!attacker}>
+        <select value={weaponSel} onChange={(e) => { setWeaponSel(e.target.value); setTargetId(''); }} disabled={!attacker}>
           <option value="">— pick a weapon —</option>
           {weapons.map((w) => (
-            <option key={w.name} value={w.name}>{w.name} ({w.type === 'melee' ? 'melee' : `${w.range}"`})</option>
+            <option key={`${w.sourceDsId}|${w.weapon.name}`} value={`${w.sourceDsId}|${w.weapon.name}`}>
+              {w.weapon.name} ({w.weapon.type === 'melee' ? 'melee' : `${w.weapon.range}"`}) ×{w.carriers}
+              {attacker && w.sourceDsId !== attacker.datasheetId ? ` — ${datasheetsById.get(w.sourceDsId)?.name ?? w.sourceDsId}` : ''}
+            </option>
           ))}
         </select>
       </label>
@@ -355,7 +418,7 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
       <div className="btnrow">
         <button
           disabled={!attackerId || !targetId || !weaponName}
-          onClick={() => dispatch({ type: 'Attack', attackerUnitId: attackerId, targetUnitId: targetId, weaponName })}
+          onClick={() => dispatch({ type: 'Attack', attackerUnitId: attackerId, targetUnitId: targetId, weaponName, weaponSourceDsId })}
         >
           Resolve attack
         </button>
@@ -367,8 +430,8 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
         </button>
       </div>
 
-      {/* Orders & stratagems */}
-      <h3>Orders & Stratagems</h3>
+      {/* Manual effect applicator — a debug tool: applies any effect with no phase/CP logic. */}
+      <h3>Manual effects (debug)</h3>
       <label className="field">
         <span>Effect</span>
         <select value={effectId} onChange={(e) => setEffectId(e.target.value)}>

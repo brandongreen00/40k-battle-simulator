@@ -199,6 +199,9 @@ export interface UnitInstance {
   /** Model count at deployment, for Below-Half-strength / Battle-shock tests. */
   startingModels: number;
   status: UnitStatus;
+  /** Full wargear item→count map from the roster (e.g. {"Meltagun": 1, "Navis shotgun": 7}).
+   *  Drives how many models fire a given weapon. Absent for units spawned without loadout data. */
+  wargearCounts?: Record<string, number>;
   /** Held in Reserves (Deep Strike / Strategic Reserves) — off the board until it arrives. */
   inReserves?: boolean;
   /** Battle round this unit arrived from Reserves (undefined if deployed normally). */
@@ -209,7 +212,14 @@ export interface UnitInstance {
   leaderUnitIds?: string[];
   /** Merged-in Leaders (their models live in this unit, tagged with their datasheetId). Lets the
    *  merged unit fire the Leader's weapons and be split apart again on detach. */
-  attachedLeaders?: { unitId: string; datasheetId: string; modelCount: number; wounds: number }[];
+  attachedLeaders?: {
+    unitId: string;
+    datasheetId: string;
+    modelCount: number;
+    wounds: number;
+    /** The Leader's own wargear counts, preserved through the merge (restored on detach). */
+    wargearCounts?: Record<string, number>;
+  }[];
 }
 
 /** A resolved Battle-shock test, kept on the state so the UI can render its 2D6 as dice. */
@@ -252,6 +262,11 @@ export interface GameState {
   units: UnitInstance[];
   /** 'setup' = pre-battle deployment; 'battle' = the five-phase rounds; 'done' = finished. */
   stage: Stage;
+  /** 'sandbox' = the free measuring board (no rules guards); 'match' = a real battle started via
+   *  NewBattle — phase/once-per-turn guards apply and sandbox controls are hidden. */
+  mode: 'sandbox' | 'match';
+  /** The active player has already run their Command phase this turn (match-mode guard). */
+  commandRun?: boolean;
   /** Pre-battle deployment sub-state (present while `stage === 'setup'`). */
   setup?: SetupState;
   round: number; // 1..5

@@ -10,6 +10,7 @@ import type { Datasheet, GameState, ModelInstance, UnitInstance, Vec2, BaseShape
 import type { RNG } from './rng';
 import { baseRadius, gapBetweenBases } from './geometry';
 import { parseKeywords } from './keywords';
+import { checkCoherency } from './coherency';
 import { resolveAttacks, type AttackProfile, type DefenderProfile, type CombatSituation } from './combat';
 import { unitCanSee, unitHasCover } from './los';
 import { controlOfObjective, scorePrimary, type OcModel } from './objectives';
@@ -28,7 +29,9 @@ export interface AttackParams {
   attackerUnitId: string;
   targetUnitId: string;
   weaponName: string;
-  /** Override the number of firing models (defaults to every alive model in the attacker). */
+  /** Disambiguates same-named weapons on merged units (e.g. two "Close combat weapon" entries). */
+  weaponSourceDsId?: string;
+  /** Override the number of firing models (defaults to the models that carry the weapon). */
   attackerCount?: number;
 }
 
@@ -68,6 +71,52 @@ export function unitWeapons(unit: UnitInstance, ctx: EngineContext): { weapon: W
   return out;
 }
 
+/** A weapon profile's base item name: multi-profile names ("Infernus heavy bolter – heavy bolter")
+ *  collapse to the item the roster counts ("Infernus heavy bolter"). */
+function weaponItemName(profileName: string): string {
+  return profileName.split(/\s+[–—-]\s+/)[0]!.trim().toLowerCase();
+}
+
+/** The wargear counts governing weapons from `sourceDsId` (the unit's own, or a merged Leader's). */
+function wargearCountsFor(unit: UnitInstance, sourceDsId: string): Record<string, number> | undefined {
+  if (sourceDsId === unit.datasheetId) return unit.wargearCounts;
+  return (unit.attachedLeaders ?? []).find((l) => l.datasheetId === sourceDsId)?.wargearCounts;
+}
+
+/**
+ * How many alive models fire `weapon`. When the unit carries roster wargear counts, only the
+ * counted bearers fire (capped by the source datasheet's alive models); without loadout data
+ * (sandbox spawns, demo rosters) every alive model of the source datasheet fires — the old
+ * behaviour. Returns null when the unit has counts but nobody carries this weapon.
+ */
+export function weaponCarrierCount(
+  unit: UnitInstance,
+  weapon: WeaponProfile,
+  sourceDsId: string,
+): number | null {
+  const aliveOfSource = unit.models.filter(
+    (m) => m.alive && (m.datasheetId ?? unit.datasheetId) === sourceDsId,
+  ).length;
+  const counts = wargearCountsFor(unit, sourceDsId);
+  if (!counts || Object.keys(counts).length === 0) return aliveOfSource;
+  const item = weaponItemName(weapon.name);
+  for (const [k, v] of Object.entries(counts)) {
+    if (k.trim().toLowerCase() === item) return Math.min(v, aliveOfSource);
+  }
+  return null; // loadout known and this weapon isn't in it
+}
+
+/** Weapons the unit can actually fire right now: source models alive and (when the loadout is
+ *  known) at least one bearer. This is what pickers should offer. */
+export function availableUnitWeapons(
+  unit: UnitInstance,
+  ctx: EngineContext,
+): { weapon: WeaponProfile; sourceDsId: string; carriers: number }[] {
+  return unitWeapons(unit, ctx)
+    .map((w) => ({ ...w, carriers: weaponCarrierCount(unit, w.weapon, w.sourceDsId) ?? 0 }))
+    .filter((w) => w.carriers > 0);
+}
+
 /**
  * Curated innate effects per datasheet (Phase 3 seam). Maps a datasheet id to always-on effect
  * ids from EFFECT_REGISTRY. Empty until the owned lists enumerate each unit's specials; this is
@@ -80,7 +129,7 @@ function effectsOf(unit: UnitInstance): string[] {
   return [...(unit.status.activeEffects ?? []), ...(INNATE_ABILITY_EFFECTS[unit.datasheetId] ?? [])];
 }
 
-function defenderProfileFor(unit: UnitInstance, ctx: EngineContext): DefenderProfile {
+function defenderProfileFor(unit: UnitInstance, ctx: EngineContext, ordered?: ModelInstance[]): DefenderProfile {
   const primary = ctx.datasheets.get(unit.datasheetId)!;
   const pm = primary.models[0]!; // the unit's main profile (used for the wound roll's Toughness)
   return {
@@ -88,8 +137,7 @@ function defenderProfileFor(unit: UnitInstance, ctx: EngineContext): DefenderPro
     save: pm.Sv,
     invuln: pm.invuln,
     keywords: primary.keywords,
-    models: unit.models
-      .filter((x) => x.alive)
+    models: (ordered ?? unit.models.filter((x) => x.alive))
       .map((x) => {
         // Per-model profile: a merged Leader model uses its own datasheet's W / Sv / invuln.
         const base = (modelDatasheet(x, unit, ctx) ?? primary).models[0]!;
@@ -104,6 +152,42 @@ function defenderProfileFor(unit: UnitInstance, ctx: EngineContext): DefenderPro
         return { maxW: base.W, wounds: x.wounds, ...(invuln != null ? { invuln } : {}), ...(save != null ? { save } : {}) };
       }),
   };
+}
+
+/**
+ * The order casualties are allocated in (10e: the owner removes models, normally keeping the unit
+ * coherent and pulling from the back). Defensive-wargear bearers still soak first (they carry the
+ * best save — the existing allocate→save behaviour); within each pool, models furthest from the
+ * attacker die first, skipping any model whose removal would split the survivors apart.
+ */
+function casualtyOrder(target: UnitInstance, ctx: EngineContext, attackerCentroid: Vec2): ModelInstance[] {
+  const shape = ctx.datasheets.get(target.datasheetId)?.baseShape ?? { kind: 'circle' as const, radius: 0.63 };
+  const hasDefensiveGear = (m: ModelInstance) =>
+    (m.wargear ?? []).some((item) => defensiveProfileForItem(item));
+  const dist = (m: ModelInstance) => Math.hypot(m.pos.x - attackerCentroid.x, m.pos.y - attackerCentroid.y);
+
+  const remaining = target.models.filter((m) => m.alive);
+  const order: ModelInstance[] = [];
+  while (remaining.length > 0) {
+    // Candidates: defensive-gear bearers while any remain, then the rest; furthest first.
+    const pool = remaining.some(hasDefensiveGear) ? remaining.filter(hasDefensiveGear) : remaining;
+    const sorted = [...pool].sort((a, b) => dist(b) - dist(a));
+    const pick =
+      sorted.find((m) => {
+        const rest = remaining.filter((x) => x !== m);
+        return rest.length <= 1 || checkCoherency(rest.map((x) => x.pos), shape).connected;
+      }) ?? sorted[0]!;
+    order.push(pick);
+    remaining.splice(remaining.indexOf(pick), 1);
+  }
+  return order;
+}
+
+/** Centroid of a unit's alive models (used to define "the back" relative to the attacker). */
+function aliveUnitCentroid(u: UnitInstance): Vec2 {
+  const ms = u.models.filter((m) => m.alive);
+  if (!ms.length) return { x: 0, y: 0 };
+  return { x: ms.reduce((s, m) => s + m.pos.x, 0) / ms.length, y: ms.reduce((s, m) => s + m.pos.y, 0) / ms.length };
 }
 
 /** Closest base-to-base gap (inches) between any two alive models of the two units. */
@@ -138,13 +222,28 @@ export function resolveAttack(
   if (!aDs || !tDs) return { state, summary: '', rejected: 'datasheet not found' };
 
   // Find the weapon across the unit's datasheets (primary + merged Leaders) and count only the
-  // models from that source datasheet as firing it.
-  const found = unitWeapons(attacker, ctx).find((w) => w.weapon.name === params.weaponName);
+  // models that actually carry it as firing it.
+  const candidates = unitWeapons(attacker, ctx).filter((w) => w.weapon.name === params.weaponName);
+  const found = params.weaponSourceDsId
+    ? candidates.find((w) => w.sourceDsId === params.weaponSourceDsId)
+    : candidates[0];
   if (!found) return { state, summary: '', rejected: 'weapon not found' };
   const weaponDef = found.weapon;
   const profile = attackProfileForWeapon(weaponDef);
+  const isMelee = weaponDef.type === 'melee';
 
-  const aliveAttackers = attacker.models.filter((m) => m.alive && (m.datasheetId ?? attacker.datasheetId) === found.sourceDsId).length;
+  // Phase legality (real matches only — the sandbox stays a free dice calculator).
+  // NOTE: a future Overwatch implementation will need its own carve-out here.
+  if (state.mode === 'match' && state.stage === 'battle') {
+    const requiredPhase = isMelee ? 'Fight' : 'Shooting';
+    if (state.phase !== requiredPhase) {
+      return { state, summary: '', rejected: `${isMelee ? 'melee' : 'ranged'} attacks only in the ${requiredPhase} phase (now ${state.phase})` };
+    }
+  }
+
+  const carriers = weaponCarrierCount(attacker, weaponDef, found.sourceDsId);
+  if (carriers == null) return { state, summary: '', rejected: `no models in the unit carry ${weaponDef.name}` };
+  const aliveAttackers = carriers;
   const aliveTargets = target.models.filter((m) => m.alive).length;
   if (aliveAttackers === 0 || aliveTargets === 0) return { state, summary: '', rejected: 'no models' };
 
@@ -152,7 +251,6 @@ export function resolveAttack(
   const kw = profile.keywords;
 
   // Legality + situational flags from real positions.
-  const isMelee = weaponDef.type === 'melee';
   if (isMelee) {
     if (gap > ENGAGEMENT_RANGE) return { state, summary: '', rejected: 'not in engagement range' };
   } else {
@@ -208,7 +306,10 @@ export function resolveAttack(
     extraAttacks: mods.extraAttacks,
   };
 
-  const defender = defenderProfileFor(target, ctx);
+  // Allocate damage in casualty order (owner removes from the back, keeping the unit coherent;
+  // defensive-wargear bearers still soak first) instead of stripping the formation's front rows.
+  const allocation = casualtyOrder(target, ctx, aliveUnitCentroid(attacker));
+  const defender = defenderProfileFor(target, ctx, allocation);
   if (mods.fnp != null) defender.fnp = mods.fnp;
   if (mods.invulnFloor != null) defender.invuln = Math.min(defender.invuln ?? 7, mods.invulnFloor);
   if (mods.saveBonus) {
@@ -219,11 +320,14 @@ export function resolveAttack(
   }
   const result = resolveAttacks(profile, defender, situation, rng);
 
-  // Map the updated wound state back onto the target's alive models, in order.
-  let idx = 0;
+  // Map the updated wound state back onto the target's models (result order == allocation order).
+  const updatedById = new Map<string, { wounds: number }>();
+  result.defenderModels.forEach((dm, k) => {
+    const m = allocation[k];
+    if (m) updatedById.set(m.id, dm);
+  });
   const newTargetModels = target.models.map((m) => {
-    if (!m.alive) return m;
-    const updated = result.defenderModels[idx++];
+    const updated = updatedById.get(m.id);
     if (!updated) return m;
     const wounds = updated.wounds;
     return { ...m, wounds, alive: wounds > 0 };
@@ -351,10 +455,11 @@ function aliveCentroid(u: UnitInstance): Vec2 {
 }
 
 /**
- * Search for a legal charge move: a rigid translate (≤ roll inches) toward the targets that ends
- * with the charger within Engagement Range of EVERY declared target and NOT within Engagement Range
- * of any non-target enemy. Rigid translation preserves coherency by construction. Returns the
- * translation vector, or null if no distance up to the roll satisfies all constraints.
+ * Search for a legal charge move: a rigid translate (≤ roll inches) that ends with the charger
+ * within Engagement Range of EVERY declared target and NOT within Engagement Range of any
+ * non-target enemy. Rigid translation preserves coherency by construction. The search fans out
+ * over several directions around the aim line (so a screening non-target can be sidestepped).
+ * Returns the translation vector, or null if no direction/distance up to the roll satisfies all.
  */
 function findChargeMove(
   charger: UnitInstance,
@@ -365,22 +470,33 @@ function findChargeMove(
   step = 0.1,
 ): Vec2 | null {
   const from = aliveCentroid(charger);
-  // Aim at the mean of the targets' centroids.
-  const aim = { x: 0, y: 0 };
-  for (const t of targets) { const c = aliveCentroid(t.unit); aim.x += c.x; aim.y += c.y; }
-  aim.x /= targets.length; aim.y /= targets.length;
-  const dx = aim.x - from.x, dy = aim.y - from.y;
-  const len = Math.hypot(dx, dy) || 1;
-  const dir = { x: dx / len, y: dy / len };
+  // Candidate aim points: the mean of the targets' centroids, plus each target's own centroid.
+  const mean = { x: 0, y: 0 };
+  for (const t of targets) { const c = aliveCentroid(t.unit); mean.x += c.x; mean.y += c.y; }
+  mean.x /= targets.length; mean.y /= targets.length;
+  const aims = [mean, ...targets.map((t) => aliveCentroid(t.unit))];
 
-  for (let d = 0; d <= roll + 1e-9; d += step) {
-    const v = { x: dir.x * d, y: dir.y * d };
-    const moved = translatedModels(charger, v);
-    const reachesAll = targets.every((t) => closestGap(moved, cShape, t.unit, t.shape) <= ENGAGEMENT_RANGE);
-    if (!reachesAll) continue;
-    const clearOfNonTargets = nonTargets.every((nt) => closestGap(moved, cShape, nt.unit, nt.shape) > ENGAGEMENT_RANGE);
-    if (!clearOfNonTargets) continue; // a longer move might clear it — keep scanning
-    return v;
+  const tried = new Set<string>();
+  for (const aim of aims) {
+    const dx = aim.x - from.x, dy = aim.y - from.y;
+    const base = Math.atan2(dy, dx);
+    // Fan out around the aim line — a straight line into a screen often clips a non-target.
+    for (const off of [0, 10, -10, 20, -20, 30, -30, 45, -45]) {
+      const ang = base + (off * Math.PI) / 180;
+      const key = ang.toFixed(3);
+      if (tried.has(key)) continue;
+      tried.add(key);
+      const dir = { x: Math.cos(ang), y: Math.sin(ang) };
+      for (let d = 0; d <= roll + 1e-9; d += step) {
+        const v = { x: dir.x * d, y: dir.y * d };
+        const moved = translatedModels(charger, v);
+        const reachesAll = targets.every((t) => closestGap(moved, cShape, t.unit, t.shape) <= ENGAGEMENT_RANGE);
+        if (!reachesAll) continue;
+        const clearOfNonTargets = nonTargets.every((nt) => closestGap(moved, cShape, nt.unit, nt.shape) > ENGAGEMENT_RANGE);
+        if (!clearOfNonTargets) continue; // a longer move might clear it — keep scanning
+        return v;
+      }
+    }
   }
   return null;
 }
@@ -400,6 +516,12 @@ export function resolveCharge(
   if (!charger) return { state, success: false, summary: 'unit not found' };
   const cDs = ctx.datasheets.get(charger.datasheetId);
   if (!cDs) return { state, success: false, summary: 'datasheet not found' };
+
+  // Phase legality (real matches only).
+  if (state.mode === 'match' && state.stage === 'battle' && state.phase !== 'Charge') {
+    const summary = `Charge rejected: only in the Charge phase (now ${state.phase})`;
+    return { state: { ...state, log: [...state.log, summary] }, success: false, summary };
+  }
 
   const targetIds = params.targetUnitIds ?? (params.targetUnitId ? [params.targetUnitId] : []);
   const targets = targetIds
@@ -426,7 +548,14 @@ export function resolveCharge(
   const move = findChargeMove(charger, cDs.baseShape, targets, nonTargets, distance);
   const success = move !== null;
   const names = targets.map((t) => ctx.datasheets.get(t.unit.datasheetId)?.name ?? t.unit.id).join(' + ');
-  const reason = success ? 'SUCCESS' : 'failed (cannot reach all targets / would clip a non-target)';
+  // Tell a short roll apart from a blocked path: the minimum distance that could possibly work
+  // is the furthest target's gap minus Engagement Range.
+  const needed = Math.max(...targets.map((t) => closestGap(charger, cDs.baseShape, t.unit, t.shape))) - ENGAGEMENT_RANGE;
+  const reason = success
+    ? 'SUCCESS'
+    : distance < needed - 1e-6
+      ? `failed — needed ${Math.max(0, needed).toFixed(1)}", rolled ${distance}"`
+      : 'failed — no clear path (cannot reach every target without ending within 1" of another enemy)';
   const summary = `${cDs.name} charges ${names}: 2D6=${rolls.join('+')}=${distance}" → ${reason}`;
 
   const units = success
@@ -477,6 +606,12 @@ export function resolveFightMove(
   if (!unit) return { state, summary: 'unit not found' };
   const ds = ctx.datasheets.get(unit.datasheetId);
   if (!ds) return { state, summary: 'datasheet not found' };
+
+  // Phase legality (real matches only).
+  if (state.mode === 'match' && state.stage === 'battle' && state.phase !== 'Fight') {
+    const summary = `Pile In/Consolidate rejected: only in the Fight phase (now ${state.phase})`;
+    return { state: { ...state, log: [...state.log, summary] }, summary };
+  }
 
   // Nearest enemy unit by base-to-base gap.
   let nearest: UnitInstance | undefined;
