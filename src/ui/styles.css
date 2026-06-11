@@ -1040,3 +1040,283 @@ button.remove {
   flex: 0 0 auto;
   max-width: 55%;
 }
+
+/* ══════════════════════ Board overlay controls (all devices) ══════════════════ */
+.board-stage {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+.board-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.board-zoom {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.board-zoom button {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: rgba(15, 18, 23, 0.85);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+.board-zoom button:disabled {
+  opacity: 0.35;
+}
+.board-zoom .zoom-pct {
+  font-size: 11px;
+  font-family: monospace;
+  color: var(--muted);
+  background: rgba(15, 18, 23, 0.85);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 3px 6px;
+}
+.board-placebar,
+.board-togglebar {
+  display: flex;
+  gap: 6px;
+  background: rgba(15, 18, 23, 0.92);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 4px;
+  flex-wrap: wrap;
+}
+.board-placebar button,
+.board-togglebar button {
+  min-height: 38px;
+  min-width: 38px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #232936;
+  color: var(--text);
+  font-size: 14px;
+  cursor: pointer;
+}
+.board-placebar button.place {
+  background: #14532d;
+  border-color: #166534;
+  color: #bbf7d0;
+  font-weight: 600;
+}
+.board-placebar button.place:disabled {
+  opacity: 0.4;
+}
+.board-placebar button.cancel {
+  background: #450a0a;
+  border-color: #7f1d1d;
+  color: #fecaca;
+}
+.board-placebar button.formation {
+  font-size: 12px;
+}
+.board-togglebar button {
+  font-size: 12px;
+}
+.board-togglebar button.on {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Mobile-only panel tabs (hidden on desktop) */
+.m-tabs {
+  display: none;
+}
+
+/* Touch hygiene everywhere: no double-tap zoom on controls, no pull-to-refresh fights. */
+button,
+select {
+  touch-action: manipulation;
+}
+html,
+body {
+  overscroll-behavior-y: none;
+}
+
+/* ══════════════════════ Phone layout (portrait-first) ═════════════════════════ */
+@media (max-width: 880px) {
+  :root {
+    --navh: 44px;
+  }
+  .topnav {
+    gap: 8px;
+    padding: 6px 10px;
+    min-height: var(--navh);
+  }
+  .topnav .brand {
+    font-size: 13px;
+  }
+  .topnav nav {
+    flex: 1;
+  }
+  .topnav nav button {
+    flex: 1;
+    min-height: 32px;
+  }
+
+  .m-tabs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--line);
+  }
+  .m-tabs button {
+    flex: 1;
+    min-height: 40px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #1b1f27;
+    color: var(--text);
+    font-size: 13px;
+  }
+  .m-tabs button.on {
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .m-tabs .m-points {
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--muted);
+    padding: 0 4px;
+    white-space: nowrap;
+  }
+  .m-tabs .m-points.over {
+    color: #fca5a5;
+    font-weight: 700;
+  }
+
+  /* ── Measuring board: board pinned on top, one panel below (tab-switched) ── */
+  .layout {
+    flex-direction: column;
+    min-height: 0;
+  }
+  .layout .board-main {
+    order: 1;
+    position: sticky;
+    top: var(--navh);
+    z-index: 5;
+    background: var(--bg);
+    padding: 8px;
+    overflow: visible;
+    border-bottom: 1px solid var(--line);
+  }
+  .layout .m-tabs {
+    order: 2;
+  }
+  .layout .sidebar,
+  .layout .gamerail {
+    order: 3;
+    width: 100%;
+    flex: none;
+    max-height: none;
+    border-left: none;
+    border-right: none;
+    padding: 12px;
+  }
+  .layout[data-mtab='game'] .sidebar {
+    display: none;
+  }
+  .layout[data-mtab='tools'] .gamerail {
+    display: none;
+  }
+  .board-hud {
+    font-size: 10.5px;
+    padding: 4px 8px;
+    margin-bottom: 6px;
+    line-height: 1.45;
+  }
+
+  /* ── List builder: three stacked panes behind tabs ── */
+  .lb-layout {
+    flex-direction: column;
+    min-height: 0;
+  }
+  .lb-layout .m-tabs {
+    order: 1;
+    position: sticky;
+    top: var(--navh);
+    z-index: 5;
+  }
+  .lb-layout .sidebar {
+    order: 2;
+    width: 100%;
+    flex: none;
+    max-height: none;
+    border-right: none;
+  }
+  .lb-main {
+    order: 2;
+    flex-direction: column;
+  }
+  .lb-main .catalog,
+  .lb-main .lb-list {
+    width: 100%;
+    flex: none;
+    max-height: none;
+    border-right: none;
+  }
+  .lb-layout[data-mtab='list'] .sidebar,
+  .lb-layout[data-mtab='list'] .catalog {
+    display: none;
+  }
+  .lb-layout[data-mtab='catalog'] .sidebar,
+  .lb-layout[data-mtab='catalog'] .lb-list {
+    display: none;
+  }
+  .lb-layout[data-mtab='setup'] .catalog,
+  .lb-layout[data-mtab='setup'] .lb-list {
+    display: none;
+  }
+  .catalog-body {
+    overflow-y: visible;
+  }
+
+  /* ── Touch-sized controls ── */
+  .btnrow button,
+  .game-panel .strat,
+  .spawn,
+  .reserve-btn,
+  .arrive,
+  .m-tabs button,
+  .actions button {
+    min-height: 42px;
+  }
+  .field select,
+  .field input,
+  .search,
+  .import-text {
+    min-height: 42px;
+    font-size: 15px; /* ≥15px stops iOS zooming the page when a field focuses */
+  }
+  .unit-list li {
+    min-height: 44px;
+  }
+  .catalog-item {
+    min-height: 44px;
+  }
+  .lu-step {
+    width: 38px;
+    height: 38px;
+  }
+  .gamerail,
+  .sidebar {
+    font-size: 14px;
+  }
+  .dicelog {
+    max-height: 200px;
+  }
+}

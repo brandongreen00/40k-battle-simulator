@@ -330,6 +330,37 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-06-10] — Mobile (portrait phone) UI overhaul: tabbed layouts, pinch-zoom board, touch
+  equivalents for every PC-only interaction.** All gates green: `pnpm typecheck`, `pnpm test`
+  (**235 tests**, 7 new in `tests/boardview.test.ts`), `pnpm build`, **28/28 touch checks** in a
+  scripted iPhone-13-emulated walkthrough with REAL touch events (CDP) — import → deploy by touch →
+  battle — plus the desktop suite re-verified (29/29, zero console errors on both).
+  - **Layouts (≤880px):** both views collapse to a single column behind mobile tab bars
+    (`.m-tabs`, hidden on desktop). Board view: the board is **sticky under the nav** (always
+    visible while the panel below scrolls) with tabs *Units & map / Game* that **auto-follow the
+    flow** (roll-off→Game, deployment→Units, battle→Game). List Builder: tabs *My list / Add
+    units / Setup* with a live points chip (e.g. `985/1000`). Touch sizing: 42-44px controls,
+    15px field fonts (stops iOS focus-zoom), `touch-action: manipulation`, no overscroll.
+  - **Board zoom/pan (new `src/ui/boardView.ts`, pure + tested):** the SVG viewBox is now a
+    clamped window — **pinch to zoom** (two-finger, start-anchored math), **two-finger/one-finger
+    pan** (one-finger pans when zoomed outside Movement/placement), **mouse-wheel zoom** (wheel
+    still rotates the ghost while placing), and a +/−/⤢ cluster with a zoom % readout. A second
+    finger always cancels game gestures (no accidental box-selects while pinching). Touch hit
+    areas: invisible ~2%-of-view hit circles on models (coarse pointers only; mouse stays precise).
+  - **Touch equivalents for PC-only actions:** placement on touch is **position-then-confirm**
+    (tap/drag the ghost — pre-seeded at view centre — then **✓ Place**; mouse click-to-commit
+    unchanged); a control row offers **⟲/⟳ rotate** (replaces scroll), **formation cycle**
+    (replaces `C`) and **✕ cancel** (replaces Esc) for ALL devices; Movement gets **"+ add to
+    selection"** (replaces Shift) and **"one model"** (replaces Alt-drag) toggles.
+  - **Decision: board controls live in a row UNDER the board, never overlaid** — the first mobile
+    run proved overlays steal taps exactly where deployment zones sit (bottom/top edges).
+  - Files: `Board.tsx` (rework), `boardView.ts` (new), `ModelToken.tsx` (hit areas),
+    `MeasuringBoard.tsx`/`listbuilder/ListBuilder.tsx` (tab bars), `styles.css` (media query +
+    control row), `index.html` (viewport-fit).
+  - **Known mobile nits (deferred):** the sticky board costs ~340px of viewport on short phones;
+    measure-to-cursor needs a second model on touch (tap two models to measure); landscape phones
+    get the desktop 3-column layout (>880px).
+
 - **[2026-06-10] — All review fixes applied (A1, B1–B6, C1–C5, D1–D3 + E-nits).** Implements every
   fix from the same-day review below. All gates green: `pnpm typecheck`, `pnpm test` (**228 tests**,
   20 new in `tests/fixes.test.ts`), `pnpm build`, plus a 29/29-check scripted re-run of the full

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { BaseShape, Datasheet, Roster, RosterUnit, Side, Vec2 } from '../core/types';
 import { reduce, createInitialState, type Intent } from '../core/state';
 import { makeRNG } from '../core/rng';
@@ -56,6 +56,14 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
   const layout = state.layout;
   const inSetup = state.stage === 'setup';
   const inMatch = state.mode === 'match';
+
+  // On phones the two side panels become tabs under the board ("Units & map" / "Game").
+  // Auto-follow the flow: roll-off & battle → Game; deployment placement & sandbox → Units.
+  const [mTab, setMTab] = useState<'tools' | 'game'>('tools');
+  const flowKey = inSetup ? (state.setup?.attacker ? 'deploy' : 'rolloff') : inMatch ? 'battle' : 'sandbox';
+  useEffect(() => {
+    setMTab(flowKey === 'rolloff' || flowKey === 'battle' ? 'game' : 'tools');
+  }, [flowKey]);
 
   // Group the layouts by deployment for the map picker (8 terrain layouts per deployment).
   const layoutGroups = useMemo(() => {
@@ -215,7 +223,16 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
   const sandboxRoster = rosterFor('player');
 
   return (
-    <div className="layout">
+    <div className="layout" data-mtab={mTab}>
+      {/* Mobile-only tab bar: switches which panel shows under the board. */}
+      <div className="m-tabs" role="tablist">
+        <button role="tab" aria-selected={mTab === 'tools'} className={mTab === 'tools' ? 'on' : ''} onClick={() => setMTab('tools')}>
+          {inSetup ? 'Deploy units' : 'Units & map'}
+        </button>
+        <button role="tab" aria-selected={mTab === 'game'} className={mTab === 'game' ? 'on' : ''} onClick={() => setMTab('game')}>
+          {inSetup ? 'Setup & dice' : 'Game'}
+        </button>
+      </div>
       <aside className="sidebar">
         <div className="sidebar-head">
           <p className="muted">{layout.deployment} · {layout.boardWidth}"×{layout.boardHeight}"</p>

@@ -57,6 +57,8 @@ export function ListBuilder({ onOpenInBoard }: Props) {
     createArmyList('AM', detachmentsForFaction('AM')[0] ?? '', 'Incursion'),
   );
   const [savedNames, setSavedNames] = useState<string[]>(() => Object.keys(loadSavedArmyLists()));
+  // On phones the three columns become tabs (the army list first — it's the thing being built).
+  const [mTab, setMTab] = useState<'list' | 'catalog' | 'setup'>('list');
 
   const points = listPoints(list, dataIndex);
   const limit = BATTLE_SIZES[list.battleSize].points;
@@ -101,7 +103,20 @@ export function ListBuilder({ onOpenInBoard }: Props) {
   const warnings = violations.filter((v) => v.severity === 'warning');
 
   return (
-    <div className="lb-layout">
+    <div className="lb-layout" data-mtab={mTab}>
+      {/* Mobile-only tab bar with a live points chip. */}
+      <div className="m-tabs" role="tablist">
+        <button role="tab" aria-selected={mTab === 'list'} className={mTab === 'list' ? 'on' : ''} onClick={() => setMTab('list')}>
+          My list
+        </button>
+        <button role="tab" aria-selected={mTab === 'catalog'} className={mTab === 'catalog' ? 'on' : ''} onClick={() => setMTab('catalog')}>
+          Add units
+        </button>
+        <button role="tab" aria-selected={mTab === 'setup'} className={mTab === 'setup' ? 'on' : ''} onClick={() => setMTab('setup')}>
+          Setup
+        </button>
+        <span className={`m-points${over ? ' over' : ''}`}>{points}/{limit}</span>
+      </div>
       <aside className="sidebar">
         <label className="field">
           <span>List name</span>
