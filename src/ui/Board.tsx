@@ -47,6 +47,8 @@ interface Props {
   onPlacementCancel?: () => void;
   /** When set, the board is in Movement-phase mode (select + group move + coherency). */
   movement?: MovementUI | null;
+  /** Combat targeting (from the game panel): highlight the attacker and its target on the board. */
+  targeting?: { attackerUnitId?: string; targetUnitId?: string } | null;
 }
 
 const FALLBACK_SHAPE: BaseShape = { kind: 'circle', radius: 0.63 };
@@ -79,6 +81,7 @@ export function Board({
   onPlacementCycle,
   onPlacementCancel,
   movement,
+  targeting,
 }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -536,6 +539,71 @@ export function Board({
               </g>
             );
           })}
+
+          {/* Combat targeting: cyan rings on the attacker, pulsing red rings on the target,
+              and a dashed firing line between their closest models. */}
+          {(() => {
+            if (!targeting || (!targeting.attackerUnitId && !targeting.targetUnitId)) return null;
+            const ringsFor = (unitId: string | undefined, cls: string, stroke: string, dash?: string) => {
+              const u = units.find((x) => x.id === unitId && !x.inReserves);
+              if (!u) return null;
+              return u.models
+                .filter((m) => m.alive)
+                .map((m) => {
+                  const r = index.get(m.id);
+                  if (!r) return null;
+                  const rad = r.shape.kind === 'circle' ? r.shape.radius! : Math.max(r.shape.rx!, r.shape.ry!);
+                  return (
+                    <circle
+                      key={`${cls}-${m.id}`}
+                      className={cls}
+                      cx={pxX(m.pos.x)}
+                      cy={pxY(m.pos.y, layout.boardHeight)}
+                      r={pxLen(rad) + 4}
+                      fill="none"
+                      stroke={stroke}
+                      strokeWidth={2}
+                      {...(dash ? { strokeDasharray: dash } : {})}
+                    />
+                  );
+                });
+            };
+            const att = units.find((x) => x.id === targeting.attackerUnitId && !x.inReserves);
+            const tgt = units.find((x) => x.id === targeting.targetUnitId && !x.inReserves);
+            let line: { a: Vec2; b: Vec2 } | null = null;
+            if (att && tgt) {
+              let best = Infinity;
+              for (const am of att.models) {
+                if (!am.alive) continue;
+                for (const tm of tgt.models) {
+                  if (!tm.alive) continue;
+                  const d = dist(am.pos, tm.pos);
+                  if (d < best) {
+                    best = d;
+                    line = { a: am.pos, b: tm.pos };
+                  }
+                }
+              }
+            }
+            return (
+              <g pointerEvents="none" className="target-overlay">
+                {line && (
+                  <line
+                    x1={pxX(line.a.x)}
+                    y1={pxY(line.a.y, layout.boardHeight)}
+                    x2={pxX(line.b.x)}
+                    y2={pxY(line.b.y, layout.boardHeight)}
+                    stroke="#ef4444"
+                    strokeWidth={1.5}
+                    strokeDasharray="8 5"
+                    opacity={0.8}
+                  />
+                )}
+                {ringsFor(targeting.attackerUnitId, 'attacker-ring', '#38bdf8')}
+                {ringsFor(targeting.targetUnitId, 'target-ring', '#ef4444', '6 4')}
+              </g>
+            );
+          })()}
 
           {ghost && placement && (
             <g className="ghost" pointerEvents="none">

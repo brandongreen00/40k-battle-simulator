@@ -44,16 +44,18 @@ describe('GamePanel — Shooting phase', () => {
     expect(within(stratList as HTMLElement).getAllByText(/Re-roll|Grenade|Go to Ground/).length).toBeGreaterThan(0);
   });
 
-  it('shows valid targets once an attacker and weapon are picked', () => {
-    const { container } = render(
+  it('shows the unit fire plan and the Shoot button once an attacker is picked', () => {
+    const { container, getByText } = render(
       <GamePanel state={shootingState()} dispatch={() => {}} datasheetsById={datasheetsById} />,
     );
     const selects = container.querySelectorAll('select');
     // Attacker select is the first in the "Resolve combat" group; pick unit 'a'.
     const attackerSelect = [...selects].find((s) => [...s.options].some((o) => o.value === 'a'))!;
     fireEvent.change(attackerSelect, { target: { value: 'a' } });
-    // A weapon select should now offer the lasgun.
-    const weaponSelect = [...container.querySelectorAll('select')].find((s) => [...s.options].some((o) => /lasgun/i.test(o.textContent ?? '')));
-    expect(weaponSelect).toBeTruthy();
+    // Shooting is unit-level: the fire plan lists the lasgun, and the Shoot button is present.
+    const firePlan = container.querySelector('.fire-plan')!;
+    expect(firePlan).toBeTruthy();
+    expect(/lasgun/i.test(firePlan.textContent ?? '')).toBe(true);
+    expect(getByText(/Shoot — all weapons/)).toBeTruthy();
   });
 });

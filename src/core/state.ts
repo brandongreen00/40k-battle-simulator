@@ -18,17 +18,19 @@ import { defensiveProfileForItem } from './wargear';
 import { rollOff, otherSide } from './setup';
 import { checkUnitDeployment, deepStrikeArrivalLegal, type DeployAbility } from './deployment';
 import { checkCoherency } from './coherency';
-import { canAttach } from './leaders';
+import { canAttach, leaderJoinPositions } from './leaders';
 import { maxMoveDistance, rollAdvance, type MoveMode } from './movement';
 import { moveBonusFromOrders } from './orders';
 import {
   resolveAttack,
   resolveCharge,
   resolveFightMove,
+  resolveUnitShooting,
   runCommandPhase,
   type AttackParams,
   type ChargeParams,
   type FightMoveParams,
+  type UnitShootParams,
   type EngineContext,
 } from './engine';
 
@@ -74,6 +76,9 @@ export type Intent =
   | { type: 'SetFirstPlayer'; side: Side }
   /** One unit attacks another with one weapon. Requires the EngineContext (datasheet lookup). */
   | ({ type: 'Attack' } & AttackParams)
+  /** A unit shoots a target with EVERY ranged weapon its models carry, resolved sequentially
+   *  (10e: each model fires all its weapons; Pistols are either/or). Requires the EngineContext. */
+  | ({ type: 'ShootUnit' } & UnitShootParams)
   /** Resolve a charge roll (2D6). Requires the EngineContext. */
   | ({ type: 'Charge' } & ChargeParams)
   /** Pile In / Consolidate (Fight phase): move a unit up to 3" toward the nearest enemy. */
@@ -289,6 +294,18 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       return outcome.state;
     }
 
+    case 'ShootUnit': {
+      if (!ctx) {
+        return { ...state, log: [...state.log, 'Shooting ignored: no datasheet context supplied'] };
+      }
+      const { type: _t, ...params } = intent;
+      const outcome = resolveUnitShooting(state, params, ctx, rng);
+      if (outcome.rejected) {
+        return { ...state, log: [...state.log, `Shooting rejected: ${outcome.rejected}`] };
+      }
+      return outcome.state;
+    }
+
     case 'Charge': {
       if (!ctx) return { ...state, log: [...state.log, 'Charge ignored: no datasheet context supplied'] };
       const { type: _t, ...params } = intent;
@@ -424,6 +441,10 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       if (leader.attachedTo || (leader.attachedLeaders?.length ?? 0) > 0) {
         return { ...state, log: [...state.log, 'Attach rejected: leader already merged'] };
       }
+      // 10e: a unit can normally have only ONE Leader attached.
+      if ((bodyguard.attachedLeaders?.length ?? 0) > 0) {
+        return { ...state, log: [...state.log, 'Attach rejected: that unit already has a Leader (one Leader per unit)'] };
+      }
       if (ctx) {
         const lDs = ctx.datasheets.get(leader.datasheetId);
         const bDs = ctx.datasheets.get(bodyguard.datasheetId);
@@ -431,7 +452,42 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
           return { ...state, log: [...state.log, `Attach rejected: ${lDs?.name ?? leader.id} cannot lead ${bDs?.name ?? bodyguard.id}`] };
         }
       }
-      const leaderModels = leader.models.map((m) => ({ ...m, unitId: bodyguard.id, datasheetId: leader.datasheetId }));
+      // Attaching means the Leader physically joins the unit: snap its models into base-to-base
+      // coherency with the Bodyguard (no overlap with anything on the board).
+      const lShape = ctx?.datasheets.get(leader.datasheetId)?.baseShape ?? FALLBACK_SHAPE;
+      const bShape = ctx?.datasheets.get(bodyguard.datasheetId)?.baseShape ?? FALLBACK_SHAPE;
+      const occupied = state.units
+        .filter((u) => u.id !== leader.id && !u.inReserves)
+        .flatMap((u) =>
+          u.models
+            .filter((m) => m.alive)
+            .map((m) => ({
+              pos: m.pos,
+              shape:
+                (m.datasheetId ? ctx?.datasheets.get(m.datasheetId)?.baseShape : undefined) ??
+                ctx?.datasheets.get(u.datasheetId)?.baseShape ??
+                FALLBACK_SHAPE,
+            })),
+        );
+      const bgAlive = bodyguard.models.filter((m) => m.alive).map((m) => m.pos);
+      const joined =
+        bodyguard.inReserves || bgAlive.length === 0
+          ? null
+          : leaderJoinPositions(
+              leader.models.filter((m) => m.alive).length,
+              lShape,
+              bgAlive,
+              bShape,
+              occupied,
+              { width: state.layout.boardWidth, height: state.layout.boardHeight },
+            );
+      let joinCursor = 0;
+      const leaderModels = leader.models.map((m) => ({
+        ...m,
+        unitId: bodyguard.id,
+        datasheetId: leader.datasheetId,
+        ...(joined && m.alive ? { pos: joined[joinCursor++]! } : {}),
+      }));
       const merged: UnitInstance = {
         ...bodyguard,
         models: [...bodyguard.models, ...leaderModels],
@@ -448,7 +504,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       return {
         ...state,
         units: state.units.filter((u) => u.id !== leader.id).map((u) => (u.id === bodyguard.id ? merged : u)),
-        log: [...state.log, 'Leader merged into its Bodyguard unit (one unit)'],
+        log: [...state.log, 'Leader merged into its Bodyguard unit (placed in coherency with it)'],
       };
     }
 

@@ -142,12 +142,9 @@ export function effectiveSave(
   cover: boolean,
 ): number {
   let armour = save - ap; // ap <= 0, so this worsens (raises) the value
-  if (cover) {
-    let improved = armour - 1;
-    // Cover cannot improve a save to better than 3+ unless the attack is AP 0 (10e Core).
-    if (ap !== 0) improved = Math.max(3, improved);
-    armour = Math.min(armour, improved);
-  }
+  // Benefit of Cover (10e Core): +1 to the saving throw — UNLESS the attack has AP 0 and the
+  // model's Save characteristic is already 3+ or better.
+  if (cover && !(ap === 0 && save <= 3)) armour -= 1;
   return Math.min(armour, invuln ?? 99);
 }
 
