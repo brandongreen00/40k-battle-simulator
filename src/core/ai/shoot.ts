@@ -9,6 +9,7 @@ import type { GameState, Side } from '../types';
 import { eligibleToShoot, validUnitShootingTargets, isOnBoard } from '../phases';
 import { objectiveControl } from '../engine';
 import { shootingEV, unitThreat, unitValue } from './evaluate';
+import { unitRolePlan } from './roles';
 import type { AiAction, AiDeps } from './types';
 import type { AiProfile } from './profile';
 
@@ -32,10 +33,15 @@ export function aiShootingAction(state: GameState, side: Side, profile: AiProfil
   let best: { shooter: string; target: string; score: number; names: string } | null = null;
   const options: { shooter: string; target: string; names: string }[] = [];
   for (const s of shooters) {
+    const plan = unitRolePlan(s, ctx);
     for (const t of validUnitShootingTargets(s, state, ctx)) {
       const names = `${ctx.datasheets.get(s.datasheetId)?.name ?? s.id} → ${ctx.datasheets.get(t.datasheetId)?.name ?? t.id}`;
       options.push({ shooter: s.id, target: t.id, names });
-      const ev = shootingEV(state, s, t, ctx);
+      let ev = shootingEV(state, s, t, ctx);
+      // Snipers exist to pick off CHARACTERS (Precision + Lone Operative hunters).
+      if (plan.characterHunter > 1 && ctx.datasheets.get(t.datasheetId)?.keywords.some((k) => k.toLowerCase() === 'character')) {
+        ev *= plan.characterHunter;
+      }
       if (ev <= 0) continue;
       const tValue = unitValue(t, ctx);
       let score = ev * profile.damage;

@@ -6,13 +6,15 @@
 // Entry keys are `${side}:${index}` — identical to the UI's deployment list, so a game the AI
 // deploys looks the same in the panels as one a human deploys.
 
-import type { Datasheet, GameState, Roster, RosterUnit, Side, Vec2 } from '../types';
+import type { Datasheet, DeclaredFormation, GameState, Roster, RosterUnit, Side, Vec2 } from '../types';
 import { otherSide } from '../setup';
 import { checkUnitDeployment, isEntryPlaced, zoneFor, type DeployAbility } from '../deployment';
 import { formationPositions } from '../formation';
 import { canAttach, isCharacter } from '../leaders';
 import { pointInPolygon, distancePointToPolygon, dist } from '../geometry';
-import { datasheetThreat, modelValue } from './evaluate';
+import { hasBackroomDeals } from '../abilities';
+import { modelValue } from './evaluate';
+import { classifyDatasheet, rolePlan } from './roles';
 import type { AiAction, AiDeps, AiIntent } from './types';
 import type { AiProfile } from './profile';
 import type { EngineContext } from '../engine';
@@ -141,11 +143,13 @@ export function findDeployAnchor(
     return { x: ms.reduce((s, m) => s + m.pos.x, 0) / ms.length, y: ms.reduce((s, m) => s + m.pos.y, 0) / ms.length };
   });
 
-  // Role depth: artillery/long guns hug the back of the zone, melee/battleline stand forward.
-  const ranged = datasheetThreat(entry.ds, 'ranged');
-  const melee = datasheetThreat(entry.ds, 'melee');
-  // 0 = right at the zone's front edge, 1 = deepest. Characters middle (they join squads anyway).
-  const wantDepth = isCharacter(entry.ds) ? 0.5 : melee > ranged ? 0.1 : ranged > 2 * melee ? 0.8 : 0.35;
+  // Role depth (0 = right at the zone's front edge, 1 = deepest): snipers/artillery hug the back,
+  // assault/assassins stand forward, battleline holds the midline. The role also scales how hard
+  // objectives pull on the anchor — a sniper does not deploy ONTO a marker just because it is
+  // near one (the old behaviour that walked the Vindicare to the midfield). See ai/roles.ts.
+  const range = Math.max(0, ...entry.ds.weapons.filter((w) => w.type === 'ranged').map((w) => w.range ?? 0));
+  const plan = rolePlan(classifyDatasheet(entry.ds), range);
+  const wantDepth = plan.wantDepth;
 
   const bounds = polygonBounds(zone);
   const maxDepth = enemyZone.length
@@ -171,7 +175,7 @@ export function findDeployAnchor(
           ? Math.min(...friendAnchors.map((f) => dist(anchor, f)))
           : 99;
         const score =
-          -objDist * profile.objective // pull toward the nearest objective
+          -objDist * profile.objective * plan.objectiveWeight // role-scaled objective pull
           - Math.abs(depth - wantDepth) * 12 // hold the role's preferred depth
           + Math.min(spacing, 6) // spread out (capped so it can't dominate)
           + (deps.rng && profile.random ? deps.rng.next() * 100 : 0);
@@ -182,6 +186,87 @@ export function findDeployAnchor(
   };
 
   return evaluate(2)?.anchor ?? evaluate(1)?.anchor ?? evaluate(0.5)?.anchor ?? null;
+}
+
+// ── Declare Battle Formations (pre-deployment Leader pairings) ────────────────
+/** The declared pairing whose Bodyguard is this entry (so the pair deploys together). */
+export function formationForBodyguard(state: GameState, entryKey: string): DeclaredFormation | undefined {
+  return (state.setup?.formations ?? []).find((f) => f.bodyguardKey === entryKey);
+}
+
+/** Is this entry a Leader that has been paired (it deploys with its Bodyguard, not alone)? */
+export function isPairedLeader(state: GameState, entryKey: string): boolean {
+  return (state.setup?.formations ?? []).some((f) => f.leaderKey === entryKey);
+}
+
+/** The deployment ability a declared pair sets up with: the Backroom-Deals/both-Infiltrators grant,
+ *  or Deep Strike only when BOTH halves have it (10e: every model needs the ability). */
+export function pairDeployAbility(
+  f: DeclaredFormation,
+  ctx: EngineContext,
+  deployAbility: (ds: Datasheet) => DeployAbility,
+): DeployAbility {
+  if (f.infiltrate) return 'infiltrators';
+  const lDs = ctx.datasheets.get(f.leaderDsId);
+  const bDs = ctx.datasheets.get(f.bodyguardDsId);
+  if (lDs && bDs && deployAbility(lDs) === 'deep_strike' && deployAbility(bDs) === 'deep_strike') return 'deep_strike';
+  return 'standard';
+}
+
+/**
+ * The Leader pairings `side` wants to declare, given what is still undeployed: each unpaired
+ * CHARACTER entry joins its best eligible Bodyguard entry (Backroom Deals leaders pick the
+ * biggest BATTLELINE unit so the Infiltrators grant moves a real brick up the board).
+ */
+export function desiredFormations(state: GameState, side: Side, deps: AiDeps): AiIntent[] {
+  const declared = state.setup?.formations ?? [];
+  const out: AiIntent[] = [];
+  const takenBodyguards = new Set(declared.map((f) => f.bodyguardKey));
+  const remaining = remainingEntries(state, side, deps);
+  const leaders = remaining.filter(
+    (e) => isCharacter(e.ds) && !declared.some((f) => f.leaderKey === e.key),
+  );
+  // Backroom Deals leaders declare first so the one-per-army Infiltrators grant lands on them.
+  leaders.sort((a, b) => Number(hasBackroomDeals(b.ds)) - Number(hasBackroomDeals(a.ds)) || a.index - b.index);
+  for (const leader of leaders) {
+    const candidates = remaining.filter(
+      (e) =>
+        !isCharacter(e.ds) &&
+        !takenBodyguards.has(e.key) &&
+        e.key !== leader.key &&
+        canAttach(leader.ds, e.ds),
+    );
+    if (candidates.length === 0) continue;
+    const wantBattleline = hasBackroomDeals(leader.ds);
+    const score = (e: DeployEntry): number => {
+      let s = modelValue(e.ds) * e.unit.modelCount;
+      if (wantBattleline && e.ds.keywords.some((k) => k.toLowerCase() === 'battleline')) s += 1000;
+      // Attaching strips a deployment ability the leader does not share (every model needs it) —
+      // do not delete a unit's Deep Strike/Infiltrators just to give it a leader.
+      const ba = deps.deployAbility(e.ds);
+      if (ba !== 'standard' && deps.deployAbility(leader.ds) !== ba && !hasBackroomDeals(leader.ds)) s -= 500;
+      return s;
+    };
+    const pick = candidates.reduce((x, y) => (score(y) > score(x) ? y : x));
+    takenBodyguards.add(pick.key);
+    const leaderKey = leader.key;
+    const bodyguardKey = pick.key;
+    out.push({
+      intent: {
+        type: 'DeclareFormation',
+        side,
+        leaderKey,
+        leaderDsId: leader.ds.id,
+        bodyguardKey,
+        bodyguardDsId: pick.ds.id,
+      },
+      skipIf: (s) =>
+        (s.setup?.formations ?? []).some((f) => f.leaderKey === leaderKey || f.bodyguardKey === bodyguardKey) ||
+        isEntryPlaced(s, leaderKey) ||
+        isEntryPlaced(s, bodyguardKey),
+    });
+  }
+  return out;
 }
 
 // ── The deployment decision ───────────────────────────────────────────────────
@@ -195,12 +280,53 @@ function wantsReserves(state: GameState, side: Side, entry: DeployEntry, ability
   return reserved + 1 <= Math.floor(total / 2);
 }
 
-/** One deployment drop for `side`: attach any ready Leaders, then place the next entry
- *  (board, Infiltrate position, or Reserves). Null when the side has nothing left to place. */
+/** One deployment drop for `side`: declare Leader pairings first (their own action, so the
+ *  reducer computes the Infiltrators grant before anything is placed), then place the next
+ *  entry — a paired Bodyguard brings its Leader down with it, merged. Null when nothing is left. */
 export function aiDeployAction(state: GameState, side: Side, profile: AiProfile, deps: AiDeps): AiAction | null {
+  // Declare Battle Formations before the side's first drop.
+  const formations = desiredFormations(state, side, deps);
+  if (formations.length > 0) {
+    return { intents: formations, note: `${side} declares battle formations (Leader pairings)` };
+  }
+
   const attaches = pendingLeaderAttaches(state, side, deps.ctx);
-  const remaining = remainingEntries(state, side, deps);
+  const allRemaining = remainingEntries(state, side, deps);
+  // Paired Leaders deploy with their Bodyguard — never alone.
+  const remaining = allRemaining.filter((e) => !isPairedLeader(state, e.key));
+
   if (remaining.length === 0) {
+    // Rescue any stranded paired Leader (its Bodyguard is already down but the Leader's own
+    // deploy was skipped): Reserves placement is always legal, and the merge re-seats its models
+    // into coherency with the on-board unit.
+    const stranded = allRemaining.filter((e) => isPairedLeader(state, e.key));
+    for (const le of stranded) {
+      const f = (state.setup?.formations ?? []).find((x) => x.leaderKey === le.key)!;
+      const bodyguard = state.units.find((u) => u.id === f.bodyguardKey);
+      if (!bodyguard) continue;
+      const leaderUnitId = le.key;
+      const bodyguardUnitId = bodyguard.id;
+      return {
+        intents: [
+          {
+            intent: {
+              type: 'PlaceInReserves',
+              unitId: le.key, owner: side, datasheetId: le.ds.id, baseShape: le.ds.baseShape,
+              modelCount: le.unit.modelCount, wounds: le.ds.models[0]?.W ?? 1,
+              ...(le.unit.wargearCounts ? { wargear: le.unit.wargearCounts } : {}),
+            },
+          },
+          {
+            intent: { type: 'AttachLeader', leaderUnitId, bodyguardUnitId },
+            skipIf: (s) => {
+              const b = s.units.find((u) => u.id === bodyguardUnitId);
+              return !s.units.some((u) => u.id === leaderUnitId) || !b || (b.attachedLeaders?.length ?? 0) > 0;
+            },
+          },
+        ],
+        note: `${side} joins ${le.ds.name} to its unit`,
+      };
+    }
     return attaches.length ? { intents: attaches, note: `${side} attaches Leaders` } : null;
   }
 
@@ -214,7 +340,14 @@ export function aiDeployAction(state: GameState, side: Side, profile: AiProfile,
     return bv - av || a.index - b.index;
   });
   const entry = profile.random ? order[deps.rng.int(0, order.length - 1)]! : order[0]!;
-  const ability = deps.deployAbility(entry.ds);
+
+  const pair = formationForBodyguard(state, entry.key);
+  const pairedLeaderEntry = pair
+    ? rosterEntries(deps.rosters[side], side, deps.ctx).find((e) => e.key === pair.leaderKey)
+    : undefined;
+  const ability: DeployAbility = pair
+    ? pairDeployAbility(pair, deps.ctx, deps.deployAbility)
+    : deps.deployAbility(entry.ds);
 
   const common = {
     unitId: entry.key,
@@ -225,26 +358,74 @@ export function aiDeployAction(state: GameState, side: Side, profile: AiProfile,
     wounds: entry.ds.models[0]?.W ?? 1,
     ...(entry.unit.wargearCounts ? { wargear: entry.unit.wargearCounts } : {}),
   };
+  const leaderCommon = pairedLeaderEntry
+    ? {
+        unitId: pairedLeaderEntry.key,
+        owner: side,
+        datasheetId: pairedLeaderEntry.ds.id,
+        baseShape: pairedLeaderEntry.ds.baseShape,
+        modelCount: pairedLeaderEntry.unit.modelCount,
+        wounds: pairedLeaderEntry.ds.models[0]?.W ?? 1,
+        ...(pairedLeaderEntry.unit.wargearCounts ? { wargear: pairedLeaderEntry.unit.wargearCounts } : {}),
+      }
+    : null;
+  const mergeIntents = (leaderUnitId: string, bodyguardUnitId: string): AiIntent => ({
+    intent: { type: 'AttachLeader', leaderUnitId, bodyguardUnitId },
+    skipIf: (s) => {
+      const b = s.units.find((u) => u.id === bodyguardUnitId);
+      return !s.units.some((u) => u.id === leaderUnitId) || !b || (b.attachedLeaders?.length ?? 0) > 0;
+    },
+  });
 
-  if (wantsReserves(state, side, entry, ability, profile, deps)) {
+  if (!pair && wantsReserves(state, side, entry, ability, profile, deps)) {
     return {
       intents: [...attaches, { intent: { type: 'PlaceInReserves', ...common } }],
       note: `${side} holds ${entry.ds.name} in Reserves (Deep Strike)`,
     };
   }
-
-  const anchor = findDeployAnchor(state, side, entry, ability, profile, deps);
-  if (!anchor) {
-    // No legal spot (packed zone) — Reserves keeps deployment moving and is always legal.
+  // A paired unit where BOTH halves Deep Strike may start in Reserves together.
+  if (pair && leaderCommon && ability === 'deep_strike' && profile.useReserves) {
     return {
-      intents: [...attaches, { intent: { type: 'PlaceInReserves', ...common } }],
-      note: `${side} holds ${entry.ds.name} in Reserves (no legal deployment spot)`,
+      intents: [
+        ...attaches,
+        { intent: { type: 'PlaceInReserves', ...common } },
+        { intent: { type: 'PlaceInReserves', ...leaderCommon } },
+        mergeIntents(leaderCommon.unitId, common.unitId),
+      ],
+      note: `${side} holds ${entry.ds.name} (led) in Reserves (Deep Strike)`,
     };
   }
-  return {
-    intents: [...attaches, { intent: { type: 'DeployUnit', ...common, anchor, formation: 'block', rotation: 0, ability } }],
-    note: `${side} deploys ${entry.ds.name}${ability === 'infiltrators' ? ' (Infiltrators)' : ''}`,
-  };
+
+  const onBoardAbility: DeployAbility = ability === 'deep_strike' ? 'standard' : ability;
+  const anchor = findDeployAnchor(state, side, entry, onBoardAbility, profile, deps);
+  if (!anchor) {
+    // No legal spot (packed zone) — Reserves keeps deployment moving and is always legal.
+    const reserveIntents: AiIntent[] = [...attaches, { intent: { type: 'PlaceInReserves', ...common } }];
+    if (leaderCommon) {
+      reserveIntents.push({ intent: { type: 'PlaceInReserves', ...leaderCommon } });
+      reserveIntents.push(mergeIntents(leaderCommon.unitId, common.unitId));
+    }
+    return { intents: reserveIntents, note: `${side} holds ${entry.ds.name} in Reserves (no legal deployment spot)` };
+  }
+
+  const intents: AiIntent[] = [
+    ...attaches,
+    { intent: { type: 'DeployUnit', ...common, anchor, formation: 'block', rotation: 0, ability: onBoardAbility } },
+  ];
+  let note = `${side} deploys ${entry.ds.name}${onBoardAbility === 'infiltrators' ? ' (Infiltrators)' : ''}`;
+  if (leaderCommon) {
+    // The Leader physically joins the unit it leads: drop it on the same anchor and merge — the
+    // AttachLeader reducer re-seats its models into base-to-base coherency.
+    const leaderUnitId = leaderCommon.unitId;
+    const bodyguardUnitId = common.unitId;
+    intents.push({
+      intent: { type: 'DeployUnit', ...leaderCommon, anchor, formation: 'block', rotation: 0, ability: onBoardAbility },
+      skipIf: (s) => isEntryPlaced(s, leaderUnitId) || !isEntryPlaced(s, bodyguardUnitId),
+    });
+    intents.push(mergeIntents(leaderUnitId, bodyguardUnitId));
+    note = `${side} deploys ${entry.ds.name} led by ${pairedLeaderEntry!.ds.name}${onBoardAbility === 'infiltrators' ? ' (Infiltrators)' : ''}`;
+  }
+  return { intents, note };
 }
 
 // ── Team pick ─────────────────────────────────────────────────────────────────

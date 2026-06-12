@@ -13,6 +13,7 @@ import { parseKeywords, type ParsedKeywords } from '../keywords';
 import { woundThreshold, effectiveSave, type Reroll } from '../combat';
 import { gapBetweenBases } from '../geometry';
 import { unitCanSee } from '../los';
+import { hasLoneOperative, ignoresLoneOperative } from '../abilities';
 import { aliveModels } from '../phases';
 
 // ── dice & pool probabilities ─────────────────────────────────────────────────
@@ -244,6 +245,16 @@ export function shootingEV(
 
   let gap = Infinity;
   for (const a of aPts) for (const t of tPts) gap = Math.min(gap, gapBetweenBases(a, aDs.baseShape, t, tDs.baseShape));
+  // Lone Operative mirrors the engine's targeting gate (>12" ranged shots are illegal) so the
+  // AI never values — or submits — a shot the reducer would reject.
+  if (
+    hasLoneOperative(tDs) &&
+    (target.attachedLeaders ?? []).length === 0 &&
+    gap > 12 &&
+    !ignoresLoneOperative(aDs)
+  ) {
+    return 0;
+  }
   // LoS over a few representative models, not every pair — this is a ranking heuristic that runs
   // inside move-candidate loops; the engine still checks true unit-to-unit LoS when firing.
   const visible = unitCanSee(samplePts(aPts), samplePts(tPts), state.layout.terrain);
