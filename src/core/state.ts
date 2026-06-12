@@ -10,26 +10,29 @@
 // Stage 1 only needs to spawn units, move models, and clear the board. No combat, LoS, scoring,
 // or AI — those are later stages.
 
-import type { BaseShape, GameState, Layout, ModelInstance, Side, UnitInstance, Vec2 } from './types';
+import type { BaseShape, Datasheet, DeclaredFormation, GameState, Layout, ModelInstance, Side, UnitInstance, Vec2 } from './types';
 import type { RNG } from './rng';
-import { clamp, clampToRange } from './geometry';
+import { clamp, clampToRange, gapBetweenBases } from './geometry';
 import { formationPositions, type Formation } from './formation';
 import { defensiveProfileForItem } from './wargear';
 import { rollOff, otherSide } from './setup';
-import { checkUnitDeployment, deepStrikeArrivalLegal, type DeployAbility } from './deployment';
+import { checkUnitDeployment, deepStrikeArrivalLegal, whollyInOwnZone, type DeployAbility } from './deployment';
 import { checkCoherency } from './coherency';
 import { canAttach, leaderJoinPositions } from './leaders';
+import { unitScoutDistance } from './abilities';
 import { maxMoveDistance, rollAdvance, type MoveMode } from './movement';
 import { moveBonusFromOrders } from './orders';
 import {
   resolveAttack,
   resolveCharge,
   resolveFightMove,
+  resolveUnitFight,
   resolveUnitShooting,
   runCommandPhase,
   type AttackParams,
   type ChargeParams,
   type FightMoveParams,
+  type UnitFightParams,
   type UnitShootParams,
   type EngineContext,
 } from './engine';
@@ -79,6 +82,9 @@ export type Intent =
   /** A unit shoots a target with EVERY ranged weapon its models carry, resolved sequentially
    *  (10e: each model fires all its weapons; Pistols are either/or). Requires the EngineContext. */
   | ({ type: 'ShootUnit' } & UnitShootParams)
+  /** A unit fights a target with all its melee weapons (10e: each model fights with one melee
+   *  weapon, plus Extra Attacks weapons), resolved sequentially. Requires the EngineContext. */
+  | ({ type: 'FightUnit' } & UnitFightParams)
   /** Resolve a charge roll (2D6). Requires the EngineContext. */
   | ({ type: 'Charge' } & ChargeParams)
   /** Pile In / Consolidate (Fight phase): move a unit up to 3" toward the nearest enemy. */
@@ -132,7 +138,27 @@ export type Intent =
   | { type: 'AttachLeader'; leaderUnitId: string; bodyguardUnitId: string }
   /** Detach a previously attached Leader. */
   | { type: 'DetachLeader'; leaderUnitId: string }
-  /** Roll off for the first turn; the winner takes it. Moves setup to 'ready'. */
+  /** Declare a Leader→Bodyguard pairing BEFORE either is deployed (Declare Battle Formations).
+   *  The pair then deploys together as one merged unit, and deployment abilities granted to the
+   *  led unit (e.g. a Backroom Deals Rogue Trader's Infiltrators) apply at set-up time. */
+  | {
+      type: 'DeclareFormation';
+      side: Side;
+      leaderKey: string;
+      leaderDsId: string;
+      bodyguardKey: string;
+      bodyguardDsId: string;
+    }
+  /** Undo a declared (not yet deployed) Leader pairing. */
+  | { type: 'ClearFormation'; leaderKey: string }
+  /** Warrant of Trade: roll the D3 and start redeploying up to that many IMPERIUM BATTLELINE units. */
+  | { type: 'UseWarrant'; side: Side }
+  /** Decline (or finish early with) the Warrant of Trade redeploy. */
+  | { type: 'DeclineWarrant'; side: Side }
+  /** Pull one deployed IMPERIUM BATTLELINE unit back off the board for redeployment (Warrant). */
+  | { type: 'WarrantRedeploy'; unitId: string }
+  /** Roll off for the first turn; the winner takes it. Moves setup to 'scouts' (if any unit has a
+   *  Scouts X" move to make) or 'ready'. */
   | { type: 'RollFirstTurn' }
   /** Finish deployment and begin the battle (Command phase of round 1). */
   | { type: 'BeginBattle' }
@@ -177,9 +203,34 @@ function beginTurnFor(state: GameState, side: Side): UnitInstance[] {
   );
 }
 
+/**
+ * Cancel any move activation still open (BeginMove without EndMove/CancelMove): snap the models
+ * back to their origins and clear the transient flags. Leaving the phase mid-activation means the
+ * move never happened — and a stale `moveMode` would otherwise wedge the Movement panel for the
+ * REST of that unit's owner's round (the "can't move my units any more" bug).
+ */
+function cancelOpenActivations(state: GameState): { units: UnitInstance[]; cancelled: string[] } {
+  const cancelled: string[] = [];
+  const units = state.units.map((u) => {
+    if (!u.status.moveMode) return u;
+    cancelled.push(u.id);
+    return {
+      ...u,
+      status: { ...u.status, moveMode: undefined, moveBudget: undefined },
+      models: u.models.map((m) => (m.moveStart ? { ...m, pos: m.moveStart, moveStart: undefined } : m)),
+    };
+  });
+  return { units, cancelled };
+}
+
 /** Advance the Pariah Nexus sequencer one step. Phases→turns→rounds; ends after round 5. */
 function advancePhase(state: GameState): GameState {
   if (state.ended || state.stage !== 'battle') return state;
+  // An unconfirmed move activation does not survive the phase ending.
+  const open = cancelOpenActivations(state);
+  if (open.cancelled.length > 0) {
+    state = { ...state, units: open.units, log: [...state.log, 'Unconfirmed move cancelled (phase ended mid-activation)'] };
+  }
   const i = PARIAH_NEXUS_PHASES.indexOf(state.phase as Phase);
   if (i >= 0 && i < PARIAH_NEXUS_PHASES.length - 1) {
     return { ...state, phase: PARIAH_NEXUS_PHASES[i + 1]! };
@@ -235,8 +286,9 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
 
     case 'MoveModel': {
       // In a match, models only move inside a Movement activation (BeginMove sets the budget) —
-      // free dragging outside it would bypass the movement rules. The sandbox/deployment stay free.
-      if (state.mode === 'match' && state.stage === 'battle') {
+      // free dragging outside it would bypass the movement rules. The sandbox/deployment stay free
+      // (the pre-battle Scout step is budgeted like the battle).
+      if (state.mode === 'match' && (state.stage === 'battle' || state.setup?.step === 'scouts')) {
         const owner = state.units.find((u) => u.models.some((m) => m.id === intent.modelId));
         if (owner && owner.status.moveBudget == null) return state;
       }
@@ -302,6 +354,18 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       const outcome = resolveUnitShooting(state, params, ctx, rng);
       if (outcome.rejected) {
         return { ...state, log: [...state.log, `Shooting rejected: ${outcome.rejected}`] };
+      }
+      return outcome.state;
+    }
+
+    case 'FightUnit': {
+      if (!ctx) {
+        return { ...state, log: [...state.log, 'Fight ignored: no datasheet context supplied'] };
+      }
+      const { type: _t, ...params } = intent;
+      const outcome = resolveUnitFight(state, params, ctx, rng);
+      if (outcome.rejected) {
+        return { ...state, log: [...state.log, `Fight rejected: ${outcome.rejected}`] };
       }
       return outcome.state;
     }
@@ -470,6 +534,18 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
             })),
         );
       const bgAlive = bodyguard.models.filter((m) => m.alive).map((m) => m.pos);
+      // During deployment, the joining Leader's models must be legally placed too: wholly within
+      // the zone when the Bodyguard deployed in-zone, or > 9" from enemies for an infiltrated /
+      // midfield unit. (In-battle attaches are unrestricted — the unit is already wherever it is.)
+      const joinLegal =
+        state.stage === 'setup'
+          ? (pos: Vec2): boolean => {
+              const bodyguardInZone = bgAlive.every((p) => whollyInOwnZone(p, bShape, state.layout, bodyguard.owner));
+              if (bodyguardInZone) return whollyInOwnZone(pos, lShape, state.layout, bodyguard.owner);
+              const enemies = enemyModelsOnBoard(state, bodyguard.owner, ctx);
+              return enemies.every((e) => gapBetweenBases(pos, lShape, e.pos, e.shape) > 9);
+            }
+          : undefined;
       const joined =
         bodyguard.inReserves || bgAlive.length === 0
           ? null
@@ -480,6 +556,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
               bShape,
               occupied,
               { width: state.layout.boardWidth, height: state.layout.boardHeight },
+              joinLegal,
             );
       let joinCursor = 0;
       const leaderModels = leader.models.map((m) => ({
@@ -535,14 +612,126 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       };
     }
 
+    case 'DeclareFormation': {
+      if (state.stage !== 'setup' || state.setup?.step !== 'deploy') {
+        return { ...state, log: [...state.log, 'Formation rejected: declare Leader pairings during deployment'] };
+      }
+      if (isUnitPlaced(state, intent.leaderKey) || isUnitPlaced(state, intent.bodyguardKey)) {
+        return { ...state, log: [...state.log, 'Formation rejected: that unit is already deployed'] };
+      }
+      const formations = state.setup.formations ?? [];
+      if (formations.some((f) => f.leaderKey === intent.leaderKey)) {
+        return { ...state, log: [...state.log, 'Formation rejected: that Leader is already paired'] };
+      }
+      if (formations.some((f) => f.bodyguardKey === intent.bodyguardKey)) {
+        return { ...state, log: [...state.log, 'Formation rejected: that unit already has a Leader (one Leader per unit)'] };
+      }
+      const lDs = ctx?.datasheets.get(intent.leaderDsId);
+      const bDs = ctx?.datasheets.get(intent.bodyguardDsId);
+      if (!ctx || !lDs || !bDs || !canAttach(lDs, bDs)) {
+        return { ...state, log: [...state.log, `Formation rejected: ${lDs?.name ?? intent.leaderDsId} cannot lead ${bDs?.name ?? intent.bodyguardDsId}`] };
+      }
+      const infiltrate = pairInfiltrates(lDs, bDs, formations, intent.side, ctx);
+      const declared: DeclaredFormation = {
+        side: intent.side,
+        leaderKey: intent.leaderKey,
+        leaderDsId: intent.leaderDsId,
+        bodyguardKey: intent.bodyguardKey,
+        bodyguardDsId: intent.bodyguardDsId,
+        ...(infiltrate ? { infiltrate } : {}),
+      };
+      return {
+        ...state,
+        setup: { ...state.setup, formations: [...formations, declared] },
+        log: [...state.log, `${intent.side} declares ${lDs!.name} will lead ${bDs!.name}${infiltrate ? ' (unit gains Infiltrators)' : ''}`],
+      };
+    }
+
+    case 'ClearFormation': {
+      if (state.stage !== 'setup' || !state.setup?.formations) return state;
+      const f = state.setup.formations.find((x) => x.leaderKey === intent.leaderKey);
+      if (!f) return state;
+      if (isUnitPlaced(state, f.bodyguardKey)) {
+        return { ...state, log: [...state.log, 'Formation kept: the pair is already deployed (detach the Leader instead)'] };
+      }
+      return {
+        ...state,
+        setup: { ...state.setup, formations: state.setup.formations.filter((x) => x.leaderKey !== intent.leaderKey) },
+        log: [...state.log, 'Leader pairing cleared'],
+      };
+    }
+
+    case 'UseWarrant': {
+      if (state.stage !== 'setup' || state.setup?.step !== 'deploy') {
+        return { ...state, log: [...state.log, 'Warrant of Trade rejected: only during deployment'] };
+      }
+      if (state.setup.warrant?.[intent.side]) {
+        return { ...state, log: [...state.log, 'Warrant of Trade rejected: already used'] };
+      }
+      const rolled = rng.int(1, 3);
+      return {
+        ...state,
+        setup: { ...state.setup, warrant: { ...state.setup.warrant, [intent.side]: { side: intent.side, rolled, remaining: rolled } } },
+        log: [...state.log, `${intent.side} uses Warrant of Trade: D3 = ${rolled} — redeploy up to ${rolled} IMPERIUM BATTLELINE unit(s)`],
+      };
+    }
+
+    case 'DeclineWarrant': {
+      if (state.stage !== 'setup' || !state.setup) return state;
+      const existing = state.setup.warrant?.[intent.side];
+      return {
+        ...state,
+        setup: {
+          ...state.setup,
+          warrant: { ...state.setup.warrant, [intent.side]: { side: intent.side, rolled: existing?.rolled ?? 0, remaining: 0 } },
+        },
+        log: [...state.log, `${intent.side} ${existing ? 'finishes' : 'declines'} the Warrant of Trade redeploy`],
+      };
+    }
+
+    case 'WarrantRedeploy': {
+      const unit = state.units.find((u) => u.id === intent.unitId);
+      if (!unit || state.stage !== 'setup') {
+        return { ...state, log: [...state.log, 'Redeploy rejected: unit not found'] };
+      }
+      const warrant = state.setup?.warrant?.[unit.owner];
+      if (!warrant || warrant.remaining <= 0) {
+        return { ...state, log: [...state.log, 'Redeploy rejected: no Warrant of Trade redeploys remaining'] };
+      }
+      const ds = ctx?.datasheets.get(unit.datasheetId);
+      const kws = (ds?.keywords ?? []).map((k) => k.toLowerCase());
+      if (!kws.includes('imperium') || !kws.includes('battleline')) {
+        return { ...state, log: [...state.log, `Redeploy rejected: ${ds?.name ?? unit.id} is not an IMPERIUM BATTLELINE unit`] };
+      }
+      // Pull the unit (and any merged Leader) off the board — its roster entries become
+      // undeployed again and re-enter the normal deployment flow (board or Reserves).
+      return {
+        ...state,
+        units: state.units.filter((u) => u.id !== unit.id),
+        setup: {
+          ...state.setup!,
+          warrant: { ...state.setup!.warrant, [unit.owner]: { ...warrant, remaining: warrant.remaining - 1 } },
+        },
+        log: [...state.log, `${unit.owner} pulls ${ds?.name ?? unit.id} back for redeployment (Warrant of Trade, ${warrant.remaining - 1} left)`],
+      };
+    }
+
     case 'RollFirstTurn': {
       const ro = rollOff(rng);
+      // Scout moves happen at the start of the first battle round, before the first turn begins —
+      // insert the 'scouts' step when any deployed unit has a Scouts X" move to make.
+      const hasScouts =
+        !!ctx && state.units.some((u) => !u.inReserves && u.models.some((m) => m.alive) && unitScoutDistance(u, ctx) != null);
       return {
         ...state,
         firstPlayer: ro.winner,
         activePlayer: ro.winner,
-        setup: { ...(state.setup ?? { step: 'deploy' }), step: 'ready', firstTurnRoll: ro, firstTurn: ro.winner },
-        log: [...state.log, `First-turn roll-off: player ${ro.player}, ai ${ro.ai} → ${ro.winner} takes the first turn`],
+        setup: { ...(state.setup ?? { step: 'deploy' }), step: hasScouts ? 'scouts' : 'ready', firstTurnRoll: ro, firstTurn: ro.winner },
+        log: [
+          ...state.log,
+          `First-turn roll-off: player ${ro.player}, ai ${ro.ai} → ${ro.winner} takes the first turn`,
+          ...(hasScouts ? ['— Scout moves: units with Scouts X" may move before the battle begins —'] : []),
+        ],
       };
     }
 
@@ -558,6 +747,12 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         activePlayer: first,
         phase: PARIAH_NEXUS_PHASES[0],
         ended: false,
+        // Clean slate for round 1: pre-battle bookkeeping (Scout-move flags etc.) is not turn state.
+        units: state.units.map((u) => ({
+          ...u,
+          status: {},
+          models: u.models.map((m) => (m.moveStart ? { ...m, moveStart: undefined } : m)),
+        })),
         log: [...state.log, `— Battle begins — ${first} takes the first turn (round 1) —`],
       };
     }
@@ -565,6 +760,35 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
     // ── Movement ───────────────────────────────────────────────────────────────
     case 'BeginMove': {
       let log = state.log;
+      // Scout moves are a pre-battle activation: only during the setup 'scouts' step, only for
+      // units with a Scouts X" move they have not resolved yet. Budget = X (not M).
+      if (intent.mode === 'scout') {
+        if (state.mode === 'match' && (state.stage !== 'setup' || state.setup?.step !== 'scouts')) {
+          return { ...state, log: [...log, 'Scout move rejected: only during the pre-battle Scout step'] };
+        }
+        const units = state.units.map((u) => {
+          if (!intent.unitIds.includes(u.id)) return u;
+          if (u.status.scouted) {
+            log = [...log, `${ctx?.datasheets.get(u.datasheetId)?.name ?? u.id} has already made its Scout move`];
+            return u;
+          }
+          const X = ctx ? unitScoutDistance(u, ctx) : null;
+          if (X == null) {
+            log = [...log, `${ctx?.datasheets.get(u.datasheetId)?.name ?? u.id} has no Scouts ability`];
+            return u;
+          }
+          return {
+            ...u,
+            status: { ...u.status, moveMode: intent.mode, moveBudget: X },
+            models: u.models.map((m) => (m.alive ? { ...m, moveStart: m.pos } : m)),
+          };
+        });
+        return { ...state, units, log };
+      }
+      // Battle moves happen in the battle stage (the sandbox stays free).
+      if (state.mode === 'match' && state.stage !== 'battle') {
+        return { ...state, log: [...log, 'Move rejected: the battle has not begun'] };
+      }
       // A unit moves once per Movement phase — in a match, re-activating an already-moved unit
       // (even after an Advance) is rejected. The flags reset at the start of the unit's next turn.
       const alreadyMoved = (u: UnitInstance) =>
@@ -643,8 +867,22 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
           return u; // stay in the move so the user can fix it
         }
         const mode = u.status.moveMode;
+        // A Scout move must end more than 9" from all enemy models (10e Scouts).
+        if (mode === 'scout') {
+          const enemies = enemyModelsOnBoard(state, u.owner, ctx);
+          const tooClose = u.models.some(
+            (m) => m.alive && enemies.some((e) => gapBetweenBases(m.pos, shape, e.pos, e.shape) <= 9),
+          );
+          if (tooClose) {
+            anyRejected = true;
+            const name = ctx?.datasheets.get(u.datasheetId)?.name ?? u.id;
+            log = [...log, `Scout move not confirmed: ${name} must end more than 9" from all enemy models`];
+            return u;
+          }
+        }
         const flag =
-          mode === 'advance' ? { advanced: true, moved: true }
+          mode === 'scout' ? { scouted: true }
+          : mode === 'advance' ? { advanced: true, moved: true }
           : mode === 'fall_back' ? { fellBack: true, moved: true }
           : mode === 'stationary' ? { remainedStationary: true }
           : { moved: true };
@@ -740,6 +978,41 @@ function formationWorld(opts: LayoutOpts): Vec2[] {
 }
 
 const FALLBACK_SHAPE: BaseShape = { kind: 'circle', radius: 0.63 };
+
+/** Is a deployment-entry id on the board / in Reserves (directly or as a merged Leader)? */
+function isUnitPlaced(state: GameState, entryKey: string): boolean {
+  return state.units.some(
+    (u) => u.id === entryKey || (u.attachedLeaders ?? []).some((l) => l.unitId === entryKey),
+  );
+}
+
+/**
+ * May a declared Leader pairing set up as Infiltrators? Either every datasheet in the pair has
+ * Infiltrators itself (10e: a unit has a deployment ability only if all its models do), or the
+ * Leader has Backroom Deals ("while this model is leading a unit, models in that unit have the
+ * Infiltrators ability"). Backroom Deals selects ONE unit per army, so only the side's first
+ * pairing with a Backroom Deals leader gets the grant.
+ */
+function pairInfiltrates(
+  leaderDs: Datasheet,
+  bodyguardDs: Datasheet,
+  formations: DeclaredFormation[],
+  side: Side,
+  ctx: EngineContext,
+): boolean {
+  const hasInfiltrators = (ds: Datasheet | undefined) =>
+    !!ds &&
+    ((ds.abilities ?? []).some((a) => a.name.toLowerCase() === 'infiltrators') ||
+      ds.keywords.some((k) => k.toLowerCase().includes('infiltrat')));
+  const hasBackroom = (ds: Datasheet | undefined) =>
+    !!ds && (ds.abilities ?? []).some((a) => a.name.toLowerCase() === 'backroom deals');
+  if (hasInfiltrators(leaderDs) && hasInfiltrators(bodyguardDs)) return true;
+  if (!hasBackroom(leaderDs)) return false;
+  const grantUsed = formations.some(
+    (f) => f.side === side && f.infiltrate && hasBackroom(ctx.datasheets.get(f.leaderDsId)),
+  );
+  return !grantUsed;
+}
 
 /** All alive enemy models on the board, with their base shape (for 9"/zone deployment checks). */
 function enemyModelsOnBoard(state: GameState, side: Side, ctx?: EngineContext): { pos: Vec2; shape: BaseShape }[] {

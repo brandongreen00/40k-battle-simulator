@@ -10,13 +10,15 @@ import type { Datasheet, GameState, ModelInstance, UnitInstance, Vec2, BaseShape
 import type { RNG } from './rng';
 import { baseRadius, gapBetweenBases } from './geometry';
 import { parseKeywords } from './keywords';
+import { parseDice } from './dice';
 import { checkCoherency } from './coherency';
-import { resolveAttacks, type AttackProfile, type DefenderProfile, type CombatSituation } from './combat';
-import { unitCanSee, unitHasCover } from './los';
+import { resolveAttacks, woundThreshold, effectiveSave, type AttackProfile, type DefenderProfile, type CombatSituation } from './combat';
+import { losBlocked, unitCanSee, unitHasCover } from './los';
 import { controlOfObjective, scorePrimary, type OcModel } from './objectives';
 import { battleShockTest } from './battleshock';
 import { rollCharge } from './movement';
 import { gatherAttackModifiers, type AttackContext } from './effects';
+import { hasLoneOperative, ignoresLoneOperative, innateEffectIds } from './abilities';
 import { defensiveProfileForItem } from './wargear';
 import { ocBonusFromOrders, ldBonusFromOrders } from './orders';
 
@@ -124,9 +126,16 @@ export function availableUnitWeapons(
  */
 export const INNATE_ABILITY_EFFECTS: Record<string, string[]> = {};
 
-/** All effect ids active on a unit right now: issued Orders/Stratagems plus innate abilities. */
-function effectsOf(unit: UnitInstance): string[] {
-  return [...(unit.status.activeEffects ?? []), ...(INNATE_ABILITY_EFFECTS[unit.datasheetId] ?? [])];
+/** All effect ids active on a unit right now: issued Orders/Stratagems, curated innate effects,
+ *  plus the ability-derived ones (innate Stealth, innate Feel No Pain X+) read off the unit's
+ *  primary datasheet. (A merged Leader's personal Stealth/FNP does not cover the whole unit —
+ *  10e grants unit-wide versions only when every model has the ability.) */
+function effectsOf(unit: UnitInstance, ctx?: EngineContext): string[] {
+  return [
+    ...(unit.status.activeEffects ?? []),
+    ...(INNATE_ABILITY_EFFECTS[unit.datasheetId] ?? []),
+    ...(ctx ? innateEffectIds(ctx.datasheets.get(unit.datasheetId)) : []),
+  ];
 }
 
 function defenderProfileFor(unit: UnitInstance, ctx: EngineContext, ordered?: ModelInstance[]): DefenderProfile {
@@ -243,7 +252,7 @@ export function resolveAttack(
 
   const carriers = weaponCarrierCount(attacker, weaponDef, found.sourceDsId);
   if (carriers == null) return { state, summary: '', rejected: `no models in the unit carry ${weaponDef.name}` };
-  const aliveAttackers = carriers;
+  let aliveAttackers = carriers;
   const aliveTargets = target.models.filter((m) => m.alive).length;
   if (aliveAttackers === 0 || aliveTargets === 0) return { state, summary: '', rejected: 'no models' };
 
@@ -256,6 +265,16 @@ export function resolveAttack(
   } else {
     const range = weaponDef.range ?? 0;
     if (gap > range) return { state, summary: '', rejected: `out of range (${gap.toFixed(1)}" > ${range}")` };
+    // Lone Operative: unless part of an Attached unit, only targetable by ranged attacks within
+    // 12" (the Vindicare's Deadshot ignores this when it shoots).
+    if (
+      hasLoneOperative(tDs) &&
+      (target.attachedLeaders ?? []).length === 0 &&
+      gap > 12 &&
+      !ignoresLoneOperative(aDs)
+    ) {
+      return { state, summary: '', rejected: `${tDs.name} is a Lone Operative (only targetable within 12")` };
+    }
   }
 
   // Line of sight + cover from terrain (Phase 2). Indirect Fire may target unseen units.
@@ -276,6 +295,18 @@ export function resolveAttack(
       if (!kw.indirectFire) return { state, summary: '', rejected: 'no line of sight' };
       hitPenalty -= 1; // Indirect Fire: -1 to hit and the target gets cover
       forceCover = true;
+    } else if (!kw.indirectFire) {
+      // Per-model visibility (10e: a model can only shoot a target it can see). Only the bearers
+      // that themselves have line of sight fire — a squad mostly hidden behind a tall ruin no
+      // longer contributes its hidden models' shots because one squadmate can peek around it.
+      const bearers = attacker.models.filter(
+        (m) => m.alive && (m.datasheetId ?? attacker.datasheetId) === found.sourceDsId,
+      );
+      const seeing = bearers.filter((m) => tPts.some((t) => !losBlocked(m.pos, t, terrain))).length;
+      if (seeing === 0) return { state, summary: '', rejected: 'no line of sight' };
+      if (seeing < aliveAttackers) {
+        aliveAttackers = seeing;
+      }
     }
   }
 
@@ -290,7 +321,7 @@ export function resolveAttack(
     targetKeywords: tDs.keywords.map((k) => k.toUpperCase()),
     gap,
   };
-  const mods = gatherAttackModifiers(abilityCtx, effectsOf(attacker), effectsOf(target));
+  const mods = gatherAttackModifiers(abilityCtx, effectsOf(attacker, ctx), effectsOf(target, ctx));
 
   const cover = (forceCover || (!isMelee && unitHasCover(aPts, tPts, terrain))) && !mods.ignoresCover;
   const situation: CombatSituation = {
@@ -501,6 +532,171 @@ export function resolveUnitShooting(
   const units = cur.units.map((u) => (u.id === attacker.id ? { ...u, status: { ...u.status, hasShot: true } } : u));
   const aliveAfter = units.find((u) => u.id === target.id)?.models.filter((m) => m.alive).length ?? 0;
   const summary = `${aDs.name} shooting at ${tDs.name}: ${firedCount} weapon(s) fired, ${aliveBefore - aliveAfter} model(s) slain`;
+  return { state: { ...cur, units, log: [...cur.log, summary] }, summary };
+}
+
+// ── Unit-level fighting: every model swings its best melee weapon ───────────────
+/** Quick deterministic expected damage per bearer of a melee profile into a defender — used only
+ *  to RANK weapon choices inside one unit (the dice still decide the game). */
+function meleeProfileRank(w: WeaponProfile, def: { T: number; save: number; invuln?: number }): number {
+  const kw = parseKeywords(w.keywords);
+  const a = parseDice(w.attacks);
+  const attacks = Math.max(0, a.count * ((a.sides + 1) / 2) + a.flat);
+  const pHit = kw.torrent ? 1 : Math.max(1 / 6, Math.min(5 / 6, (7 - w.skill) / 6));
+  const pWound = Math.max(1 / 6, Math.min(5 / 6, (7 - woundThreshold(w.S, def.T)) / 6));
+  const sv = effectiveSave(def.save, w.AP, def.invuln, false);
+  const pFail = sv > 6 ? 1 : 1 - (7 - Math.max(2, sv)) / 6;
+  const d = parseDice(w.D);
+  const dmg = Math.max(1, d.count * ((d.sides + 1) / 2) + d.flat);
+  return attacks * pHit * pWound * pFail * dmg;
+}
+
+/**
+ * Which melee weapons swing when the whole unit fights (10e: each model fights with ONE of its
+ * melee weapons — its choice — plus any [EXTRA ATTACKS] weapons on top). Applies:
+ *  • one profile per multi-profile weapon ("– strike" / "– sweep" are one weapon): the better
+ *    profile against this target is kept;
+ *  • per-model weapon choice: bearers are assigned to their highest-ranked weapon first, and the
+ *    remaining models swing the next-best weapon they carry (unit-level approximation of "each
+ *    model picks one" — the roster tracks counts, not which model holds what);
+ *  • Extra Attacks weapons always swing in addition, without using up a model's pick.
+ */
+export function planUnitFight(
+  state: GameState,
+  attacker: UnitInstance,
+  ctx: EngineContext,
+  targetUnitId?: string,
+): FirePlan {
+  const notes: string[] = [];
+  let melee = availableUnitWeapons(attacker, ctx).filter((w) => w.weapon.type === 'melee');
+
+  const target = targetUnitId ? state.units.find((u) => u.id === targetUnitId) : undefined;
+  const tProfile = target ? ctx.datasheets.get(target.datasheetId)?.models[0] : undefined;
+  const def = { T: tProfile?.T ?? 4, save: tProfile?.Sv ?? 3, invuln: tProfile?.invuln };
+
+  // Multi-profile weapons are ONE weapon: keep the best profile per item against this target.
+  const byItem = new Map<string, typeof melee>();
+  for (const w of melee) {
+    const key = `${w.sourceDsId}|${weaponItemName(w.weapon.name)}`;
+    if (!byItem.has(key)) byItem.set(key, []);
+    byItem.get(key)!.push(w);
+  }
+  melee = [...byItem.values()].map((profiles) => {
+    if (profiles.length === 1) return profiles[0]!;
+    const best = profiles.reduce((x, y) => (meleeProfileRank(y.weapon, def) > meleeProfileRank(x.weapon, def) ? y : x));
+    notes.push(`${weaponItemName(best.weapon.name)}: fighting with the "${best.weapon.name}" profile`);
+    return best;
+  });
+
+  const extras = melee.filter((w) => !!parseKeywords(w.weapon.keywords).extraAttacks);
+  const mains = melee
+    .filter((w) => !parseKeywords(w.weapon.keywords).extraAttacks)
+    .sort((x, y) => meleeProfileRank(y.weapon, def) - meleeProfileRank(x.weapon, def));
+
+  // Each model fights with ONE main melee weapon: hand the best weapons to their bearers first.
+  const budget = new Map<string, number>(); // sourceDsId -> models still without a weapon pick
+  const fire: FirePlan['fire'] = [];
+  for (const w of mains) {
+    if (!budget.has(w.sourceDsId)) {
+      budget.set(
+        w.sourceDsId,
+        attacker.models.filter((m) => m.alive && (m.datasheetId ?? attacker.datasheetId) === w.sourceDsId).length,
+      );
+    }
+    const left = budget.get(w.sourceDsId)!;
+    const n = Math.min(w.carriers, left);
+    if (n <= 0) {
+      notes.push(`${w.weapon.name}: held (its bearers swing a better weapon)`);
+      continue;
+    }
+    budget.set(w.sourceDsId, left - n);
+    fire.push({ weapon: w.weapon, sourceDsId: w.sourceDsId, carriers: n });
+  }
+  for (const w of extras) fire.push({ weapon: w.weapon, sourceDsId: w.sourceDsId, carriers: w.carriers });
+
+  return { fire, notes };
+}
+
+export interface UnitFightParams {
+  attackerUnitId: string;
+  targetUnitId: string;
+}
+
+/**
+ * Resolve a whole unit's Fight activation against one target: every weapon in the fight plan is
+ * resolved SEQUENTIALLY (casualties from one weapon are removed before the next swings), exactly
+ * like unit-level shooting. Marks the unit as having fought.
+ */
+export function resolveUnitFight(
+  state: GameState,
+  params: UnitFightParams,
+  ctx: EngineContext,
+  rng: RNG,
+): AttackOutcome {
+  const attacker = state.units.find((u) => u.id === params.attackerUnitId);
+  const target = state.units.find((u) => u.id === params.targetUnitId);
+  if (!attacker || !target) return { state, summary: '', rejected: 'unit not found' };
+  const aDs = ctx.datasheets.get(attacker.datasheetId);
+  const tDs = ctx.datasheets.get(target.datasheetId);
+  if (!aDs || !tDs) return { state, summary: '', rejected: 'datasheet not found' };
+
+  if (state.mode === 'match' && state.stage === 'battle' && state.phase !== 'Fight') {
+    return { state, summary: '', rejected: `fighting only in the Fight phase (now ${state.phase})` };
+  }
+  if (state.mode === 'match' && attacker.status.hasFought) {
+    return { state, summary: '', rejected: 'this unit has already fought this turn' };
+  }
+  if (closestGap(attacker, aDs.baseShape, target, tDs.baseShape) > ENGAGEMENT_RANGE) {
+    return { state, summary: '', rejected: 'not in engagement range' };
+  }
+
+  const { fire, notes } = planUnitFight(state, attacker, ctx, target.id);
+  if (fire.length === 0) return { state, summary: '', rejected: 'no melee weapons' };
+
+  const aliveBefore = target.models.filter((m) => m.alive).length;
+  let cur: GameState = {
+    ...state,
+    log: [
+      ...state.log,
+      `— ${aDs.name} fights ${tDs.name}: ${fire.length} weapon(s), resolved sequentially —`,
+      ...notes.map((n) => `  ${n}`),
+    ],
+  };
+  let swungCount = 0;
+  const skipped: string[] = [];
+  for (const w of fire) {
+    const tNow = cur.units.find((u) => u.id === target.id);
+    if (!tNow || !tNow.models.some((m) => m.alive)) {
+      cur = { ...cur, log: [...cur.log, '  target destroyed — remaining weapons not used'] };
+      break;
+    }
+    const out = resolveAttack(
+      cur,
+      {
+        attackerUnitId: attacker.id,
+        targetUnitId: target.id,
+        weaponName: w.weapon.name,
+        weaponSourceDsId: w.sourceDsId,
+        attackerCount: w.carriers,
+      },
+      ctx,
+      rng,
+    );
+    if (out.rejected) {
+      skipped.push(`  ${w.weapon.name} not used: ${out.rejected}`);
+      continue;
+    }
+    swungCount++;
+    cur = out.state;
+  }
+  if (skipped.length) cur = { ...cur, log: [...cur.log, ...skipped] };
+  if (swungCount === 0) {
+    return { state, summary: '', rejected: `no melee weapon could be used (${skipped[0]?.trim() ?? 'not in engagement range'})` };
+  }
+
+  const units = cur.units.map((u) => (u.id === attacker.id ? { ...u, status: { ...u.status, hasFought: true } } : u));
+  const aliveAfter = units.find((u) => u.id === target.id)?.models.filter((m) => m.alive).length ?? 0;
+  const summary = `${aDs.name} fighting ${tDs.name}: ${swungCount} weapon(s), ${aliveBefore - aliveAfter} model(s) slain`;
   return { state: { ...cur, units, log: [...cur.log, summary] }, summary };
 }
 

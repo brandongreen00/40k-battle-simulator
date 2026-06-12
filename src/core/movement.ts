@@ -6,13 +6,15 @@
 
 import type { RNG } from './rng';
 
-export type MoveMode = 'normal' | 'advance' | 'fall_back' | 'stationary';
+/** 'scout' = the pre-battle Scouts X" move (budget comes from the ability, not M). */
+export type MoveMode = 'normal' | 'advance' | 'fall_back' | 'stationary' | 'scout';
 
 /** Maximum move distance (inches) for a mode. `advanceRoll` is the extra D6 for an Advance. */
 export function maxMoveDistance(M: number, mode: MoveMode, advanceRoll = 0): number {
   switch (mode) {
     case 'normal':
     case 'fall_back':
+    case 'scout': // callers pass the Scouts X" in place of M
       return M;
     case 'advance':
       return M + advanceRoll;
