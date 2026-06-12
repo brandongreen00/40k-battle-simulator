@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Datasheet, GameState, UnitInstance } from '../core/types';
 import type { Intent } from '../core/state';
-import { availableUnitWeapons, planUnitShooting, type EngineContext } from '../core/engine';
+import { availableUnitWeapons, planUnitFight, planUnitShooting, type EngineContext } from '../core/engine';
 import type { MoveMode } from '../core/movement';
 import { EFFECT_REGISTRY } from '../core/effects';
 import {
@@ -58,7 +58,9 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
   const [chargeTargetIds, setChargeTargetIds] = useState<string[]>([]);
 
   const ctx: EngineContext = useMemo(() => ({ datasheets: datasheetsById }), [datasheetsById]);
-  const movingUnits = units.filter((u) => u.status.moveMode);
+  // Only the ACTIVE player's open activations belong to this panel — an opponent's unit left
+  // mid-activation must not wedge your Movement phase behind its Confirm/Cancel buttons.
+  const movingUnits = units.filter((u) => u.status.moveMode && u.owner === state.activePlayer);
   const incoherentMoving = movingUnits.filter((u) => !unitCoherency(u, ctx).inCoherency);
   const coherencyOk = incoherentMoving.length === 0;
   const arrivable = reservesArrivable(state);
@@ -117,6 +119,11 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
   const firePlan = useMemo(
     () => (attacker && phase === 'Shooting' ? planUnitShooting(state, attacker, ctx) : null),
     [attacker, phase, units],
+  );
+  // The fight plan when the whole unit fights (per-model weapon picks + Extra Attacks).
+  const fightPlan = useMemo(
+    () => (attacker && phase === 'Fight' && inMatch ? planUnitFight(state, attacker, ctx, targetId || undefined) : null),
+    [attacker, phase, units, targetId, inMatch],
   );
 
   // Tell the board which units are attacker/target so it can highlight them.
@@ -388,8 +395,9 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
       {attackerEligibility && !attackerEligibility.eligible && (
         <p className="coh-bad">⚠ {attackerEligibility.reason}</p>
       )}
-      {/* Shooting is unit-level: every model fires its equipped weapons (no weapon picker). */}
-      {phase !== 'Shooting' && (
+      {/* Shooting and (in a match) fighting are unit-level: every model uses its equipped
+          weapons, so there is no weapon picker — the panel shows the plan instead. */}
+      {phase !== 'Shooting' && !(inMatch && phase === 'Fight') && (
         <label className="field">
           <span>Weapon</span>
           <select value={weaponSel} onChange={(e) => { setWeaponSel(e.target.value); setTargetId(''); }} disabled={!attacker}>
@@ -419,6 +427,24 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
             </ul>
           )}
           {firePlan.notes.map((n, i) => <p key={i} className="hint">{n}</p>)}
+        </div>
+      )}
+      {inMatch && phase === 'Fight' && attacker && fightPlan && (
+        <div className="fire-plan">
+          <span className="muted">Will fight ({fightPlan.fire.length} weapon{fightPlan.fire.length === 1 ? '' : 's'}, each model swings one melee weapon + Extra Attacks):</span>
+          {fightPlan.fire.length === 0 ? (
+            <p className="coh-bad">No melee weapons.</p>
+          ) : (
+            <ul>
+              {fightPlan.fire.map((w) => (
+                <li key={`${w.sourceDsId}|${w.weapon.name}`}>
+                  {w.carriers}× {w.weapon.name} (A{w.weapon.attacks})
+                  {w.sourceDsId !== attacker.datasheetId ? ` — ${datasheetsById.get(w.sourceDsId)?.name ?? w.sourceDsId}` : ''}
+                </li>
+              ))}
+            </ul>
+          )}
+          {fightPlan.notes.map((n, i) => <p key={i} className="hint">{n}</p>)}
         </div>
       )}
       <label className="field">
@@ -457,6 +483,14 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
             onClick={() => dispatch({ type: 'ShootUnit', attackerUnitId: attackerId, targetUnitId: targetId })}
           >
             🔫 Shoot — all weapons
+          </button>
+        ) : inMatch && phase === 'Fight' ? (
+          <button
+            className="primary"
+            disabled={!attackerId || !targetId || !fightPlan || fightPlan.fire.length === 0}
+            onClick={() => dispatch({ type: 'FightUnit', attackerUnitId: attackerId, targetUnitId: targetId })}
+          >
+            ⚔ Fight — all weapons
           </button>
         ) : (
           <button

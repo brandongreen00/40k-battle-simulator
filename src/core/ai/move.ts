@@ -10,19 +10,32 @@
 
 import type { GameState, Side, UnitInstance, Vec2 } from '../types';
 import type { EngineContext } from '../engine';
-import { aliveModels, isOnBoard, engagedEnemies, reservesArrivable, unitCentroid, ENGAGEMENT_RANGE } from '../phases';
+import { aliveModels, isOnBoard, engagedEnemies, pendingScoutUnits, reservesArrivable, unitCentroid, ENGAGEMENT_RANGE } from '../phases';
 import { checkCoherency } from '../coherency';
-import { deepStrikeArrivalLegal } from '../deployment';
+import { deepStrikeArrivalLegal, zoneFor } from '../deployment';
 import { formationPositions } from '../formation';
 import { gapBetweenBases, dist, baseRadius } from '../geometry';
 import { objectiveControl } from '../engine';
+import { unitScoutDistance } from '../abilities';
 import { shootingEV, unitThreat, unitValue, unitGap, maxWeaponRange, meleeEV } from './evaluate';
+import { homeGarrisonId, unitRolePlan, type RolePlan } from './roles';
 import type { AiAction, AiDeps } from './types';
 import type { AiProfile } from './profile';
 import type { MoveMode } from '../movement';
 
 const hasMoved = (u: UnitInstance): boolean =>
   !!(u.status.moved || u.status.advanced || u.status.fellBack || u.status.remainedStationary);
+
+/** The side's HOME objective: the marker closest to its own deployment zone's centroid. */
+export function homeObjective(state: GameState, side: Side): Vec2 | null {
+  if (state.layout.objectives.length === 0) return null;
+  const zone = zoneFor(state.layout, side);
+  const anchor =
+    zone.length > 0
+      ? { x: zone.reduce((s, p) => s + p.x, 0) / zone.length, y: zone.reduce((s, p) => s + p.y, 0) / zone.length }
+      : { x: state.layout.boardWidth / 2, y: side === 'player' ? 0 : state.layout.boardHeight };
+  return state.layout.objectives.reduce((a, b) => (dist(a, anchor) <= dist(b, anchor) ? a : b));
+}
 
 /** Largest fraction t∈[0,1] of `delta` every alive model can take without leaving the board
  *  (centres clamped like the reducer does) — keeps a rigid translate rigid. */
@@ -59,17 +72,28 @@ function endsEngaged(state: GameState, unit: UnitInstance, delta: Vec2, ctx: Eng
 }
 
 /** Score the unit standing at `delta` from its current spot (the move-candidate utility). */
-function positionScore(state: GameState, unit: UnitInstance, delta: Vec2, profile: AiProfile, deps: AiDeps): number {
+function positionScore(
+  state: GameState,
+  unit: UnitInstance,
+  delta: Vec2,
+  profile: AiProfile,
+  deps: AiDeps,
+  plan: RolePlan,
+  garrison: boolean,
+): number {
   const { ctx } = deps;
   const centroid = unitCentroid(unit);
   const at = { x: centroid.x + delta.x, y: centroid.y + delta.y };
   const controlR = state.layout.objectiveControlRadiusIn ?? 3;
   const enemies = state.units.filter((e) => e.owner !== unit.owner && isOnBoard(e));
   const myOC = aliveModels(unit).length; // proxy: model count ≈ OC presence
+  const home = homeObjective(state, unit.owner);
 
   let score = 0;
 
   // Objectives: reward standing in control range, weighted by how contested/empty the marker is.
+  // Holding what you already own matters too — Primary scores EVERY Command phase — so a safely
+  // held marker is still worth standing on, and one with enemies closing in is nearly contested.
   const { perObjective } = objectiveControl(state, ctx);
   state.layout.objectives.forEach((o, i) => {
     const d = dist(at, o);
@@ -77,15 +101,37 @@ function positionScore(state: GameState, unit: UnitInstance, delta: Vec2, profil
     const c = perObjective[i]!;
     const mine = unit.owner === 'player' ? c.player : c.ai;
     const theirs = unit.owner === 'player' ? c.ai : c.player;
-    const need = theirs >= mine || mine === 0; // contested, lost, or empty — worth standing on
+    const enemyNear = enemies.some((e) => e.models.some((m) => m.alive && dist(m.pos, o) <= 12));
+    const contested = theirs >= mine || mine === 0;
+    const urgency = contested ? 1.2 : enemyNear ? 0.9 : 0.45; // keep holding ≫ the old 0.3
+    const isHome = home && o.x === home.x && o.y === home.y;
+    const garrisonBoost = garrison && isHome ? 3 : 1;
     const inRange = d <= controlR;
-    score += (inRange ? 10 : (controlR + 6 - d)) * (need ? 1.2 : 0.3) * profile.objective * Math.min(myOC, 5);
+    score +=
+      (inRange ? 10 : (controlR + 6 - d)) * urgency * profile.objective * plan.objectiveWeight *
+      garrisonBoost * Math.min(myOC, 5);
   });
 
-  // Shooting from the new spot: best target's expected points of damage.
+  // Shooting from the new spot: best target's expected points of damage (role bonus vs CHARACTERs).
   let bestEV = 0;
-  for (const e of enemies) bestEV = Math.max(bestEV, shootingEV(state, unit, e, ctx, delta));
+  for (const e of enemies) {
+    let ev = shootingEV(state, unit, e, ctx, delta);
+    if (plan.characterHunter > 1 && ctx.datasheets.get(e.datasheetId)?.keywords.some((k) => k.toLowerCase() === 'character')) {
+      ev *= plan.characterHunter;
+    }
+    bestEV = Math.max(bestEV, ev);
+  }
   score += bestEV * profile.damage;
+
+  // Role standoff: closing inside the role's keep-away band is penalised (a sniper that CAN
+  // shoot from 36" should not be standing at 10").
+  if (plan.standoff > 0 && enemies.length) {
+    let nearest = Infinity;
+    for (const e of enemies) {
+      for (const m of e.models) if (m.alive) nearest = Math.min(nearest, dist(m.pos, at));
+    }
+    if (nearest < plan.standoff) score -= (plan.standoff - nearest) * 1.5;
+  }
 
   // Danger: enemies that can reach/shoot this spot, scaled by what we'd lose.
   const myValue = unitValue(unit, ctx);
@@ -108,12 +154,19 @@ interface MovePlan {
   goal: Vec2 | null;
 }
 
-/** Decide where one unit wants to go this turn. */
-export function planMove(state: GameState, unit: UnitInstance, profile: AiProfile, deps: AiDeps): MovePlan {
+/** Decide where one unit wants to go this turn. `garrison` = this unit holds the home objective. */
+export function planMove(
+  state: GameState,
+  unit: UnitInstance,
+  profile: AiProfile,
+  deps: AiDeps,
+  garrison = false,
+): MovePlan {
   const { ctx } = deps;
   const centroid = unitCentroid(unit);
   const M = ctx.datasheets.get(unit.datasheetId)?.models[0]?.M ?? 6;
   const engaged = engagedEnemies(unit, state, ctx);
+  const plan = unitRolePlan(unit, ctx);
 
   // Engaged: stay and fight when our melee out-trades theirs, otherwise Fall Back.
   if (engaged.length > 0) {
@@ -126,10 +179,15 @@ export function planMove(state: GameState, unit: UnitInstance, profile: AiProfil
     return { mode: 'fall_back', goal: { x: centroid.x + (away.x / len) * M, y: centroid.y + (away.y / len) * M } };
   }
 
-  // Candidate goals: hold, each objective, the best shooting standoff, retreat.
+  // Candidate goals: hold, each objective (the garrison only considers HOME), the role's
+  // standoff approach, retreat/kite.
   const enemies = state.units.filter((e) => e.owner !== unit.owner && isOnBoard(e));
+  const home = homeObjective(state, unit.owner);
   const goals: { goal: Vec2 | null; advanceOk: boolean }[] = [{ goal: null, advanceOk: false }];
-  for (const o of state.layout.objectives) goals.push({ goal: o, advanceOk: true });
+  for (const o of state.layout.objectives) {
+    if (garrison && home && (o.x !== home.x || o.y !== home.y)) continue; // the garrison stays home
+    goals.push({ goal: o, advanceOk: true });
+  }
   if (enemies.length) {
     const nearest = enemies.reduce((a, b) => (unitGap(a, unit, ctx) < unitGap(b, unit, ctx) ? a : b));
     const nc = unitCentroid(nearest);
@@ -137,8 +195,9 @@ export function planMove(state: GameState, unit: UnitInstance, profile: AiProfil
     const len = Math.hypot(towards.x, towards.y) || 1;
     const gap = unitGap(unit, nearest, ctx);
     const range = maxWeaponRange(unit, ctx);
-    const standoff = Math.max(profile.standoff, 3);
-    // Close to weapons range (or to melee), but no closer than the profile's standoff.
+    // Close to weapons range (or to melee), but no closer than the ROLE's keep-away band
+    // (profile standoff acts as a floor for cagey personalities).
+    const standoff = Math.max(plan.standoff, plan.role === 'assault' || plan.role === 'assassin' ? 0 : Math.min(profile.standoff, 12), 0);
     const closeBy = Math.max(0, Math.min(gap - standoff, gap - (range > 0 ? range * 0.6 : 1)));
     if (closeBy > 0.5) goals.push({ goal: { x: centroid.x + (towards.x / len) * closeBy, y: centroid.y + (towards.y / len) * closeBy }, advanceOk: range === 0 });
     // And the kite-away option for soft shooters.
@@ -154,7 +213,7 @@ export function planMove(state: GameState, unit: UnitInstance, profile: AiProfil
   }
 
   let best: { score: number; goal: Vec2 | null; advance: boolean } = {
-    score: positionScore(state, unit, { x: 0, y: 0 }, profile, deps) + 0.5, // Remain Stationary edge (Heavy)
+    score: positionScore(state, unit, { x: 0, y: 0 }, profile, deps, plan, garrison) + 0.5, // Remain Stationary edge (Heavy)
     goal: null,
     advance: false,
   };
@@ -178,7 +237,7 @@ export function planMove(state: GameState, unit: UnitInstance, profile: AiProfil
         if (Math.hypot(delta.x, delta.y) < 0.5) continue;
       }
       const advance = budget > M;
-      const score = positionScore(state, unit, delta, profile, deps) - (advance ? 2 : 0); // Advance forfeits shooting
+      const score = positionScore(state, unit, delta, profile, deps, plan, garrison) - (advance ? 2 : 0); // Advance forfeits shooting
       if (score > best.score) best = { score, goal: { x: centroid.x + delta.x, y: centroid.y + delta.y }, advance };
     }
   }
@@ -223,6 +282,8 @@ export function findArrivalAnchor(state: GameState, unit: UnitInstance, deps: Ai
 export function aiMovementAction(state: GameState, side: Side, profile: AiProfile, deps: AiDeps): AiAction {
   const { ctx } = deps;
   const mine = state.units.filter((u) => u.owner === side && isOnBoard(u));
+  // One unit per side garrisons the home objective (holding your own point is free Primary VP).
+  const garrisonId = homeGarrisonId(mine, homeObjective(state, side), ctx, (u) => unitValue(u, ctx));
 
   // Tick B — finish the open activation under the real (post-Advance-roll) budget.
   const moving = mine.find((u) => u.status.moveMode);
@@ -241,7 +302,7 @@ export function aiMovementAction(state: GameState, side: Side, profile: AiProfil
         note: `${side} regroups ${ctx.datasheets.get(moving.datasheetId)?.name ?? moving.id} (coherency)`,
       };
     }
-    const plan = planMove(state, moving, profile, deps);
+    const plan = planMove(state, moving, profile, deps, moving.id === garrisonId);
     const centroid = unitCentroid(moving);
     let delta = { x: 0, y: 0 };
     if (plan.goal && budget > 0.05) {
@@ -287,7 +348,7 @@ export function aiMovementAction(state: GameState, side: Side, profile: AiProfil
         note: `${side} regroups ${name} (out of coherency — move forfeited)`,
       };
     }
-    const plan = planMove(state, next, profile, deps);
+    const plan = planMove(state, next, profile, deps, next.id === garrisonId);
     if (plan.mode === 'stationary') {
       return {
         intents: [
@@ -301,4 +362,81 @@ export function aiMovementAction(state: GameState, side: Side, profile: AiProfil
   }
 
   return { intents: [{ intent: { type: 'AdvancePhase' } }], note: `${side} ends the Movement phase` };
+}
+
+// ── Pre-battle Scout moves ────────────────────────────────────────────────────
+/** Largest fraction of `delta` that keeps every model of `unit` more than 9" from enemy models
+ *  (binary search along the line; 0 is always legal — the unit deployed legally). */
+function clampDeltaToNine(state: GameState, unit: UnitInstance, delta: Vec2, ctx: EngineContext): Vec2 {
+  const shape = ctx.datasheets.get(unit.datasheetId)?.baseShape ?? { kind: 'circle' as const, radius: 0.63 };
+  const enemies: { pos: Vec2; shape: typeof shape }[] = [];
+  for (const e of state.units) {
+    if (e.owner === unit.owner || e.inReserves) continue;
+    const eShape = ctx.datasheets.get(e.datasheetId)?.baseShape ?? shape;
+    for (const m of e.models) if (m.alive) enemies.push({ pos: m.pos, shape: eShape });
+  }
+  const legal = (d: Vec2): boolean =>
+    unit.models.every(
+      (m) => !m.alive || enemies.every((e) => gapBetweenBases({ x: m.pos.x + d.x, y: m.pos.y + d.y }, shape, e.pos, e.shape) > 9.05),
+    );
+  if (legal(delta)) return delta;
+  const len = Math.hypot(delta.x, delta.y);
+  if (len < 1e-9) return { x: 0, y: 0 };
+  let lo = 0;
+  let hi = len;
+  for (let i = 0; i < 10; i++) {
+    const mid = (lo + hi) / 2;
+    if (legal({ x: (delta.x / len) * mid, y: (delta.y / len) * mid })) lo = mid;
+    else hi = mid;
+  }
+  return { x: (delta.x / len) * lo, y: (delta.y / len) * lo };
+}
+
+/**
+ * One Scout-move activation for `side` during the pre-battle 'scouts' step: take the next pending
+ * Scouts X" unit toward its best objective (role-aware), clamped to X" / the board / the >9" rule.
+ * The whole activation is one deterministic batch (no dice): BeginMove(scout) → Nudge → EndMove.
+ */
+export function aiScoutAction(state: GameState, side: Side, profile: AiProfile, deps: AiDeps): AiAction | null {
+  const { ctx } = deps;
+  const pending = pendingScoutUnits(state, ctx, side).sort((a, b) => a.id.localeCompare(b.id));
+  const unit = pending[0];
+  if (!unit) return null;
+  const X = unitScoutDistance(unit, ctx) ?? 0;
+  const name = ctx.datasheets.get(unit.datasheetId)?.name ?? unit.id;
+
+  // Pick the best destination with the same utility the Movement phase uses (no Advance option).
+  const plan = unitRolePlan(unit, ctx);
+  const centroid = unitCentroid(unit);
+  let best: { score: number; delta: Vec2 } = {
+    score: positionScore(state, unit, { x: 0, y: 0 }, profile, deps, plan, false),
+    delta: { x: 0, y: 0 },
+  };
+  for (const o of state.layout.objectives) {
+    const want = { x: o.x - centroid.x, y: o.y - centroid.y };
+    const need = Math.hypot(want.x, want.y);
+    const t = need > X ? X / need : 1;
+    let delta = clampDeltaToBoard(unit, { x: want.x * t, y: want.y * t }, state.layout);
+    delta = clampDeltaToNine(state, unit, delta, ctx);
+    if (Math.hypot(delta.x, delta.y) < 0.25) continue;
+    const score = positionScore(state, unit, delta, profile, deps, plan, false);
+    if (score > best.score) best = { score, delta };
+  }
+
+  const unitId = unit.id;
+  if (Math.hypot(best.delta.x, best.delta.y) < 0.25) {
+    // Nothing worth scouting toward — decline the move.
+    return {
+      intents: [{ intent: { type: 'SetUnitStatus', unitId, status: { scouted: true } } }],
+      note: `${side} holds ${name} (no Scout move)`,
+    };
+  }
+  return {
+    intents: [
+      { intent: { type: 'BeginMove', unitIds: [unitId], mode: 'scout' } },
+      { intent: { type: 'NudgeUnit', unitIds: [unitId], delta: best.delta } },
+      { intent: { type: 'EndMove', unitIds: [unitId] } },
+    ],
+    note: `${side} Scout-moves ${name} ${Math.hypot(best.delta.x, best.delta.y).toFixed(1)}"`,
+  };
 }

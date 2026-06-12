@@ -330,6 +330,87 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-06-12] — Owner review #2: movement-wedge fix, unit-level fighting, AI roles + point
+  play, per-model visibility, Scouts, pre-battle Leader pairing (Backroom Deals) + Warrant of
+  Trade, and an ability audit.** Implements all seven items of the owner's review. All gates
+  green: `pnpm typecheck`, `pnpm test` (**293 tests**, 25 new in `tests/review.test.ts`),
+  `pnpm build`; sim spot-runs (DW vs Fleet, Cadian vs Krieg, 6 games each) all end naturally with
+  zero rejected intents, and a probe game confirms the new Vindicare behaviour (camps its own
+  half at 17–24" standoff, kites, never charges) and the home objective staying garrisoned.
+
+  **1 · "Units wouldn't move after Advancing" (bug).** The reducer was sound (regression-tested:
+  flags reset at the owner's next turn) — the wedge was a unit left MID-ACTIVATION (`moveMode`
+  set, never confirmed: auto-play toggled off between the AI's two move ticks, or "Next phase"
+  clicked mid-move). The stale flag survived an entire enemy round and the Movement panel counted
+  BOTH sides' open activations, locking the human behind Confirm/Cancel buttons that weren't
+  theirs. Fixes: `AdvancePhase` cancels any open activation (models snap back to `moveStart`,
+  logged); the panel's `movingUnits` is scoped to the active player. Also `BeginMove` is now
+  stage-gated in matches (no battle moves during setup).
+
+  **2 · Unit-level fighting** (`FightUnit` intent, mirrors `ShootUnit`): `planUnitFight` resolves
+  EVERY melee weapon sequentially with per-model weapon picks — each model swings ONE melee
+  weapon (best profile vs the target by a deterministic mini-EV; multi-profile weapons collapse),
+  bearers of the best weapons first, remaining models on the next-best, `[EXTRA ATTACKS]` on top
+  — capped by `wargearCounts` carriers. Fight-phase panel shows the fight plan + "⚔ Fight — all
+  weapons" (weapon picker stays in the sandbox); the AI fights through the same intent.
+
+  **3/4 · AI roles + playing for points** (`src/core/ai/roles.ts`, research in
+  `docs/ai_unit_roles.md`): signal-based classification (sniper/assassin/artillery/gunline/
+  battleline/assault/skirmisher/support/transport) drives deployment depth, a per-role standoff
+  band (snipers/artillery stay 24–36" out and never charge), objective-pull scaling, and a
+  CHARACTER-hunter shooting bonus. The Vindicare infiltrates DEEP instead of midfield. Each
+  Movement phase one unit (battleline-first fitness) garrisons the HOME objective with a 3× goal
+  boost, and safely-held markers score 0.45×/0.9×-when-threatened (was 0.3×) so units stop
+  wandering off points.
+
+  **5 · Visibility:** point LoS was already into-not-through (kept; now pinned by tests incl. the
+  two-ruin case). The real leak was unit-level: ONE squad mate peeking let every hidden gun fire.
+  Now per-model: only bearers with their own sightline shoot (`resolveAttack` clamps the firing
+  count per weapon; `validShootingTargets` mirrors it per-bearer so the AI never plans a dead
+  shot).
+
+  **6 · Scouts X"** — new pre-battle step between the first-turn roll and Begin Battle (`setup.step
+  'scouts'`): `BeginMove mode 'scout'` budgets X" from the data (converter + committed JSON now
+  carry Wahapedia's ability `parameter` — Eversor 9", Kasrkin 6", Sentinels 9"…), `EndMove`
+  enforces >9" from enemies and sets `scouted` (not `moved`), first-turn player resolves first,
+  attached units need Scouts on every model, `BeginBattle` wipes pre-battle flags. Human flow in
+  the DeploymentPanel (Begin/drag/Confirm/Skip), AI via `aiScoutAction`.
+
+  **7 · Pre-deployment Leader pairing + Rogue Trader.** `DeclareFormation` (Declare Battle
+  Formations) pairs a Leader entry to a Bodyguard entry BEFORE placement; the pair deploys as one
+  merged unit (UI ghost drops both + merges; AI declares pairings as its first setup action) under
+  the PAIR's deployment ability: **Backroom Deals** grants the led unit Infiltrators (one per
+  army), otherwise abilities require every model (a non-Deep-Strike leader keeps a Terminator
+  squad on the board — and the AI's pairing logic avoids such pairs). Leader join positions are
+  now zone-legal during deployment. **Warrant of Trade**: once both armies are down, roll D3
+  (`UseWarrant`) and pull up to that many IMPERIUM BATTLELINE units back into the deployment flow
+  (`WarrantRedeploy`, Reserves allowed); whoActs gates the first-turn roll behind the decision;
+  the heuristic AI declines (a future profile knob).
+
+  **Ability audit (7.1)** — `docs/ai_unit_roles.md` §2 tables every ability in the AI pool with
+  status. Implemented this pass beyond the above: **Lone Operative** (untargetable by ranged >12"
+  unless attached; Vindicare's **Deadshot** ignores it; mirrored in AI EV), **innate Stealth** and
+  **innate Feel No Pain X+** read off datasheet abilities (new `fnp_4` effect), **Fights First**
+  innate fixed (the old check compared numeric ability ids to words — never matched; the Callidus
+  now swings first), **Frenzon** (Advance-then-shoot/charge carve-out, text-matched). Still open
+  (documented): Deadly Demise, Firing Deck/transports, Overkill, Shieldbreaker, Acrobatic Escape,
+  Lord of Deceit, Soulless Horror/Psychic Assassin, Healing Serum, Screening Line, Shoot Sharp
+  and Scarper, squad utility gear (medi-packs/vox/standards).
+
+  **Decisions:** ability parameters were patched into the committed `datasheets.json` with the
+  same serialisation the converter writes (117 abilities), and `convert.ts` now captures
+  `parameter` so the next full `pnpm ingest` reproduces it; scout-move ORDER between sides is
+  soft-enforced for humans (whoActs drives the AI strictly); Warrant order when both sides have
+  one = Defender first; the AI declines Warrant redeploys for now; per-bearer LoS counts
+  `min(carriers, seeing-bearers)` (which bearer holds which gun isn't tracked); fight-plan weapon
+  ranking uses a local deterministic mini-EV (engine can't import ai/evaluate — cycle).
+
+  **Handoff / next:** the three owned `docs/lists/*.md` remain absent (encode + bind specials);
+  the ✗ rows of the audit table are the Stage-4 checklist; AI Warrant/Scout policy knobs could
+  join `AiProfile`; possible UI nicety — surface "Already moved this turn" reasons inline on the
+  board. Known nit: a human-driven scout move for the SECOND side can't box-select (activePlayer
+  is the first-turn winner) — the panel's Begin/drag/Confirm flow covers it.
+
 - **[2026-06-12] — Stage 5: the AI opponent. The AI plays the ENTIRE game — team pick, deployment,
   all five phases, vs a human or vs another AI — plus a headless simulator whose logs say who's
   better.** All gates green: `pnpm typecheck`, `pnpm test` (**268 tests**, 26 new across 6 AI test

@@ -87,6 +87,7 @@ export const EFFECT_REGISTRY: Record<string, Effect> = {
 
   // ── Defensive building blocks (stratagems, unit specials) ─────────────────────
   'minus1_damage': { id: 'minus1_damage', name: '-1 Damage', side: 'defender', output: { damageReduction: 1 } },
+  'fnp_4': { id: 'fnp_4', name: 'Feel No Pain 4+', side: 'defender', output: { fnp: 4 } },
   'fnp_5': { id: 'fnp_5', name: 'Feel No Pain 5+', side: 'defender', output: { fnp: 5 } },
   'fnp_6': { id: 'fnp_6', name: 'Feel No Pain 6+', side: 'defender', output: { fnp: 6 } },
   'stealth': { id: 'stealth', name: 'Stealth (-1 to be hit)', side: 'defender', appliesTo: ranged, output: { toBeHitModifier: -1 } },

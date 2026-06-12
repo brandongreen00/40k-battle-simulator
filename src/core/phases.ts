@@ -10,6 +10,7 @@ import type { EngineContext } from './engine';
 import { closestGap, planUnitShooting, unitWeapons } from './engine';
 import { parseKeywords } from './keywords';
 import { unitCanSee } from './los';
+import { canActAfterAdvance, hasFightsFirstAbility, hasLoneOperative, ignoresLoneOperative, unitScoutDistance } from './abilities';
 import { checkCoherency, type CoherencyResult } from './coherency';
 
 const FALLBACK_SHAPE = { kind: 'circle' as const, radius: 0.63 };
@@ -80,7 +81,9 @@ export function eligibleToShoot(u: UnitInstance, state: GameState, ctx: EngineCo
   if (!isOnBoard(u)) return { eligible: false, reason: 'not on the battlefield' };
   if (u.status.hasShot) return { eligible: false, reason: 'already shot this turn' };
   const ds = dsOf(u, ctx);
-  if (u.status.advanced && !hasAssaultWeapon(ds)) {
+  // Frenzon-style abilities ("eligible to shoot … in a turn in which it Advanced") lift the
+  // Advance restriction entirely; Assault weapons lift it for themselves.
+  if (u.status.advanced && !hasAssaultWeapon(ds) && !canActAfterAdvance(ds).shoot) {
     return { eligible: false, reason: 'Advanced this turn (no Assault weapons)' };
   }
   if (u.status.fellBack) return { eligible: false, reason: 'Fell Back this turn' };
@@ -93,19 +96,28 @@ export function eligibleToShoot(u: UnitInstance, state: GameState, ctx: EngineCo
 
 /**
  * Units this attacker may legally choose as a target with `weaponName`: an enemy unit with at least
- * one model within range AND visible (LoS) to at least one of the attacker's models. Indirect Fire
- * weapons may target unseen units. Leader-protected units are excluded.
+ * one model within range AND visible (LoS) to at least one of the weapon's BEARERS — the engine
+ * only lets models that themselves see the target fire (10e), so a merged Leader's gun needs the
+ * Leader's own sightline. Indirect Fire weapons may target unseen units. Leader-protected units
+ * are excluded.
  */
 export function validShootingTargets(
   attacker: UnitInstance,
   weaponName: string,
   state: GameState,
   ctx: EngineContext,
+  weaponSourceDsId?: string,
 ): UnitInstance[] {
   const aDs = dsOf(attacker, ctx);
-  const weapon = unitWeapons(attacker, ctx).find((w) => w.weapon.name === weaponName)?.weapon;
-  if (!aDs || !weapon || weapon.type !== 'ranged') return [];
-  const aPts = alivePts(attacker);
+  const candidates = unitWeapons(attacker, ctx).filter((w) => w.weapon.name === weaponName);
+  const found = weaponSourceDsId ? candidates.find((w) => w.sourceDsId === weaponSourceDsId) : candidates[0];
+  const weapon = found?.weapon;
+  if (!aDs || !found || !weapon || weapon.type !== 'ranged') return [];
+  const srcDsId = found.sourceDsId;
+  const aPts = aliveModels(attacker)
+    .filter((m) => (m.datasheetId ?? attacker.datasheetId) === srcDsId)
+    .map((m) => m.pos);
+  if (aPts.length === 0) return [];
   const range = weapon.range ?? 0;
   const kw = parseKeywords(weapon.keywords);
   const out: UnitInstance[] = [];
@@ -113,8 +125,18 @@ export function validShootingTargets(
     if (isLeaderProtected(e, state)) continue;
     const eDs = dsOf(e, ctx);
     if (!eDs) continue;
-    const inRange = gapBetween(attacker, e, ctx) <= range;
-    if (!inRange) continue;
+    const gap = gapBetween(attacker, e, ctx);
+    if (gap > range) continue;
+    // Lone Operative: unless attached, only targetable by ranged attacks within 12"
+    // (ignored by a Deadshot attacker, e.g. the Vindicare).
+    if (
+      hasLoneOperative(eDs) &&
+      (e.attachedLeaders ?? []).length === 0 &&
+      gap > 12 &&
+      !ignoresLoneOperative(aDs)
+    ) {
+      continue;
+    }
     const visible = kw.indirectFire || unitCanSee(aPts, alivePts(e), state.layout.terrain);
     if (visible) out.push(e);
   }
@@ -136,7 +158,7 @@ export function validUnitShootingTargets(
   const ids = new Set<string>();
   const out: UnitInstance[] = [];
   for (const w of fire) {
-    for (const t of validShootingTargets(attacker, w.weapon.name, state, ctx)) {
+    for (const t of validShootingTargets(attacker, w.weapon.name, state, ctx, w.sourceDsId)) {
       if (ids.has(t.id)) continue;
       if (engaged.length > 0 && !engaged.some((e) => e.id === t.id)) continue;
       ids.add(t.id);
@@ -154,7 +176,10 @@ export function chargeTargets(u: UnitInstance, state: GameState, ctx: EngineCont
 
 export function eligibleToCharge(u: UnitInstance, state: GameState, ctx: EngineContext): Eligibility {
   if (!isOnBoard(u)) return { eligible: false, reason: 'not on the battlefield' };
-  if (u.status.advanced) return { eligible: false, reason: 'Advanced this turn' };
+  // Frenzon-style abilities allow declaring a charge in a turn the unit Advanced.
+  if (u.status.advanced && !canActAfterAdvance(dsOf(u, ctx)).charge) {
+    return { eligible: false, reason: 'Advanced this turn' };
+  }
   if (u.status.fellBack) return { eligible: false, reason: 'Fell Back this turn' };
   if (u.status.charged) return { eligible: false, reason: 'already charged this turn' };
   if (u.status.chargeAttempted) return { eligible: false, reason: 'already declared a charge this phase' };
@@ -182,8 +207,9 @@ export function eligibleToFight(u: UnitInstance, state: GameState, ctx: EngineCo
 /** Does this unit have Fights First this turn? (It charged, or has an innate Fights First.) */
 export function hasFightsFirst(u: UnitInstance, ctx: EngineContext): boolean {
   if (u.status.charged) return true;
-  const ds = dsOf(u, ctx);
-  return !!ds?.abilityIds?.some((a) => a.toLowerCase().includes('fights first'));
+  // The ability list carries resolved names; abilityIds are numeric Wahapedia ids, so the old
+  // id-based check could never match (the Callidus' innate Fights First was silently lost).
+  return hasFightsFirstAbility(dsOf(u, ctx));
 }
 
 /**
@@ -250,4 +276,25 @@ export function orderableUnits(officer: UnitInstance, state: GameState, ctx: Eng
 export function reservesArrivable(state: GameState): UnitInstance[] {
   if (state.round < 2) return [];
   return state.units.filter((u) => u.inReserves && u.owner === state.activePlayer);
+}
+
+// ── Scout moves (pre-battle) ─────────────────────────────────────────────────
+/** Units of `side` (or both sides) that still have a Scouts X" move to make or decline. */
+export function pendingScoutUnits(state: GameState, ctx: EngineContext, side?: Side): UnitInstance[] {
+  return state.units.filter(
+    (u) =>
+      (!side || u.owner === side) &&
+      isOnBoard(u) &&
+      !u.status.scouted &&
+      unitScoutDistance(u, ctx) != null,
+  );
+}
+
+/** Whose Scout move is next: the first-turn player resolves all of theirs first (10e Scouts). */
+export function scoutTurn(state: GameState, ctx: EngineContext): Side | null {
+  const first = state.setup?.firstTurn ?? state.firstPlayer;
+  if (pendingScoutUnits(state, ctx, first).length > 0) return first;
+  const other: Side = first === 'player' ? 'ai' : 'player';
+  if (pendingScoutUnits(state, ctx, other).length > 0) return other;
+  return null;
 }

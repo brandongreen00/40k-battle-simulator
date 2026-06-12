@@ -99,7 +99,8 @@
       {
         "name": "Scouts",
         "description": "SCOUTS Scouts form the vanguard of many armies. Unnoticed by the enemy, they range ahead of the main force. Some units have ‘Scouts x\"’ listed in their abilities. If every model in a unit has this ability, then at the start of the first battle round, before the first turn begins, it can make a Normal move of up to x\", with the exception that, while making that move, the distance moved by each model in that unit can be greater than that model's Move characteristic, as long as it is not greater than x\". DEDICATED TRANSPORT models can make use of any Scouts x\" ability listed in their abilities, or a Scouts x\" ability that a unit that starts the battle embarked within that DEDICATED TRANSPORT model has (provided only models with this ability are embarked within that DEDICATED TRANSPORT model), regardless of how that embarked unit gained this ability (e.g. listed in their abilities, conferred by an Enhancement or by an attached CHARACTER, etc.). A unit that moves using this ability must end that move more than 9\" horizontally away from all enemy models. If both players have units that can do this, the player who is taking the first turn moves their units first. Example: A unit has the Scouts 6\" ability. At the start of the first battle round, the controlling player can make a Normal move with that unit of up to 6\". • Scouts x\": Unit can make a Normal move of up to x\" before the first turn begins. • If embarked in a DEDICATED TRANSPORT, that DEDICATED TRANSPORT can make this move instead. • Must end this move more than 9\" horizontally away from all enemy models.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "6\""
       },
       {
         "name": "Voice of Command",
@@ -691,7 +692,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Hover",
@@ -887,7 +889,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6+2"
       },
       {
         "name": "Rolling Fortress",
@@ -1061,7 +1064,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Pinning Bombardment",
@@ -1275,7 +1279,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "1"
       },
       {
         "name": "Mobile Hunter-killers",
@@ -1518,7 +1523,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "1"
       },
       {
         "name": "Hover",
@@ -1648,7 +1654,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Recovery Vehicle",
@@ -1922,7 +1929,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6"
       },
       {
         "name": "Fiery Vengeance",
@@ -2085,7 +2093,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6+2"
       },
       {
         "name": "Rolling Fortress",
@@ -2220,12 +2229,14 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6+2"
       },
       {
         "name": "Firing Deck",
         "description": "FIRING DECK Some transports have firing hatches, ports or platforms from which embarked passengers can shoot. Some TRANSPORT models have ‘Firing Deck x’ listed in their abilities. Each time such a model is selected to shoot in the Shooting phase, you can select up to ‘x’ models embarked within it whose units have not already shot this phase. Then, for each of those embarked models, you can select one ranged weapon that embarked model is equipped with (excluding weapons with the [ONE SHOT] ability). Until that TRANSPORT model has resolved all of its attacks, it counts as being equipped with all of the weapons you selected in this way, in addition to its other weapons. Until the end of the phase, those selected models’ units are not eligible to shoot. • Firing Deck ‘x’: Each time this TRANSPORT shoots, select one weapon (excluding weapons with the [ONE SHOT] ability) from up to ‘x’ models embarked within it whose units have not shot this phase; this TRANSPORT counts as being equipped with those weapons as well. Until the end of the phase, those selected models’ units are not eligible to shoot.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "6"
       },
       {
         "name": "Tremor Quake",
@@ -2359,7 +2370,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6+2"
       },
       {
         "name": "Armour Obliteration",
@@ -2494,7 +2506,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Earthshaker Rounds",
@@ -2598,7 +2611,8 @@
       {
         "name": "Feel No Pain",
         "description": "FEEL NO PAIN Some warriors refuse to be laid low, even by what should be fatal wounds. Some models have ‘Feel No Pain x+’ listed in their abilities. Each time a model with this ability suffers damage and so would lose a wound (including wounds lost due to mortal wounds), roll one D6: if the result is greater than or equal to the number denoted by ‘x’, that wound is ignored and is not lost. If a model has more than one Feel No Pain ability, you can only use one of those abilities each time that model suffers damage and so would lose a wound. • Feel No Pain x+: Each time this model would lose a wound, roll one D6: if the result equals or exceeds ‘x’, that wound is not lost.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "6+"
       },
       {
         "name": "Wall of Muscle",
@@ -4135,7 +4149,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Ancient Conquest",
@@ -4464,7 +4479,8 @@
       {
         "name": "Scouts",
         "description": "SCOUTS Scouts form the vanguard of many armies. Unnoticed by the enemy, they range ahead of the main force. Some units have ‘Scouts x\"’ listed in their abilities. If every model in a unit has this ability, then at the start of the first battle round, before the first turn begins, it can make a Normal move of up to x\", with the exception that, while making that move, the distance moved by each model in that unit can be greater than that model's Move characteristic, as long as it is not greater than x\". DEDICATED TRANSPORT models can make use of any Scouts x\" ability listed in their abilities, or a Scouts x\" ability that a unit that starts the battle embarked within that DEDICATED TRANSPORT model has (provided only models with this ability are embarked within that DEDICATED TRANSPORT model), regardless of how that embarked unit gained this ability (e.g. listed in their abilities, conferred by an Enhancement or by an attached CHARACTER, etc.). A unit that moves using this ability must end that move more than 9\" horizontally away from all enemy models. If both players have units that can do this, the player who is taking the first turn moves their units first. Example: A unit has the Scouts 6\" ability. At the start of the first battle round, the controlling player can make a Normal move with that unit of up to 6\". • Scouts x\": Unit can make a Normal move of up to x\" before the first turn begins. • If embarked in a DEDICATED TRANSPORT, that DEDICATED TRANSPORT can make this move instead. • Must end this move more than 9\" horizontally away from all enemy models.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "6\""
       },
       {
         "name": "Voice of Command",
@@ -4699,7 +4715,8 @@
       {
         "name": "Scouts",
         "description": "SCOUTS Scouts form the vanguard of many armies. Unnoticed by the enemy, they range ahead of the main force. Some units have ‘Scouts x\"’ listed in their abilities. If every model in a unit has this ability, then at the start of the first battle round, before the first turn begins, it can make a Normal move of up to x\", with the exception that, while making that move, the distance moved by each model in that unit can be greater than that model's Move characteristic, as long as it is not greater than x\". DEDICATED TRANSPORT models can make use of any Scouts x\" ability listed in their abilities, or a Scouts x\" ability that a unit that starts the battle embarked within that DEDICATED TRANSPORT model has (provided only models with this ability are embarked within that DEDICATED TRANSPORT model), regardless of how that embarked unit gained this ability (e.g. listed in their abilities, conferred by an Enhancement or by an attached CHARACTER, etc.). A unit that moves using this ability must end that move more than 9\" horizontally away from all enemy models. If both players have units that can do this, the player who is taking the first turn moves their units first. Example: A unit has the Scouts 6\" ability. At the start of the first battle round, the controlling player can make a Normal move with that unit of up to 6\". • Scouts x\": Unit can make a Normal move of up to x\" before the first turn begins. • If embarked in a DEDICATED TRANSPORT, that DEDICATED TRANSPORT can make this move instead. • Must end this move more than 9\" horizontally away from all enemy models.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "6\""
       },
       {
         "name": "Bring it Down!",
@@ -4823,7 +4840,8 @@
       {
         "name": "Scouts",
         "description": "SCOUTS Scouts form the vanguard of many armies. Unnoticed by the enemy, they range ahead of the main force. Some units have ‘Scouts x\"’ listed in their abilities. If every model in a unit has this ability, then at the start of the first battle round, before the first turn begins, it can make a Normal move of up to x\", with the exception that, while making that move, the distance moved by each model in that unit can be greater than that model's Move characteristic, as long as it is not greater than x\". DEDICATED TRANSPORT models can make use of any Scouts x\" ability listed in their abilities, or a Scouts x\" ability that a unit that starts the battle embarked within that DEDICATED TRANSPORT model has (provided only models with this ability are embarked within that DEDICATED TRANSPORT model), regardless of how that embarked unit gained this ability (e.g. listed in their abilities, conferred by an Enhancement or by an attached CHARACTER, etc.). A unit that moves using this ability must end that move more than 9\" horizontally away from all enemy models. If both players have units that can do this, the player who is taking the first turn moves their units first. Example: A unit has the Scouts 6\" ability. At the start of the first battle round, the controlling player can make a Normal move with that unit of up to 6\". • Scouts x\": Unit can make a Normal move of up to x\" before the first turn begins. • If embarked in a DEDICATED TRANSPORT, that DEDICATED TRANSPORT can make this move instead. • Must end this move more than 9\" horizontally away from all enemy models.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "6\""
       },
       {
         "name": "Jungle Fighters",
@@ -4957,7 +4975,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "1"
       },
       {
         "name": "Blistering Advance",
@@ -5051,12 +5070,14 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Firing Deck",
         "description": "FIRING DECK Some transports have firing hatches, ports or platforms from which embarked passengers can shoot. Some TRANSPORT models have ‘Firing Deck x’ listed in their abilities. Each time such a model is selected to shoot in the Shooting phase, you can select up to ‘x’ models embarked within it whose units have not already shot this phase. Then, for each of those embarked models, you can select one ranged weapon that embarked model is equipped with (excluding weapons with the [ONE SHOT] ability). Until that TRANSPORT model has resolved all of its attacks, it counts as being equipped with all of the weapons you selected in this way, in addition to its other weapons. Until the end of the phase, those selected models’ units are not eligible to shoot. • Firing Deck ‘x’: Each time this TRANSPORT shoots, select one weapon (excluding weapons with the [ONE SHOT] ability) from up to ‘x’ models embarked within it whose units have not shot this phase; this TRANSPORT counts as being equipped with those weapons as well. Until the end of the phase, those selected models’ units are not eligible to shoot.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "12"
       },
       {
         "name": "Rapid Strike Vehicle",
@@ -5222,12 +5243,14 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Firing Deck",
         "description": "FIRING DECK Some transports have firing hatches, ports or platforms from which embarked passengers can shoot. Some TRANSPORT models have ‘Firing Deck x’ listed in their abilities. Each time such a model is selected to shoot in the Shooting phase, you can select up to ‘x’ models embarked within it whose units have not already shot this phase. Then, for each of those embarked models, you can select one ranged weapon that embarked model is equipped with (excluding weapons with the [ONE SHOT] ability). Until that TRANSPORT model has resolved all of its attacks, it counts as being equipped with all of the weapons you selected in this way, in addition to its other weapons. Until the end of the phase, those selected models’ units are not eligible to shoot. • Firing Deck ‘x’: Each time this TRANSPORT shoots, select one weapon (excluding weapons with the [ONE SHOT] ability) from up to ‘x’ models embarked within it whose units have not shot this phase; this TRANSPORT counts as being equipped with those weapons as well. Until the end of the phase, those selected models’ units are not eligible to shoot.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "2"
       },
       {
         "name": "Mobile Command Vehicle",
@@ -5379,7 +5402,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6"
       },
       {
         "name": "Tracking Target",
@@ -5669,7 +5693,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Voice of Command",
@@ -6111,7 +6136,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6"
       },
       {
         "name": "Hover",
@@ -6264,7 +6290,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6"
       },
       {
         "name": "Fire Support",
@@ -6466,7 +6493,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "1"
       },
       {
         "name": "Demolition Charges",
@@ -6567,7 +6595,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "1"
       },
       {
         "name": "Assigned Agents",
@@ -7781,7 +7810,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6"
       },
       {
         "name": "Deathstrike Missile",
@@ -8514,7 +8544,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6+2"
       },
       {
         "name": "Pinning Bombardment",
@@ -8663,12 +8694,14 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6+2"
       },
       {
         "name": "Firing Deck",
         "description": "FIRING DECK Some transports have firing hatches, ports or platforms from which embarked passengers can shoot. Some TRANSPORT models have ‘Firing Deck x’ listed in their abilities. Each time such a model is selected to shoot in the Shooting phase, you can select up to ‘x’ models embarked within it whose units have not already shot this phase. Then, for each of those embarked models, you can select one ranged weapon that embarked model is equipped with (excluding weapons with the [ONE SHOT] ability). Until that TRANSPORT model has resolved all of its attacks, it counts as being equipped with all of the weapons you selected in this way, in addition to its other weapons. Until the end of the phase, those selected models’ units are not eligible to shoot. • Firing Deck ‘x’: Each time this TRANSPORT shoots, select one weapon (excluding weapons with the [ONE SHOT] ability) from up to ‘x’ models embarked within it whose units have not shot this phase; this TRANSPORT counts as being equipped with those weapons as well. Until the end of the phase, those selected models’ units are not eligible to shoot.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "6"
       },
       {
         "name": "Close-range Titan Killer",
@@ -8841,7 +8874,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "1"
       },
       {
         "name": "Earthshaker Rounds",
@@ -8979,7 +9013,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "1"
       },
       {
         "name": "Deep Strike",
@@ -9198,7 +9233,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Lone Operative",
@@ -9208,7 +9244,8 @@
       {
         "name": "Scouts",
         "description": "SCOUTS Scouts form the vanguard of many armies. Unnoticed by the enemy, they range ahead of the main force. Some units have ‘Scouts x\"’ listed in their abilities. If every model in a unit has this ability, then at the start of the first battle round, before the first turn begins, it can make a Normal move of up to x\", with the exception that, while making that move, the distance moved by each model in that unit can be greater than that model's Move characteristic, as long as it is not greater than x\". DEDICATED TRANSPORT models can make use of any Scouts x\" ability listed in their abilities, or a Scouts x\" ability that a unit that starts the battle embarked within that DEDICATED TRANSPORT model has (provided only models with this ability are embarked within that DEDICATED TRANSPORT model), regardless of how that embarked unit gained this ability (e.g. listed in their abilities, conferred by an Enhancement or by an attached CHARACTER, etc.). A unit that moves using this ability must end that move more than 9\" horizontally away from all enemy models. If both players have units that can do this, the player who is taking the first turn moves their units first. Example: A unit has the Scouts 6\" ability. At the start of the first battle round, the controlling player can make a Normal move with that unit of up to 6\". • Scouts x\": Unit can make a Normal move of up to x\" before the first turn begins. • If embarked in a DEDICATED TRANSPORT, that DEDICATED TRANSPORT can make this move instead. • Must end this move more than 9\" horizontally away from all enemy models.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "9\""
       },
       {
         "name": "Assigned Agents",
@@ -10268,7 +10305,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6+2"
       },
       {
         "name": "Mount Up!",
@@ -10602,7 +10640,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Suppression Bombardment",
@@ -11206,7 +11245,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6+2"
       },
       {
         "name": "Close-quarters Warfare",
@@ -11381,7 +11421,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6"
       },
       {
         "name": "Flush Them Out",
@@ -11555,7 +11596,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "1"
       },
       {
         "name": "Convoy Escort Vehicle",
@@ -11694,7 +11736,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Flak Battery",
@@ -11788,7 +11831,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "1"
       },
       {
         "name": "Flak Battery",
@@ -12190,12 +12234,14 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Firing Deck",
         "description": "FIRING DECK Some transports have firing hatches, ports or platforms from which embarked passengers can shoot. Some TRANSPORT models have ‘Firing Deck x’ listed in their abilities. Each time such a model is selected to shoot in the Shooting phase, you can select up to ‘x’ models embarked within it whose units have not already shot this phase. Then, for each of those embarked models, you can select one ranged weapon that embarked model is equipped with (excluding weapons with the [ONE SHOT] ability). Until that TRANSPORT model has resolved all of its attacks, it counts as being equipped with all of the weapons you selected in this way, in addition to its other weapons. Until the end of the phase, those selected models’ units are not eligible to shoot. • Firing Deck ‘x’: Each time this TRANSPORT shoots, select one weapon (excluding weapons with the [ONE SHOT] ability) from up to ‘x’ models embarked within it whose units have not shot this phase; this TRANSPORT counts as being equipped with those weapons as well. Until the end of the phase, those selected models’ units are not eligible to shoot.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "2"
       },
       {
         "name": "Assigned Agents",
@@ -13078,7 +13124,8 @@
       {
         "name": "Feel No Pain",
         "description": "FEEL NO PAIN Some warriors refuse to be laid low, even by what should be fatal wounds. Some models have ‘Feel No Pain x+’ listed in their abilities. Each time a model with this ability suffers damage and so would lose a wound (including wounds lost due to mortal wounds), roll one D6: if the result is greater than or equal to the number denoted by ‘x’, that wound is ignored and is not lost. If a model has more than one Feel No Pain ability, you can only use one of those abilities each time that model suffers damage and so would lose a wound. • Feel No Pain x+: Each time this model would lose a wound, roll one D6: if the result equals or exceeds ‘x’, that wound is not lost.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "6+"
       },
       {
         "name": "Leader",
@@ -13555,7 +13602,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "1"
       },
       {
         "name": "Assigned Agents",
@@ -13689,7 +13737,8 @@
       {
         "name": "Scouts",
         "description": "SCOUTS Scouts form the vanguard of many armies. Unnoticed by the enemy, they range ahead of the main force. Some units have ‘Scouts x\"’ listed in their abilities. If every model in a unit has this ability, then at the start of the first battle round, before the first turn begins, it can make a Normal move of up to x\", with the exception that, while making that move, the distance moved by each model in that unit can be greater than that model's Move characteristic, as long as it is not greater than x\". DEDICATED TRANSPORT models can make use of any Scouts x\" ability listed in their abilities, or a Scouts x\" ability that a unit that starts the battle embarked within that DEDICATED TRANSPORT model has (provided only models with this ability are embarked within that DEDICATED TRANSPORT model), regardless of how that embarked unit gained this ability (e.g. listed in their abilities, conferred by an Enhancement or by an attached CHARACTER, etc.). A unit that moves using this ability must end that move more than 9\" horizontally away from all enemy models. If both players have units that can do this, the player who is taking the first turn moves their units first. Example: A unit has the Scouts 6\" ability. At the start of the first battle round, the controlling player can make a Normal move with that unit of up to 6\". • Scouts x\": Unit can make a Normal move of up to x\" before the first turn begins. • If embarked in a DEDICATED TRANSPORT, that DEDICATED TRANSPORT can make this move instead. • Must end this move more than 9\" horizontally away from all enemy models.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "6\""
       },
       {
         "name": "Assigned Agents",
@@ -13814,7 +13863,8 @@
       {
         "name": "Feel No Pain",
         "description": "FEEL NO PAIN Some warriors refuse to be laid low, even by what should be fatal wounds. Some models have ‘Feel No Pain x+’ listed in their abilities. Each time a model with this ability suffers damage and so would lose a wound (including wounds lost due to mortal wounds), roll one D6: if the result is greater than or equal to the number denoted by ‘x’, that wound is ignored and is not lost. If a model has more than one Feel No Pain ability, you can only use one of those abilities each time that model suffers damage and so would lose a wound. • Feel No Pain x+: Each time this model would lose a wound, roll one D6: if the result equals or exceeds ‘x’, that wound is not lost.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "4+"
       },
       {
         "name": "Leader",
@@ -14279,12 +14329,14 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Firing Deck",
         "description": "FIRING DECK Some transports have firing hatches, ports or platforms from which embarked passengers can shoot. Some TRANSPORT models have ‘Firing Deck x’ listed in their abilities. Each time such a model is selected to shoot in the Shooting phase, you can select up to ‘x’ models embarked within it whose units have not already shot this phase. Then, for each of those embarked models, you can select one ranged weapon that embarked model is equipped with (excluding weapons with the [ONE SHOT] ability). Until that TRANSPORT model has resolved all of its attacks, it counts as being equipped with all of the weapons you selected in this way, in addition to its other weapons. Until the end of the phase, those selected models’ units are not eligible to shoot. • Firing Deck ‘x’: Each time this TRANSPORT shoots, select one weapon (excluding weapons with the [ONE SHOT] ability) from up to ‘x’ models embarked within it whose units have not shot this phase; this TRANSPORT counts as being equipped with those weapons as well. Until the end of the phase, those selected models’ units are not eligible to shoot.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "2"
       },
       {
         "name": "Assigned Agents",
@@ -14805,7 +14857,8 @@
       {
         "name": "Scouts",
         "description": "SCOUTS Scouts form the vanguard of many armies. Unnoticed by the enemy, they range ahead of the main force. Some units have ‘Scouts x\"’ listed in their abilities. If every model in a unit has this ability, then at the start of the first battle round, before the first turn begins, it can make a Normal move of up to x\", with the exception that, while making that move, the distance moved by each model in that unit can be greater than that model's Move characteristic, as long as it is not greater than x\". DEDICATED TRANSPORT models can make use of any Scouts x\" ability listed in their abilities, or a Scouts x\" ability that a unit that starts the battle embarked within that DEDICATED TRANSPORT model has (provided only models with this ability are embarked within that DEDICATED TRANSPORT model), regardless of how that embarked unit gained this ability (e.g. listed in their abilities, conferred by an Enhancement or by an attached CHARACTER, etc.). A unit that moves using this ability must end that move more than 9\" horizontally away from all enemy models. If both players have units that can do this, the player who is taking the first turn moves their units first. Example: A unit has the Scouts 6\" ability. At the start of the first battle round, the controlling player can make a Normal move with that unit of up to 6\". • Scouts x\": Unit can make a Normal move of up to x\" before the first turn begins. • If embarked in a DEDICATED TRANSPORT, that DEDICATED TRANSPORT can make this move instead. • Must end this move more than 9\" horizontally away from all enemy models.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "6\""
       },
       {
         "name": "Warrior Elite",
@@ -15391,7 +15444,8 @@
       {
         "name": "Scouts",
         "description": "SCOUTS Scouts form the vanguard of many armies. Unnoticed by the enemy, they range ahead of the main force. Some units have ‘Scouts x\"’ listed in their abilities. If every model in a unit has this ability, then at the start of the first battle round, before the first turn begins, it can make a Normal move of up to x\", with the exception that, while making that move, the distance moved by each model in that unit can be greater than that model's Move characteristic, as long as it is not greater than x\". DEDICATED TRANSPORT models can make use of any Scouts x\" ability listed in their abilities, or a Scouts x\" ability that a unit that starts the battle embarked within that DEDICATED TRANSPORT model has (provided only models with this ability are embarked within that DEDICATED TRANSPORT model), regardless of how that embarked unit gained this ability (e.g. listed in their abilities, conferred by an Enhancement or by an attached CHARACTER, etc.). A unit that moves using this ability must end that move more than 9\" horizontally away from all enemy models. If both players have units that can do this, the player who is taking the first turn moves their units first. Example: A unit has the Scouts 6\" ability. At the start of the first battle round, the controlling player can make a Normal move with that unit of up to 6\". • Scouts x\": Unit can make a Normal move of up to x\" before the first turn begins. • If embarked in a DEDICATED TRANSPORT, that DEDICATED TRANSPORT can make this move instead. • Must end this move more than 9\" horizontally away from all enemy models.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "6\""
       },
       {
         "name": "Grenadiers",
@@ -16119,7 +16173,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Armoured Spearhead",
@@ -16418,7 +16473,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Voice of Command",
@@ -16675,7 +16731,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Line-breaker",
@@ -16907,7 +16964,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Urban Warfare",
@@ -17152,7 +17210,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Gung-ho Executioners",
@@ -17384,7 +17443,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Withering Hail",
@@ -17613,7 +17673,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Mow Down the Enemy",
@@ -17844,7 +17905,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Tank-killer",
@@ -17982,7 +18044,8 @@
       {
         "name": "Feel No Pain",
         "description": "FEEL NO PAIN Some warriors refuse to be laid low, even by what should be fatal wounds. Some models have ‘Feel No Pain x+’ listed in their abilities. Each time a model with this ability suffers damage and so would lose a wound (including wounds lost due to mortal wounds), roll one D6: if the result is greater than or equal to the number denoted by ‘x’, that wound is ignored and is not lost. If a model has more than one Feel No Pain ability, you can only use one of those abilities each time that model suffers damage and so would lose a wound. • Feel No Pain x+: Each time this model would lose a wound, roll one D6: if the result equals or exceeds ‘x’, that wound is not lost.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "6+"
       },
       {
         "name": "Voice of Command",
@@ -18286,7 +18349,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6+2"
       },
       {
         "name": "Battlefield Control",
@@ -18482,7 +18546,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6+2"
       },
       {
         "name": "Overwhelming Short-range Firepower",
@@ -18669,7 +18734,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6+2"
       },
       {
         "name": "Tank Hunter",
@@ -18854,7 +18920,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6+2"
       },
       {
         "name": "Armoured Aggressor",
@@ -19033,7 +19100,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6"
       },
       {
         "name": "Rugged Reliability",
@@ -19232,7 +19300,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6"
       },
       {
         "name": "Battlefield Dominance",
@@ -19411,7 +19480,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6"
       },
       {
         "name": "Armoured Defender",
@@ -19605,7 +19675,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6"
       },
       {
         "name": "One Shot",
@@ -19755,7 +19826,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Furious Barrage",
@@ -19849,7 +19921,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "1"
       },
       {
         "name": "Furious Barrage",
@@ -19957,7 +20030,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6+2"
       },
       {
         "name": "Heavy Bombs",
@@ -20088,7 +20162,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6+2"
       },
       {
         "name": "Bomb Drop",
@@ -20834,7 +20909,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6"
       },
       {
         "name": "Armoured Frontis",
@@ -21058,7 +21134,8 @@
       {
         "name": "Scouts",
         "description": "SCOUTS Scouts form the vanguard of many armies. Unnoticed by the enemy, they range ahead of the main force. Some units have ‘Scouts x\"’ listed in their abilities. If every model in a unit has this ability, then at the start of the first battle round, before the first turn begins, it can make a Normal move of up to x\", with the exception that, while making that move, the distance moved by each model in that unit can be greater than that model's Move characteristic, as long as it is not greater than x\". DEDICATED TRANSPORT models can make use of any Scouts x\" ability listed in their abilities, or a Scouts x\" ability that a unit that starts the battle embarked within that DEDICATED TRANSPORT model has (provided only models with this ability are embarked within that DEDICATED TRANSPORT model), regardless of how that embarked unit gained this ability (e.g. listed in their abilities, conferred by an Enhancement or by an attached CHARACTER, etc.). A unit that moves using this ability must end that move more than 9\" horizontally away from all enemy models. If both players have units that can do this, the player who is taking the first turn moves their units first. Example: A unit has the Scouts 6\" ability. At the start of the first battle round, the controlling player can make a Normal move with that unit of up to 6\". • Scouts x\": Unit can make a Normal move of up to x\" before the first turn begins. • If embarked in a DEDICATED TRANSPORT, that DEDICATED TRANSPORT can make this move instead. • Must end this move more than 9\" horizontally away from all enemy models.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "6\""
       },
       {
         "name": "Desert Riders",
@@ -21519,7 +21596,8 @@
       {
         "name": "Feel No Pain",
         "description": "FEEL NO PAIN Some warriors refuse to be laid low, even by what should be fatal wounds. Some models have ‘Feel No Pain x+’ listed in their abilities. Each time a model with this ability suffers damage and so would lose a wound (including wounds lost due to mortal wounds), roll one D6: if the result is greater than or equal to the number denoted by ‘x’, that wound is ignored and is not lost. If a model has more than one Feel No Pain ability, you can only use one of those abilities each time that model suffers damage and so would lose a wound. • Feel No Pain x+: Each time this model would lose a wound, roll one D6: if the result equals or exceeds ‘x’, that wound is not lost.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "5+"
       },
       {
         "name": "Ogryn Bodyguard",
@@ -21654,7 +21732,8 @@
       {
         "name": "Feel No Pain",
         "description": "FEEL NO PAIN Some warriors refuse to be laid low, even by what should be fatal wounds. Some models have ‘Feel No Pain x+’ listed in their abilities. Each time a model with this ability suffers damage and so would lose a wound (including wounds lost due to mortal wounds), roll one D6: if the result is greater than or equal to the number denoted by ‘x’, that wound is ignored and is not lost. If a model has more than one Feel No Pain ability, you can only use one of those abilities each time that model suffers damage and so would lose a wound. • Feel No Pain x+: Each time this model would lose a wound, roll one D6: if the result equals or exceeds ‘x’, that wound is not lost.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "6+"
       },
       {
         "name": "Ogryn Bodyguard",
@@ -21764,7 +21843,8 @@
       {
         "name": "Feel No Pain",
         "description": "FEEL NO PAIN Some warriors refuse to be laid low, even by what should be fatal wounds. Some models have ‘Feel No Pain x+’ listed in their abilities. Each time a model with this ability suffers damage and so would lose a wound (including wounds lost due to mortal wounds), roll one D6: if the result is greater than or equal to the number denoted by ‘x’, that wound is ignored and is not lost. If a model has more than one Feel No Pain ability, you can only use one of those abilities each time that model suffers damage and so would lose a wound. • Feel No Pain x+: Each time this model would lose a wound, roll one D6: if the result equals or exceeds ‘x’, that wound is not lost.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "6+"
       },
       {
         "name": "Point-blank Barrage",
@@ -21914,7 +21994,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6"
       },
       {
         "name": "Targeting Coordinates",
@@ -23345,7 +23426,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6"
       },
       {
         "name": "Ablative Plating",
@@ -23540,7 +23622,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6"
       },
       {
         "name": "Voice of Command",
@@ -24035,7 +24118,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Auspex Surveyor",
@@ -24184,12 +24268,14 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Scouts",
         "description": "SCOUTS Scouts form the vanguard of many armies. Unnoticed by the enemy, they range ahead of the main force. Some units have ‘Scouts x\"’ listed in their abilities. If every model in a unit has this ability, then at the start of the first battle round, before the first turn begins, it can make a Normal move of up to x\", with the exception that, while making that move, the distance moved by each model in that unit can be greater than that model's Move characteristic, as long as it is not greater than x\". DEDICATED TRANSPORT models can make use of any Scouts x\" ability listed in their abilities, or a Scouts x\" ability that a unit that starts the battle embarked within that DEDICATED TRANSPORT model has (provided only models with this ability are embarked within that DEDICATED TRANSPORT model), regardless of how that embarked unit gained this ability (e.g. listed in their abilities, conferred by an Enhancement or by an attached CHARACTER, etc.). A unit that moves using this ability must end that move more than 9\" horizontally away from all enemy models. If both players have units that can do this, the player who is taking the first turn moves their units first. Example: A unit has the Scouts 6\" ability. At the start of the first battle round, the controlling player can make a Normal move with that unit of up to 6\". • Scouts x\": Unit can make a Normal move of up to x\" before the first turn begins. • If embarked in a DEDICATED TRANSPORT, that DEDICATED TRANSPORT can make this move instead. • Must end this move more than 9\" horizontally away from all enemy models.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "9\""
       },
       {
         "name": "Outflank",
@@ -24393,7 +24479,8 @@
       {
         "name": "Scouts",
         "description": "SCOUTS Scouts form the vanguard of many armies. Unnoticed by the enemy, they range ahead of the main force. Some units have ‘Scouts x\"’ listed in their abilities. If every model in a unit has this ability, then at the start of the first battle round, before the first turn begins, it can make a Normal move of up to x\", with the exception that, while making that move, the distance moved by each model in that unit can be greater than that model's Move characteristic, as long as it is not greater than x\". DEDICATED TRANSPORT models can make use of any Scouts x\" ability listed in their abilities, or a Scouts x\" ability that a unit that starts the battle embarked within that DEDICATED TRANSPORT model has (provided only models with this ability are embarked within that DEDICATED TRANSPORT model), regardless of how that embarked unit gained this ability (e.g. listed in their abilities, conferred by an Enhancement or by an attached CHARACTER, etc.). A unit that moves using this ability must end that move more than 9\" horizontally away from all enemy models. If both players have units that can do this, the player who is taking the first turn moves their units first. Example: A unit has the Scouts 6\" ability. At the start of the first battle round, the controlling player can make a Normal move with that unit of up to 6\". • Scouts x\": Unit can make a Normal move of up to x\" before the first turn begins. • If embarked in a DEDICATED TRANSPORT, that DEDICATED TRANSPORT can make this move instead. • Must end this move more than 9\" horizontally away from all enemy models.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "6\""
       },
       {
         "name": "Assigned Agents",
@@ -24644,12 +24731,14 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "1"
       },
       {
         "name": "Scouts",
         "description": "SCOUTS Scouts form the vanguard of many armies. Unnoticed by the enemy, they range ahead of the main force. Some units have ‘Scouts x\"’ listed in their abilities. If every model in a unit has this ability, then at the start of the first battle round, before the first turn begins, it can make a Normal move of up to x\", with the exception that, while making that move, the distance moved by each model in that unit can be greater than that model's Move characteristic, as long as it is not greater than x\". DEDICATED TRANSPORT models can make use of any Scouts x\" ability listed in their abilities, or a Scouts x\" ability that a unit that starts the battle embarked within that DEDICATED TRANSPORT model has (provided only models with this ability are embarked within that DEDICATED TRANSPORT model), regardless of how that embarked unit gained this ability (e.g. listed in their abilities, conferred by an Enhancement or by an attached CHARACTER, etc.). A unit that moves using this ability must end that move more than 9\" horizontally away from all enemy models. If both players have units that can do this, the player who is taking the first turn moves their units first. Example: A unit has the Scouts 6\" ability. At the start of the first battle round, the controlling player can make a Normal move with that unit of up to 6\". • Scouts x\": Unit can make a Normal move of up to x\" before the first turn begins. • If embarked in a DEDICATED TRANSPORT, that DEDICATED TRANSPORT can make this move instead. • Must end this move more than 9\" horizontally away from all enemy models.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "9\""
       },
       {
         "name": "Daring Recon",
@@ -24747,7 +24836,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "1"
       },
       {
         "name": "Powerlifter Charge",
@@ -24837,7 +24927,8 @@
       {
         "name": "Feel No Pain",
         "description": "FEEL NO PAIN Some warriors refuse to be laid low, even by what should be fatal wounds. Some models have ‘Feel No Pain x+’ listed in their abilities. Each time a model with this ability suffers damage and so would lose a wound (including wounds lost due to mortal wounds), roll one D6: if the result is greater than or equal to the number denoted by ‘x’, that wound is ignored and is not lost. If a model has more than one Feel No Pain ability, you can only use one of those abilities each time that model suffers damage and so would lose a wound. • Feel No Pain x+: Each time this model would lose a wound, roll one D6: if the result equals or exceeds ‘x’, that wound is not lost.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "6+"
       },
       {
         "name": "Leader",
@@ -24847,7 +24938,8 @@
       {
         "name": "Scouts",
         "description": "SCOUTS Scouts form the vanguard of many armies. Unnoticed by the enemy, they range ahead of the main force. Some units have ‘Scouts x\"’ listed in their abilities. If every model in a unit has this ability, then at the start of the first battle round, before the first turn begins, it can make a Normal move of up to x\", with the exception that, while making that move, the distance moved by each model in that unit can be greater than that model's Move characteristic, as long as it is not greater than x\". DEDICATED TRANSPORT models can make use of any Scouts x\" ability listed in their abilities, or a Scouts x\" ability that a unit that starts the battle embarked within that DEDICATED TRANSPORT model has (provided only models with this ability are embarked within that DEDICATED TRANSPORT model), regardless of how that embarked unit gained this ability (e.g. listed in their abilities, conferred by an Enhancement or by an attached CHARACTER, etc.). A unit that moves using this ability must end that move more than 9\" horizontally away from all enemy models. If both players have units that can do this, the player who is taking the first turn moves their units first. Example: A unit has the Scouts 6\" ability. At the start of the first battle round, the controlling player can make a Normal move with that unit of up to 6\". • Scouts x\": Unit can make a Normal move of up to x\" before the first turn begins. • If embarked in a DEDICATED TRANSPORT, that DEDICATED TRANSPORT can make this move instead. • Must end this move more than 9\" horizontally away from all enemy models.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "6\""
       },
       {
         "name": "Voice of Command",
@@ -24992,7 +25084,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6+2"
       },
       {
         "name": "Titan-killer",
@@ -25144,7 +25237,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Assigned Agents",
@@ -25841,7 +25935,8 @@
       {
         "name": "Scouts",
         "description": "SCOUTS Scouts form the vanguard of many armies. Unnoticed by the enemy, they range ahead of the main force. Some units have ‘Scouts x\"’ listed in their abilities. If every model in a unit has this ability, then at the start of the first battle round, before the first turn begins, it can make a Normal move of up to x\", with the exception that, while making that move, the distance moved by each model in that unit can be greater than that model's Move characteristic, as long as it is not greater than x\". DEDICATED TRANSPORT models can make use of any Scouts x\" ability listed in their abilities, or a Scouts x\" ability that a unit that starts the battle embarked within that DEDICATED TRANSPORT model has (provided only models with this ability are embarked within that DEDICATED TRANSPORT model), regardless of how that embarked unit gained this ability (e.g. listed in their abilities, conferred by an Enhancement or by an attached CHARACTER, etc.). A unit that moves using this ability must end that move more than 9\" horizontally away from all enemy models. If both players have units that can do this, the player who is taking the first turn moves their units first. Example: A unit has the Scouts 6\" ability. At the start of the first battle round, the controlling player can make a Normal move with that unit of up to 6\". • Scouts x\": Unit can make a Normal move of up to x\" before the first turn begins. • If embarked in a DEDICATED TRANSPORT, that DEDICATED TRANSPORT can make this move instead. • Must end this move more than 9\" horizontally away from all enemy models.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "6\""
       },
       {
         "name": "Kill Team",
@@ -26068,12 +26163,14 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Firing Deck",
         "description": "FIRING DECK Some transports have firing hatches, ports or platforms from which embarked passengers can shoot. Some TRANSPORT models have ‘Firing Deck x’ listed in their abilities. Each time such a model is selected to shoot in the Shooting phase, you can select up to ‘x’ models embarked within it whose units have not already shot this phase. Then, for each of those embarked models, you can select one ranged weapon that embarked model is equipped with (excluding weapons with the [ONE SHOT] ability). Until that TRANSPORT model has resolved all of its attacks, it counts as being equipped with all of the weapons you selected in this way, in addition to its other weapons. Until the end of the phase, those selected models’ units are not eligible to shoot. • Firing Deck ‘x’: Each time this TRANSPORT shoots, select one weapon (excluding weapons with the [ONE SHOT] ability) from up to ‘x’ models embarked within it whose units have not shot this phase; this TRANSPORT counts as being equipped with those weapons as well. Until the end of the phase, those selected models’ units are not eligible to shoot.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "2"
       },
       {
         "name": "Mobile Command Vehicle",
@@ -26268,7 +26365,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6+2"
       },
       {
         "name": "Close-range Devastation",
@@ -26432,12 +26530,14 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6+2"
       },
       {
         "name": "Firing Deck",
         "description": "FIRING DECK Some transports have firing hatches, ports or platforms from which embarked passengers can shoot. Some TRANSPORT models have ‘Firing Deck x’ listed in their abilities. Each time such a model is selected to shoot in the Shooting phase, you can select up to ‘x’ models embarked within it whose units have not already shot this phase. Then, for each of those embarked models, you can select one ranged weapon that embarked model is equipped with (excluding weapons with the [ONE SHOT] ability). Until that TRANSPORT model has resolved all of its attacks, it counts as being equipped with all of the weapons you selected in this way, in addition to its other weapons. Until the end of the phase, those selected models’ units are not eligible to shoot. • Firing Deck ‘x’: Each time this TRANSPORT shoots, select one weapon (excluding weapons with the [ONE SHOT] ability) from up to ‘x’ models embarked within it whose units have not shot this phase; this TRANSPORT counts as being equipped with those weapons as well. Until the end of the phase, those selected models’ units are not eligible to shoot.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "12"
       },
       {
         "name": "Mount Up!",
@@ -26571,7 +26671,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6+2"
       },
       {
         "name": "Concussive Wave",
@@ -26703,7 +26804,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Tank Hunter",
@@ -26933,7 +27035,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "1"
       },
       {
         "name": "Sentry Programming",
@@ -27065,12 +27168,14 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "1"
       },
       {
         "name": "Scouts",
         "description": "SCOUTS Scouts form the vanguard of many armies. Unnoticed by the enemy, they range ahead of the main force. Some units have ‘Scouts x\"’ listed in their abilities. If every model in a unit has this ability, then at the start of the first battle round, before the first turn begins, it can make a Normal move of up to x\", with the exception that, while making that move, the distance moved by each model in that unit can be greater than that model's Move characteristic, as long as it is not greater than x\". DEDICATED TRANSPORT models can make use of any Scouts x\" ability listed in their abilities, or a Scouts x\" ability that a unit that starts the battle embarked within that DEDICATED TRANSPORT model has (provided only models with this ability are embarked within that DEDICATED TRANSPORT model), regardless of how that embarked unit gained this ability (e.g. listed in their abilities, conferred by an Enhancement or by an attached CHARACTER, etc.). A unit that moves using this ability must end that move more than 9\" horizontally away from all enemy models. If both players have units that can do this, the player who is taking the first turn moves their units first. Example: A unit has the Scouts 6\" ability. At the start of the first battle round, the controlling player can make a Normal move with that unit of up to 6\". • Scouts x\": Unit can make a Normal move of up to x\" before the first turn begins. • If embarked in a DEDICATED TRANSPORT, that DEDICATED TRANSPORT can make this move instead. • Must end this move more than 9\" horizontally away from all enemy models.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "9\""
       },
       {
         "name": "Turbo-boost",
@@ -27190,7 +27295,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "1"
       },
       {
         "name": "Mobile Hunter-killer",
@@ -27299,7 +27405,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Rapid Deployment",
@@ -27467,7 +27574,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Transport Support",
@@ -28293,7 +28401,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Support Vehicle",
@@ -28674,7 +28783,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6+2"
       },
       {
         "name": "Power Overload",
@@ -28830,7 +28940,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6"
       },
       {
         "name": "Hover",
@@ -28957,7 +29068,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6"
       },
       {
         "name": "Hover",
@@ -29076,7 +29188,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Hover",
@@ -29834,7 +29947,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6"
       },
       {
         "name": "Agile Dogfighter",
@@ -29960,7 +30074,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D6"
       },
       {
         "name": "Hover",
@@ -30059,7 +30174,8 @@
       {
         "name": "Feel No Pain",
         "description": "FEEL NO PAIN Some warriors refuse to be laid low, even by what should be fatal wounds. Some models have ‘Feel No Pain x+’ listed in their abilities. Each time a model with this ability suffers damage and so would lose a wound (including wounds lost due to mortal wounds), roll one D6: if the result is greater than or equal to the number denoted by ‘x’, that wound is ignored and is not lost. If a model has more than one Feel No Pain ability, you can only use one of those abilities each time that model suffers damage and so would lose a wound. • Feel No Pain x+: Each time this model would lose a wound, roll one D6: if the result equals or exceeds ‘x’, that wound is not lost.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "6+"
       },
       {
         "name": "Leader",
@@ -30318,7 +30434,8 @@
       {
         "name": "Deadly Demise",
         "description": "DEADLY DEMISE From detonating ammo stores to corrosive innards or frenzied death throes, some targets are deadly even in defeat. Some models have ‘Deadly Demise x’ listed in their abilities. When such a model is destroyed, roll one D6 before removing it from play (if such a model is a TRANSPORT, roll before any embarked models disembark). On a 6, each unit within 6\" of that model suffers a number of mortal wounds denoted by ‘x’ (if this is a random number, roll separately for each unit within 6\"). Example: A TRANSPORT model with the Deadly Demise D3 ability is destroyed. Before any models disembark and before removing it from play, its controlling player rolls one D6, getting a 6. There are three units within 6\" of that destroyed model, so its controlling player rolls one D3 for each of them, inflicting mortal wounds accordingly. • Deadly Demise x: When this model is destroyed, roll one D6. On a 6, each unit within 6\" suffers ‘x’ mortal wounds.",
-        "type": "Core"
+        "type": "Core",
+        "parameter": "D3"
       },
       {
         "name": "Suppression Bombardment",

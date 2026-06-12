@@ -349,7 +349,10 @@ async function main() {
           // Wahapedia decorates `type` with a layout hint, e.g. "Special (правая колонка)" — keep the
           // leading word only (Core / Faction / Datasheet / Wargear / Special / Primarch / …).
           const type = (a['type'] || '').split('(')[0].trim();
-          return { name, description, ...(type ? { type } : {}) };
+          // Parameterised Core abilities (Scouts 9", Deadly Demise D3, Feel No Pain 5+, Firing
+          // Deck 12) carry their per-unit value in the `parameter` column — keep it.
+          const parameter = (a['parameter'] || '').trim();
+          return { name, description, ...(type ? { type } : {}), ...(parameter ? { parameter } : {}) };
         })
         .filter((x) => x.name.length > 0);
 

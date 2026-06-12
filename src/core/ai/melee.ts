@@ -12,6 +12,7 @@ import type { GameState, Side, UnitInstance } from '../types';
 import { eligibleToCharge, chargeTargets, eligibleToFight, engagedEnemies, fightActivationOrder, isOnBoard } from '../phases';
 import { availableUnitWeapons, objectiveControl } from '../engine';
 import { chargeProb, meleeEV, unitGap, unitValue } from './evaluate';
+import { unitRolePlan } from './roles';
 import type { AiAction, AiDeps, AiIntent } from './types';
 import type { AiProfile } from './profile';
 
@@ -32,6 +33,8 @@ export function aiChargeAction(state: GameState, side: Side, profile: AiProfile,
   let best: { charger: string; target: string; score: number; names: string } | null = null;
   const options: { charger: string; target: string; names: string }[] = [];
   for (const c of chargers) {
+    const plan = unitRolePlan(c, ctx);
+    if (plan.chargeWeight <= 0) continue; // snipers/artillery never charge
     for (const t of chargeTargets(c, state, ctx)) {
       const names = `${ctx.datasheets.get(c.datasheetId)?.name ?? c.id} → ${ctx.datasheets.get(t.datasheetId)?.name ?? t.id}`;
       options.push({ charger: c.id, target: t.id, names });
@@ -40,7 +43,7 @@ export function aiChargeAction(state: GameState, side: Side, profile: AiProfile,
       if (p <= 0) continue;
       const value = meleeEV(c, t, ctx, true) + (holdsObjective(t) ? 15 * profile.objective : 0);
       const retaliation = meleeEV(t, c, ctx) * profile.caution;
-      const score = p * (value - retaliation * 0.5);
+      const score = p * (value - retaliation * 0.5) * plan.chargeWeight;
       if (score < profile.chargeThreshold) continue;
       if (!best || score > best.score || (score === best.score && c.id < best.charger)) {
         best = { charger: c.id, target: t.id, score, names };
@@ -86,22 +89,21 @@ export function aiFightAction(state: GameState, side: Side, profile: AiProfile, 
   const target = profile.random && enemies.length > 1 ? enemies[deps.rng.int(0, enemies.length - 1)]! : enemies[0];
 
   const intents: AiIntent[] = [{ intent: { type: 'FightMove', unitId, mode: 'pile_in' } }];
-  if (target) {
+  const hasMelee = availableUnitWeapons(unit, ctx).some((w) => w.weapon.type === 'melee');
+  if (target && hasMelee) {
     const targetId = target.id;
-    // A target may die to an earlier weapon, or the pile-in may not reach — stand down silently.
+    // The target may die to overwatch/abilities, or the pile-in may not reach — stand down silently.
     const cannotHit = (s: GameState): boolean => {
       const me = s.units.find((x) => x.id === unitId);
       const t = s.units.find((x) => x.id === targetId);
       if (!me || !t || !t.models.some((m) => m.alive)) return true;
       return !engagedEnemies(me, s, ctx).some((e) => e.id === targetId);
     };
-    for (const w of availableUnitWeapons(unit, ctx)) {
-      if (w.weapon.type !== 'melee') continue;
-      intents.push({
-        intent: { type: 'Attack', attackerUnitId: unitId, targetUnitId: targetId, weaponName: w.weapon.name, weaponSourceDsId: w.sourceDsId },
-        skipIf: cannotHit,
-      });
-    }
+    // One activation, every melee weapon, per-model weapon picks — same intent the UI button uses.
+    intents.push({
+      intent: { type: 'FightUnit', attackerUnitId: unitId, targetUnitId: targetId },
+      skipIf: cannotHit,
+    });
   }
   intents.push({ intent: { type: 'FightMove', unitId, mode: 'consolidate' } });
   // Mark the activation spent even if the unit had no usable melee weapon (it still piled in),

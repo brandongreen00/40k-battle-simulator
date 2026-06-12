@@ -9,11 +9,13 @@
 
 import type { GameState, Side } from '../types';
 import { otherSide } from '../setup';
+import { scoutTurn } from '../phases';
+import { unitHasWarrant } from '../abilities';
 import type { AiAction, AiDeps, Decision } from './types';
 import { resolveProfile, type AiProfile } from './profile';
 import { aiDeployAction, deployTurn, pendingLeaderAttaches } from './deploy';
 import { aiCommandAction } from './command';
-import { aiMovementAction } from './move';
+import { aiMovementAction, aiScoutAction } from './move';
 import { aiShootingAction } from './shoot';
 import { aiChargeAction } from './melee';
 import { aiFightAction, nextFighter } from './melee';
@@ -23,6 +25,18 @@ export { pickRoster } from './deploy';
 export type { AiAction, AiDeps, AiIntent, Decision } from './types';
 export { AI_PROFILES, resolveProfile, type AiProfile } from './profile';
 
+/** The side (Defender first) with a Warrant of Trade decision or redeploys outstanding, if any. */
+export function warrantPending(state: GameState, deps: AiDeps): Side | null {
+  if (state.stage !== 'setup' || state.setup?.step !== 'deploy') return null;
+  const order: Side[] = state.setup?.defender ? [state.setup.defender, otherSide(state.setup.defender)] : ['player', 'ai'];
+  for (const s of order) {
+    const w = state.setup?.warrant?.[s];
+    if (w && w.remaining > 0) return s; // mid-redeploy
+    if (!w && state.units.some((u) => u.owner === s && unitHasWarrant(u, deps.ctx))) return s; // undecided
+  }
+  return null;
+}
+
 /** Whose decision the game is waiting on right now. */
 export function whoActs(state: GameState, deps: AiDeps): Decision {
   if (state.stage === 'setup') {
@@ -31,13 +45,21 @@ export function whoActs(state: GameState, deps: AiDeps): Decision {
     if (step === 'deploy') {
       const side = deployTurn(state, deps);
       if (side) return { actor: side, reason: `${side} places a unit` };
-      // Everything placed — give either side a chance to finish Leader attaches, then roll on.
+      // Everything placed — give either side a chance to finish Leader attaches, then resolve
+      // Warrant of Trade redeploys, then roll on.
       for (const s of ['player', 'ai'] as const) {
         if (pendingLeaderAttaches(state, s, deps.ctx).length > 0) {
           return { actor: s, reason: `${s} attaches Leaders` };
         }
       }
+      const warrant = warrantPending(state, deps);
+      if (warrant) return { actor: warrant, reason: `${warrant} resolves Warrant of Trade` };
       return { actor: 'shared', reason: 'roll off for the first turn' };
+    }
+    if (step === 'scouts') {
+      const side = scoutTurn(state, deps.ctx);
+      if (side) return { actor: side, reason: `${side} makes Scout moves` };
+      return { actor: 'shared', reason: 'begin the battle' };
     }
     return { actor: 'shared', reason: 'begin the battle' };
   }
@@ -62,7 +84,9 @@ export function sharedAction(state: GameState): AiAction | null {
     if (state.units.length === 0) return null; // nothing deployed — wait for rosters
     return { intents: [{ intent: { type: 'RollFirstTurn' } }], note: 'roll off: first turn' };
   }
-  if (step === 'ready') return { intents: [{ intent: { type: 'BeginBattle' } }], note: 'begin the battle' };
+  if (step === 'scouts' || step === 'ready') {
+    return { intents: [{ intent: { type: 'BeginBattle' } }], note: 'begin the battle' };
+  }
   return null;
 }
 
@@ -76,12 +100,20 @@ export function aiAction(state: GameState, side: Side, profileIn: string | AiPro
 
   if (state.stage === 'setup') {
     const step = state.setup?.step;
+    if (step === 'scouts') {
+      return aiScoutAction(state, side, profile, deps);
+    }
     if (step !== 'deploy') return null; // roll-offs are shared actions
     const turn = deployTurn(state, deps);
     if (turn === side) return aiDeployAction(state, side, profile, deps);
     if (turn === null) {
       const attaches = pendingLeaderAttaches(state, side, deps.ctx);
       if (attaches.length) return { intents: attaches, note: `${side} attaches Leaders` };
+      // Warrant of Trade: the heuristic AI keeps its deployment (declining is always legal; a
+      // redeploy policy is a future profile knob).
+      if (warrantPending(state, deps) === side) {
+        return { intents: [{ intent: { type: 'DeclineWarrant', side } }], note: `${side} declines the Warrant of Trade redeploy` };
+      }
     }
     return null;
   }

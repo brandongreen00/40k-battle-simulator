@@ -27,37 +27,32 @@ describe('AI seats in the real UI (jsdom)', () => {
     fireEvent.click(seatRows[0]!.querySelector('.seg button:nth-child(2)')!);
     expect(getAllByText('AI').length).toBeGreaterThan(0);
 
-    // Let the auto-driver play: each 350ms beat takes one AI action (roll-off, a deployment
-    // drop, an activation…). Deployment of two 13-unit lists plus roll-offs ≈ 30 actions.
-    for (let tick = 0; tick < 80; tick++) {
+    // Let the auto-driver play: each 350ms beat takes one AI action (roll-off, the battle-
+    // formations declaration, a deployment drop — paired Leaders come down WITH their unit —
+    // Scout moves, an activation…). Track that it really passed through deployment on the way.
+    let sawDeployment = false;
+    for (let tick = 0; tick < 160 && !/Round \d/.test(container.textContent ?? ''); tick++) {
       await act(async () => {
         vi.advanceTimersByTime(400);
       });
-      const note = container.querySelector('.ai-note');
-      if (note && /Battle begins|round/i.test(container.textContent ?? '')) break;
+      if (/is Attacker/.test(container.textContent ?? '')) sawDeployment = true;
     }
-
-    // The AI must at least have rolled off and be deploying; give it more beats to reach battle.
-    expect(container.textContent).toMatch(/is Attacker/);
-    for (let tick = 0; tick < 80 && !/Round \d/.test(container.textContent ?? ''); tick++) {
-      await act(async () => {
-        vi.advanceTimersByTime(400);
-      });
-    }
+    expect(sawDeployment).toBe(true);
 
     // Battle reached: the Game panel shows Round 1 and units are on the board.
     expect(container.textContent).toMatch(/Round 1/);
     expect(container.querySelectorAll('.model-token').length).toBeGreaterThan(20);
 
-    // And the game keeps progressing (the AI takes Command/Movement actions, the log grows).
-    const before = container.querySelectorAll('.dicelog div').length;
+    // And the game keeps progressing (the AI takes Command/Movement actions, the log scrolls —
+    // it renders a 40-line window, so compare its CONTENT, not its length).
+    const before = container.querySelector('.dicelog')?.textContent ?? '';
     for (let tick = 0; tick < 12; tick++) {
       await act(async () => {
         vi.advanceTimersByTime(400);
       });
     }
-    const after = container.querySelectorAll('.dicelog div').length;
-    expect(after).toBeGreaterThan(before);
+    const after = container.querySelector('.dicelog')?.textContent ?? '';
+    expect(after).not.toEqual(before);
   }, 120_000);
 
   it('human-vs-AI: the AI deploys only its own units and waits for the human elsewhere', async () => {

@@ -81,6 +81,9 @@ export interface UnitAbility {
   description: string;
   /** 'Core' | 'Faction' | 'Datasheet' | 'Wargear' | 'Special' (Wahapedia's ability type). */
   type?: string;
+  /** Per-unit value of a parameterised Core ability, verbatim — e.g. Scouts '9"', Deadly Demise
+   *  'D3', Feel No Pain '5+', Firing Deck '12'. */
+  parameter?: string;
 }
 
 /** An enhancement: points upgrade for a CHARACTER, scoped to one detachment. */
@@ -184,6 +187,8 @@ export interface UnitStatus {
   charged?: boolean; // completed a charge this turn (Lance, Fights First)
   hasFought?: boolean; // already fought this turn
   battleShocked?: boolean; // failed a Battle-shock test this round
+  /** Resolved (or declined) its pre-battle Scouts X" move. */
+  scouted?: boolean;
   /** Active ability/Order/Stratagem effect ids (see core/effects.ts). Expire at turn reset. */
   activeEffects?: string[];
   // ── Movement-phase activation (transient; set by BeginMove, cleared by EndMove/turn) ──
@@ -237,13 +242,34 @@ export interface BattleShockReport {
 // ── Pre-battle setup / deployment ────────────────────────────────────────────
 export type Stage = 'setup' | 'battle' | 'done';
 
-/** Steps of the pre-battle sequence (mission pack order). */
-export type DeployStep = 'roll_roles' | 'deploy' | 'roll_first_turn' | 'ready';
+/** Steps of the pre-battle sequence (mission pack order). 'scouts' = the pre-battle Scout moves
+ *  window (after the first-turn roll, before the battle begins). */
+export type DeployStep = 'roll_roles' | 'deploy' | 'roll_first_turn' | 'scouts' | 'ready';
 
 export interface RollOff {
   player: number;
   ai: number;
   winner: Side;
+}
+
+/** A Leader→Bodyguard pairing declared before deployment (Declare Battle Formations). The pair
+ *  deploys as one merged unit; `infiltrate` marks a pair that may set up as Infiltrators (both
+ *  have the ability, or a Backroom Deals leader grants it to the unit it leads). */
+export interface DeclaredFormation {
+  side: Side;
+  leaderKey: string; // roster entry key of the Leader ("side:index")
+  leaderDsId: string;
+  bodyguardKey: string; // roster entry key of the Bodyguard unit
+  bodyguardDsId: string;
+  infiltrate?: boolean;
+}
+
+/** Warrant of Trade (Rogue Trader): after both armies have deployed, redeploy up to D3 IMPERIUM
+ *  BATTLELINE units. `remaining` counts down as units are pulled back for redeployment. */
+export interface WarrantState {
+  side: Side;
+  rolled: number; // the D3 result (0 when declined)
+  remaining: number;
 }
 
 export interface SetupState {
@@ -254,6 +280,10 @@ export interface SetupState {
   defender?: Side;
   /** Whose turn it is to place a unit during alternating deployment (Defender first). */
   toDeploy?: Side;
+  /** Leader attachments declared before deployment (Declare Battle Formations). */
+  formations?: DeclaredFormation[];
+  /** Warrant of Trade redeploy state per side, once that side has used (or declined) it. */
+  warrant?: Partial<Record<Side, WarrantState>>;
   /** Roll-off that set the first turn (for the dice display). */
   firstTurnRoll?: RollOff;
   firstTurn?: Side;

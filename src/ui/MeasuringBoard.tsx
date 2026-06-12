@@ -8,6 +8,7 @@ import { unitCoherency, unitCentroid } from '../core/phases';
 import {
   aiAction, aiMayAct, aiReactionToShooting, resolveProfile, sharedAction, whoActs, type AiDeps,
 } from '../core/ai/controller';
+import { formationForBodyguard, isPairedLeader, pairDeployAbility } from '../core/ai/deploy';
 import { dataIndex, datasheetsById, deployAbilityForDatasheet, getDatasheet, layouts, rosters, stratagems } from '../data/loaders';
 import { Board, type Placement, type MovementUI } from './Board';
 import { GamePanel } from './GamePanel';
@@ -208,9 +209,17 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
     return out;
   }
 
-  /** Pick a unit up for deployment placement (ghost tracks the cursor, zone-limited). */
+  /** Pick a unit up for deployment placement (ghost tracks the cursor, zone-limited). A paired
+   *  Bodyguard deploys with its declared pair ability (e.g. Backroom Deals → Infiltrators). */
   function beginDeploy(entry: DeployEntry, side: Side) {
-    setPlacing({ unit: entry.unit, ds: entry.ds, formation: 'block', rotation: 0, side, entryKey: entry.key, ability: deployAbilityForDatasheet(entry.ds) });
+    const pair = formationForBodyguard(state, entry.key);
+    const ability = pair
+      ? (() => {
+          const a = pairDeployAbility(pair, { datasheets: datasheetsById }, deployAbilityForDatasheet);
+          return a === 'deep_strike' ? 'standard' : a; // on-board placement; Reserves handles DS
+        })()
+      : deployAbilityForDatasheet(entry.ds);
+    setPlacing({ unit: entry.unit, ds: entry.ds, formation: 'block', rotation: 0, side, entryKey: entry.key, ability });
   }
   /** Pick a unit up for free sandbox placement (no zone restriction). */
   function beginSandbox(unit: RosterUnit) {
@@ -232,6 +241,27 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
       dispatch({ type: 'ArriveFromReserves', unitId: placing.arriveUnitId, anchor, formation: placing.formation, rotation: placing.rotation });
     } else if (placing.entryKey) {
       dispatch({ type: 'DeployUnit', unitId: placing.entryKey, owner: placing.side, anchor, formation: placing.formation, rotation: placing.rotation, ability: placing.ability, ...common });
+      // A declared pair deploys as ONE unit: the Leader drops on the same anchor and merges
+      // (AttachLeader re-seats its models into base-to-base coherency with the unit).
+      const pair = formationForBodyguard(state, placing.entryKey);
+      const leaderEntry = pair ? entriesFor(placing.side).find((e) => e.key === pair.leaderKey) : undefined;
+      if (pair && leaderEntry) {
+        dispatch({
+          type: 'DeployUnit',
+          unitId: pair.leaderKey,
+          owner: placing.side,
+          anchor,
+          formation: placing.formation,
+          rotation: placing.rotation,
+          ability: placing.ability,
+          datasheetId: leaderEntry.ds.id,
+          baseShape: leaderEntry.ds.baseShape,
+          modelCount: leaderEntry.unit.modelCount,
+          wounds: leaderEntry.ds.models[0]?.W ?? 1,
+          ...(leaderEntry.unit.wargearCounts ? { wargear: leaderEntry.unit.wargearCounts } : {}),
+        });
+        dispatch({ type: 'AttachLeader', leaderUnitId: pair.leaderKey, bodyguardUnitId: placing.entryKey });
+      }
     } else {
       dispatch({ type: 'SpawnUnit', unitId: `u${spawnCount.current++}`, owner: placing.side, anchor, formation: placing.formation, rotation: placing.rotation, ...common });
     }
@@ -253,6 +283,18 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
   function placeReserves(entry: DeployEntry, side: Side) {
     const ds = entry.ds;
     dispatch({ type: 'PlaceInReserves', unitId: entry.key, owner: side, datasheetId: ds.id, baseShape: ds.baseShape, modelCount: entry.unit.modelCount, wounds: ds.models[0]?.W ?? 1, ...(entry.unit.wargearCounts ? { wargear: entry.unit.wargearCounts } : {}) });
+    // A paired Leader follows its unit into Reserves and merges there.
+    const pair = formationForBodyguard(state, entry.key);
+    const leaderEntry = pair ? entriesFor(side).find((e) => e.key === pair.leaderKey) : undefined;
+    if (pair && leaderEntry) {
+      dispatch({
+        type: 'PlaceInReserves',
+        unitId: pair.leaderKey, owner: side, datasheetId: leaderEntry.ds.id, baseShape: leaderEntry.ds.baseShape,
+        modelCount: leaderEntry.unit.modelCount, wounds: leaderEntry.ds.models[0]?.W ?? 1,
+        ...(leaderEntry.unit.wargearCounts ? { wargear: leaderEntry.unit.wargearCounts } : {}),
+      });
+      dispatch({ type: 'AttachLeader', leaderUnitId: pair.leaderKey, bodyguardUnitId: entry.key });
+    }
   }
 
   // The ghost the board renders; carries a legality predicate for deployment / Deep Strike arrival.
@@ -271,8 +313,12 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
       }
     : null;
 
-  // Movement-phase board interaction (drag-select, group move, coherency warnings).
-  const inMovement = state.stage === 'battle' && state.phase === 'Movement' && !placing;
+  // Movement-phase board interaction (drag-select, group move, coherency warnings). The
+  // pre-battle Scout step reuses the same drag machinery (BeginMove 'scout' sets the budget).
+  const inMovement =
+    ((state.stage === 'battle' && state.phase === 'Movement') ||
+      (state.stage === 'setup' && state.setup?.step === 'scouts')) &&
+    !placing;
   const movement: MovementUI | null = inMovement
     ? {
         selectedUnitIds,
@@ -377,10 +423,15 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
                 const placed = isPlaced(e.key);
                 const active = placing?.entryKey === e.key;
                 const reserve = state.units.find((u) => u.id === e.key)?.inReserves;
+                // A paired Leader deploys with its unit, not alone.
+                const paired = isPairedLeader(state, e.key);
+                const pair = formationForBodyguard(state, e.key);
                 return (
                   <li key={e.key} className={placed ? 'placed' : ''}>
                     {placed ? (
                       <span className="spawn done">{reserve ? 'Reserves' : '✓'}</span>
+                    ) : paired ? (
+                      <span className="spawn done" title="Declared as a Leader — deploys merged with its unit">⚑ with unit</span>
                     ) : (
                       <>
                         <button className={`spawn${active ? ' seg-on' : ''}`} onClick={() => (active ? setPlacing(null) : beginDeploy(e, sideToPlace))}>
@@ -389,8 +440,8 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
                         <button className="reserve-btn" title="Place in Reserves (Deep Strike, arrives round 2+)" onClick={() => placeReserves(e, sideToPlace)}>⤓</button>
                       </>
                     )}
-                    <span className="unit-name">{e.ds.name}</span>
-                    <span className="unit-meta">×{e.unit.modelCount}{deployAbilityForDatasheet(e.ds) !== 'standard' ? ` · ${deployAbilityForDatasheet(e.ds) === 'infiltrators' ? 'Infiltrators' : 'Deep Strike'}` : ''}</span>
+                    <span className="unit-name">{e.ds.name}{pair ? ' ⚑' : ''}</span>
+                    <span className="unit-meta">×{e.unit.modelCount}{deployAbilityForDatasheet(e.ds) !== 'standard' ? ` · ${deployAbilityForDatasheet(e.ds) === 'infiltrators' ? 'Infiltrators' : 'Deep Strike'}` : ''}{pair?.infiltrate ? ' · Infiltrators (granted)' : ''}</span>
                   </li>
                 );
               })}
@@ -492,6 +543,8 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
             rosterName={rosterNameBySide}
             setRosterName={setRosterName}
             remaining={remaining}
+            entries={{ player: entriesFor('player'), ai: entriesFor('ai') }}
+            isPlaced={isPlaced}
           />
         ) : (
           <GamePanel
