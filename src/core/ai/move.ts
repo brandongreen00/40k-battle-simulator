@@ -146,8 +146,11 @@ export function planMove(state: GameState, unit: UnitInstance, profile: AiProfil
   }
 
   if (profile.random) {
-    const pick = goals[deps.rng.int(0, goals.length - 1)]!;
-    return { mode: pick.goal ? 'normal' : 'stationary', goal: pick.goal };
+    // True baseline: wander a random legal direction (or hold), no curated goals.
+    if (deps.rng.next() < 0.25) return { mode: 'stationary', goal: null };
+    const ang = deps.rng.next() * 2 * Math.PI;
+    const r = deps.rng.next() * M;
+    return { mode: 'normal', goal: { x: centroid.x + Math.cos(ang) * r, y: centroid.y + Math.sin(ang) * r } };
   }
 
   let best: { score: number; goal: Vec2 | null; advance: boolean } = {

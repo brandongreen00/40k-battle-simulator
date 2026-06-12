@@ -330,6 +330,94 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-06-12] — Stage 5: the AI opponent. The AI plays the ENTIRE game — team pick, deployment,
+  all five phases, vs a human or vs another AI — plus a headless simulator whose logs say who's
+  better.** All gates green: `pnpm typecheck`, `pnpm test` (**268 tests**, 26 new across 6 AI test
+  files incl. a jsdom test that watches the real UI auto-play into battle), `pnpm build`. An 84-game
+  round-robin and profile mirrors ran clean: **every game ends naturally with ZERO rejected intents
+  and zero forced advances**.
+
+  **The AI core (`src/core/ai/`, PURE — the plan §7 "Approach A" heuristic/utility AI):**
+  - The AI submits the SAME validated intents as the UI (rule #1) and reads legality ONLY through
+    `phases.ts` — it cannot produce an illegal state. Stateless: every decision recomputes from
+    `GameState`, so it can be stepped, interleaved with a human, or replayed.
+  - `controller.ts` — the one seam both the browser and the simulator use: `whoActs(state)` (whose
+    decision is the game waiting on — incl. the **Fight phase alternating across BOTH players**,
+    and 'shared' for roll-offs) + `aiAction(state, side, profile)` → a batch of intents, each with
+    an optional `skipIf` guard re-checked at dispatch (e.g. a melee target died to the first
+    weapon) so the engine never rejects an AI intent.
+  - `profile.ts` — JSON-serialisable weight sets (`balanced`/`aggressive`/`defensive`/`random`).
+    **This is the training surface**: the sim loads tweaked weights from disk, pits them, and the
+    winner is kept. `random` is a true wander/uniform-choice baseline (balanced beats it 8-0,
+    45.0 : 7.5 avg VP — proof the heuristics carry real signal).
+  - `evaluate.ts` — analytic hit→wound→save→damage expectations mirroring `combat.ts` (pool/crit/
+    reroll probabilities, Rapid Fire/Melta/Blast/Torrent/Anti-X/Lethal/Sustained/Devastating,
+    per-model overkill caps), 2D6 charge odds, points-based unit valuation, whole-unit shooting EV
+    from real positions (real fire plan + range/LoS, sampled-point LoS for speed).
+  - `deploy.ts` — alternating deployment with the UI's exact entry keys (`side:index`): legal-anchor
+    grid search scored by objective pull / role depth (artillery back, melee forward) / spacing,
+    Infiltrators (>9″ midfield), Deep-Strike Reserves policy (≤ half the army, no Characters),
+    automatic **Leader pairing** via `canAttach`, Reserves fallback so deployment can never stall.
+  - `command.ts` — `RunCommandPhase`, then per-Officer **AM Orders** picked by situation (engaged →
+    Fix Bayonets!, holding under fire → Take Cover!, out of range → Move! Move! Move!, rapid-fire
+    range → First Rank Fire!, else Take Aim!; Grizzled Company issues 2/Officer + the re-roll-1s
+    rider) and the **Imperialis Fleet** Eliminate (scariest enemy) / Acquire (objective holder).
+  - `move.ts` — two-tick activations (BeginMove → reducer rolls Advance → recompute under the REAL
+    budget → one pre-clamped rigid `NudgeUnit` + `EndMove`, so coherency/board/budget can never
+    bounce), candidate goals = hold / objectives / standoff approach / kite, scored by objective
+    control + shooting EV + threat exposure; engaged units stay or Fall Back by melee trade math;
+    never ends a normal move in Engagement Range (binary-search backoff); Deep Strike arrivals
+    hunt the best legal >9″ anchor near objectives; coherency-broken units forfeit cleanly.
+  - `shoot.ts`/`melee.ts` — EV-ranked target selection (bonus for killing killers, units on
+    objectives, finishing units); charges by P(2D6) × melee value vs retaliation with an
+    objective-steal bonus; Fight activations: Pile In → every melee weapon → Consolidate.
+  - `react.ts` — **reactive plays on the opponent's turn** (rule #3): before an enemy ShootUnit
+    resolves, the defender AI may spend 1 CP on Go to Ground/Smokescreen (stealth) when incoming
+    EV justifies it. Wired into BOTH the runner and the UI dispatch path (so it reacts to YOU).
+  - `match.ts` — seeded deterministic headless runner: full game from `NewBattle` to round 5 with
+    per-turn VP/CP/units snapshots, the full dice log, and health counters (rejectedLog,
+    forcedAdvances) that the tests pin to zero.
+  - **Engine fidelity fix** (also for the human): a unit declares ONE charge per phase —
+    `chargeAttempted` flag (match-only), set on success or failure; `eligibleToCharge` reports it.
+    Closes the "re-roll a failed charge" exploit from the 06-10 review.
+
+  **Prebuilt teams** (`tools/rosters/prebuilt.ts` → `pnpm build:rosters` → `data/rosters/prebuilt_*.json`):
+  six legal 1000pt Incursion lists, validated by `army.validate` at generation AND in tests (sync-
+  checked against the committed JSON): **Cadian Bulwark** (Grizzled Company), **Krieg Siege
+  Echelon** (Siege Regiment, indirect-heavy), **Armoured Spearhead** (Hammer of the Emperor,
+  tanks), **Fleet Boarding Party** (Imperialis Fleet), **Deathwatch Vigil** (Ordo Xenos, elite +
+  Deep Strike), **Hereticus Purgation Force** (Ordo Hereticus). No enhancements (no in-game effect
+  yet — decision noted in the file).
+
+  **Simulator** (`pnpm sim`, `tools/sim/`): N seeded matches between any rosters/profiles (seats
+  alternate board sides), per-game lines + league table, JSONL full-game logs + summary to
+  `out/sim/` (gitignored). `--tournament` round-robins every playable roster; `--a/--b` take
+  profile names or a JSON weights file; `--list` shows options. First 84-game tournament results:
+  Fleet Boarding Party 22-2 (bodies win Primary), tank lists struggle — exactly the kind of
+  insight the logs are for.
+
+  **UI:** a **Players bar** on the game rail (match mode only — the sandbox is untouched): each
+  side Human or AI with a profile picker, **auto-play** (350ms beat), **Step**, and a live "🤖
+  last action" note. Defaults: you = `player`, computer = `ai`. Both sides AI = watchable
+  AI-vs-AI. The AI deploys only on its alternating slot (jsdom-tested), and shared roll-offs stay
+  human-clickable unless both seats are AI.
+
+  **Decisions:** heuristic AI first per the roadmap (no LLM — that's the optional Stage-5b);
+  training = profile-weight comparison through the sim, not ML; AI ignores the sandbox; reserves
+  arrive ASAP from round 2; Insane Bravery/Command Re-roll/Counter-offensive/Overwatch not played
+  by the AI (no engine binding yet — Overwatch resolution itself is still the open B2 carve-out);
+  multi-target charges not declared (single-target only); demo roster left in the sim pool as a
+  punching bag (0-24, as expected).
+
+  **Handoff / next:** (1) the three owned lists still need `docs/lists/*.md` → encode + bind their
+  specials in `EFFECT_REGISTRY`/`INNATE_ABILITY_EFFECTS`; the AI will use them automatically via
+  the same effect ids. (2) Possible AI strengthening, all behind `AiProfile`: screening/charge-bait
+  awareness, multi-target charges, smarter CP economy (Counter-offensive once Overwatch/interrupt
+  carve-outs exist), per-weapon target splitting if the engine ever supports it. (3) Optional
+  Stage-5b Claude-driven strategic brain on top of `whoActs`/`aiAction` (LLM picks among scored
+  candidate actions — never raw coordinates, per plan §7). (4) A weight-evolution script over
+  `pnpm sim` summaries would close the auto-training loop.
+
 - **[2026-06-11] — 10e mechanics review + fidelity fixes: unit-level shooting, one Leader per unit,
   Leader joins physically, Benefit of Cover corrected, target highlighting.** Owner-requested review
   of the rules core against the 10e Core Rules (Wahapedia). All gates green: `pnpm typecheck`,
