@@ -673,6 +673,11 @@ export function resolveCharge(
     const summary = `Charge rejected: only in the Charge phase (now ${state.phase})`;
     return { state: { ...state, log: [...state.log, summary] }, success: false, summary };
   }
+  // 10e: a unit is selected to declare a charge once per phase — no re-rolling a failed charge.
+  if (state.mode === 'match' && charger.status.chargeAttempted) {
+    const summary = 'Charge rejected: this unit already declared a charge this phase';
+    return { state: { ...state, log: [...state.log, summary] }, success: false, summary };
+  }
 
   const targetIds = params.targetUnitIds ?? (params.targetUnitId ? [params.targetUnitId] : []);
   const targets = targetIds
@@ -709,11 +714,14 @@ export function resolveCharge(
       : 'failed — no clear path (cannot reach every target without ending within 1" of another enemy)';
   const summary = `${cDs.name} charges ${names}: 2D6=${rolls.join('+')}=${distance}" → ${reason}`;
 
-  const units = success
-    ? state.units.map((u) => (u.id === charger.id
-        ? { ...translatedModels(u, move!), status: { ...u.status, charged: true, moved: true } }
-        : u))
-    : state.units;
+  // The declaration is spent whether or not the roll/path succeeded (match mode; the sandbox
+  // stays a free dice calculator).
+  const attempted = state.mode === 'match' ? { chargeAttempted: true } : {};
+  const units = state.units.map((u) => {
+    if (u.id !== charger.id) return u;
+    if (success) return { ...translatedModels(u, move!), status: { ...u.status, ...attempted, charged: true, moved: true } };
+    return { ...u, status: { ...u.status, ...attempted } };
+  });
   return { state: { ...state, units, log: [...state.log, summary] }, success, summary };
 }
 

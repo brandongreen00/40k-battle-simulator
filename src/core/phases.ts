@@ -157,6 +157,7 @@ export function eligibleToCharge(u: UnitInstance, state: GameState, ctx: EngineC
   if (u.status.advanced) return { eligible: false, reason: 'Advanced this turn' };
   if (u.status.fellBack) return { eligible: false, reason: 'Fell Back this turn' };
   if (u.status.charged) return { eligible: false, reason: 'already charged this turn' };
+  if (u.status.chargeAttempted) return { eligible: false, reason: 'already declared a charge this phase' };
   const ds = dsOf(u, ctx);
   if (hasKeyword(ds, 'Aircraft')) return { eligible: false, reason: 'Aircraft cannot charge' };
   if (engagedEnemies(u, state, ctx).length > 0) {

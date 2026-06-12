@@ -179,6 +179,8 @@ export interface UnitStatus {
   fellBack?: boolean; // Fell Back this turn
   remainedStationary?: boolean; // did not move (Heavy bonus)
   hasShot?: boolean; // already shot this turn
+  /** Declared a charge this turn (success or fail) — a unit charges once per phase (match mode). */
+  chargeAttempted?: boolean;
   charged?: boolean; // completed a charge this turn (Lance, Fights First)
   hasFought?: boolean; // already fought this turn
   battleShocked?: boolean; // failed a Battle-shock test this round
