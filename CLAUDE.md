@@ -330,6 +330,33 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-06-12] — Text-export roster importer CLI + the owner's two real lists, simulated AI-vs-AI.**
+  The owner supplied two 40k-app text exports (Bane 985pts / Grizzled Company, Rogue Trader's Army
+  985pts / Imperialis Fleet) and asked for AI battles between them. All gates green: `pnpm typecheck`,
+  `pnpm test` (**298 tests**, 5 new in `tests/importText.test.ts`), `pnpm build`.
+  - **New `pnpm import:roster <export.txt> [--out name]`** (`tools/rosters/import-text.ts`): runs the
+    existing pure `parseArmyText` on a saved app export, validates with `army.validate` (errors abort —
+    an illegal roster is never written), and emits the same `toRoster` shape the prebuilt builder does
+    to `data/rosters/`. Source exports live in `tools/rosters/imports/*.txt` so rosters are reproducible;
+    the test suite sync-checks the committed JSON against re-parsing the text (prebuilt-style).
+  - **`normalizeExport`**: the owner's Bane paste had lost bullet glyphs on continuation lines
+    ("• 1x Bale Eye" then "    1x Laspistol") — the parser would silently drop those wargear counts.
+    The CLI re-bullets an indented glyphless "Nx item" line as a sibling of the previous bullet
+    (headers reset the carry; intact exports pass through unchanged). Unit-tested.
+  - **`data/rosters/bane.json` is no longer an empty scaffold** — it's the real 7-unit list (Yarrick,
+    2× Death Korps of Krieg, Artillery Team, Death Riders, Krieg Combat Engineers, Stormlord), 985pts,
+    0 import warnings. New `data/rosters/rogue_traders_army.json` (10 units, 985pts, 0 warnings).
+    Both now appear in the board's pickers and `pnpm sim --list`.
+  - **Sim results** (`pnpm sim -- --rosterA Bane --rosterB "Rogue Trader’s Army" --games 10 --seed 42`,
+    hammer-and-anvil-1, balanced vs balanced, sides alternating): **Rogue Trader's Army 9W–1L**,
+    avg VP 43.0 : 26.5. All 10 games ended naturally, zero rejected intents/forced advances. Reading:
+    consistent with the earlier 84-game finding that bodies win Primary — the Fleet list has ~50 OC-rich
+    models across 10 units vs Bane's 7 units with 430pts in one Stormlord. In Bane's one win (seed 47,
+    per the round snapshots) it took the objectives first — 10-0 Primary lead by round 2 with the unit
+    count even — and stayed ahead to 40 : 25. Full logs in `out/sim/` (gitignored).
+  - **Note:** `docs/lists/*.md` still don't exist; these imports are the owner's current app exports
+    and serve as the de-facto Bane + Fleet lists. The Grizzled Company roster scaffold remains empty.
+
 - **[2026-06-12] — Owner review #2: movement-wedge fix, unit-level fighting, AI roles + point
   play, per-model visibility, Scouts, pre-battle Leader pairing (Backroom Deals) + Warrant of
   Trade, and an ability audit.** Implements all seven items of the owner's review. All gates

@@ -1,0 +1,125 @@
+{
+  "name": "Rogue Trader’s Army",
+  "faction": "AoI",
+  "detachment": "Imperialis Fleet",
+  "points": 985,
+  "units": [
+    {
+      "datasheetId": "000000871",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Neural shredder": 1,
+        "Phase sword and poison blades": 1
+      }
+    },
+    {
+      "datasheetId": "000000872",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Executioner pistol": 1,
+        "Power sword and neuro gauntlet": 1
+      }
+    },
+    {
+      "datasheetId": "000002090",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Dirgesinger": 1,
+        "Power fist": 1,
+        "Psychic Tempest": 1
+      }
+    },
+    {
+      "datasheetId": "000002762",
+      "modelCount": 4,
+      "wargearCounts": {
+        "Household pistol": 1,
+        "Monomolecular cane-rapier": 1,
+        "Dartmask": 1,
+        "Death Cult power blade": 1,
+        "Close combat weapon": 2,
+        "Voltaic pistol": 1,
+        "Healing serum": 1,
+        "Laspistol": 1
+      },
+      "enhancementId": "000009138002"
+    },
+    {
+      "datasheetId": "000003814",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Hellfire Extremis": 1,
+        "Master-crafted power weapon": 1
+      }
+    },
+    {
+      "datasheetId": "000003816",
+      "modelCount": 10,
+      "wargearCounts": {
+        "Combi-weapon": 1,
+        "Xenophase blade": 1,
+        "Astartes shield": 2,
+        "Close combat weapon": 3,
+        "Deathwatch thunder hammer": 4,
+        "Frag cannon": 1,
+        "Infernus heavy bolter": 1,
+        "Power weapon": 2,
+        "Stalker-pattern boltgun": 1
+      }
+    },
+    {
+      "datasheetId": "000002587",
+      "modelCount": 10,
+      "wargearCounts": {
+        "Close combat weapon": 10,
+        "Navis shotgun": 8,
+        "Demolition charge": 1,
+        "Endurant Shield": 1,
+        "Meltagun": 1,
+        "Navis heavy shotgun": 1
+      }
+    },
+    {
+      "datasheetId": "000002587",
+      "modelCount": 10,
+      "wargearCounts": {
+        "Bolt pistol": 1,
+        "Close combat weapon": 10,
+        "Power weapon": 2,
+        "Autopistol": 2,
+        "Chainfist": 1,
+        "Demolition charge": 1,
+        "Endurant Shield": 1,
+        "Meltagun": 1,
+        "Navis heavy shotgun": 1,
+        "Navis shotgun": 5
+      }
+    },
+    {
+      "datasheetId": "000002685",
+      "modelCount": 11,
+      "wargearCounts": {
+        "Arbites combat shotgun": 8,
+        "Arbites shotpistol": 10,
+        "Close combat weapon": 10,
+        "Nuncio-acquila": 1,
+        "Arbites Medi-kit": 1,
+        "Arbites grenade launcher": 1,
+        "Excruciator maul": 1,
+        "Soulguilt Scanner": 1,
+        "Webber": 1,
+        "Mechanical bite": 1
+      }
+    },
+    {
+      "datasheetId": "000002684",
+      "modelCount": 11,
+      "wargearCounts": {
+        "Arbites shotpistol": 10,
+        "Shock maul": 10,
+        "Mechanical bite": 1
+      }
+    }
+  ],
+  "note": "Imported from the 40k-app text export rogue_traders_army.txt via pnpm import:roster."
+}

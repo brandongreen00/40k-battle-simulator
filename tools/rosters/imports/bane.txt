@@ -1,0 +1,81 @@
+Bane (985 points)
+
+Astra Militarum
+Incursion (1000 points)
+Grizzled Company
+
+
+CHARACTERS
+
+Commissar Yarrick (150 points)
+  • Warlord
+  • 1x Bale Eye
+    1x Laspistol
+    1x Power klaw
+    1x Power sword
+    1x Storm bolter
+
+
+BATTLELINE
+
+Death Korps of Krieg (65 points)
+  • 1x Death Korps Watchmaster
+    • 1x Chainsword
+      1x Laspistol
+  • 9x Death Korps Trooper
+    • 9x Close combat weapon
+      1x Death Korps Medi-pack
+      1x Grenade launcher
+      7x Lasgun
+      1x Plasma gun
+      1x Vox-caster
+
+Death Korps of Krieg (65 points)
+  • 1x Death Korps Watchmaster
+    • 1x Chainsword
+      1x Laspistol
+  • 9x Death Korps Trooper
+    • 9x Close combat weapon
+      1x Death Korps Medi-pack
+      1x Grenade launcher
+      7x Lasgun
+      1x Plasma gun
+      1x Vox-caster
+
+
+OTHER DATASHEETS
+
+Artillery Team (95 points)
+  • 1x Crew close combat weapons
+    1x Heavy mortar
+    1x Lasgun
+
+Death Riders (120 points)
+  • 1x Ridemaster
+    • 1x Death Rider lascarbine
+      1x Frag lance
+      1x Power sabre
+      1x Savage claws
+  • 9x Death Rider
+    • 9x Death Rider lascarbine
+      9x Frag lance
+      9x Power sabre
+      9x Savage claws
+
+Krieg Combat Engineers (60 points)
+  • 1x Krieg Engineer Watchmaster
+    • 1x Autopistol
+      1x Trench club
+  • 4x Krieg Combat Engineer
+    • 4x Autopistol
+      4x Trench club
+
+Stormlord (430 points)
+  • 1x Armoured tracks
+    2x Heavy stubber
+    4x Lascannon
+    1x Twin heavy bolter
+    4x Twin heavy flamer
+    1x Vulcan mega-bolter
+
+Exported with App Version: v1.53.0 (1), Data Version: v780

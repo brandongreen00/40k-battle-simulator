@@ -1,0 +1,116 @@
+Rogue Trader’s Army (985 Points)
+
+Imperial Agents
+Imperialis Fleet
+Incursion (1,000 Points)
+
+CHARACTERS
+
+Callidus Assassin (100 Points)
+  • 1x Neural shredder
+  • 1x Phase sword and poison blades
+
+Eversor Assassin (110 Points)
+  • 1x Executioner pistol
+  • 1x Power sword and neuro gauntlet
+
+Inquisitor Draxus (75 Points)
+  • 1x Dirgesinger
+  • 1x Power fist
+  • 1x Psychic Tempest
+
+Rogue Trader Entourage (90 Points)
+  • 1x Rogue Trader
+     • Warlord
+     ◦ 1x Household pistol
+     ◦ 1x Monomolecular cane-rapier
+     ◦ Enhancements: Clandestine Operation
+  • 1x Death Cult Assassin
+     ◦ 1x Dartmask
+     ◦ 1x Death Cult power blade
+  • 1x Lectro‐Maester
+     ◦ 1x Close combat weapon
+     ◦ 1x Voltaic pistol
+  • 1x Rejuvenat Adept
+     ◦ 1x Close combat weapon
+     ◦ 1x Healing serum
+     ◦ 1x Laspistol
+
+Watch Captain Artemis (65 Points)
+  • 1x Hellfire Extremis
+  • 1x Master-crafted power weapon
+
+BATTLELINE
+
+Deathwatch Kill Team (190 Points)
+  • 1x Watch Sergeant
+     ◦ 1x Combi-weapon
+     ◦ 1x Xenophase blade
+  • 9x Deathwatch Veterans
+     ◦ 2x Astartes shield
+     ◦ 3x Close combat weapon
+     ◦ 4x Deathwatch thunder hammer
+     ◦ 1x Frag cannon
+     ◦ 1x Infernus heavy bolter
+     ◦ 2x Power weapon
+     ◦ 1x Stalker-pattern boltgun
+
+Imperial Navy Breachers (90 Points)
+  • 1x Navis Sergeant-at-Arms
+     ◦ 1x Close combat weapon
+     ◦ 1x Navis shotgun
+  • 9x Navis Armsman
+     ◦ 9x Close combat weapon
+     ◦ 1x Demolition charge
+     ◦ 1x Endurant Shield
+     ◦ 1x Meltagun
+     ◦ 1x Navis heavy shotgun
+     ◦ 7x Navis shotgun
+
+Imperial Navy Breachers (90 Points)
+  • 1x Navis Sergeant-at-Arms
+     ◦ 1x Bolt pistol
+     ◦ 1x Close combat weapon
+     ◦ 1x Power weapon
+  • 9x Navis Armsman
+     ◦ 2x Autopistol
+     ◦ 1x Chainfist
+     ◦ 9x Close combat weapon
+     ◦ 1x Demolition charge
+     ◦ 1x Endurant Shield
+     ◦ 1x Meltagun
+     ◦ 1x Navis heavy shotgun
+     ◦ 5x Navis shotgun
+     ◦ 1x Power weapon
+
+OTHER DATASHEETS
+
+Exaction Squad (90 Points)
+  • 1x Proctor-Exactant
+     ◦ 1x Arbites combat shotgun
+     ◦ 1x Arbites shotpistol
+     ◦ 1x Close combat weapon
+     ◦ 1x Nuncio-acquila
+  • 9x Exaction Vigilant
+     ◦ 1x Arbites Medi-kit
+     ◦ 7x Arbites combat shotgun
+     ◦ 1x Arbites grenade launcher
+     ◦ 9x Arbites shotpistol
+     ◦ 9x Close combat weapon
+     ◦ 1x Excruciator maul
+     ◦ 1x Soulguilt Scanner
+     ◦ 1x Webber
+  • 1x Cyber-mastiff
+     ◦ 1x Mechanical bite
+
+Subductor Squad (85 Points)
+  • 1x Proctor-Subductor
+     ◦ 1x Arbites shotpistol
+     ◦ 1x Shock maul
+  • 9x Subductor
+     ◦ 9x Arbites shotpistol
+     ◦ 9x Shock maul
+  • 1x Cyber-mastiff
+     ◦ 1x Mechanical bite
+
+Exported with App Version: v1.53.0 (1), Data Version: v780
