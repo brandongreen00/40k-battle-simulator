@@ -10,6 +10,7 @@ import {
   validUnitShootingTargets, chargeTargets, engagedEnemies, fightActivationOrder, orderableUnits, type Eligibility,
 } from '../core/phases';
 import { AM_ORDERS, unitIsOfficer } from '../core/orders';
+import { secondaryCard } from '../core/secondaries';
 import { usableStratagems } from '../core/stratagems';
 import { stratagems } from '../data/loaders';
 import { Die } from './Dice';
@@ -210,11 +211,44 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
         {(['player', 'ai'] as const).map((s) => (
           <div key={s} className="score-cell">
             <span className="dot" style={{ background: OWNER_COLOR[s].fill }} /> {s}
-            <div className="vp">{state.score[s]} VP</div>
+            <div className="vp">
+              {state.score[s]} VP
+              {state.secondaries && (
+                <span className="muted"> ({state.score[s] - state.secondaries[s].vp}P+{state.secondaries[s].vp}S)</span>
+              )}
+            </div>
             <div className="cp">{state.cp[s]} CP</div>
           </div>
         ))}
       </div>
+
+      {/* Tactical (Secondary) Missions — drawn in the Command phase, scored at turn end. */}
+      {inMatch && state.secondaries && state.stage === 'battle' && (
+        <div className="phase-block">
+          <h3>Tactical Missions</h3>
+          {(['player', 'ai'] as const).map((s) => (
+            <div key={s} className="order-officer">
+              <strong style={{ color: OWNER_COLOR[s].fill }}>{s}</strong>{' '}
+              <span className="muted">{state.secondaries![s].vp}/40 secondary VP · {state.secondaries![s].deck.length} in deck</span>
+              {state.secondaries![s].hand.length === 0 ? (
+                <div className="muted">— no active missions (drawn when the Command phase runs)</div>
+              ) : (
+                state.secondaries![s].hand.map((c) => {
+                  const card = secondaryCard(c.id);
+                  return (
+                    <div key={c.id} className="order-row">
+                      <span title={card?.desc}>{card?.name ?? c.id} <span className="muted">· drawn R{c.drawn}</span></span>
+                      {s === state.activePlayer && (
+                        <button onClick={() => dispatch({ type: 'DiscardSecondary', side: s, cardId: c.id })}>discard</button>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Command phase — Orders (Voice of Command) */}
       {phase === 'Command' && officers.length > 0 && (

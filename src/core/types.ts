@@ -239,6 +239,34 @@ export interface BattleShockReport {
   passed: boolean;
 }
 
+// ── Secondary (Tactical) Missions ────────────────────────────────────────────
+/** One card in a side's hand: the card id and the round it was drawn in (staleness). */
+export interface SecondaryCardInHand {
+  id: string;
+  drawn: number;
+}
+
+/** One side's Tactical Mission state (Pariah Nexus): a personal shuffled deck, a hand of up to
+ *  two active missions, the discard pile, and the secondary VP scored so far (cap 40). */
+export interface SecondarySideState {
+  deck: string[];
+  hand: SecondaryCardInHand[];
+  discard: string[];
+  vp: number;
+}
+
+/** A unit destroyed this turn — what the kill-based secondary cards score from. */
+export interface KillRecord {
+  /** Owner of the DESTROYED unit. */
+  side: Side;
+  /** Every datasheet in the destroyed unit (Bodyguard + merged Leaders). */
+  datasheetIds: string[];
+  /** Highest Wounds characteristic among those datasheets' profiles (Bring It Down tiers). */
+  maxWounds: number;
+  /** Was any of its models within objective control range when it was destroyed? */
+  onObjective: boolean;
+}
+
 // ── Pre-battle setup / deployment ────────────────────────────────────────────
 export type Stage = 'setup' | 'battle' | 'done';
 
@@ -302,6 +330,13 @@ export interface GameState {
   /** Core Stratagem "Command Re-roll" usage: side → phase key (`round:turn:phase`) it was last
    *  used in. Enforces once per phase per side (match-mode; currently bound to charge rolls). */
   rerollUsed?: Partial<Record<Side, string>>;
+  /** Pariah Nexus Tactical (Secondary) Missions — per-side deck/hand/VP (match mode only). */
+  secondaries?: Record<Side, SecondarySideState>;
+  /** Units destroyed during the CURRENT turn (secondary scoring); reset at every turn end. */
+  turnKills?: KillRecord[];
+  /** Objective control snapshot taken at the start of the active player's turn
+   *  (Storm Hostile Objective). Index-aligned with `layout.objectives`. */
+  controlAtTurnStart?: (Side | null)[];
   /** Pre-battle deployment sub-state (present while `stage === 'setup'`). */
   setup?: SetupState;
   round: number; // 1..5

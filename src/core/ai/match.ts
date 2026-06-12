@@ -37,7 +37,10 @@ export interface MatchConfig {
 export interface TurnSnapshot {
   round: number;
   turn: Side;
+  /** Total VP (primary + secondary). */
   score: { player: number; ai: number };
+  /** The secondary (Tactical Mission) share of the total. */
+  secondary: { player: number; ai: number };
   cp: { player: number; ai: number };
   unitsAlive: { player: number; ai: number };
 }
@@ -137,6 +140,7 @@ export function runMatch(cfg: MatchConfig, data: MatchData): MatchResult {
         round: state.round,
         turn: state.activePlayer,
         score: { ...state.score },
+        secondary: { player: state.secondaries?.player.vp ?? 0, ai: state.secondaries?.ai.vp ?? 0 },
         cp: { ...state.cp },
         unitsAlive: { player: aliveUnits(state, 'player'), ai: aliveUnits(state, 'ai') },
       });

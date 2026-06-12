@@ -18,6 +18,7 @@ import { formationPositions } from '../formation';
 import { gapBetweenBases, dist, baseRadius } from '../geometry';
 import { objectiveControl } from '../engine';
 import { unitScoutDistance } from '../abilities';
+import { secondaryPositionBonus } from '../secondaries';
 import { shootingEV, unitThreat, unitValue, unitGap, unitOC, maxWeaponRange, meleeEV } from './evaluate';
 import { homeGarrisonId, unitRolePlan, type RolePlan } from './roles';
 import type { AiAction, AiDeps } from './types';
@@ -114,6 +115,9 @@ function positionScore(
       (inRange ? 10 : (controlR + 6 - d)) * urgency * profile.objective * plan.objectiveWeight *
       garrisonBoost * Math.min(myOC, 5);
   });
+
+  // Active Tactical Missions: standing where a card scores (enemy DZ, outpost/NML markers…).
+  score += secondaryPositionBonus(state, unit.owner, at, ctx);
 
   // Shooting from the new spot: best target's expected points of damage (role bonus vs CHARACTERs).
   let bestEV = 0;

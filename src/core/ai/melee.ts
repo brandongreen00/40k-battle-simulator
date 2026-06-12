@@ -12,6 +12,7 @@ import type { GameState, Side, UnitInstance } from '../types';
 import { eligibleToCharge, chargeTargets, eligibleToFight, engagedEnemies, fightActivationOrder, isOnBoard } from '../phases';
 import { availableUnitWeapons, chargePathExists, objectiveControl } from '../engine';
 import { chargeProb, meleeEV, unitGap, unitValue } from './evaluate';
+import { secondaryKillBonus } from '../secondaries';
 import { unitRolePlan } from './roles';
 import type { AiAction, AiDeps, AiIntent } from './types';
 import type { AiProfile } from './profile';
@@ -41,7 +42,9 @@ export function aiChargeAction(state: GameState, side: Side, profile: AiProfile,
       const need = unitGap(c, t, ctx) - 1; // reach Engagement Range
       const p = chargeProb(need);
       if (p <= 0) continue;
-      const value = meleeEV(c, t, ctx, true) + (holdsObjective(t) ? 15 * profile.objective : 0);
+      const value =
+        meleeEV(c, t, ctx, true) * secondaryKillBonus(state, side, t, ctx) +
+        (holdsObjective(t) ? 15 * profile.objective : 0);
       const retaliation = meleeEV(t, c, ctx) * profile.caution;
       const score = p * (value - retaliation * 0.5) * plan.chargeWeight;
       if (score < profile.chargeThreshold) continue;

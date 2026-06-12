@@ -330,6 +330,44 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-06-12] — Secondary missions: the Pariah Nexus Tactical Mission deck (40 VP), played by
+  both humans and the AI.** Closes the "primary-only scoring favours bodies" structural gap.
+  All gates green: `pnpm typecheck`, `pnpm test` (**327 tests**, 10 new in
+  `tests/secondaries.test.ts`), `pnpm build`; Bane vs RT ×10 + DW vs Fleet ×6 + Cadian vs Krieg ×6
+  all end naturally, zero rejected intents. Full design + per-card table + assumptions in
+  **`docs/secondary_missions.md`**.
+  - **New pure `src/core/secondaries.ts`**: a 12-card Tactical deck — every card computable from
+    game state (Assassination, Bring It Down, No Prisoners, Overwhelming Force, Behind Enemy
+    Lines, Engage on All Fronts, Area Denial, Secure No Man's Land, Extend Battle Lines, Capture
+    Enemy Outpost, Storm Hostile Objective, Defend Stronghold). Action-based cards excluded (no
+    Actions mechanic yet); VP values are best-effort data, centralized in `SECONDARY_CARDS`.
+  - **Lifecycle in the reducer**: per-side seeded decks at `NewBattle`; Run Command does the
+    turn-start upkeep (objective-control snapshot for Storm Hostile, stale-card auto-discard
+    after 2 unscored own turns, draw to a 2-card hand); `AdvancePhase` out of Fight scores the
+    ending player's cards + the opponent's *opponent-turn* cards, discards scored cards, resets
+    the kill ledger. Secondary VP caps at **40** and adds into `state.score` (total ≤ 90);
+    breakdown kept in `state.secondaries[side].vp`. New `DiscardSecondary` intent for the human
+    discard choice (the AI relies on the stale rule).
+  - **Kill ledger** (`GameState.turnKills` via `recordKills` diffing before/after on
+    Attack/ShootUnit/FightUnit): victim side, all datasheets in the unit (merged Leaders count
+    for Assassination), max Wounds (Bring It Down tier), died-on-objective (Overwhelming Force).
+  - **The AI plays its cards**: `secondaryKillBonus` multiplies shooting AND charge EV for
+    Assassination/Bring It Down targets; `secondaryPositionBonus` adds move-candidate score for
+    standing where a position card pays (enemy DZ, outpost/NML/home markers, flipping a stolen
+    marker back). No new `whoActs` decision points — sim health is unchanged by construction.
+  - **UI**: scoreboard shows the P+S breakdown; a "Tactical Missions" panel lists both hands
+    (name, rule text, drawn round, deck count) with discard buttons for the active player.
+    `TurnSnapshot` gained the `secondary` breakdown (JSONL logs carry it).
+  - **First results** (Bane vs RT ×10, seed 42): 10 of 12 cards scored, 199 secondary VP total —
+    Bane +7.4/game, RT +11.0/game; scores now run 22-60 (was 15-50). RT still wins the matchup
+    (9-1-0): with kills AND bodies it out-scores on both axes — at this point that is a genuine
+    list verdict, not a scoring artifact. Decision: deck shuffles consume the match RNG at
+    NewBattle (reproducibility preserved per seed; dice sequences shift vs older seeds).
+  - **Handoff / next:** Fixed-Missions mode (small extension over the same evaluators); the
+    Actions mechanic would unlock the missing cards (Cleanse/Sabotage/…); AI discard policy could
+    move from the stale rule to per-card feasibility checks behind `AiProfile`; correcting card
+    VP values is a one-line data edit each (see the doc's table).
+
 - **[2026-06-12] — AI refinements from the Bane-vs-Rogue-Trader log review (owner: "implement all
   you've discovered").** Seven fixes, all verified to FIRE in re-run sims. All gates green:
   `pnpm typecheck`, `pnpm test` (**317 tests**, 9 new in `tests/refinements.test.ts`), `pnpm build`;
