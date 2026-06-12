@@ -330,6 +330,29 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-06-12] — Owner bug report: "when I deploy, the AI doesn't deploy after that" — investigated +
+  guarded.** The engine/controller alternation is NOT broken: headless repros (both seatings, prebuilt
+  AND the owner's Bane/Rogue-Trader lists) and a full human-vs-AI deployment driven through the real UI
+  (jsdom, dice roll-off, every slot) all complete with the AI answering every human drop. Two real UI
+  wedges that produce exactly the reported symptom were found and closed. All gates green:
+  `pnpm typecheck`, `pnpm test` (**330 tests**, 3 new in `tests/deployGuards.test.tsx`), `pnpm build`.
+  - **Wedge 1 — empty rosters were assignable to a side.** The 0-unit scaffolds (`Grizzled Company`,
+    `Imperialis Fleet` — names that sound exactly like real armies) appeared unmarked in the deployment
+    army pickers; give one to the computer and the AI has literally nothing to deploy, silently, forever.
+    Fix: `DeploymentPanel` disables 0-unit options (labelled "(empty)") and shows a ⚠ warning line if a
+    selected side's roster has no units (new `.warn` style).
+  - **Wedge 2 — a held placement ghost silently pauses auto-play.** `aiCanAct` gates on `!placing`, but
+    during the AI's slot the sidebar still offered the AI's OWN units with live "+ Deploy"/⤓ buttons —
+    one click (easy: the list under the cursor swaps to the AI's right after your drop) and the AI waits
+    forever with no message. Fix: when the side-to-place's seat is AI, the sidebar shows a "🤖 the
+    computer controls this side" hint instead of buttons (flip the seat to Human in the Players bar to
+    place manually); plus an effect that drops a deployment ghost whose side flips to an AI seat, so
+    auto-play resumes.
+  - **Note for next session:** if the owner still reproduces it after this, the missing diagnostics are
+    (a) the dice log isn't rendered during setup, so AI Reserves placements are nearly invisible, and
+    (b) an exception thrown inside the auto-play `setTimeout` would stall the AI until the next state
+    change (only visible in the browser console) — worth a try/catch + surfaced error if it recurs.
+
 - **[2026-06-12] — Secondary missions: the Pariah Nexus Tactical Mission deck (40 VP), played by
   both humans and the AI.** Closes the "primary-only scoring favours bodies" structural gap.
   All gates green: `pnpm typecheck`, `pnpm test` (**327 tests**, 10 new in
