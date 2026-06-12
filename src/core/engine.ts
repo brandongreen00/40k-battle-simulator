@@ -12,6 +12,7 @@ import { baseRadius, gapBetweenBases } from './geometry';
 import { parseKeywords } from './keywords';
 import { parseDice } from './dice';
 import { checkCoherency } from './coherency';
+import { anyOverlap, clampDeltaAvoidingOverlap, occupiedBases, unitBases, type OccupiedBase } from './collision';
 import { resolveAttacks, woundThreshold, effectiveSave, type AttackProfile, type DefenderProfile, type CombatSituation } from './combat';
 import { losBlocked, unitCanSee, unitHasCover } from './los';
 import { controlOfObjective, scorePrimary, type OcModel } from './objectives';
@@ -814,6 +815,10 @@ function findChargeMove(
   targets: { unit: UnitInstance; shape: BaseShape }[],
   nonTargets: { unit: UnitInstance; shape: BaseShape }[],
   roll: number,
+  occupied: OccupiedBase[] = [],
+  /** Per-model bases of a translated charger copy (merged units mix base sizes). */
+  chargerBases: (u: UnitInstance) => OccupiedBase[] = (u) =>
+    u.models.filter((m) => m.alive).map((m) => ({ pos: m.pos, shape: cShape })),
   step = 0.1,
 ): Vec2 | null {
   const from = aliveCentroid(charger);
@@ -841,6 +846,8 @@ function findChargeMove(
         if (!reachesAll) continue;
         const clearOfNonTargets = nonTargets.every((nt) => closestGap(moved, cShape, nt.unit, nt.shape) > ENGAGEMENT_RANGE);
         if (!clearOfNonTargets) continue; // a longer move might clear it — keep scanning
+        // Bases may end in contact but never on top of another model (friend or foe).
+        if (anyOverlap(chargerBases(moved), occupied)) continue;
         return v;
       }
     }
@@ -897,7 +904,8 @@ export function resolveCharge(
     .map((u) => ({ unit: u, shape: ctx.datasheets.get(u.datasheetId)?.baseShape ?? cDs.baseShape }));
 
   const { distance, rolls } = rollCharge(rng);
-  const move = findChargeMove(charger, cDs.baseShape, targets, nonTargets, distance);
+  const occupied = occupiedBases(state, ctx, [charger.id]);
+  const move = findChargeMove(charger, cDs.baseShape, targets, nonTargets, distance, occupied, (u) => unitBases(u, ctx));
   const success = move !== null;
   const names = targets.map((t) => ctx.datasheets.get(t.unit.datasheetId)?.name ?? t.unit.id).join(' + ');
   // Tell a short roll apart from a blocked path: the minimum distance that could possibly work
@@ -981,13 +989,19 @@ export function resolveFightMove(
   if (!nearest) return { state, summary: 'no enemy to move toward' };
 
   const dir = closestAxis(unit, nearest);
-  const moveDist = Math.min(3, Math.max(0, minGap)); // up to 3", stopping at base contact
+  let moveDist = Math.min(3, Math.max(0, minGap)); // up to 3", stopping at base contact
+  // Never end on top of another model's base (a friendly unit can sit between us and the enemy).
+  const occupied = occupiedBases(state, ctx, [unit.id]);
+  const clamped = clampDeltaAvoidingOverlap(
+    unitBases(unit, ctx), occupied, { x: dir.x * moveDist, y: dir.y * moveDist },
+  );
+  moveDist = Math.hypot(clamped.x, clamped.y);
   if (moveDist <= 1e-6) {
     return { state: { ...state, log: [...state.log, `${ds.name} ${params.mode === 'pile_in' ? 'piles in' : 'consolidates'} (already in base contact)`] }, summary: 'no move' };
   }
   const units = state.units.map((u) =>
     u.id === unit.id
-      ? { ...u, models: u.models.map((m) => (m.alive ? { ...m, pos: { x: m.pos.x + dir.x * moveDist, y: m.pos.y + dir.y * moveDist } } : m)) }
+      ? { ...u, models: u.models.map((m) => (m.alive ? { ...m, pos: { x: m.pos.x + clamped.x, y: m.pos.y + clamped.y } } : m)) }
       : u,
   );
   const verb = params.mode === 'pile_in' ? 'piles in' : 'consolidates';

@@ -18,6 +18,7 @@ import { defensiveProfileForItem } from './wargear';
 import { rollOff, otherSide } from './setup';
 import { checkUnitDeployment, deepStrikeArrivalLegal, whollyInOwnZone, type DeployAbility } from './deployment';
 import { checkCoherency } from './coherency';
+import { occupiedBases, unitOverlaps } from './collision';
 import { canAttach, leaderJoinPositions } from './leaders';
 import { unitScoutDistance } from './abilities';
 import { maxMoveDistance, rollAdvance, type MoveMode } from './movement';
@@ -469,7 +470,10 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       const ability = intent.ability ?? 'standard';
       const positions = formationWorld(intent);
       const enemies = enemyModelsOnBoard(state, intent.owner, ctx);
-      const check = checkUnitDeployment(positions, intent.baseShape, state.layout, intent.owner, ability, enemies);
+      const check = checkUnitDeployment(
+        positions, intent.baseShape, state.layout, intent.owner, ability, enemies,
+        occupiedBases(state, ctx),
+      );
       if (!check.legal) {
         return { ...state, log: [...state.log, `Deployment rejected (${intent.owner}): ${check.reason}`] };
       }
@@ -866,6 +870,13 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
           log = [...log, `Move not confirmed: ${name} is out of coherency`];
           return u; // stay in the move so the user can fix it
         }
+        // A move may pass over other models but can never END with bases stacked.
+        if (unitOverlaps(state, u, ctx)) {
+          anyRejected = true;
+          const name = ctx?.datasheets.get(u.datasheetId)?.name ?? u.id;
+          log = [...log, `Move not confirmed: ${name} ends on top of another model's base`];
+          return u;
+        }
         const mode = u.status.moveMode;
         // A Scout move must end more than 9" from all enemy models (10e Scouts).
         if (mode === 'scout') {
@@ -906,7 +917,10 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         anchor: intent.anchor, formation: intent.formation, rotation: intent.rotation,
       };
       const enemies = enemyModelsOnBoard(state, unit.owner, ctx);
-      const check = deepStrikeArrivalLegal(formationWorld(opts), shape, enemies, state.round);
+      const check = deepStrikeArrivalLegal(
+        formationWorld(opts), shape, enemies, state.round,
+        occupiedBases(state, ctx, [unit.id]),
+      );
       if (!check.legal) return { ...state, log: [...state.log, `Deep Strike rejected: ${check.reason}`] };
       const newModels = layoutModels(opts, state.layout).map((m, i) => ({
         ...m,

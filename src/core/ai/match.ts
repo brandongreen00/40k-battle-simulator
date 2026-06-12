@@ -30,6 +30,8 @@ export interface MatchConfig {
   seed: number;
   /** Hard safety budget; a finished 5-round game uses a few hundred intents. */
   maxIntents?: number;
+  /** Called after every applied intent — a test seam for asserting game-state invariants. */
+  observe?: (state: GameState) => void;
 }
 
 export interface TurnSnapshot {
@@ -100,6 +102,7 @@ export function runMatch(cfg: MatchConfig, data: MatchData): MatchResult {
     }
     state = reduce(state, intent, rng, data.ctx);
     intentCount++;
+    cfg.observe?.(state);
   };
 
   while (intentCount < maxIntents) {

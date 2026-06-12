@@ -330,6 +330,35 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-06-12] — Bases can never stack (owner rule): models move AROUND each other, never end ON
+  TOP.** Closes the long-open C6 base-overlap gap. All gates green: `pnpm typecheck`, `pnpm test`
+  (**308 tests**, 10 new in `tests/collision.test.ts`), `pnpm build`; sim spot-runs (Bane vs Rogue
+  Trader 10 games, DW vs Fleet + Cadian vs Krieg 6 each) all end naturally with zero rejected intents.
+  - **New pure `src/core/collision.ts`** + `geometry.basesOverlap`: per-model occupied-base set
+    (merged Leader models use their OWN datasheet's base), `unitOverlaps` (vs others AND unit-internal
+    stacking), and `clampDeltaAvoidingOverlap` (binary-search backoff of a rigid translate). Only FINAL
+    positions are gated — passing over models mid-move stays legal, and base-to-base CONTACT stays
+    legal (melee). **Oval bases use their inscribed circle** (min semi-axis) for overlap: rotation
+    isn't tracked and the avg-radius approximation falsely flagged legal tight oval formations (Death
+    Riders in a block) as stacked; conservative — real stacking always caught.
+  - **Enforced everywhere positions settle:** `EndMove` rejects (like coherency — "ends on top of
+    another model's base", unit stays mid-activation); `DeployUnit` + `ArriveFromReserves` via new
+    `occupied` params on `checkUnitDeployment`/`deepStrikeArrivalLegal`; charge path search skips
+    end positions that stack (fan-out still sidesteps screens); Pile In/Consolidate clamps at the
+    first blocking base. The AI pre-clamps its movement/scout nudges, deploy anchors and Deep-Strike
+    arrival spots through the same helpers, so its intents still never bounce; a tick-B guard
+    forfeits the move if a unit somehow already overlaps (mirrors the coherency forfeit).
+  - **Paired-Leader deployment reworked (AI + UI):** the Leader used to be DROPPED on the
+    Bodyguard's anchor and re-seated by the merge — now illegal. Both paths stage the Leader via
+    `PlaceInReserves` + `AttachLeader` (the existing stranded-leader rescue pattern); the merge's
+    `leaderJoinPositions` ring search was already overlap-aware. `review.test.ts` updated to match.
+  - **UI:** placement ghosts turn red on stacked bases (deploy + Deep Strike); the Movement panel's
+    Confirm is disabled with an "on top of another model" warning (incl. Scout step); warning
+    triangles show over overlapping mid-move units. Sandbox free-drag (`MoveModel` outside an
+    activation) stays free by the existing sandbox-freedom decision — every match path is gated.
+  - **Test seam:** `runMatch` gained an optional `observe(state)` hook; the new acceptance test runs
+    a full Bane vs Rogue Trader's Army game asserting NO two settled bases overlap after EVERY intent.
+
 - **[2026-06-12] — Text-export roster importer CLI + the owner's two real lists, simulated AI-vs-AI.**
   The owner supplied two 40k-app text exports (Bane 985pts / Grizzled Company, Rogue Trader's Army
   985pts / Imperialis Fleet) and asked for AI battles between them. All gates green: `pnpm typecheck`,

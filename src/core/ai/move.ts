@@ -12,6 +12,7 @@ import type { GameState, Side, UnitInstance, Vec2 } from '../types';
 import type { EngineContext } from '../engine';
 import { aliveModels, isOnBoard, engagedEnemies, pendingScoutUnits, reservesArrivable, unitCentroid, ENGAGEMENT_RANGE } from '../phases';
 import { checkCoherency } from '../coherency';
+import { clampDeltaAvoidingOverlap, occupiedBases, unitBases, unitOverlaps } from '../collision';
 import { deepStrikeArrivalLegal, zoneFor } from '../deployment';
 import { formationPositions } from '../formation';
 import { gapBetweenBases, dist, baseRadius } from '../geometry';
@@ -259,6 +260,7 @@ export function findArrivalAnchor(state: GameState, unit: UnitInstance, deps: Ai
     for (const m of e.models) if (m.alive) enemies.push({ pos: m.pos, shape });
   }
   const targets = [...state.layout.objectives, { x: state.layout.boardWidth / 2, y: state.layout.boardHeight / 2 }];
+  const occupied = occupiedBases(state, ctx, [unit.id]);
   const r = baseRadius(ds.baseShape);
   for (const step of [2, 1]) {
     let best: { anchor: Vec2; score: number } | null = null;
@@ -268,7 +270,7 @@ export function findArrivalAnchor(state: GameState, unit: UnitInstance, deps: Ai
         const objDist = Math.min(...targets.map((o) => dist(anchor, o)));
         if (best && objDist >= -best.score) continue; // can't beat the best — skip the geometry
         const positions = formationPositions({ anchor, count: unit.models.length, baseShape: ds.baseShape, formation: 'block', rotation: 0 });
-        if (!deepStrikeArrivalLegal(positions, ds.baseShape, enemies, state.round).legal) continue;
+        if (!deepStrikeArrivalLegal(positions, ds.baseShape, enemies, state.round, occupied).legal) continue;
         if (positions.some((p) => p.x < r || p.y < r || p.x > state.layout.boardWidth - r || p.y > state.layout.boardHeight - r)) continue;
         if (!best || -objDist > best.score) best = { anchor, score: -objDist };
       }
@@ -291,7 +293,9 @@ export function aiMovementAction(state: GameState, side: Side, profile: AiProfil
     const ids = [moving.id];
     const budget = moving.status.moveBudget ?? 0;
     const shape = ctx.datasheets.get(moving.datasheetId)?.baseShape ?? { kind: 'circle' as const, radius: 0.63 };
-    const coherentNow = checkCoherency(aliveModels(moving).map((m) => m.pos), shape).inCoherency;
+    const coherentNow =
+      checkCoherency(aliveModels(moving).map((m) => m.pos), shape).inCoherency &&
+      !unitOverlaps(state, moving, ctx);
     if (!coherentNow) {
       // Rare (casualty-shaped) — forfeit the move rather than risk a rejected confirm.
       return {
@@ -313,6 +317,9 @@ export function aiMovementAction(state: GameState, side: Side, profile: AiProfil
       if (moving.status.moveMode !== 'fall_back' && endsEngaged(state, moving, delta, ctx)) {
         delta = { x: 0, y: 0 };
       }
+      // Never END the move with bases stacked on another unit (friend or foe) — back off along
+      // the line so EndMove cannot bounce. Passing over models mid-move is fine.
+      delta = clampDeltaAvoidingOverlap(unitBases(moving, ctx), occupiedBases(state, ctx, [moving.id]), delta);
     }
     const intents: AiAction['intents'] = [];
     if (Math.hypot(delta.x, delta.y) > 0.01) intents.push({ intent: { type: 'NudgeUnit', unitIds: ids, delta } });
@@ -418,6 +425,7 @@ export function aiScoutAction(state: GameState, side: Side, profile: AiProfile, 
     const t = need > X ? X / need : 1;
     let delta = clampDeltaToBoard(unit, { x: want.x * t, y: want.y * t }, state.layout);
     delta = clampDeltaToNine(state, unit, delta, ctx);
+    delta = clampDeltaAvoidingOverlap(unitBases(unit, ctx), occupiedBases(state, ctx, [unit.id]), delta);
     if (Math.hypot(delta.x, delta.y) < 0.25) continue;
     const score = positionScore(state, unit, delta, profile, deps, plan, false);
     if (score > best.score) best = { score, delta };

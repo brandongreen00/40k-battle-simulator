@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { Datasheet, GameState, UnitInstance } from '../core/types';
 import type { Intent } from '../core/state';
 import { availableUnitWeapons, planUnitFight, planUnitShooting, type EngineContext } from '../core/engine';
+import { unitOverlaps } from '../core/collision';
 import type { MoveMode } from '../core/movement';
 import { EFFECT_REGISTRY } from '../core/effects';
 import {
@@ -63,6 +64,8 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
   const movingUnits = units.filter((u) => u.status.moveMode && u.owner === state.activePlayer);
   const incoherentMoving = movingUnits.filter((u) => !unitCoherency(u, ctx).inCoherency);
   const coherencyOk = incoherentMoving.length === 0;
+  const overlappingMoving = movingUnits.filter((u) => unitOverlaps(state, u, ctx));
+  const overlapOk = overlappingMoving.length === 0;
   const arrivable = reservesArrivable(state);
   const nameOfUnit = (id: string) => datasheetsById.get(units.find((u) => u.id === id)?.datasheetId ?? '')?.name ?? id;
 
@@ -319,17 +322,25 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
             </>
           ) : (
             <>
-              <p className={coherencyOk ? 'muted' : 'coh-bad'}>
+              <p className={coherencyOk && overlapOk ? 'muted' : 'coh-bad'}>
                 {movingUnits.length} unit(s) moving ·{' '}
-                {coherencyOk
-                  ? 'in coherency ✓'
-                  : `⚠ out of coherency: ${incoherentMoving.map((u) => nameOfUnit(u.id)).join(', ')}`}
+                {!coherencyOk
+                  ? `⚠ out of coherency: ${incoherentMoving.map((u) => nameOfUnit(u.id)).join(', ')}`
+                  : !overlapOk
+                    ? `⚠ on top of another model: ${overlappingMoving.map((u) => nameOfUnit(u.id)).join(', ')}`
+                    : 'in coherency ✓'}
               </p>
               <div className="btnrow">
                 <button
                   className="primary"
-                  disabled={!coherencyOk}
-                  title={coherencyOk ? '' : 'A unit is out of coherency — bring its models back together first'}
+                  disabled={!coherencyOk || !overlapOk}
+                  title={
+                    !coherencyOk
+                      ? 'A unit is out of coherency — bring its models back together first'
+                      : !overlapOk
+                        ? 'Bases cannot end a move on top of another model — move them clear first'
+                        : ''
+                  }
                   onClick={() => { dispatch({ type: 'EndMove', unitIds: movingUnits.map((u) => u.id) }); setSelectedUnitIds?.([]); }}
                 >
                   ✓ Confirm move

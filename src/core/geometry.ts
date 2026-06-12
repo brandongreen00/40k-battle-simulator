@@ -64,6 +64,24 @@ export function gapBetweenBases(a: Vec2, sa: BaseShape, b: Vec2, sb: BaseShape):
   return baseToBaseGap(a, baseRadius(sa), b, baseRadius(sb));
 }
 
+/**
+ * Do two bases physically overlap? Models may be moved AROUND each other and bases may touch
+ * (base-to-base contact is how melee works), but a model can never stand ON TOP of another —
+ * `baseToBaseGap` clamps at 0, so overlap needs the raw centre distance. Ovals use their
+ * INSCRIBED circle (min semi-axis): base rotation isn't tracked, and the average-radius
+ * approximation would falsely flag legal tight oval formations (e.g. Death Riders in a block)
+ * as stacked. Conservative: real stacking is always caught, shallow edge-on oval overlap may
+ * not be. The tolerance forgives float noise from moves ending exactly at base contact.
+ */
+export const OVERLAP_TOLERANCE = 0.01; // inches
+function inscribedRadius(shape: BaseShape): number {
+  if (shape.kind === 'circle') return baseRadius(shape);
+  return Math.min(shape.rx ?? 0, shape.ry ?? 0);
+}
+export function basesOverlap(a: Vec2, sa: BaseShape, b: Vec2, sb: BaseShape, tol = OVERLAP_TOLERANCE): boolean {
+  return dist(a, b) < inscribedRadius(sa) + inscribedRadius(sb) - tol;
+}
+
 /** Half-extents (inches) of a base along x/y — circle is symmetric, oval uses its semi-axes. */
 export function baseHalfExtents(shape: BaseShape): { hx: number; hy: number } {
   if (shape.kind === 'circle') {

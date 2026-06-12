@@ -371,10 +371,12 @@ describe('7 · pre-deployment Leader pairing + Warrant of Trade', () => {
     expect(s.setup?.formations?.length).toBe(1);
     expect(s.setup?.formations?.[0]?.infiltrate).toBe(true);
 
-    // The pair deploys midfield as Infiltrators: unit, leader on the same anchor, merge.
+    // The pair deploys midfield as Infiltrators: unit down, Leader staged via Reserves, merge
+    // (bases never stack, so the Leader cannot be DROPPED onto the unit's anchor — the merge
+    // re-seats its models into base-to-base coherency instead).
     const mid = { x: 30, y: 22 };
     s = reduce(s, { type: 'DeployUnit', unitId: 'p:1', owner: 'player', datasheetId: BREACHERS, baseShape: { kind: 'circle', radius: 0.5 }, modelCount: 10, wounds: 1, anchor: mid, ability: 'infiltrators' }, rng, realCtx);
-    s = reduce(s, { type: 'DeployUnit', unitId: 'p:0', owner: 'player', datasheetId: ROGUE_TRADER, baseShape: { kind: 'circle', radius: 0.63 }, modelCount: 4, wounds: 4, anchor: mid, ability: 'infiltrators' }, rng, realCtx);
+    s = reduce(s, { type: 'PlaceInReserves', unitId: 'p:0', owner: 'player', datasheetId: ROGUE_TRADER, baseShape: { kind: 'circle', radius: 0.63 }, modelCount: 4, wounds: 4 }, rng, realCtx);
     s = reduce(s, { type: 'AttachLeader', leaderUnitId: 'p:0', bodyguardUnitId: 'p:1' }, rng, realCtx);
     const merged = s.units.find((u) => u.id === 'p:1')!;
     expect(merged.attachedLeaders?.length).toBe(1);
