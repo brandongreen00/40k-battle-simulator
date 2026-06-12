@@ -1,0 +1,61 @@
+{
+  "name": "Cadian Bulwark",
+  "faction": "AM",
+  "detachment": "Grizzled Company",
+  "points": 980,
+  "units": [
+    {
+      "datasheetId": "000002607",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000002609",
+      "modelCount": 5
+    },
+    {
+      "datasheetId": "000002612",
+      "modelCount": 10
+    },
+    {
+      "datasheetId": "000002612",
+      "modelCount": 10
+    },
+    {
+      "datasheetId": "000002615",
+      "modelCount": 10
+    },
+    {
+      "datasheetId": "000000723",
+      "modelCount": 3
+    },
+    {
+      "datasheetId": "000000686",
+      "modelCount": 3
+    },
+    {
+      "datasheetId": "000000692",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000000700",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000000690",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000000691",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000000716",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000001394",
+      "modelCount": 1
+    }
+  ],
+  "note": "Prebuilt AI sparring list — a legal 1000pt Incursion army generated from the converted data by tools/rosters/build-prebuilt.ts (edit tools/rosters/prebuilt.ts and re-run pnpm build:rosters). Not one of the three owned lists."
+}

@@ -1,0 +1,67 @@
+{
+  "name": "Fleet Boarding Party",
+  "faction": "AoI",
+  "detachment": "Imperialis Fleet",
+  "points": 1000,
+  "units": [
+    {
+      "datasheetId": "000002762",
+      "modelCount": 4
+    },
+    {
+      "datasheetId": "000002587",
+      "modelCount": 10,
+      "wargearCounts": {
+        "Endurant Shield": 1
+      }
+    },
+    {
+      "datasheetId": "000002587",
+      "modelCount": 10,
+      "wargearCounts": {
+        "Endurant Shield": 1
+      }
+    },
+    {
+      "datasheetId": "000002509",
+      "modelCount": 6
+    },
+    {
+      "datasheetId": "000002509",
+      "modelCount": 6
+    },
+    {
+      "datasheetId": "000002765",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000002683",
+      "modelCount": 11
+    },
+    {
+      "datasheetId": "000002685",
+      "modelCount": 11
+    },
+    {
+      "datasheetId": "000002684",
+      "modelCount": 11
+    },
+    {
+      "datasheetId": "000004174",
+      "modelCount": 5
+    },
+    {
+      "datasheetId": "000000871",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000003820",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000002766",
+      "modelCount": 1
+    }
+  ],
+  "note": "Prebuilt AI sparring list — a legal 1000pt Incursion army generated from the converted data by tools/rosters/build-prebuilt.ts (edit tools/rosters/prebuilt.ts and re-run pnpm build:rosters). Not one of the three owned lists."
+}

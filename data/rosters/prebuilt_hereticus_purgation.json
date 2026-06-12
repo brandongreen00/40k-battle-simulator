@@ -1,0 +1,57 @@
+{
+  "name": "Hereticus Purgation Force",
+  "faction": "AoI",
+  "detachment": "Ordo Hereticus Purgation Force",
+  "points": 955,
+  "units": [
+    {
+      "datasheetId": "000000877",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000003818",
+      "modelCount": 10
+    },
+    {
+      "datasheetId": "000003818",
+      "modelCount": 10
+    },
+    {
+      "datasheetId": "000003819",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000002683",
+      "modelCount": 11
+    },
+    {
+      "datasheetId": "000002683",
+      "modelCount": 11
+    },
+    {
+      "datasheetId": "000002685",
+      "modelCount": 11
+    },
+    {
+      "datasheetId": "000004074",
+      "modelCount": 9
+    },
+    {
+      "datasheetId": "000003812",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000000872",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000003828",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000002767",
+      "modelCount": 6
+    }
+  ],
+  "note": "Prebuilt AI sparring list — a legal 1000pt Incursion army generated from the converted data by tools/rosters/build-prebuilt.ts (edit tools/rosters/prebuilt.ts and re-run pnpm build:rosters). Not one of the three owned lists."
+}

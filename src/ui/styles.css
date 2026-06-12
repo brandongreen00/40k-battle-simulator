@@ -1344,3 +1344,35 @@ body {
 .fire-plan li {
   margin: 2px 0;
 }
+
+/* ── AI seat bar (Human/AI per side + auto-play) ─────────────────────────────── */
+.ai-bar {
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.ai-seat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.ai-seat .ai-side {
+  width: 52px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.ai-seat select {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+.ai-note {
+  margin: 8px 0 0;
+  word-break: break-word;
+}

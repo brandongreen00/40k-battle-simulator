@@ -14,10 +14,14 @@
     "ingest": "tsx tools/ingest/convert.ts",
     "report:abilities": "tsx tools/ingest/abilities-report.ts",
     "extract:layouts": "tsx tools/layouts/extract-gw-ca-2025.ts",
-    "preview:layouts": "tsx tools/layouts/preview.ts"
+    "preview:layouts": "tsx tools/layouts/preview.ts",
+    "sim": "tsx tools/sim/run.ts",
+    "build:rosters": "tsx tools/rosters/build-prebuilt.ts"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild"]
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   },
   "dependencies": {
     "react": "^18.3.1",
