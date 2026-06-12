@@ -5,10 +5,14 @@ import { makeRNG } from '../core/rng';
 import { nextFormation, type Formation } from '../core/formation';
 import { checkUnitDeployment, deepStrikeArrivalLegal, isEntryPlaced, type DeployAbility } from '../core/deployment';
 import { unitCoherency, unitCentroid } from '../core/phases';
-import { dataIndex, datasheetsById, deployAbilityForDatasheet, getDatasheet, layouts, rosters } from '../data/loaders';
+import {
+  aiAction, aiMayAct, aiReactionToShooting, resolveProfile, sharedAction, whoActs, type AiDeps,
+} from '../core/ai/controller';
+import { dataIndex, datasheetsById, deployAbilityForDatasheet, getDatasheet, layouts, rosters, stratagems } from '../data/loaders';
 import { Board, type Placement, type MovementUI } from './Board';
 import { GamePanel } from './GamePanel';
 import { DeploymentPanel, effectiveSide } from './DeploymentPanel';
+import { AiBar, type AiSeats } from './AiBar';
 import { loadSavedRosters } from './savedLists';
 import { OWNER_COLOR, TERRAIN_STYLE } from './view';
 
@@ -48,8 +52,34 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
   // the seed), so we reduce OUTSIDE React — once, in the event handler — and store the result.
   const [state, setState] = useState(() => createInitialState(layouts[0]!));
   const stateRef = useRef(state);
+  // AI seats: who is the computer. Defaults: you play `player`, the computer plays `ai`.
+  const [aiSeats, setAiSeats] = useState<AiSeats>({
+    player: { enabled: false, profile: 'balanced' },
+    ai: { enabled: true, profile: 'balanced' },
+  });
+  const [aiAuto, setAiAuto] = useState(true);
+  const [aiNote, setAiNote] = useState('');
+  const aiSeatsRef = useRef(aiSeats);
+  aiSeatsRef.current = aiSeats;
+  const aiDepsRef = useRef<AiDeps | null>(null);
   const dispatch = useCallback((i: Intent) => {
-    const next = reduce(stateRef.current, i, rng, { datasheets: datasheetsById });
+    let cur = stateRef.current;
+    // Reactive window (architecture rule #3): before a unit shoots, an AI-controlled defender may
+    // answer with a defensive stratagem — exactly as the headless match runner does.
+    if (i.type === 'ShootUnit' && aiDepsRef.current) {
+      const target = cur.units.find((u) => u.id === i.targetUnitId);
+      const seat = target ? aiSeatsRef.current[target.owner] : undefined;
+      if (target && seat?.enabled) {
+        const reactions = aiReactionToShooting(
+          cur, target.owner, i.attackerUnitId, i.targetUnitId, resolveProfile(seat.profile), aiDepsRef.current,
+        );
+        for (const r of reactions) {
+          if (r.skipIf?.(cur)) continue;
+          cur = reduce(cur, r.intent, rng, { datasheets: datasheetsById });
+        }
+      }
+    }
+    const next = reduce(cur, i, rng, { datasheets: datasheetsById });
     stateRef.current = next;
     setState(next);
   }, []);
@@ -100,6 +130,54 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
 
   const rosterFor = (side: Side): Roster | undefined => allRosters.find((r) => r.name === rosterNameBySide[side]);
   const setRosterName = (side: Side, name: string) => setRosterNameBySide((m) => ({ ...m, [side]: name }));
+
+  // Everything the AI controller needs to read the game (same data the panels use).
+  const aiDeps: AiDeps = useMemo(
+    () => ({
+      ctx: { datasheets: datasheetsById },
+      rosters: { player: rosterFor('player'), ai: rosterFor('ai') },
+      detachments: { player: rosterFor('player')?.detachment ?? '', ai: rosterFor('ai')?.detachment ?? '' },
+      deployAbility: deployAbilityForDatasheet,
+      stratagems,
+      rng,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rosterNameBySide, allRosters],
+  );
+  aiDepsRef.current = aiDeps;
+
+  /** Take one AI action if the game is waiting on an AI seat. Returns true when something ran. */
+  const aiTick = useCallback((): boolean => {
+    const cur = stateRef.current;
+    if (cur.mode !== 'match') return false; // the AI plays matches, never the free sandbox
+    const seats = aiSeatsRef.current;
+    const actor = aiMayAct(whoActs(cur, aiDeps), { player: seats.player.enabled, ai: seats.ai.enabled });
+    if (!actor) return false;
+    const action = actor === 'shared' ? sharedAction(cur) : aiAction(cur, actor, seats[actor].profile, aiDeps);
+    if (!action || action.intents.length === 0) return false;
+    for (const item of action.intents) {
+      if (item.skipIf?.(stateRef.current)) continue;
+      dispatch(item.intent);
+    }
+    setAiNote(action.note);
+    return true;
+  }, [aiDeps, dispatch]);
+
+  // Whether the game is currently waiting on an AI seat (drives auto-play and the Step button).
+  const aiCanAct =
+    state.mode === 'match' &&
+    !placing &&
+    aiMayAct(whoActs(state, aiDeps), { player: aiSeats.player.enabled, ai: aiSeats.ai.enabled }) !== null;
+
+  // Auto-play: whenever the game waits on an AI seat, take the next action after a short beat
+  // (slow enough to watch, fast enough to not drag a full AI-vs-AI game out).
+  useEffect(() => {
+    if (!aiAuto || !aiCanAct) return;
+    const t = setTimeout(() => {
+      aiTick();
+    }, 350);
+    return () => clearTimeout(t);
+  }, [state, aiAuto, aiCanAct, aiTick]);
 
   // Deployment entries per side, and which are already on the board / in reserves.
   const entriesFor = (side: Side): DeployEntry[] => {
@@ -395,6 +473,16 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
       </main>
 
       <aside className="gamerail">
+        <AiBar
+          seats={aiSeats}
+          onSeats={setAiSeats}
+          auto={aiAuto}
+          onAuto={setAiAuto}
+          onStep={() => aiTick()}
+          canStep={aiCanAct}
+          note={aiNote}
+          active={inMatch}
+        />
         {inSetup ? (
           <DeploymentPanel
             state={state}
