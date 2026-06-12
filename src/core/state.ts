@@ -18,6 +18,8 @@ import { defensiveProfileForItem } from './wargear';
 import { rollOff, otherSide } from './setup';
 import { checkUnitDeployment, deepStrikeArrivalLegal, whollyInOwnZone, type DeployAbility } from './deployment';
 import { checkCoherency } from './coherency';
+import { occupiedBases, unitOverlaps } from './collision';
+import { initSecondaries, recordKills, secondariesOnTurnEnd, secondariesOnTurnStart } from './secondaries';
 import { canAttach, leaderJoinPositions } from './leaders';
 import { unitScoutDistance } from './abilities';
 import { maxMoveDistance, rollAdvance, type MoveMode } from './movement';
@@ -100,6 +102,9 @@ export type Intent =
    *  Not gated by the active player, so reactive stratagems (Displacer Field) work in the
    *  opponent's turn (architecture rule #3). */
   | { type: 'UseStratagem'; name: string; side: Side; cost: number; targetUnitId?: string; effectId?: string }
+  /** Discard one of your active Tactical Missions (the end-of-turn discard choice; the AI relies
+   *  on the automatic stale-discard instead). */
+  | { type: 'DiscardSecondary'; side: Side; cardId: string }
   // ── Pre-battle setup / deployment (Stage: setup) ──────────────────────────────
   /** Start a new battle: clear the board and enter deployment at the roll-off step. */
   | { type: 'NewBattle' }
@@ -224,7 +229,7 @@ function cancelOpenActivations(state: GameState): { units: UnitInstance[]; cance
 }
 
 /** Advance the Pariah Nexus sequencer one step. Phases→turns→rounds; ends after round 5. */
-function advancePhase(state: GameState): GameState {
+function advancePhase(state: GameState, ctx?: EngineContext): GameState {
   if (state.ended || state.stage !== 'battle') return state;
   // An unconfirmed move activation does not survive the phase ending.
   const open = cancelOpenActivations(state);
@@ -235,7 +240,10 @@ function advancePhase(state: GameState): GameState {
   if (i >= 0 && i < PARIAH_NEXUS_PHASES.length - 1) {
     return { ...state, phase: PARIAH_NEXUS_PHASES[i + 1]! };
   }
-  // End of the Fight phase — the active player's turn ends.
+  // End of the Fight phase — the active player's turn ends: score Tactical Missions first
+  // (the ending player's end-of-your-turn cards, the opponent's end-of-opponent's-turn cards),
+  // then clear the per-turn kill ledger.
+  state = secondariesOnTurnEnd(state, ctx);
   if (state.activePlayer === state.firstPlayer) {
     const next = otherSide(state.activePlayer);
     return {
@@ -243,13 +251,14 @@ function advancePhase(state: GameState): GameState {
       activePlayer: next,
       phase: PARIAH_NEXUS_PHASES[0]!,
       commandRun: false,
+      turnKills: [],
       units: beginTurnFor(state, next),
       log: [...state.log, `— ${next} turn, round ${state.round} —`],
     };
   }
   // Second player just finished: advance the round (or end the battle after round 5).
   if (state.round >= 5) {
-    return { ...state, ended: true, log: [...state.log, '— battle ends (round 5 complete) —'] };
+    return { ...state, ended: true, turnKills: [], log: [...state.log, '— battle ends (round 5 complete) —'] };
   }
   const round = state.round + 1;
   const next = state.firstPlayer;
@@ -259,6 +268,7 @@ function advancePhase(state: GameState): GameState {
     activePlayer: next,
     phase: PARIAH_NEXUS_PHASES[0]!,
     commandRun: false,
+    turnKills: [],
     units: beginTurnFor(state, next),
     log: [...state.log, `— ${next} turn, round ${round} —`],
   };
@@ -321,7 +331,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       return createInitialState(intent.layout);
 
     case 'AdvancePhase':
-      return advancePhase(state);
+      return advancePhase(state, ctx);
 
     case 'SetFirstPlayer':
       return { ...state, firstPlayer: intent.side, activePlayer: intent.side, round: 1, phase: PARIAH_NEXUS_PHASES[0], ended: false };
@@ -343,7 +353,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       if (outcome.rejected) {
         return { ...state, log: [...state.log, `Attack rejected: ${outcome.rejected}`] };
       }
-      return outcome.state;
+      return recordKills(state, outcome.state, ctx);
     }
 
     case 'ShootUnit': {
@@ -355,7 +365,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       if (outcome.rejected) {
         return { ...state, log: [...state.log, `Shooting rejected: ${outcome.rejected}`] };
       }
-      return outcome.state;
+      return recordKills(state, outcome.state, ctx);
     }
 
     case 'FightUnit': {
@@ -367,7 +377,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       if (outcome.rejected) {
         return { ...state, log: [...state.log, `Fight rejected: ${outcome.rejected}`] };
       }
-      return outcome.state;
+      return recordKills(state, outcome.state, ctx);
     }
 
     case 'Charge': {
@@ -394,7 +404,11 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
           return { ...state, log: [...state.log, 'Command phase rejected: already run this turn'] };
         }
       }
-      return { ...runCommandPhase(state, ctx, rng), commandRun: true };
+      // Run the phase (CP / Battle-shock / Primary), then the Tactical Mission upkeep for the
+      // active player: snapshot objective control, discard stale cards, draw back up to 2.
+      let next: GameState = { ...runCommandPhase(state, ctx, rng), commandRun: true };
+      if (next.mode === 'match' && next.stage === 'battle') next = secondariesOnTurnStart(next, ctx);
+      return next;
     }
 
     case 'IssueOrder':
@@ -425,6 +439,25 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       };
     }
 
+    case 'DiscardSecondary': {
+      const sec = state.secondaries?.[intent.side];
+      if (!sec || !sec.hand.some((c) => c.id === intent.cardId)) {
+        return { ...state, log: [...state.log, 'Discard rejected: that Tactical Mission is not in hand'] };
+      }
+      return {
+        ...state,
+        secondaries: {
+          ...state.secondaries!,
+          [intent.side]: {
+            ...sec,
+            hand: sec.hand.filter((c) => c.id !== intent.cardId),
+            discard: [...sec.discard, intent.cardId],
+          },
+        },
+        log: [...state.log, `${intent.side} discards Tactical Mission "${intent.cardId}"`],
+      };
+    }
+
     // ── Pre-battle setup / deployment ──────────────────────────────────────────
     case 'NewBattle':
       return {
@@ -432,6 +465,9 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         stage: 'setup',
         mode: 'match',
         setup: { step: 'roll_roles' },
+        // Each side shuffles its own Tactical Mission deck now (seeded — games stay reproducible).
+        secondaries: initSecondaries(rng),
+        turnKills: [],
         log: ['— Deployment — roll off to determine Attacker and Defender —'],
       };
 
@@ -469,7 +505,10 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       const ability = intent.ability ?? 'standard';
       const positions = formationWorld(intent);
       const enemies = enemyModelsOnBoard(state, intent.owner, ctx);
-      const check = checkUnitDeployment(positions, intent.baseShape, state.layout, intent.owner, ability, enemies);
+      const check = checkUnitDeployment(
+        positions, intent.baseShape, state.layout, intent.owner, ability, enemies,
+        occupiedBases(state, ctx),
+      );
       if (!check.legal) {
         return { ...state, log: [...state.log, `Deployment rejected (${intent.owner}): ${check.reason}`] };
       }
@@ -866,6 +905,13 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
           log = [...log, `Move not confirmed: ${name} is out of coherency`];
           return u; // stay in the move so the user can fix it
         }
+        // A move may pass over other models but can never END with bases stacked.
+        if (unitOverlaps(state, u, ctx)) {
+          anyRejected = true;
+          const name = ctx?.datasheets.get(u.datasheetId)?.name ?? u.id;
+          log = [...log, `Move not confirmed: ${name} ends on top of another model's base`];
+          return u;
+        }
         const mode = u.status.moveMode;
         // A Scout move must end more than 9" from all enemy models (10e Scouts).
         if (mode === 'scout') {
@@ -906,7 +952,10 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         anchor: intent.anchor, formation: intent.formation, rotation: intent.rotation,
       };
       const enemies = enemyModelsOnBoard(state, unit.owner, ctx);
-      const check = deepStrikeArrivalLegal(formationWorld(opts), shape, enemies, state.round);
+      const check = deepStrikeArrivalLegal(
+        formationWorld(opts), shape, enemies, state.round,
+        occupiedBases(state, ctx, [unit.id]),
+      );
       if (!check.legal) return { ...state, log: [...state.log, `Deep Strike rejected: ${check.reason}`] };
       const newModels = layoutModels(opts, state.layout).map((m, i) => ({
         ...m,

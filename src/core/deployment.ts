@@ -12,7 +12,8 @@
 // and what the AI calls to keep its own deployment legal.
 
 import type { BaseShape, GameState, Layout, Side, Vec2 } from './types';
-import { baseRadius, distancePointToPolygon, distancePointToSegment, gapBetweenBases, pointInPolygon } from './geometry';
+import { baseRadius, basesOverlap, distancePointToPolygon, distancePointToSegment, gapBetweenBases, pointInPolygon } from './geometry';
+import type { OccupiedBase } from './collision';
 
 /** A unit's deployment ability, derived from its datasheet keywords/abilities. */
 export type DeployAbility = 'standard' | 'infiltrators' | 'deep_strike';
@@ -69,6 +70,8 @@ export interface DeploymentCheck {
  * - infiltrators: every model > 9" from the enemy zone (and from enemy models, passed in).
  * - deep_strike at deploy time: handled by placing the unit in Reserves, not on the board, so this
  *   returns illegal for on-board placement (the UI offers a "to Reserves" action instead).
+ * In every case a model may not be set up on top of another model's base (`occupied` — pass ALL
+ * on-board models, both sides).
  */
 export function checkUnitDeployment(
   positions: Vec2[],
@@ -77,28 +80,40 @@ export function checkUnitDeployment(
   side: Side,
   ability: DeployAbility,
   enemyModels: { pos: Vec2; shape: BaseShape }[] = [],
+  occupied: OccupiedBase[] = [],
 ): DeploymentCheck {
+  const clearOfModels = (p: Vec2) => occupied.every((o) => !basesOverlap(p, baseShape, o.pos, o.shape));
+  const stacked = positions.some((p) => !clearOfModels(p));
+
   if (ability === 'infiltrators') {
     const enemyZone = zoneFor(layout, side === 'player' ? 'ai' : 'player');
     const perModel = positions.map((p) => {
       const farFromZone = enemyZone.length === 0 || distancePointToPolygon(p, enemyZone) > INFILTRATE_MIN;
       const farFromEnemies = enemyModels.every((e) => gapBetweenBases(p, baseShape, e.pos, e.shape) > INFILTRATE_MIN);
       const onBoard = p.x >= 0 && p.y >= 0 && p.x <= layout.boardWidth && p.y <= layout.boardHeight;
-      return onBoard && farFromZone && farFromEnemies;
+      return onBoard && farFromZone && farFromEnemies && clearOfModels(p);
     });
     return {
       legal: perModel.every(Boolean),
       perModel,
-      reason: perModel.every(Boolean) ? undefined : 'Infiltrators must be set up > 9" from the enemy zone and enemy models',
+      reason: perModel.every(Boolean)
+        ? undefined
+        : stacked
+          ? 'Models cannot be set up on top of other models'
+          : 'Infiltrators must be set up > 9" from the enemy zone and enemy models',
     };
   }
 
   // Standard deployment: every model's base wholly within the side's own zone.
-  const perModel = positions.map((p) => whollyInOwnZone(p, baseShape, layout, side));
+  const perModel = positions.map((p) => whollyInOwnZone(p, baseShape, layout, side) && clearOfModels(p));
   return {
     legal: perModel.every(Boolean),
     perModel,
-    reason: perModel.every(Boolean) ? undefined : 'All models must be wholly within your deployment zone',
+    reason: perModel.every(Boolean)
+      ? undefined
+      : stacked
+        ? 'Models cannot be set up on top of other models'
+        : 'All models must be wholly within your deployment zone',
   };
 }
 
@@ -123,17 +138,24 @@ export function deepStrikeArrivalLegal(
   baseShape: BaseShape,
   enemyModels: { pos: Vec2; shape: BaseShape }[],
   round: number,
+  occupied: OccupiedBase[] = [],
 ): DeploymentCheck {
   if (round < 2) {
     return { legal: false, perModel: positions.map(() => false), reason: 'Reserves cannot arrive in the first battle round' };
   }
-  const perModel = positions.map((p) =>
-    enemyModels.every((e) => gapBetweenBases(p, baseShape, e.pos, e.shape) > INFILTRATE_MIN),
+  const clearOfModels = (p: Vec2) => occupied.every((o) => !basesOverlap(p, baseShape, o.pos, o.shape));
+  const stacked = positions.some((p) => !clearOfModels(p));
+  const perModel = positions.map(
+    (p) => enemyModels.every((e) => gapBetweenBases(p, baseShape, e.pos, e.shape) > INFILTRATE_MIN) && clearOfModels(p),
   );
   return {
     legal: perModel.every(Boolean),
     perModel,
-    reason: perModel.every(Boolean) ? undefined : 'Deep Strike must arrive > 9" from all enemy models',
+    reason: perModel.every(Boolean)
+      ? undefined
+      : stacked
+        ? 'Models cannot be set up on top of other models'
+        : 'Deep Strike must arrive > 9" from all enemy models',
   };
 }
 

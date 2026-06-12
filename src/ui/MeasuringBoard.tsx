@@ -4,6 +4,7 @@ import { reduce, createInitialState, type Intent } from '../core/state';
 import { makeRNG } from '../core/rng';
 import { nextFormation, type Formation } from '../core/formation';
 import { checkUnitDeployment, deepStrikeArrivalLegal, isEntryPlaced, type DeployAbility } from '../core/deployment';
+import { occupiedBases, unitOverlaps } from '../core/collision';
 import { unitCoherency, unitCentroid } from '../core/phases';
 import {
   aiAction, aiMayAct, aiReactionToShooting, resolveProfile, sharedAction, whoActs, type AiDeps,
@@ -241,19 +242,16 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
       dispatch({ type: 'ArriveFromReserves', unitId: placing.arriveUnitId, anchor, formation: placing.formation, rotation: placing.rotation });
     } else if (placing.entryKey) {
       dispatch({ type: 'DeployUnit', unitId: placing.entryKey, owner: placing.side, anchor, formation: placing.formation, rotation: placing.rotation, ability: placing.ability, ...common });
-      // A declared pair deploys as ONE unit: the Leader drops on the same anchor and merges
-      // (AttachLeader re-seats its models into base-to-base coherency with the unit).
+      // A declared pair deploys as ONE unit: the Leader cannot be dropped ON the unit (bases
+      // never stack), so it stages via Reserves and merges — AttachLeader re-seats its models
+      // into base-to-base coherency with the unit, clear of every occupied base.
       const pair = formationForBodyguard(state, placing.entryKey);
       const leaderEntry = pair ? entriesFor(placing.side).find((e) => e.key === pair.leaderKey) : undefined;
       if (pair && leaderEntry) {
         dispatch({
-          type: 'DeployUnit',
+          type: 'PlaceInReserves',
           unitId: pair.leaderKey,
           owner: placing.side,
-          anchor,
-          formation: placing.formation,
-          rotation: placing.rotation,
-          ability: placing.ability,
           datasheetId: leaderEntry.ds.id,
           baseShape: leaderEntry.ds.baseShape,
           modelCount: leaderEntry.unit.modelCount,
@@ -306,9 +304,9 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
         formation: placing.formation,
         rotation: placing.rotation,
         ...(placing.arriveUnitId
-          ? { legal: (positions: Vec2[]) => deepStrikeArrivalLegal(positions, placing.ds.baseShape, enemyModels(placing.side), state.round).legal }
+          ? { legal: (positions: Vec2[]) => deepStrikeArrivalLegal(positions, placing.ds.baseShape, enemyModels(placing.side), state.round, occupiedBases(state, { datasheets: datasheetsById }, placing.arriveUnitId ? [placing.arriveUnitId] : [])).legal }
           : placing.entryKey
-          ? { legal: (positions: Vec2[]) => checkUnitDeployment(positions, placing.ds.baseShape, layout, placing.side, placing.ability, enemyModels(placing.side)).legal }
+          ? { legal: (positions: Vec2[]) => checkUnitDeployment(positions, placing.ds.baseShape, layout, placing.side, placing.ability, enemyModels(placing.side), occupiedBases(state, { datasheets: datasheetsById })).legal }
           : {}),
       }
     : null;
@@ -341,7 +339,11 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
         },
         warnings: state.units
           .filter((u) => u.owner === state.activePlayer && !u.inReserves && u.models.some((m) => m.alive))
-          .filter((u) => !unitCoherency(u, { datasheets: datasheetsById }).inCoherency)
+          .filter(
+            (u) =>
+              !unitCoherency(u, { datasheets: datasheetsById }).inCoherency ||
+              (u.status.moveMode != null && unitOverlaps(state, u, { datasheets: datasheetsById })),
+          )
           .map((u) => ({ unitId: u.id, centroid: unitCentroid(u) })),
       }
     : null;

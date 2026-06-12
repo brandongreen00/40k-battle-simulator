@@ -30,12 +30,17 @@ export interface MatchConfig {
   seed: number;
   /** Hard safety budget; a finished 5-round game uses a few hundred intents. */
   maxIntents?: number;
+  /** Called after every applied intent — a test seam for asserting game-state invariants. */
+  observe?: (state: GameState) => void;
 }
 
 export interface TurnSnapshot {
   round: number;
   turn: Side;
+  /** Total VP (primary + secondary). */
   score: { player: number; ai: number };
+  /** The secondary (Tactical Mission) share of the total. */
+  secondary: { player: number; ai: number };
   cp: { player: number; ai: number };
   unitsAlive: { player: number; ai: number };
 }
@@ -100,6 +105,7 @@ export function runMatch(cfg: MatchConfig, data: MatchData): MatchResult {
     }
     state = reduce(state, intent, rng, data.ctx);
     intentCount++;
+    cfg.observe?.(state);
   };
 
   while (intentCount < maxIntents) {
@@ -134,6 +140,7 @@ export function runMatch(cfg: MatchConfig, data: MatchData): MatchResult {
         round: state.round,
         turn: state.activePlayer,
         score: { ...state.score },
+        secondary: { player: state.secondaries?.player.vp ?? 0, ai: state.secondaries?.ai.vp ?? 0 },
         cp: { ...state.cp },
         unitsAlive: { player: aliveUnits(state, 'player'), ai: aliveUnits(state, 'ai') },
       });

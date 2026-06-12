@@ -12,6 +12,7 @@ import { baseRadius, gapBetweenBases } from './geometry';
 import { parseKeywords } from './keywords';
 import { parseDice } from './dice';
 import { checkCoherency } from './coherency';
+import { anyOverlap, clampDeltaAvoidingOverlap, occupiedBases, unitBases, type OccupiedBase } from './collision';
 import { resolveAttacks, woundThreshold, effectiveSave, type AttackProfile, type DefenderProfile, type CombatSituation } from './combat';
 import { losBlocked, unitCanSee, unitHasCover } from './los';
 import { controlOfObjective, scorePrimary, type OcModel } from './objectives';
@@ -788,6 +789,9 @@ export interface ChargeParams {
   /** One or more declared charge targets. `targetUnitId` is accepted for back-compat. */
   targetUnitIds?: string[];
   targetUnitId?: string;
+  /** Spend 1 CP on the Core Stratagem "Command Re-roll" if the charge roll fails (match mode;
+   *  once per phase per side — the engine enforces both and re-rolls the full 2D6). */
+  commandReroll?: boolean;
 }
 
 /** Rigid copy of a unit translated by `v` (alive models only). */
@@ -814,6 +818,10 @@ function findChargeMove(
   targets: { unit: UnitInstance; shape: BaseShape }[],
   nonTargets: { unit: UnitInstance; shape: BaseShape }[],
   roll: number,
+  occupied: OccupiedBase[] = [],
+  /** Per-model bases of a translated charger copy (merged units mix base sizes). */
+  chargerBases: (u: UnitInstance) => OccupiedBase[] = (u) =>
+    u.models.filter((m) => m.alive).map((m) => ({ pos: m.pos, shape: cShape })),
   step = 0.1,
 ): Vec2 | null {
   const from = aliveCentroid(charger);
@@ -841,6 +849,8 @@ function findChargeMove(
         if (!reachesAll) continue;
         const clearOfNonTargets = nonTargets.every((nt) => closestGap(moved, cShape, nt.unit, nt.shape) > ENGAGEMENT_RANGE);
         if (!clearOfNonTargets) continue; // a longer move might clear it — keep scanning
+        // Bases may end in contact but never on top of another model (friend or foe).
+        if (anyOverlap(chargerBases(moved), occupied)) continue;
         return v;
       }
     }
@@ -896,8 +906,27 @@ export function resolveCharge(
     .filter((u) => u.owner !== charger.owner && !u.inReserves && !targetSet.has(u.id) && u.models.some((m) => m.alive))
     .map((u) => ({ unit: u, shape: ctx.datasheets.get(u.datasheetId)?.baseShape ?? cDs.baseShape }));
 
-  const { distance, rolls } = rollCharge(rng);
-  const move = findChargeMove(charger, cDs.baseShape, targets, nonTargets, distance);
+  let { distance, rolls } = rollCharge(rng);
+  const occupied = occupiedBases(state, ctx, [charger.id]);
+  let move = findChargeMove(charger, cDs.baseShape, targets, nonTargets, distance, occupied, (u) => unitBases(u, ctx));
+
+  // Core Stratagem "Command Re-roll": on a failed charge the issuer may spend 1 CP to re-roll
+  // the full 2D6 (once per phase per side, match mode only).
+  let cp = state.cp;
+  let rerollUsed = state.rerollUsed;
+  const extraLog: string[] = [];
+  if (!move && params.commandReroll && state.mode === 'match') {
+    const phaseKey = `${state.round}:${state.activePlayer}:${state.phase}`;
+    if (cp[charger.owner] >= 1 && rerollUsed?.[charger.owner] !== phaseKey) {
+      cp = { ...cp, [charger.owner]: cp[charger.owner] - 1 };
+      rerollUsed = { ...(rerollUsed ?? {}), [charger.owner]: phaseKey };
+      const first = `${rolls.join('+')}=${distance}"`;
+      ({ distance, rolls } = rollCharge(rng));
+      extraLog.push(`${charger.owner} spends 1 CP on Command Re-roll: charge 2D6 ${first} re-rolled`);
+      move = findChargeMove(charger, cDs.baseShape, targets, nonTargets, distance, occupied, (u) => unitBases(u, ctx));
+    }
+  }
+
   const success = move !== null;
   const names = targets.map((t) => ctx.datasheets.get(t.unit.datasheetId)?.name ?? t.unit.id).join(' + ');
   // Tell a short roll apart from a blocked path: the minimum distance that could possibly work
@@ -918,7 +947,36 @@ export function resolveCharge(
     if (success) return { ...translatedModels(u, move!), status: { ...u.status, ...attempted, charged: true, moved: true } };
     return { ...u, status: { ...u.status, ...attempted } };
   });
-  return { state: { ...state, units, log: [...state.log, summary] }, success, summary };
+  return { state: { ...state, units, cp, rerollUsed, log: [...state.log, ...extraLog, summary] }, success, summary };
+}
+
+/**
+ * Could `charger` complete a charge against `targetUnitIds` on a roll of `roll` (default 12, the
+ * 2D6 maximum)? Runs the same path search as `resolveCharge` without dice or state changes. The
+ * AI calls this before DECLARING, so a charge with no legal landing spot at ANY roll (screens,
+ * stacked bases) never burns the once-per-phase declaration on a guaranteed failure.
+ */
+export function chargePathExists(
+  state: GameState,
+  chargerUnitId: string,
+  targetUnitIds: string[],
+  ctx: EngineContext,
+  roll = 12,
+): boolean {
+  const charger = state.units.find((u) => u.id === chargerUnitId);
+  const cDs = charger ? ctx.datasheets.get(charger.datasheetId) : undefined;
+  if (!charger || !cDs) return false;
+  const targets = targetUnitIds
+    .map((id) => state.units.find((u) => u.id === id))
+    .filter((u): u is UnitInstance => !!u && u.models.some((m) => m.alive))
+    .map((u) => ({ unit: u, shape: ctx.datasheets.get(u.datasheetId)?.baseShape ?? cDs.baseShape }));
+  if (targets.length === 0) return false;
+  const targetSet = new Set(targets.map((t) => t.unit.id));
+  const nonTargets = state.units
+    .filter((u) => u.owner !== charger.owner && !u.inReserves && !targetSet.has(u.id) && u.models.some((m) => m.alive))
+    .map((u) => ({ unit: u, shape: ctx.datasheets.get(u.datasheetId)?.baseShape ?? cDs.baseShape }));
+  const occupied = occupiedBases(state, ctx, [charger.id]);
+  return findChargeMove(charger, cDs.baseShape, targets, nonTargets, roll, occupied, (u) => unitBases(u, ctx)) !== null;
 }
 
 /** Unit vector from the charger's closest model to the target's closest model. */
@@ -981,13 +1039,19 @@ export function resolveFightMove(
   if (!nearest) return { state, summary: 'no enemy to move toward' };
 
   const dir = closestAxis(unit, nearest);
-  const moveDist = Math.min(3, Math.max(0, minGap)); // up to 3", stopping at base contact
+  let moveDist = Math.min(3, Math.max(0, minGap)); // up to 3", stopping at base contact
+  // Never end on top of another model's base (a friendly unit can sit between us and the enemy).
+  const occupied = occupiedBases(state, ctx, [unit.id]);
+  const clamped = clampDeltaAvoidingOverlap(
+    unitBases(unit, ctx), occupied, { x: dir.x * moveDist, y: dir.y * moveDist },
+  );
+  moveDist = Math.hypot(clamped.x, clamped.y);
   if (moveDist <= 1e-6) {
     return { state: { ...state, log: [...state.log, `${ds.name} ${params.mode === 'pile_in' ? 'piles in' : 'consolidates'} (already in base contact)`] }, summary: 'no move' };
   }
   const units = state.units.map((u) =>
     u.id === unit.id
-      ? { ...u, models: u.models.map((m) => (m.alive ? { ...m, pos: { x: m.pos.x + dir.x * moveDist, y: m.pos.y + dir.y * moveDist } } : m)) }
+      ? { ...u, models: u.models.map((m) => (m.alive ? { ...m, pos: { x: m.pos.x + clamped.x, y: m.pos.y + clamped.y } } : m)) }
       : u,
   );
   const verb = params.mode === 'pile_in' ? 'piles in' : 'consolidates';

@@ -275,7 +275,10 @@ export function shootingEV(
     };
     ev += expectedWeaponDamage(w.weapon, w.carriers, def, sit).kills * perModel;
   }
-  return ev;
+  // A volley cannot be worth more than the whole target: per-weapon kill expectations stack, so
+  // a 13-gun platform used to value a lone 100pt assassin at several HUNDRED points and feed its
+  // entire activation into overkill. Cap at the target's remaining value.
+  return Math.min(ev, unitValue(target, ctx));
 }
 
 /** Expected points of damage from one Fight activation of `attacker` into `target` (all melee weapons). */
@@ -289,7 +292,19 @@ export function meleeEV(attacker: UnitInstance, target: UnitInstance, ctx: Engin
     if (w.weapon.type !== 'melee') continue;
     ev += expectedWeaponDamage(w.weapon, w.carriers, def, { charged }).kills * perModel;
   }
-  return ev;
+  return Math.min(ev, unitValue(target, ctx)); // same overkill cap as shootingEV
+}
+
+/** Total Objective Control of a unit's alive models (merged Leader models use their OWN profile —
+ *  a Stormlord is OC 8 from one model; counting heads instead starves tanks of objective play). */
+export function unitOC(u: UnitInstance, ctx: EngineContext): number {
+  let total = 0;
+  for (const m of u.models) {
+    if (!m.alive) continue;
+    const ds = ctx.datasheets.get(m.datasheetId ?? u.datasheetId);
+    total += ds?.models[0]?.OC ?? 1;
+  }
+  return total;
 }
 
 /** Closest base-to-base gap between two units (Infinity when either is off-board/dead). */

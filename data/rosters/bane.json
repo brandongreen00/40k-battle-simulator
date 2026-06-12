@@ -1,8 +1,87 @@
 {
   "name": "Bane",
   "faction": "AM",
-  "detachment": "",
-  "points": 1000,
-  "units": [],
-  "note": "AWAITING SOURCE LIST. The unit-reference file docs/lists/jacks_army_unit_reference.md was not provided, so units are not yet encoded. This is the Krieg/Astra Militarum thematic list; detachment is TBD (likely 'Siege Regiment' for a Krieg theme — confirm from the list). Add RosterUnit entries once the list is supplied."
+  "detachment": "Grizzled Company",
+  "points": 985,
+  "units": [
+    {
+      "datasheetId": "000004216",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Bale Eye": 1,
+        "Laspistol": 1,
+        "Power klaw": 1,
+        "Power sword": 1,
+        "Storm bolter": 1
+      }
+    },
+    {
+      "datasheetId": "000002613",
+      "modelCount": 10,
+      "wargearCounts": {
+        "Chainsword": 1,
+        "Laspistol": 1,
+        "Close combat weapon": 9,
+        "Death Korps Medi-pack": 1,
+        "Grenade launcher": 1,
+        "Lasgun": 7,
+        "Plasma gun": 1,
+        "Vox-caster": 1
+      }
+    },
+    {
+      "datasheetId": "000002613",
+      "modelCount": 10,
+      "wargearCounts": {
+        "Chainsword": 1,
+        "Laspistol": 1,
+        "Close combat weapon": 9,
+        "Death Korps Medi-pack": 1,
+        "Grenade launcher": 1,
+        "Lasgun": 7,
+        "Plasma gun": 1,
+        "Vox-caster": 1
+      }
+    },
+    {
+      "datasheetId": "000003896",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Crew close combat weapons": 1,
+        "Heavy mortar": 1,
+        "Lasgun": 1
+      }
+    },
+    {
+      "datasheetId": "000003898",
+      "modelCount": 10,
+      "wargearCounts": {
+        "Death Rider lascarbine": 10,
+        "Frag lance": 10,
+        "Power sabre": 10,
+        "Savage claws": 10
+      }
+    },
+    {
+      "datasheetId": "000003893",
+      "modelCount": 5,
+      "wargearCounts": {
+        "Autopistol": 5,
+        "Trench club": 5
+      }
+    },
+    {
+      "datasheetId": "000000708",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Armoured tracks": 1,
+        "Heavy stubber": 2,
+        "Lascannon": 4,
+        "Twin heavy bolter": 1,
+        "Twin heavy flamer": 4,
+        "Vulcan mega-bolter": 1
+      }
+    }
+  ],
+  "note": "Imported from the 40k-app text export bane.txt via pnpm import:roster."
 }

@@ -330,6 +330,139 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-06-12] — Secondary missions: the Pariah Nexus Tactical Mission deck (40 VP), played by
+  both humans and the AI.** Closes the "primary-only scoring favours bodies" structural gap.
+  All gates green: `pnpm typecheck`, `pnpm test` (**327 tests**, 10 new in
+  `tests/secondaries.test.ts`), `pnpm build`; Bane vs RT ×10 + DW vs Fleet ×6 + Cadian vs Krieg ×6
+  all end naturally, zero rejected intents. Full design + per-card table + assumptions in
+  **`docs/secondary_missions.md`**.
+  - **New pure `src/core/secondaries.ts`**: a 12-card Tactical deck — every card computable from
+    game state (Assassination, Bring It Down, No Prisoners, Overwhelming Force, Behind Enemy
+    Lines, Engage on All Fronts, Area Denial, Secure No Man's Land, Extend Battle Lines, Capture
+    Enemy Outpost, Storm Hostile Objective, Defend Stronghold). Action-based cards excluded (no
+    Actions mechanic yet); VP values are best-effort data, centralized in `SECONDARY_CARDS`.
+  - **Lifecycle in the reducer**: per-side seeded decks at `NewBattle`; Run Command does the
+    turn-start upkeep (objective-control snapshot for Storm Hostile, stale-card auto-discard
+    after 2 unscored own turns, draw to a 2-card hand); `AdvancePhase` out of Fight scores the
+    ending player's cards + the opponent's *opponent-turn* cards, discards scored cards, resets
+    the kill ledger. Secondary VP caps at **40** and adds into `state.score` (total ≤ 90);
+    breakdown kept in `state.secondaries[side].vp`. New `DiscardSecondary` intent for the human
+    discard choice (the AI relies on the stale rule).
+  - **Kill ledger** (`GameState.turnKills` via `recordKills` diffing before/after on
+    Attack/ShootUnit/FightUnit): victim side, all datasheets in the unit (merged Leaders count
+    for Assassination), max Wounds (Bring It Down tier), died-on-objective (Overwhelming Force).
+  - **The AI plays its cards**: `secondaryKillBonus` multiplies shooting AND charge EV for
+    Assassination/Bring It Down targets; `secondaryPositionBonus` adds move-candidate score for
+    standing where a position card pays (enemy DZ, outpost/NML/home markers, flipping a stolen
+    marker back). No new `whoActs` decision points — sim health is unchanged by construction.
+  - **UI**: scoreboard shows the P+S breakdown; a "Tactical Missions" panel lists both hands
+    (name, rule text, drawn round, deck count) with discard buttons for the active player.
+    `TurnSnapshot` gained the `secondary` breakdown (JSONL logs carry it).
+  - **First results** (Bane vs RT ×10, seed 42): 10 of 12 cards scored, 199 secondary VP total —
+    Bane +7.4/game, RT +11.0/game; scores now run 22-60 (was 15-50). RT still wins the matchup
+    (9-1-0): with kills AND bodies it out-scores on both axes — at this point that is a genuine
+    list verdict, not a scoring artifact. Decision: deck shuffles consume the match RNG at
+    NewBattle (reproducibility preserved per seed; dice sequences shift vs older seeds).
+  - **Handoff / next:** Fixed-Missions mode (small extension over the same evaluators); the
+    Actions mechanic would unlock the missing cards (Cleanse/Sabotage/…); AI discard policy could
+    move from the stale rule to per-card feasibility checks behind `AiProfile`; correcting card
+    VP values is a one-line data edit each (see the doc's table).
+
+- **[2026-06-12] — AI refinements from the Bane-vs-Rogue-Trader log review (owner: "implement all
+  you've discovered").** Seven fixes, all verified to FIRE in re-run sims. All gates green:
+  `pnpm typecheck`, `pnpm test` (**317 tests**, 9 new in `tests/refinements.test.ts`), `pnpm build`;
+  Bane vs RT ×10 + Cadian vs Krieg ×6 + DW vs Fleet ×6 all end naturally, zero rejected intents.
+  - **Attached Officers issue Orders again** (`orders.unitIsOfficer`, sees through the Leader merge;
+    `phases.orderableUnits` now includes the officer's OWN merged unit — a standalone Officer still
+    can't self-order, he lacks REGIMENT). Yarrick merged into Death Korps had silenced Bane's whole
+    army rule: 0 Orders in 10 logged games → **116** after (incl. the Grizzled re-roll-1s rider);
+    Cadian Bulwark issues 263/6 games. AI (`ai/command.ts`) and the UI officer list both fixed.
+  - **EV overkill cap** (`evaluate.ts`): `shootingEV`/`meleeEV` are capped at the target's remaining
+    value — per-weapon kill expectations stack, so the 13-gun Stormlord valued a lone 100pt assassin
+    at several hundred points. Stormlord overkill-stops 10/38 activations → **1/50**; its fire now
+    goes to Deathwatch/Breachers (was 79/153 weapon-fires into single characters). Side effect:
+    elite lists stopped wasting volleys (DW Vigil now ~even with Fleet Boarding, which used to crush
+    everything on bodies).
+  - **Real OC in the AI's objective pull** (`evaluate.unitOC`, used by `move.positionScore`,
+    capped at 8): the proxy was model COUNT, so a 1-model OC-8 Stormlord had 1/5 a squad's pull.
+    Probe game: the Stormlord now parks its OC 8 on a marker all game.
+  - **Firing Deck ≠ transport** (`roles.ts`): only DEDICATED TRANSPORT classifies as 'transport';
+    the Stormlord is a 'gunline' again (the transport plan was benching 430pts).
+  - **Charge feasibility pre-check** (`engine.chargePathExists`, dry-runs the path search at roll
+    12): the AI declares only charges with a legal landing spot at SOME roll — the Callidus burned
+    declarations into a screened Stormlord ("no clear path") every game; 7 no-path failures → 1.
+  - **Command Re-roll** (`ChargeParams.commandReroll` + `GameState.rerollUsed`): on a failed charge
+    roll, spend 1 CP to re-roll the full 2D6 — match-mode, once per phase per side, engine-enforced.
+    The AI requests it on every declared charge (its best-scored play); the UI got a checkbox in the
+    Charge block. 8 uses in 10 Bane-RT games. (Scope: charge rolls only for now.)
+  - **Lone Operative + Deep Strike characters start in Reserves** (`deploy.wantsReserves`): the
+    Callidus infiltrated to the 9" line and died on ROUND 1 in 10 straight games (inside the 12"
+    Lone-Op bubble after one enemy move). She now arrives round 2+: died r3-r5 or survived in all
+    10 re-run games. Also: Acquire At All Costs holder radius uses the layout control radius (was
+    hardcoded 4").
+  - **Honest outcome:** Bane vs RT stays ~1-9 (avg 24:44) because BOTH sides play better — the
+    surviving Callidus scores objectives now. The matchup gap is structural: 55 OC-rich bodies vs
+    37 under PRIMARY-ONLY scoring. The real lever left is Secondary Missions (roadmap Phase 4),
+    plus the engine projects already documented: per-weapon target splitting, Overwatch/
+    Counter-offensive carve-outs, and Bane's unimplemented specials (Medi-pack, Firing Deck,
+    Will of Iron — the ability-audit ✗ rows).
+
+- **[2026-06-12] — Bases can never stack (owner rule): models move AROUND each other, never end ON
+  TOP.** Closes the long-open C6 base-overlap gap. All gates green: `pnpm typecheck`, `pnpm test`
+  (**308 tests**, 10 new in `tests/collision.test.ts`), `pnpm build`; sim spot-runs (Bane vs Rogue
+  Trader 10 games, DW vs Fleet + Cadian vs Krieg 6 each) all end naturally with zero rejected intents.
+  - **New pure `src/core/collision.ts`** + `geometry.basesOverlap`: per-model occupied-base set
+    (merged Leader models use their OWN datasheet's base), `unitOverlaps` (vs others AND unit-internal
+    stacking), and `clampDeltaAvoidingOverlap` (binary-search backoff of a rigid translate). Only FINAL
+    positions are gated — passing over models mid-move stays legal, and base-to-base CONTACT stays
+    legal (melee). **Oval bases use their inscribed circle** (min semi-axis) for overlap: rotation
+    isn't tracked and the avg-radius approximation falsely flagged legal tight oval formations (Death
+    Riders in a block) as stacked; conservative — real stacking always caught.
+  - **Enforced everywhere positions settle:** `EndMove` rejects (like coherency — "ends on top of
+    another model's base", unit stays mid-activation); `DeployUnit` + `ArriveFromReserves` via new
+    `occupied` params on `checkUnitDeployment`/`deepStrikeArrivalLegal`; charge path search skips
+    end positions that stack (fan-out still sidesteps screens); Pile In/Consolidate clamps at the
+    first blocking base. The AI pre-clamps its movement/scout nudges, deploy anchors and Deep-Strike
+    arrival spots through the same helpers, so its intents still never bounce; a tick-B guard
+    forfeits the move if a unit somehow already overlaps (mirrors the coherency forfeit).
+  - **Paired-Leader deployment reworked (AI + UI):** the Leader used to be DROPPED on the
+    Bodyguard's anchor and re-seated by the merge — now illegal. Both paths stage the Leader via
+    `PlaceInReserves` + `AttachLeader` (the existing stranded-leader rescue pattern); the merge's
+    `leaderJoinPositions` ring search was already overlap-aware. `review.test.ts` updated to match.
+  - **UI:** placement ghosts turn red on stacked bases (deploy + Deep Strike); the Movement panel's
+    Confirm is disabled with an "on top of another model" warning (incl. Scout step); warning
+    triangles show over overlapping mid-move units. Sandbox free-drag (`MoveModel` outside an
+    activation) stays free by the existing sandbox-freedom decision — every match path is gated.
+  - **Test seam:** `runMatch` gained an optional `observe(state)` hook; the new acceptance test runs
+    a full Bane vs Rogue Trader's Army game asserting NO two settled bases overlap after EVERY intent.
+
+- **[2026-06-12] — Text-export roster importer CLI + the owner's two real lists, simulated AI-vs-AI.**
+  The owner supplied two 40k-app text exports (Bane 985pts / Grizzled Company, Rogue Trader's Army
+  985pts / Imperialis Fleet) and asked for AI battles between them. All gates green: `pnpm typecheck`,
+  `pnpm test` (**298 tests**, 5 new in `tests/importText.test.ts`), `pnpm build`.
+  - **New `pnpm import:roster <export.txt> [--out name]`** (`tools/rosters/import-text.ts`): runs the
+    existing pure `parseArmyText` on a saved app export, validates with `army.validate` (errors abort —
+    an illegal roster is never written), and emits the same `toRoster` shape the prebuilt builder does
+    to `data/rosters/`. Source exports live in `tools/rosters/imports/*.txt` so rosters are reproducible;
+    the test suite sync-checks the committed JSON against re-parsing the text (prebuilt-style).
+  - **`normalizeExport`**: the owner's Bane paste had lost bullet glyphs on continuation lines
+    ("• 1x Bale Eye" then "    1x Laspistol") — the parser would silently drop those wargear counts.
+    The CLI re-bullets an indented glyphless "Nx item" line as a sibling of the previous bullet
+    (headers reset the carry; intact exports pass through unchanged). Unit-tested.
+  - **`data/rosters/bane.json` is no longer an empty scaffold** — it's the real 7-unit list (Yarrick,
+    2× Death Korps of Krieg, Artillery Team, Death Riders, Krieg Combat Engineers, Stormlord), 985pts,
+    0 import warnings. New `data/rosters/rogue_traders_army.json` (10 units, 985pts, 0 warnings).
+    Both now appear in the board's pickers and `pnpm sim --list`.
+  - **Sim results** (`pnpm sim -- --rosterA Bane --rosterB "Rogue Trader’s Army" --games 10 --seed 42`,
+    hammer-and-anvil-1, balanced vs balanced, sides alternating): **Rogue Trader's Army 9W–1L**,
+    avg VP 43.0 : 26.5. All 10 games ended naturally, zero rejected intents/forced advances. Reading:
+    consistent with the earlier 84-game finding that bodies win Primary — the Fleet list has ~50 OC-rich
+    models across 10 units vs Bane's 7 units with 430pts in one Stormlord. In Bane's one win (seed 47,
+    per the round snapshots) it took the objectives first — 10-0 Primary lead by round 2 with the unit
+    count even — and stayed ahead to 40 : 25. Full logs in `out/sim/` (gitignored).
+  - **Note:** `docs/lists/*.md` still don't exist; these imports are the owner's current app exports
+    and serve as the de-facto Bane + Fleet lists. The Grizzled Company roster scaffold remains empty.
+
 - **[2026-06-12] — Owner review #2: movement-wedge fix, unit-level fighting, AI roles + point
   play, per-model visibility, Scouts, pre-battle Leader pairing (Backroom Deals) + Warrant of
   Trade, and an ability audit.** Implements all seven items of the owner's review. All gates

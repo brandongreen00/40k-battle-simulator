@@ -10,8 +10,9 @@
 
 import type { GameState, Side, UnitInstance } from '../types';
 import { eligibleToCharge, chargeTargets, eligibleToFight, engagedEnemies, fightActivationOrder, isOnBoard } from '../phases';
-import { availableUnitWeapons, objectiveControl } from '../engine';
+import { availableUnitWeapons, chargePathExists, objectiveControl } from '../engine';
 import { chargeProb, meleeEV, unitGap, unitValue } from './evaluate';
+import { secondaryKillBonus } from '../secondaries';
 import { unitRolePlan } from './roles';
 import type { AiAction, AiDeps, AiIntent } from './types';
 import type { AiProfile } from './profile';
@@ -30,7 +31,7 @@ export function aiChargeAction(state: GameState, side: Side, profile: AiProfile,
       return t.models.some((m) => m.alive && Math.hypot(m.pos.x - o.x, m.pos.y - o.y) <= controlR + 1);
     });
 
-  let best: { charger: string; target: string; score: number; names: string } | null = null;
+  const candidates: { charger: string; target: string; score: number; names: string }[] = [];
   const options: { charger: string; target: string; names: string }[] = [];
   for (const c of chargers) {
     const plan = unitRolePlan(c, ctx);
@@ -41,13 +42,13 @@ export function aiChargeAction(state: GameState, side: Side, profile: AiProfile,
       const need = unitGap(c, t, ctx) - 1; // reach Engagement Range
       const p = chargeProb(need);
       if (p <= 0) continue;
-      const value = meleeEV(c, t, ctx, true) + (holdsObjective(t) ? 15 * profile.objective : 0);
+      const value =
+        meleeEV(c, t, ctx, true) * secondaryKillBonus(state, side, t, ctx) +
+        (holdsObjective(t) ? 15 * profile.objective : 0);
       const retaliation = meleeEV(t, c, ctx) * profile.caution;
       const score = p * (value - retaliation * 0.5) * plan.chargeWeight;
       if (score < profile.chargeThreshold) continue;
-      if (!best || score > best.score || (score === best.score && c.id < best.charger)) {
-        best = { charger: c.id, target: t.id, score, names };
-      }
+      candidates.push({ charger: c.id, target: t.id, score, names });
     }
   }
 
@@ -59,10 +60,21 @@ export function aiChargeAction(state: GameState, side: Side, profile: AiProfile,
     };
   }
 
-  if (best) {
+  // Best first — but only declare a charge that has a legal landing spot at SOME roll (≤ 12").
+  // The Callidus used to burn her declaration into a screened Stormlord ("no clear path") every
+  // game; the feasibility dry-run skips those and takes the next-best target instead.
+  candidates.sort((a, b) => b.score - a.score || a.charger.localeCompare(b.charger) || a.target.localeCompare(b.target));
+  for (const cand of candidates) {
+    if (!chargePathExists(state, cand.charger, [cand.target], ctx)) continue;
     return {
-      intents: [{ intent: { type: 'Charge', chargerUnitId: best.charger, targetUnitIds: [best.target] } }],
-      note: `${side} charges: ${best.names}`,
+      intents: [
+        {
+          // commandReroll: a declared charge is the AI's best-scored play this phase, so spending
+          // 1 CP to salvage a failed roll outranks holding it (engine enforces once-per-phase).
+          intent: { type: 'Charge', chargerUnitId: cand.charger, targetUnitIds: [cand.target], commandReroll: true },
+        },
+      ],
+      note: `${side} charges: ${cand.names}`,
     };
   }
   return { intents: [{ intent: { type: 'AdvancePhase' } }], note: `${side} ends the Charge phase` };

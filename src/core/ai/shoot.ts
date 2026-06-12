@@ -8,6 +8,7 @@
 import type { GameState, Side } from '../types';
 import { eligibleToShoot, validUnitShootingTargets, isOnBoard } from '../phases';
 import { objectiveControl } from '../engine';
+import { secondaryKillBonus } from '../secondaries';
 import { shootingEV, unitThreat, unitValue } from './evaluate';
 import { unitRolePlan } from './roles';
 import type { AiAction, AiDeps } from './types';
@@ -42,6 +43,8 @@ export function aiShootingAction(state: GameState, side: Side, profile: AiProfil
       if (plan.characterHunter > 1 && ctx.datasheets.get(t.datasheetId)?.keywords.some((k) => k.toLowerCase() === 'character')) {
         ev *= plan.characterHunter;
       }
+      // Active Tactical Missions (Assassination / Bring It Down) pay extra for this kill.
+      ev *= secondaryKillBonus(state, side, t, ctx);
       if (ev <= 0) continue;
       const tValue = unitValue(t, ctx);
       let score = ev * profile.damage;

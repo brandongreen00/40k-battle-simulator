@@ -61,7 +61,9 @@ export function classifyDatasheet(ds: Datasheet | undefined): UnitRole {
 
   // Lone Operatives split by reach: a 36"+ gun is a sniper, otherwise it kills up close.
   if (hasLoneOperative(ds)) return range >= 36 && ranged >= melee ? 'sniper' : 'assassin';
-  if (has(ds, 'Dedicated Transport') || hasAbility(ds, 'Firing Deck')) return 'transport';
+  // Only DEDICATED transports play taxi. Firing Deck alone must not — a Stormlord is a Titanic
+  // gun platform that happens to carry passengers, and the transport plan was benching it.
+  if (has(ds, 'Dedicated Transport')) return 'transport';
   // Indirect long guns shelter at the back (they do not need line of sight).
   if (hasIndirect(ds) && range >= 36 && melee < ranged) return 'artillery';
   if (has(ds, 'Character')) return 'support';

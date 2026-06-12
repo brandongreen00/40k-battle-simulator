@@ -4,6 +4,7 @@ import type { Intent } from '../core/state';
 import { canAttach, isCharacter } from '../core/leaders';
 import { unitHasWarrant, unitScoutDistance } from '../core/abilities';
 import { pendingScoutUnits, scoutTurn, unitCoherency } from '../core/phases';
+import { unitOverlaps } from '../core/collision';
 import { gapBetweenBases } from '../core/geometry';
 import { RollOffDice } from './Dice';
 import { OWNER_COLOR } from './view';
@@ -318,10 +319,15 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
               </p>
               {!scoutLegal(scoutMoving) && <p className="coh-bad">⚠ within 9" of an enemy — keep moving</p>}
               {!unitCoherency(scoutMoving, ctx).inCoherency && <p className="coh-bad">⚠ out of coherency</p>}
+              {unitOverlaps(state, scoutMoving, ctx) && <p className="coh-bad">⚠ on top of another model's base</p>}
               <div className="btnrow">
                 <button
                   className="primary"
-                  disabled={!scoutLegal(scoutMoving) || !unitCoherency(scoutMoving, ctx).inCoherency}
+                  disabled={
+                    !scoutLegal(scoutMoving) ||
+                    !unitCoherency(scoutMoving, ctx).inCoherency ||
+                    unitOverlaps(state, scoutMoving, ctx)
+                  }
                   onClick={() => dispatch({ type: 'EndMove', unitIds: [scoutMoving.id] })}
                 >
                   ✓ Confirm Scout move

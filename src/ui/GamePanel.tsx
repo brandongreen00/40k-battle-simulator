@@ -2,15 +2,17 @@ import { useEffect, useMemo, useState } from 'react';
 import type { Datasheet, GameState, UnitInstance } from '../core/types';
 import type { Intent } from '../core/state';
 import { availableUnitWeapons, planUnitFight, planUnitShooting, type EngineContext } from '../core/engine';
+import { unitOverlaps } from '../core/collision';
 import type { MoveMode } from '../core/movement';
 import { EFFECT_REGISTRY } from '../core/effects';
 import {
   reservesArrivable, unitCoherency, eligibleToShoot, eligibleToCharge, eligibleToFight,
   validUnitShootingTargets, chargeTargets, engagedEnemies, fightActivationOrder, orderableUnits, type Eligibility,
 } from '../core/phases';
-import { AM_ORDERS, isOfficer } from '../core/orders';
+import { AM_ORDERS, unitIsOfficer } from '../core/orders';
+import { secondaryCard } from '../core/secondaries';
 import { usableStratagems } from '../core/stratagems';
-import { stratagems, abilityNamesFor } from '../data/loaders';
+import { stratagems } from '../data/loaders';
 import { Die } from './Dice';
 import { OWNER_COLOR } from './view';
 import type { Side } from '../core/types';
@@ -56,6 +58,7 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
   const [effectId, setEffectId] = useState('order:take_aim');
   const [stratSide, setStratSide] = useState<Side>(state.activePlayer);
   const [chargeTargetIds, setChargeTargetIds] = useState<string[]>([]);
+  const [chargeReroll, setChargeReroll] = useState(false);
 
   const ctx: EngineContext = useMemo(() => ({ datasheets: datasheetsById }), [datasheetsById]);
   // Only the ACTIVE player's open activations belong to this panel — an opponent's unit left
@@ -63,6 +66,8 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
   const movingUnits = units.filter((u) => u.status.moveMode && u.owner === state.activePlayer);
   const incoherentMoving = movingUnits.filter((u) => !unitCoherency(u, ctx).inCoherency);
   const coherencyOk = incoherentMoving.length === 0;
+  const overlappingMoving = movingUnits.filter((u) => unitOverlaps(state, u, ctx));
+  const overlapOk = overlappingMoving.length === 0;
   const arrivable = reservesArrivable(state);
   const nameOfUnit = (id: string) => datasheetsById.get(units.find((u) => u.id === id)?.datasheetId ?? '')?.name ?? id;
 
@@ -134,9 +139,10 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
   const fightOrder = useMemo(() => (phase === 'Fight' ? fightActivationOrder(state, ctx) : []), [phase, units]);
 
   // Command phase: Officers of the active player that can issue Orders, and the active detachment.
+  // unitIsOfficer sees through the Leader merge (an attached Yarrick still issues Orders).
   const activeDetachment = detachmentBySide?.[state.activePlayer] ?? '';
   const officers = useMemo(
-    () => (phase === 'Command' ? myUnits.filter((u) => isOfficer(datasheetsById.get(u.datasheetId), abilityNamesFor(datasheetsById.get(u.datasheetId)!))) : []),
+    () => (phase === 'Command' ? myUnits.filter((u) => unitIsOfficer(u, ctx)) : []),
     [phase, units, state.activePlayer],
   );
   const enemiesOnBoard = units.filter((u) => u.owner !== state.activePlayer && !u.inReserves && u.models.some((m) => m.alive));
@@ -205,11 +211,44 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
         {(['player', 'ai'] as const).map((s) => (
           <div key={s} className="score-cell">
             <span className="dot" style={{ background: OWNER_COLOR[s].fill }} /> {s}
-            <div className="vp">{state.score[s]} VP</div>
+            <div className="vp">
+              {state.score[s]} VP
+              {state.secondaries && (
+                <span className="muted"> ({state.score[s] - state.secondaries[s].vp}P+{state.secondaries[s].vp}S)</span>
+              )}
+            </div>
             <div className="cp">{state.cp[s]} CP</div>
           </div>
         ))}
       </div>
+
+      {/* Tactical (Secondary) Missions — drawn in the Command phase, scored at turn end. */}
+      {inMatch && state.secondaries && state.stage === 'battle' && (
+        <div className="phase-block">
+          <h3>Tactical Missions</h3>
+          {(['player', 'ai'] as const).map((s) => (
+            <div key={s} className="order-officer">
+              <strong style={{ color: OWNER_COLOR[s].fill }}>{s}</strong>{' '}
+              <span className="muted">{state.secondaries![s].vp}/40 secondary VP · {state.secondaries![s].deck.length} in deck</span>
+              {state.secondaries![s].hand.length === 0 ? (
+                <div className="muted">— no active missions (drawn when the Command phase runs)</div>
+              ) : (
+                state.secondaries![s].hand.map((c) => {
+                  const card = secondaryCard(c.id);
+                  return (
+                    <div key={c.id} className="order-row">
+                      <span title={card?.desc}>{card?.name ?? c.id} <span className="muted">· drawn R{c.drawn}</span></span>
+                      {s === state.activePlayer && (
+                        <button onClick={() => dispatch({ type: 'DiscardSecondary', side: s, cardId: c.id })}>discard</button>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Command phase — Orders (Voice of Command) */}
       {phase === 'Command' && officers.length > 0 && (
@@ -319,17 +358,25 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
             </>
           ) : (
             <>
-              <p className={coherencyOk ? 'muted' : 'coh-bad'}>
+              <p className={coherencyOk && overlapOk ? 'muted' : 'coh-bad'}>
                 {movingUnits.length} unit(s) moving ·{' '}
-                {coherencyOk
-                  ? 'in coherency ✓'
-                  : `⚠ out of coherency: ${incoherentMoving.map((u) => nameOfUnit(u.id)).join(', ')}`}
+                {!coherencyOk
+                  ? `⚠ out of coherency: ${incoherentMoving.map((u) => nameOfUnit(u.id)).join(', ')}`
+                  : !overlapOk
+                    ? `⚠ on top of another model: ${overlappingMoving.map((u) => nameOfUnit(u.id)).join(', ')}`
+                    : 'in coherency ✓'}
               </p>
               <div className="btnrow">
                 <button
                   className="primary"
-                  disabled={!coherencyOk}
-                  title={coherencyOk ? '' : 'A unit is out of coherency — bring its models back together first'}
+                  disabled={!coherencyOk || !overlapOk}
+                  title={
+                    !coherencyOk
+                      ? 'A unit is out of coherency — bring its models back together first'
+                      : !overlapOk
+                        ? 'Bases cannot end a move on top of another model — move them clear first'
+                        : ''
+                  }
                   onClick={() => { dispatch({ type: 'EndMove', unitIds: movingUnits.map((u) => u.id) }); setSelectedUnitIds?.([]); }}
                 >
                   ✓ Confirm move
@@ -502,10 +549,18 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
         )}
         <button
           disabled={!attackerId || (phase === 'Charge' ? chargeTargetIds.length === 0 : !targetId)}
-          onClick={() => dispatch({ type: 'Charge', chargerUnitId: attackerId, targetUnitIds: phase === 'Charge' ? chargeTargetIds : (targetId ? [targetId] : []) })}
+          onClick={() => dispatch({ type: 'Charge', chargerUnitId: attackerId, targetUnitIds: phase === 'Charge' ? chargeTargetIds : (targetId ? [targetId] : []), commandReroll: chargeReroll })}
         >
           Charge (2D6){chargeTargetIds.length > 1 ? ` ×${chargeTargetIds.length}` : ''}
         </button>
+        {inMatch && phase === 'Charge' && (
+          <label className="field" title="If the charge roll fails, spend 1 CP on the Core Stratagem Command Re-roll (once per phase)">
+            <span>
+              <input type="checkbox" checked={chargeReroll} onChange={(e) => setChargeReroll(e.target.checked)} /> Command
+              Re-roll on fail (1 CP)
+            </span>
+          </label>
+        )}
       </div>
 
       {/* Manual effect applicator — a debug tool: applies any effect with no phase/CP logic. */}

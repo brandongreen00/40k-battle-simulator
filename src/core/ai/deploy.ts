@@ -9,10 +9,11 @@
 import type { Datasheet, DeclaredFormation, GameState, Roster, RosterUnit, Side, Vec2 } from '../types';
 import { otherSide } from '../setup';
 import { checkUnitDeployment, isEntryPlaced, zoneFor, type DeployAbility } from '../deployment';
+import { occupiedBases } from '../collision';
 import { formationPositions } from '../formation';
 import { canAttach, isCharacter } from '../leaders';
 import { pointInPolygon, distancePointToPolygon, dist } from '../geometry';
-import { hasBackroomDeals } from '../abilities';
+import { hasBackroomDeals, hasLoneOperative } from '../abilities';
 import { modelValue } from './evaluate';
 import { classifyDatasheet, rolePlan } from './roles';
 import type { AiAction, AiDeps, AiIntent } from './types';
@@ -137,6 +138,7 @@ export function findDeployAnchor(
   if (zone.length === 0) return { x: layout.boardWidth / 2, y: layout.boardHeight / 2 };
   const enemyZone = zoneFor(layout, otherSide(side));
   const enemies = enemyModelsOnBoard(state, side, ctx);
+  const occupied = occupiedBases(state, ctx); // both sides — bases may never stack
   const friends = state.units.filter((u) => u.owner === side && !u.inReserves && u.models.some((m) => m.alive));
   const friendAnchors = friends.map((u) => {
     const ms = u.models.filter((m) => m.alive);
@@ -165,7 +167,7 @@ export function findDeployAnchor(
         const positions = formationPositions({
           anchor, count: entry.unit.modelCount, baseShape: entry.ds.baseShape, formation: 'block', rotation: 0,
         });
-        if (!checkUnitDeployment(positions, entry.ds.baseShape, layout, side, ability, enemies).legal) continue;
+        if (!checkUnitDeployment(positions, entry.ds.baseShape, layout, side, ability, enemies, occupied).legal) continue;
 
         const objDist = layout.objectives.length
           ? Math.min(...layout.objectives.map((o) => dist(anchor, o)))
@@ -273,8 +275,17 @@ export function desiredFormations(state: GameState, side: Side, deps: AiDeps): A
 /** Should this entry start in Reserves? Deep Strikers do (profile-gated), Characters don't
  *  (they want to merge with a bodyguard on the board), and never more than half the army. */
 function wantsReserves(state: GameState, side: Side, entry: DeployEntry, ability: DeployAbility, profile: AiProfile, deps: AiDeps): boolean {
-  if (ability !== 'deep_strike' || !profile.useReserves) return false;
-  if (isCharacter(entry.ds)) return false;
+  if (!profile.useReserves) return false;
+  // Lone Operative characters that ALSO have Deep Strike (the Callidus has Infiltrators too, so
+  // her classified ability is 'infiltrators') survive by arriving from Reserves on round 2 —
+  // infiltrating to the 9" line parks them inside the enemy's 12" targeting bubble after one
+  // move, and the logs showed the Callidus dying on round 1 in 10 straight games.
+  const loneOpDeepStrike =
+    isCharacter(entry.ds) &&
+    hasLoneOperative(entry.ds) &&
+    (entry.ds.abilities ?? []).some((a) => a.name.toLowerCase().includes('deep strike'));
+  if (ability !== 'deep_strike' && !loneOpDeepStrike) return false;
+  if (isCharacter(entry.ds) && !loneOpDeepStrike) return false;
   const total = rosterEntries(deps.rosters[side], side, deps.ctx).length;
   const reserved = state.units.filter((u) => u.owner === side && u.inReserves).length;
   return reserved + 1 <= Math.floor(total / 2);
@@ -414,12 +425,13 @@ export function aiDeployAction(state: GameState, side: Side, profile: AiProfile,
   ];
   let note = `${side} deploys ${entry.ds.name}${onBoardAbility === 'infiltrators' ? ' (Infiltrators)' : ''}`;
   if (leaderCommon) {
-    // The Leader physically joins the unit it leads: drop it on the same anchor and merge — the
-    // AttachLeader reducer re-seats its models into base-to-base coherency.
+    // The Leader physically joins the unit it leads. It cannot be DROPPED on the unit (bases never
+    // stack), so stage it via Reserves and merge — AttachLeader re-seats its models into
+    // base-to-base coherency with the on-board unit, avoiding every occupied base.
     const leaderUnitId = leaderCommon.unitId;
     const bodyguardUnitId = common.unitId;
     intents.push({
-      intent: { type: 'DeployUnit', ...leaderCommon, anchor, formation: 'block', rotation: 0, ability: onBoardAbility },
+      intent: { type: 'PlaceInReserves', ...leaderCommon },
       skipIf: (s) => isEntryPlaced(s, leaderUnitId) || !isEntryPlaced(s, bodyguardUnitId),
     });
     intents.push(mergeIntents(leaderUnitId, bodyguardUnitId));

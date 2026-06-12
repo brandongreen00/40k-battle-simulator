@@ -16,7 +16,8 @@
     "extract:layouts": "tsx tools/layouts/extract-gw-ca-2025.ts",
     "preview:layouts": "tsx tools/layouts/preview.ts",
     "sim": "tsx tools/sim/run.ts",
-    "build:rosters": "tsx tools/rosters/build-prebuilt.ts"
+    "build:rosters": "tsx tools/rosters/build-prebuilt.ts",
+    "import:roster": "tsx tools/rosters/import-text.ts"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

@@ -259,15 +259,17 @@ const VOICE_OF_COMMAND_RANGE = 6; // inches
 
 /**
  * Friendly REGIMENT units an Officer can issue an Order to: same owner, within 6", on the board,
- * not Battle-shocked, not the officer itself. (The order set itself lives in core/orders.ts.)
+ * not Battle-shocked. An ATTACHED Officer may order its own (merged) unit — the merged unit
+ * carries the Bodyguard's REGIMENT keyword; a standalone Officer fails the REGIMENT check, so
+ * "self" never lets a lone Officer order himself. (The order set lives in core/orders.ts.)
  */
 export function orderableUnits(officer: UnitInstance, state: GameState, ctx: EngineContext): UnitInstance[] {
   return state.units.filter((u) => {
-    if (u.owner !== officer.owner || u.id === officer.id || !isOnBoard(u)) return false;
+    if (u.owner !== officer.owner || !isOnBoard(u)) return false;
     if (u.status.battleShocked) return false;
     const ds = dsOf(u, ctx);
     if (!ds?.keywords.some((k) => k.toLowerCase() === 'regiment')) return false;
-    return gapBetween(officer, u, ctx) <= VOICE_OF_COMMAND_RANGE;
+    return u.id === officer.id || gapBetween(officer, u, ctx) <= VOICE_OF_COMMAND_RANGE;
   });
 }
 
