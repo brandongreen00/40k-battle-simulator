@@ -181,6 +181,12 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
     return () => clearTimeout(t);
   }, [state, aiAuto, aiCanAct, aiTick]);
 
+  // A deployment ghost held for an AI-controlled side would pause auto-play forever (aiCanAct
+  // gates on !placing) — drop it. Can happen when the seat flips to AI mid-placement.
+  useEffect(() => {
+    if (placing?.entryKey && aiSeats[placing.side].enabled) setPlacing(null);
+  }, [placing, aiSeats]);
+
   // Deployment entries per side, and which are already on the board / in reserves.
   const entriesFor = (side: Side): DeployEntry[] => {
     const r = rosterFor(side);
@@ -420,6 +426,9 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
         {inSetup && state.setup?.attacker ? (
           <section>
             <h2>Deploy · <span style={{ color: OWNER_COLOR[sideToPlace].fill }}>{sideToPlace}</span></h2>
+            {aiSeats[sideToPlace].enabled && (
+              <p className="hint">🤖 The computer controls this side and deploys by itself{aiAuto ? '' : ' — auto-play is off, use Step in the Players bar'}. Switch the seat to Human there to place these units yourself.</p>
+            )}
             <ul className="unit-list">
               {entriesFor(sideToPlace).map((e) => {
                 const placed = isPlaced(e.key);
@@ -434,6 +443,10 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
                       <span className="spawn done">{reserve ? 'Reserves' : '✓'}</span>
                     ) : paired ? (
                       <span className="spawn done" title="Declared as a Leader — deploys merged with its unit">⚑ with unit</span>
+                    ) : aiSeats[sideToPlace].enabled ? (
+                      // An AI-controlled side deploys itself: a picked-up ghost would silently pause
+                      // auto-play (aiCanAct gates on !placing), so don't offer manual placement here.
+                      <span className="spawn done" title="The AI deploys this unit (switch the seat to Human in the Players bar to place it yourself)">🤖</span>
                     ) : (
                       <>
                         <button className={`spawn${active ? ' seg-on' : ''}`} onClick={() => (active ? setPlacing(null) : beginDeploy(e, sideToPlace))}>

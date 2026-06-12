@@ -117,19 +117,30 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
     <section className="game-panel">
       <h2>Deployment</h2>
 
-      {/* Rosters per side */}
+      {/* Rosters per side. A roster with no units would leave that side with NOTHING to deploy
+          (the AI would simply never place anything) — keep the empty scaffolds unpickable. */}
       <div className="dep-rosters">
         {(['player', 'ai'] as const).map((side) => (
           <label className="field" key={side}>
             <span style={{ color: OWNER_COLOR[side].fill }}>{side} army</span>
             <select value={rosterName[side]} onChange={(e) => setRosterName(side, e.target.value)} disabled={setup.step !== 'roll_roles'}>
               {rosters.map((r) => (
-                <option key={r.name} value={r.name}>{r.name}{r.sample ? ' (demo)' : ''}</option>
+                <option key={r.name} value={r.name} disabled={r.units.length === 0}>
+                  {r.name}{r.sample ? ' (demo)' : ''}{r.units.length === 0 ? ' (empty)' : ''}
+                </option>
               ))}
             </select>
           </label>
         ))}
       </div>
+      {(['player', 'ai'] as const).some((s) => (rosters.find((r) => r.name === rosterName[s])?.units.length ?? 0) === 0) && (
+        <p className="warn">
+          ⚠ {(['player', 'ai'] as const)
+            .filter((s) => (rosters.find((r) => r.name === rosterName[s])?.units.length ?? 0) === 0)
+            .map((s) => `the ${s} army "${rosterName[s]}" has no units`)
+            .join(' and ')} — that side has nothing to deploy. Pick a list with units.
+        </p>
+      )}
 
       {/* Step 1 — Attacker / Defender */}
       <div className="dep-step">
