@@ -60,6 +60,24 @@ export function isOfficer(ds: Datasheet | undefined, abilityNames: string[] = []
   return abilityNames.some((a) => a.toLowerCase().includes('voice of command'));
 }
 
+/**
+ * Does this live unit contain an Officer — its own datasheet, OR a merged attached Leader's?
+ * An attached Officer keeps Voice of Command (10e): Yarrick merged into a Death Korps squad
+ * still issues Orders. The Leader-merge replaces the Officer's unit instance, so any scan that
+ * only reads `unit.datasheetId` goes blind the moment the Officer joins a squad.
+ */
+export function unitIsOfficer(
+  u: UnitInstance,
+  ctx: { datasheets: Map<string, Datasheet> },
+): boolean {
+  const officerDs = (id: string): boolean => {
+    const ds = ctx.datasheets.get(id);
+    return isOfficer(ds, (ds?.abilities ?? []).map((a) => a.name));
+  };
+  if (officerDs(u.datasheetId)) return true;
+  return (u.attachedLeaders ?? []).some((l) => officerDs(l.datasheetId));
+}
+
 /** A unit can receive Orders if it has the REGIMENT keyword and is not Battle-shocked. */
 export function canReceiveOrders(ds: Datasheet | undefined, u: UnitInstance): boolean {
   if (!ds || u.status.battleShocked) return false;

@@ -299,6 +299,9 @@ export interface GameState {
   mode: 'sandbox' | 'match';
   /** The active player has already run their Command phase this turn (match-mode guard). */
   commandRun?: boolean;
+  /** Core Stratagem "Command Re-roll" usage: side → phase key (`round:turn:phase`) it was last
+   *  used in. Enforces once per phase per side (match-mode; currently bound to charge rolls). */
+  rerollUsed?: Partial<Record<Side, string>>;
   /** Pre-battle deployment sub-state (present while `stage === 'setup'`). */
   setup?: SetupState;
   round: number; // 1..5

@@ -18,7 +18,7 @@ import { formationPositions } from '../formation';
 import { gapBetweenBases, dist, baseRadius } from '../geometry';
 import { objectiveControl } from '../engine';
 import { unitScoutDistance } from '../abilities';
-import { shootingEV, unitThreat, unitValue, unitGap, maxWeaponRange, meleeEV } from './evaluate';
+import { shootingEV, unitThreat, unitValue, unitGap, unitOC, maxWeaponRange, meleeEV } from './evaluate';
 import { homeGarrisonId, unitRolePlan, type RolePlan } from './roles';
 import type { AiAction, AiDeps } from './types';
 import type { AiProfile } from './profile';
@@ -87,7 +87,9 @@ function positionScore(
   const at = { x: centroid.x + delta.x, y: centroid.y + delta.y };
   const controlR = state.layout.objectiveControlRadiusIn ?? 3;
   const enemies = state.units.filter((e) => e.owner !== unit.owner && isOnBoard(e));
-  const myOC = aliveModels(unit).length; // proxy: model count ≈ OC presence
+  // Real OC, capped so a horde can't fully drown the other terms: a 10-strong squad saturates,
+  // and a one-model OC-8 Stormlord pulls toward markers as hard as a squad (it used to count 1).
+  const myOC = Math.min(unitOC(unit, ctx), 8);
   const home = homeObjective(state, unit.owner);
 
   let score = 0;

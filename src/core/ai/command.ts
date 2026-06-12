@@ -5,7 +5,7 @@
 // Primary scoring — its dice change who can receive Orders), then the buffs + AdvancePhase.
 
 import type { GameState, Side, UnitInstance } from '../types';
-import { isOfficer, canReceiveOrders, AM_ORDERS } from '../orders';
+import { unitIsOfficer, canReceiveOrders, AM_ORDERS } from '../orders';
 import { orderableUnits, isOnBoard, engagedEnemies } from '../phases';
 import { objectiveControl, availableUnitWeapons } from '../engine';
 import { parseKeywords } from '../keywords';
@@ -56,9 +56,9 @@ export function aiCommandAction(state: GameState, side: Side, profile: AiProfile
   const ordersPerOfficer = detachment === 'Grizzled Company' ? 2 : 1;
   const ordered = new Set<string>();
   for (const officer of myUnits) {
-    const ds = ctx.datasheets.get(officer.datasheetId);
-    const abilityNames = (ds?.abilities ?? []).map((a) => a.name);
-    if (!isOfficer(ds, abilityNames)) continue;
+    // unitIsOfficer sees through the Leader merge: Yarrick attached to a Death Korps squad
+    // still issues Orders (and may order his own unit — orderableUnits includes it).
+    if (!unitIsOfficer(officer, ctx)) continue;
     let issued = 0;
     const targets = orderableUnits(officer, state, ctx)
       .filter((t) => !ordered.has(t.id) && canReceiveOrders(ctx.datasheets.get(t.datasheetId), t))
@@ -94,8 +94,9 @@ export function aiCommandAction(state: GameState, side: Side, profile: AiProfile
     const holderIdx = perObjective.findIndex((o) => o.controller === side);
     if (holderIdx >= 0) {
       const o = state.layout.objectives[holderIdx]!;
+      const controlR = (state.layout.objectiveControlRadiusIn ?? 3) + 1;
       const holder = myUnits
-        .filter((u) => u.models.some((m) => m.alive && Math.hypot(m.pos.x - o.x, m.pos.y - o.y) <= 4))
+        .filter((u) => u.models.some((m) => m.alive && Math.hypot(m.pos.x - o.x, m.pos.y - o.y) <= controlR))
         .sort((a, b) => unitValue(b, ctx) - unitValue(a, ctx))[0];
       if (holder) {
         intents.push({

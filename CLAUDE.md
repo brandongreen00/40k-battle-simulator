@@ -330,6 +330,45 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-06-12] — AI refinements from the Bane-vs-Rogue-Trader log review (owner: "implement all
+  you've discovered").** Seven fixes, all verified to FIRE in re-run sims. All gates green:
+  `pnpm typecheck`, `pnpm test` (**317 tests**, 9 new in `tests/refinements.test.ts`), `pnpm build`;
+  Bane vs RT ×10 + Cadian vs Krieg ×6 + DW vs Fleet ×6 all end naturally, zero rejected intents.
+  - **Attached Officers issue Orders again** (`orders.unitIsOfficer`, sees through the Leader merge;
+    `phases.orderableUnits` now includes the officer's OWN merged unit — a standalone Officer still
+    can't self-order, he lacks REGIMENT). Yarrick merged into Death Korps had silenced Bane's whole
+    army rule: 0 Orders in 10 logged games → **116** after (incl. the Grizzled re-roll-1s rider);
+    Cadian Bulwark issues 263/6 games. AI (`ai/command.ts`) and the UI officer list both fixed.
+  - **EV overkill cap** (`evaluate.ts`): `shootingEV`/`meleeEV` are capped at the target's remaining
+    value — per-weapon kill expectations stack, so the 13-gun Stormlord valued a lone 100pt assassin
+    at several hundred points. Stormlord overkill-stops 10/38 activations → **1/50**; its fire now
+    goes to Deathwatch/Breachers (was 79/153 weapon-fires into single characters). Side effect:
+    elite lists stopped wasting volleys (DW Vigil now ~even with Fleet Boarding, which used to crush
+    everything on bodies).
+  - **Real OC in the AI's objective pull** (`evaluate.unitOC`, used by `move.positionScore`,
+    capped at 8): the proxy was model COUNT, so a 1-model OC-8 Stormlord had 1/5 a squad's pull.
+    Probe game: the Stormlord now parks its OC 8 on a marker all game.
+  - **Firing Deck ≠ transport** (`roles.ts`): only DEDICATED TRANSPORT classifies as 'transport';
+    the Stormlord is a 'gunline' again (the transport plan was benching 430pts).
+  - **Charge feasibility pre-check** (`engine.chargePathExists`, dry-runs the path search at roll
+    12): the AI declares only charges with a legal landing spot at SOME roll — the Callidus burned
+    declarations into a screened Stormlord ("no clear path") every game; 7 no-path failures → 1.
+  - **Command Re-roll** (`ChargeParams.commandReroll` + `GameState.rerollUsed`): on a failed charge
+    roll, spend 1 CP to re-roll the full 2D6 — match-mode, once per phase per side, engine-enforced.
+    The AI requests it on every declared charge (its best-scored play); the UI got a checkbox in the
+    Charge block. 8 uses in 10 Bane-RT games. (Scope: charge rolls only for now.)
+  - **Lone Operative + Deep Strike characters start in Reserves** (`deploy.wantsReserves`): the
+    Callidus infiltrated to the 9" line and died on ROUND 1 in 10 straight games (inside the 12"
+    Lone-Op bubble after one enemy move). She now arrives round 2+: died r3-r5 or survived in all
+    10 re-run games. Also: Acquire At All Costs holder radius uses the layout control radius (was
+    hardcoded 4").
+  - **Honest outcome:** Bane vs RT stays ~1-9 (avg 24:44) because BOTH sides play better — the
+    surviving Callidus scores objectives now. The matchup gap is structural: 55 OC-rich bodies vs
+    37 under PRIMARY-ONLY scoring. The real lever left is Secondary Missions (roadmap Phase 4),
+    plus the engine projects already documented: per-weapon target splitting, Overwatch/
+    Counter-offensive carve-outs, and Bane's unimplemented specials (Medi-pack, Firing Deck,
+    Will of Iron — the ability-audit ✗ rows).
+
 - **[2026-06-12] — Bases can never stack (owner rule): models move AROUND each other, never end ON
   TOP.** Closes the long-open C6 base-overlap gap. All gates green: `pnpm typecheck`, `pnpm test`
   (**308 tests**, 10 new in `tests/collision.test.ts`), `pnpm build`; sim spot-runs (Bane vs Rogue

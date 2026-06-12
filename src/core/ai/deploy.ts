@@ -13,7 +13,7 @@ import { occupiedBases } from '../collision';
 import { formationPositions } from '../formation';
 import { canAttach, isCharacter } from '../leaders';
 import { pointInPolygon, distancePointToPolygon, dist } from '../geometry';
-import { hasBackroomDeals } from '../abilities';
+import { hasBackroomDeals, hasLoneOperative } from '../abilities';
 import { modelValue } from './evaluate';
 import { classifyDatasheet, rolePlan } from './roles';
 import type { AiAction, AiDeps, AiIntent } from './types';
@@ -275,8 +275,17 @@ export function desiredFormations(state: GameState, side: Side, deps: AiDeps): A
 /** Should this entry start in Reserves? Deep Strikers do (profile-gated), Characters don't
  *  (they want to merge with a bodyguard on the board), and never more than half the army. */
 function wantsReserves(state: GameState, side: Side, entry: DeployEntry, ability: DeployAbility, profile: AiProfile, deps: AiDeps): boolean {
-  if (ability !== 'deep_strike' || !profile.useReserves) return false;
-  if (isCharacter(entry.ds)) return false;
+  if (!profile.useReserves) return false;
+  // Lone Operative characters that ALSO have Deep Strike (the Callidus has Infiltrators too, so
+  // her classified ability is 'infiltrators') survive by arriving from Reserves on round 2 —
+  // infiltrating to the 9" line parks them inside the enemy's 12" targeting bubble after one
+  // move, and the logs showed the Callidus dying on round 1 in 10 straight games.
+  const loneOpDeepStrike =
+    isCharacter(entry.ds) &&
+    hasLoneOperative(entry.ds) &&
+    (entry.ds.abilities ?? []).some((a) => a.name.toLowerCase().includes('deep strike'));
+  if (ability !== 'deep_strike' && !loneOpDeepStrike) return false;
+  if (isCharacter(entry.ds) && !loneOpDeepStrike) return false;
   const total = rosterEntries(deps.rosters[side], side, deps.ctx).length;
   const reserved = state.units.filter((u) => u.owner === side && u.inReserves).length;
   return reserved + 1 <= Math.floor(total / 2);

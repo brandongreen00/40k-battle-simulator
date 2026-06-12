@@ -9,9 +9,9 @@ import {
   reservesArrivable, unitCoherency, eligibleToShoot, eligibleToCharge, eligibleToFight,
   validUnitShootingTargets, chargeTargets, engagedEnemies, fightActivationOrder, orderableUnits, type Eligibility,
 } from '../core/phases';
-import { AM_ORDERS, isOfficer } from '../core/orders';
+import { AM_ORDERS, unitIsOfficer } from '../core/orders';
 import { usableStratagems } from '../core/stratagems';
-import { stratagems, abilityNamesFor } from '../data/loaders';
+import { stratagems } from '../data/loaders';
 import { Die } from './Dice';
 import { OWNER_COLOR } from './view';
 import type { Side } from '../core/types';
@@ -57,6 +57,7 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
   const [effectId, setEffectId] = useState('order:take_aim');
   const [stratSide, setStratSide] = useState<Side>(state.activePlayer);
   const [chargeTargetIds, setChargeTargetIds] = useState<string[]>([]);
+  const [chargeReroll, setChargeReroll] = useState(false);
 
   const ctx: EngineContext = useMemo(() => ({ datasheets: datasheetsById }), [datasheetsById]);
   // Only the ACTIVE player's open activations belong to this panel — an opponent's unit left
@@ -137,9 +138,10 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
   const fightOrder = useMemo(() => (phase === 'Fight' ? fightActivationOrder(state, ctx) : []), [phase, units]);
 
   // Command phase: Officers of the active player that can issue Orders, and the active detachment.
+  // unitIsOfficer sees through the Leader merge (an attached Yarrick still issues Orders).
   const activeDetachment = detachmentBySide?.[state.activePlayer] ?? '';
   const officers = useMemo(
-    () => (phase === 'Command' ? myUnits.filter((u) => isOfficer(datasheetsById.get(u.datasheetId), abilityNamesFor(datasheetsById.get(u.datasheetId)!))) : []),
+    () => (phase === 'Command' ? myUnits.filter((u) => unitIsOfficer(u, ctx)) : []),
     [phase, units, state.activePlayer],
   );
   const enemiesOnBoard = units.filter((u) => u.owner !== state.activePlayer && !u.inReserves && u.models.some((m) => m.alive));
@@ -513,10 +515,18 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
         )}
         <button
           disabled={!attackerId || (phase === 'Charge' ? chargeTargetIds.length === 0 : !targetId)}
-          onClick={() => dispatch({ type: 'Charge', chargerUnitId: attackerId, targetUnitIds: phase === 'Charge' ? chargeTargetIds : (targetId ? [targetId] : []) })}
+          onClick={() => dispatch({ type: 'Charge', chargerUnitId: attackerId, targetUnitIds: phase === 'Charge' ? chargeTargetIds : (targetId ? [targetId] : []), commandReroll: chargeReroll })}
         >
           Charge (2D6){chargeTargetIds.length > 1 ? ` ×${chargeTargetIds.length}` : ''}
         </button>
+        {inMatch && phase === 'Charge' && (
+          <label className="field" title="If the charge roll fails, spend 1 CP on the Core Stratagem Command Re-roll (once per phase)">
+            <span>
+              <input type="checkbox" checked={chargeReroll} onChange={(e) => setChargeReroll(e.target.checked)} /> Command
+              Re-roll on fail (1 CP)
+            </span>
+          </label>
+        )}
       </div>
 
       {/* Manual effect applicator — a debug tool: applies any effect with no phase/CP logic. */}
