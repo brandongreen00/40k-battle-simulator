@@ -4,6 +4,7 @@ import { createInitialState, reduce } from '../src/core/state';
 import { makeRNG } from '../src/core/rng';
 import { whoActs, aiAction, sharedAction, type AiDeps } from '../src/core/ai/controller';
 import { whollyInOwnZone, checkUnitDeployment } from '../src/core/deployment';
+import { unitScoutDistance } from '../src/core/abilities';
 import { formationPositions } from '../src/core/formation';
 import { datasheetsById, deployAbilityForDatasheet, stratagems, layouts } from '../src/data/loaders';
 import cadian from '../data/rosters/prebuilt_cadian_bulwark.json';
@@ -65,11 +66,16 @@ describe('ai/deploy — full alternating deployment', () => {
     expect(placed('player', (cadian as Roster).units.length)).toBe((cadian as Roster).units.length);
     expect(placed('ai', (fleet as Roster).units.length)).toBe((fleet as Roster).units.length);
 
-    // Standard deployments sit wholly within their own zone.
+    // Standard deployments sit wholly within their own zone — except units with a Scouts X"
+    // move (they legally walk out of the zone before the battle begins) and led units (a
+    // declared pair may deploy under a granted ability, e.g. Backroom Deals → Infiltrators;
+    // the reducer validated that placement, asserted by the no-rejections check above).
     for (const u of state.units) {
       if (u.inReserves) continue;
       const ds = datasheetsById.get(u.datasheetId)!;
       if (deployAbilityForDatasheet(ds) !== 'standard') continue;
+      if (unitScoutDistance(u, ctx) != null) continue;
+      if ((u.attachedLeaders?.length ?? 0) > 0) continue;
       for (const m of u.models.filter((m) => m.alive)) {
         expect(
           whollyInOwnZone(m.pos, ds.baseShape, state.layout, u.owner),
@@ -107,10 +113,21 @@ describe('ai/deploy — full alternating deployment', () => {
     const deps = makeDeps(rng);
     let state = reduce(createInitialState(layout), { type: 'NewBattle' }, rng, ctx);
     state = reduce(state, { type: 'RollRoles' }, rng, ctx);
-    const d = whoActs(state, deps);
-    expect(d.actor === 'player' || d.actor === 'ai').toBe(true);
-    const action = aiAction(state, d.actor as 'player' | 'ai', 'balanced', deps)!;
-    const deployIntent = action.intents.map((i) => i.intent).find((i) => i.type === 'DeployUnit' || i.type === 'PlaceInReserves');
+    // The side's first action may be the battle-formations declaration — take actions until the
+    // first actual placement comes out.
+    let deployIntent;
+    for (let i = 0; i < 5 && !deployIntent; i++) {
+      const d = whoActs(state, deps);
+      expect(d.actor === 'player' || d.actor === 'ai').toBe(true);
+      const action = aiAction(state, d.actor as 'player' | 'ai', 'balanced', deps)!;
+      deployIntent = action.intents.map((x) => x.intent).find((x) => x.type === 'DeployUnit' || x.type === 'PlaceInReserves');
+      if (!deployIntent) {
+        for (const item of action.intents) {
+          if (item.skipIf?.(state)) continue;
+          state = reduce(state, item.intent, rng, ctx);
+        }
+      }
+    }
     expect(deployIntent).toBeTruthy();
     if (deployIntent?.type === 'DeployUnit') {
       // Re-run the reducer's own check on the AI's chosen anchor.
