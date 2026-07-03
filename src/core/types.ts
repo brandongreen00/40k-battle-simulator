@@ -122,6 +122,8 @@ export interface Roster {
   note?: string;
   /** True for non-canonical demo rosters used only to exercise the board. */
   sample?: boolean;
+  /** 11e recommendation: the Force Disposition this list plays best + the AI profile for it. */
+  recommended?: { disposition: string; profile: string };
 }
 
 // ── Terrain & board ──────────────────────────────────────────────────────────

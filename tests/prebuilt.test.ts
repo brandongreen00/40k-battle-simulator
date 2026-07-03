@@ -14,20 +14,21 @@ describe('prebuilt AI sparring lists', () => {
     expect(factions).toContain('AoI');
   });
 
-  for (const { fileName, list } of PREBUILT) {
-    it(`${list.name} is a legal 1000pt Incursion list and the committed JSON is in sync`, () => {
+  for (const { fileName, list, recommended } of PREBUILT) {
+    it(`${list.name} is a legal list at its battle size and the committed JSON is in sync`, () => {
       const errors = validate(list, dataIndex).filter((v) => v.severity === 'error');
       expect(errors, errors.map((e) => e.message).join('; ')).toEqual([]);
 
+      const cap = list.battleSize === 'Strike Force' ? 2000 : 1000;
       const points = listPoints(list, dataIndex);
-      expect(points).toBeGreaterThanOrEqual(900); // a real list, not a token one
-      expect(points).toBeLessThanOrEqual(1000);
+      expect(points).toBeGreaterThanOrEqual(cap - 100); // a real list, not a token one
+      expect(points).toBeLessThanOrEqual(cap);
 
       // Committed JSON == regenerating from the definition (run `pnpm build:rosters` after edits).
       const onDisk = JSON.parse(
         readFileSync(join(__dirname, '..', 'data', 'rosters', `${fileName}.json`), 'utf-8'),
       ) as Roster;
-      expect(onDisk).toEqual({ ...toRoster(list, dataIndex), note: PREBUILT_NOTE });
+      expect(onDisk).toEqual({ ...toRoster(list, dataIndex), note: PREBUILT_NOTE, ...(recommended ? { recommended } : {}) });
 
       // Every unit resolves and is sized to a real points tier (the board needs both).
       for (const u of list.units) {

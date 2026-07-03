@@ -16,6 +16,8 @@ export interface PrebuiltDef {
   /** data/rosters/<fileName>.json */
   fileName: string;
   list: ArmyList;
+  /** 11e recommendation: the Force Disposition this list plays best + the AI profile for it. */
+  recommended?: { disposition: string; profile: string };
 }
 
 /** Shorthand: a ListUnit with uid `<dsId>~<n>` (n disambiguates duplicates). */
@@ -155,6 +157,154 @@ export const PREBUILT: PrebuiltDef[] = [
       ], //                            total 955
     },
   },
+  // ── 11th edition teams (community-informed; see docs/11e_teams.md) ───────────
+  {
+    fileName: 'prebuilt_solar_spearpoint',
+    recommended: { disposition: 'purge_the_foe', profile: 'attrition' },
+    list: {
+      name: 'Solar Spearpoint (2k)',
+      faction: 'AM',
+      detachment: 'Mechanised Assault',
+      battleSize: 'Strike Force',
+      units: [
+        u('000002605', 1, 1, true), // Lord Solar Leontus (Warlord) — 130
+        u('000002609', 5), //          Cadian Command Squad — 65
+        u('000002612', 10, 1), //      Cadian Shock Troops — 65
+        u('000000719', 5), //          Militarum Tempestus Command Squad — 85
+        u('000002746', 10, 1), //      Tempestus Scions — 140
+        u('000002615', 10, 1), //      Kasrkin — 110
+        u('000002615', 10, 2), //      Kasrkin — 110
+        u('000002615', 10, 3), //      Kasrkin — 110
+        u('000002617', 1), //          Rogal Dorn Battle Tank — 260
+        u('000001396', 1), //          Tech-Priest Enginseer — 45
+        u('000000694', 1), //          Hellhound — 125
+        u('000003893', 5), //          Krieg Combat Engineers — 60
+        u('000002485', 6), //          Gaunt's Ghosts — 100
+        u('000001406', 1), //          Sly Marbo — 55
+        u('000002616', 5), //          Attilan Rough Riders — 60
+        u('000003898', 5), //          Death Riders — 60
+        u('000000690', 1), //          Scout Sentinels — 55
+        u('000000692', 1, 1), //       Chimera — 85
+        u('000000692', 1, 2), //       Chimera — 85
+        u('000000693', 1, 1), //       Taurox — 75
+        u('000000693', 1, 2), //       Taurox — 75
+        u('000000716', 1), //          Commissar — 30
+      ], //                            total ~1985
+    },
+  },
+  {
+    fileName: 'prebuilt_grizzled_greatest_hits',
+    recommended: { disposition: 'priority_assets', profile: 'operative' },
+    list: {
+      name: 'Grizzled Greatest Hits (2k)',
+      faction: 'AM',
+      detachment: 'Grizzled Company',
+      battleSize: 'Strike Force',
+      units: [
+        u('000002607', 1, 1, true), // Cadian Castellan (Warlord) — 55
+        u('000003892', 1), //          Rogal Dorn Commander — 290
+        u('000002617', 1), //          Rogal Dorn Battle Tank — 260
+        u('000000723', 6), //          Bullgryn Squad — 200
+        u('000002615', 10, 1), //      Kasrkin — 110
+        u('000002615', 10, 2), //      Kasrkin — 110
+        u('000000695', 1), //          Basilisk — 140
+        u('000002485', 6), //          Gaunt's Ghosts — 100
+        u('000000719', 5, 1), //       Militarum Tempestus Command Squad — 85
+        u('000000719', 5, 2), //       Militarum Tempestus Command Squad — 85
+        u('000002746', 5, 1), //       Tempestus Scions — 70
+        u('000002746', 5, 2), //       Tempestus Scions — 70
+        u('000000690', 1), //          Scout Sentinels — 55
+        u('000000694', 1), //          Hellhound — 125
+        u('000002612', 10, 1), //      Cadian Shock Troops — 65
+        u('000002609', 5), //          Cadian Command Squad — 65
+        u('000000716', 1), //          Commissar — 30
+        u('000001394', 1), //          Ministorum Priest — 35
+        u('000001396', 1), //          Tech-Priest Enginseer — 45
+      ], //                            total ~1995
+    },
+  },
+  {
+    fileName: 'prebuilt_idavoll_vigil',
+    recommended: { disposition: 'disruption', profile: 'objective_rusher' },
+    list: {
+      name: 'Idavoll Vigil (2k)',
+      faction: 'AoI',
+      detachment: 'Imperialis Fleet',
+      battleSize: 'Strike Force',
+      units: [
+        u('000002762', 4, 1, true), // Rogue Trader Entourage (Warlord) — 75
+        u('000003816', 10, 1), //      Deathwatch Kill Team — 190
+        u('000003816', 10, 2), //      Deathwatch Kill Team — 190
+        u('000003816', 5, 3), //       Deathwatch Kill Team — 100
+        u('000003815', 1, 1), //       Watch Master — 95
+        u('000003815', 1, 2), //       Watch Master — 95
+        u('000003814', 1), //          Watch Captain Artemis — 65
+        u('000000876', 1), //          Inquisitor Coteaz — 75
+        u('000000877', 1), //          Inquisitor — 55
+        u('000004214', 1), //          Inquisitor Kroyle — 100
+        u('000002587', 10, 1), //      Imperial Navy Breachers — 90
+        u('000002587', 10, 2), //      Imperial Navy Breachers — 90
+        u('000003820', 1, 1), //       Inquisitorial Chimera — 70
+        u('000003820', 1, 2), //       Inquisitorial Chimera — 70
+        u('000002684', 11, 1), //      Subductor Squad — 85
+        u('000002684', 11, 2), //      Subductor Squad — 85
+        u('000002684', 11, 3), //      Subductor Squad — 85
+        u('000002767', 6, 1), //       Inquisitorial Agents — 50
+        u('000002767', 6, 2), //       Inquisitorial Agents — 50
+        u('000000870', 1), //          Vindicare Assassin — 110
+        u('000000874', 1), //          Inquisitor Greyfax — 65
+        u('000002685', 11), //         Exaction Squad — 90
+      ], //                            total ~1980
+    },
+  },
+  {
+    fileName: 'prebuilt_bridgehead_1k',
+    recommended: { disposition: 'reconnaissance', profile: 'operative' },
+    list: {
+      name: 'Bridgehead Pattern (1k)',
+      faction: 'AM',
+      detachment: 'Bridgehead Strike',
+      battleSize: 'Incursion',
+      units: [
+        u('000002607', 1, 1, true), // Cadian Castellan (Warlord) — 55
+        u('000000719', 5), //          Militarum Tempestus Command Squad — 85
+        u('000002746', 5, 1), //       Tempestus Scions — 70
+        u('000002746', 5, 2), //       Tempestus Scions — 70
+        u('000002615', 10, 1), //      Kasrkin — 110
+        u('000002615', 10, 2), //      Kasrkin — 110
+        u('000000721', 1), //          Taurox Prime — 90
+        u('000000690', 1), //          Scout Sentinels — 55
+        u('000000694', 1), //          Hellhound — 125
+        u('000002485', 6), //          Gaunt's Ghosts — 100
+        u('000003893', 5), //          Krieg Combat Engineers — 60
+        u('000001406', 1), //          Sly Marbo — 55
+      ], //                            total ~985
+    },
+  },
+  {
+    fileName: 'prebuilt_vigil_strike_1k',
+    recommended: { disposition: 'disruption', profile: 'objective_rusher' },
+    list: {
+      name: 'Vigil Strike (1k)',
+      faction: 'AoI',
+      detachment: 'Imperialis Fleet',
+      battleSize: 'Incursion',
+      units: [
+        u('000002762', 4, 1, true), // Rogue Trader Entourage (Warlord) — 75
+        u('000003815', 1), //          Watch Master — 95
+        u('000003816', 10, 1), //      Deathwatch Kill Team — 190
+        u('000003816', 5, 2), //       Deathwatch Kill Team — 100
+        u('000002587', 10), //         Imperial Navy Breachers — 90
+        u('000003820', 1), //          Inquisitorial Chimera — 70
+        u('000002684', 11), //         Subductor Squad — 85
+        u('000000870', 1), //          Vindicare Assassin — 110
+        u('000002767', 6, 1), //       Inquisitorial Agents — 50
+        u('000002767', 6, 2), //       Inquisitorial Agents — 50
+        u('000000876', 1), //          Inquisitor Coteaz — 75
+      ], //                            total ~990
+    },
+  },
+
 ];
 
 export const PREBUILT_NOTE =

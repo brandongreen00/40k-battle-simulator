@@ -1,0 +1,61 @@
+{
+  "name": "Bridgehead Pattern (1k)",
+  "faction": "AM",
+  "detachment": "Bridgehead Strike",
+  "points": 985,
+  "units": [
+    {
+      "datasheetId": "000002607",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000000719",
+      "modelCount": 5
+    },
+    {
+      "datasheetId": "000002746",
+      "modelCount": 5
+    },
+    {
+      "datasheetId": "000002746",
+      "modelCount": 5
+    },
+    {
+      "datasheetId": "000002615",
+      "modelCount": 10
+    },
+    {
+      "datasheetId": "000002615",
+      "modelCount": 10
+    },
+    {
+      "datasheetId": "000000721",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000000690",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000000694",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000002485",
+      "modelCount": 6
+    },
+    {
+      "datasheetId": "000003893",
+      "modelCount": 5
+    },
+    {
+      "datasheetId": "000001406",
+      "modelCount": 1
+    }
+  ],
+  "note": "Prebuilt AI sparring list — a legal 1000pt Incursion army generated from the converted data by tools/rosters/build-prebuilt.ts (edit tools/rosters/prebuilt.ts and re-run pnpm build:rosters). Not one of the three owned lists.",
+  "recommended": {
+    "disposition": "reconnaissance",
+    "profile": "operative"
+  }
+}
