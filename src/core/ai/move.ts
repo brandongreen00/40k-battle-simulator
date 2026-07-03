@@ -254,11 +254,27 @@ export function planMove(
 }
 
 // ── Reserves arrival ──────────────────────────────────────────────────────────
-/** Find a legal Deep Strike anchor near the most useful objective (>9" from every enemy). */
+/** The deployment ability an arriving unit uses — MUST match what the intent passes to the
+ *  reducer, or the AI would validate one rule and the engine another. */
+export function arrivalAbility(unit: UnitInstance, deps: AiDeps): 'standard' | 'deep_strike' {
+  const ds = deps.ctx.datasheets.get(unit.datasheetId);
+  if (!ds) return 'standard';
+  const deep =
+    deps.deployAbility(ds) === 'deep_strike' ||
+    (ds.abilities ?? []).some((a) => a.name.toLowerCase().includes('deep strike'));
+  return deep ? 'deep_strike' : 'standard';
+}
+
+/**
+ * Find a legal ingress anchor near the most useful objective. Deep Strike units may arrive
+ * anywhere more than 8" from enemies (24.09); other strategic reserves must arrive wholly
+ * within 6" of a battlefield edge (20.04) — the AI mirrors the reducer's exact legality.
+ */
 export function findArrivalAnchor(state: GameState, unit: UnitInstance, deps: AiDeps): Vec2 | null {
   const { ctx } = deps;
   const ds = ctx.datasheets.get(unit.datasheetId);
   if (!ds) return null;
+  const deepStrike = arrivalAbility(unit, deps) === 'deep_strike';
   const enemies: { pos: Vec2; shape: typeof ds.baseShape }[] = [];
   for (const e of state.units) {
     if (e.owner === unit.owner || e.inReserves) continue;
@@ -268,16 +284,22 @@ export function findArrivalAnchor(state: GameState, unit: UnitInstance, deps: Ai
   const targets = [...state.layout.objectives, { x: state.layout.boardWidth / 2, y: state.layout.boardHeight / 2 }];
   const occupied = occupiedBases(state, ctx, [unit.id]);
   const r = baseRadius(ds.baseShape);
+  const W = state.layout.boardWidth;
+  const H = state.layout.boardHeight;
+  const legalOpts = { deepStrike, layout: state.layout, side: unit.owner };
   for (const step of [2, 1]) {
     let best: { anchor: Vec2; score: number } | null = null;
-    for (let x = r + step / 2; x <= state.layout.boardWidth - r; x += step) {
-      for (let y = r + step / 2; y <= state.layout.boardHeight - r; y += step) {
+    for (let x = r + step / 2; x <= W - r; x += step) {
+      for (let y = r + step / 2; y <= H - r; y += step) {
+        // Non-Deep-Strike ingress: the whole unit must sit within 6" of an edge — skip the
+        // interior before doing any geometry.
+        if (!deepStrike && Math.min(x, y, W - x, H - y) > 5.5) continue;
         const anchor = { x, y };
         const objDist = Math.min(...targets.map((o) => dist(anchor, o)));
         if (best && objDist >= -best.score) continue; // can't beat the best — skip the geometry
         const positions = formationPositions({ anchor, count: unit.models.length, baseShape: ds.baseShape, formation: 'block', rotation: 0 });
-        if (!deepStrikeArrivalLegal(positions, ds.baseShape, enemies, state.round, occupied).legal) continue;
-        if (positions.some((p) => p.x < r || p.y < r || p.x > state.layout.boardWidth - r || p.y > state.layout.boardHeight - r)) continue;
+        if (!deepStrikeArrivalLegal(positions, ds.baseShape, enemies, state.round, occupied, legalOpts).legal) continue;
+        if (positions.some((p) => p.x < r || p.y < r || p.x > W - r || p.y > H - r)) continue;
         if (!best || -objDist > best.score) best = { anchor, score: -objDist };
       }
     }
@@ -340,7 +362,18 @@ export function aiMovementAction(state: GameState, side: Side, profile: AiProfil
       const anchor = findArrivalAnchor(state, u, deps);
       if (!anchor) continue; // no legal spot this turn — try again next round
       return {
-        intents: [{ intent: { type: 'ArriveFromReserves', unitId: u.id, anchor, formation: 'block', rotation: 0 } }],
+        intents: [
+          {
+            intent: {
+              type: 'ArriveFromReserves',
+              unitId: u.id,
+              anchor,
+              formation: 'block',
+              rotation: 0,
+              ability: arrivalAbility(u, deps),
+            },
+          },
+        ],
         note: `${side} deep-strikes ${ctx.datasheets.get(u.datasheetId)?.name ?? u.id}`,
       };
     }

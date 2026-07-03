@@ -1,5 +1,5 @@
-// Pariah Nexus Tactical (Secondary) Missions: deck lifecycle, kill tracking, card evaluators,
-// the 40VP cap, and a full AI game where secondaries actually score.
+// 11e Secondary Missions (Chapter Approved deck): deck lifecycle, kill tracking, card
+// evaluators, the 45VP cap, and a full AI game where secondaries actually score.
 import { describe, it, expect } from 'vitest';
 import { createInitialState, reduce } from '../src/core/state';
 import type { EngineContext } from '../src/core/engine';
@@ -79,31 +79,44 @@ describe('deck lifecycle', () => {
     expect(a.player.deck.join()).not.toBe(a.ai.deck.join()); // separate shuffles
   });
 
-  it('turn-start upkeep discards stale cards, draws to 2, and snapshots objective control', () => {
+  it('11e turn-start upkeep draws TWO cards on top of the existing hand (no hand limit)', () => {
     let s = spawn(createInitialState(layout), 'sq', 'player', 'troop', 10, 22, 5); // on own objective
     s = { ...s, mode: 'match', round: 3, activePlayer: 'player' };
     s = {
       ...s,
       secondaries: {
-        player: { deck: ['no_prisoners', 'area_denial'], hand: [{ id: 'assassination', drawn: 1 }], discard: [], vp: 0 },
+        player: { deck: ['no_prisoners', 'centre_ground'], hand: [{ id: 'assassination', drawn: 2 }], discard: [], vp: 0 },
         ai: emptySide(),
       },
     };
     const next = secondariesOnTurnStart(s, ctx);
     const sec = next.secondaries!.player;
-    expect(sec.discard).toContain('assassination'); // drawn R1, now R3 → stale
-    expect(sec.hand.map((c) => c.id)).toEqual(['no_prisoners', 'area_denial']);
+    expect(sec.hand.map((c) => c.id)).toEqual(['assassination', 'no_prisoners', 'centre_ground']);
     expect(sec.deck).toEqual([]);
-    expect(next.controlAtTurnStart?.[0]).toBe('player');
-    expect(next.controlAtTurnStart?.[1]).toBeNull();
+  });
+
+  it('turn-end auto-discards stale unscored cards for 1 CP', () => {
+    let s = spawn(createInitialState(layout), 'sq', 'player', 'troop', 10, 22, 5);
+    s = { ...s, mode: 'match', round: 3, activePlayer: 'player', cp: { player: 0, ai: 0 } };
+    s = {
+      ...s,
+      secondaries: {
+        player: { deck: [], hand: [{ id: 'a_grievous_blow', drawn: 1 }], discard: [], vp: 0 },
+        ai: emptySide(),
+      },
+    };
+    const next = secondariesOnTurnEnd(s, ctx);
+    expect(next.secondaries!.player.hand).toEqual([]);
+    expect(next.secondaries!.player.discard).toContain('a_grievous_blow');
+    expect(next.cp.player).toBe(1);
   });
 
   it('the DiscardSecondary intent moves a hand card to the discard pile', () => {
-    let s = withHand(createInitialState(layout), 'player', ['area_denial']);
-    s = reduce(s, { type: 'DiscardSecondary', side: 'player', cardId: 'area_denial' }, rng, ctx);
+    let s = withHand(createInitialState(layout), 'player', ['centre_ground']);
+    s = reduce(s, { type: 'DiscardSecondary', side: 'player', cardId: 'centre_ground' }, rng, ctx);
     expect(s.secondaries!.player.hand).toEqual([]);
-    expect(s.secondaries!.player.discard).toEqual(['area_denial']);
-    s = reduce(s, { type: 'DiscardSecondary', side: 'player', cardId: 'area_denial' }, rng, ctx);
+    expect(s.secondaries!.player.discard).toEqual(['centre_ground']);
+    s = reduce(s, { type: 'DiscardSecondary', side: 'player', cardId: 'centre_ground' }, rng, ctx);
     expect(s.log.at(-1)).toMatch(/not in hand/);
   });
 });
@@ -127,66 +140,73 @@ describe('kill tracking', () => {
     expect(k.onObjective).toBe(true);
   });
 
-  it('the kill cards score from the ledger (Assassination 5, Bring It Down 4+3, No Prisoners cap)', () => {
+  it('the 11e kill cards score from the ledger', () => {
     const base = { ...createInitialState(layout), mode: 'match' as const };
     const kills = (recs: GameState['turnKills']) => ({ ...base, turnKills: recs });
-    const score = (id: string, s: GameState) => secondaryCard(id)!.score(s, 'player', ctx);
-    expect(score('assassination', kills([{ side: 'ai', datasheetIds: ['hero'], maxWounds: 5, onObjective: false }]))).toBe(5);
-    expect(score('bring_it_down', kills([{ side: 'ai', datasheetIds: ['tank'], maxWounds: 18, onObjective: false }]))).toBe(7);
-    expect(score('no_prisoners', kills(Array(5).fill({ side: 'ai', datasheetIds: ['troop'], maxWounds: 1, onObjective: false })))).toBe(6);
-    expect(score('overwhelming_force', kills([{ side: 'ai', datasheetIds: ['troop'], maxWounds: 1, onObjective: true }]))).toBe(3);
+    const card = (id: string, s: GameState) =>
+      secondaryCard(id)!.score(s, 'player', ctx, { id, drawn: 1 });
+    expect(card('assassination', kills([{ side: 'ai', datasheetIds: ['hero'], maxWounds: 5, onObjective: false, charactersSlain: 1 }]))).toBe(5);
+    expect(card('bring_it_down', kills([{ side: 'ai', datasheetIds: ['tank'], maxWounds: 18, onObjective: false }]))).toBe(5);
+    expect(card('a_grievous_blow', kills([{ side: 'ai', datasheetIds: ['troop'], maxWounds: 1, onObjective: false, startingStrength: 15 }]))).toBe(5);
+    expect(card('no_prisoners', kills(Array(5).fill({ side: 'ai', datasheetIds: ['troop'], maxWounds: 1, onObjective: false })))).toBe(10);
+    expect(card('overwhelming_force', kills([{ side: 'ai', datasheetIds: ['troop'], maxWounds: 1, onObjective: true, startedTurnOnObjective: true }]))).toBe(3);
     // own losses never score for us
-    expect(score('assassination', kills([{ side: 'player', datasheetIds: ['hero'], maxWounds: 5, onObjective: false }]))).toBe(0);
+    expect(card('assassination', kills([{ side: 'player', datasheetIds: ['hero'], maxWounds: 5, onObjective: false, charactersSlain: 1 }]))).toBe(0);
   });
 });
 
 describe('position cards and turn-end scoring', () => {
-  it('Behind Enemy Lines: 1 unit wholly in the enemy zone = 3, 2+ = 5', () => {
+  it('Behind Enemy Lines: 3VP per friendly unit wholly in the enemy zone (11e)', () => {
     let s = spawn(createInitialState(layout), 'a', 'player', 'troop', 50, 10, 3);
-    const one = secondaryCard('behind_enemy_lines')!.score({ ...s, mode: 'match' }, 'player', ctx);
-    expect(one).toBe(3);
+    const card = (st: GameState, side: Side) =>
+      secondaryCard('behind_enemy_lines')!.score({ ...st, mode: 'match' }, side, ctx, { id: 'behind_enemy_lines', drawn: 2 });
+    expect(card(s, 'player')).toBe(3);
     s = spawn(s, 'b', 'player', 'troop', 50, 30, 3);
-    expect(secondaryCard('behind_enemy_lines')!.score({ ...s, mode: 'match' }, 'player', ctx)).toBe(5);
-    expect(secondaryCard('behind_enemy_lines')!.score({ ...s, mode: 'match' }, 'ai', ctx)).toBe(0);
+    expect(card(s, 'player')).toBe(6);
+    expect(card(s, 'ai')).toBe(0);
   });
 
-  it('Storm Hostile Objective needs the turn-start snapshot to flip', () => {
-    let s = spawn(createInitialState(layout), 'sq', 'player', 'troop', 30, 22, 5);
-    s = { ...s, mode: 'match' };
-    const card = secondaryCard('storm_hostile_objective')!;
-    expect(card.score({ ...s, controlAtTurnStart: [null, 'ai', null] }, 'player', ctx)).toBe(4);
-    expect(card.score({ ...s, controlAtTurnStart: [null, null, null] }, 'player', ctx)).toBe(0);
+  it('Centre Ground scores by enemy proximity to the board centre', () => {
+    let s = spawn(createInitialState(layout), 'sq', 'player', 'troop', 30, 22, 5); // at centre
+    const card = (st: GameState) =>
+      secondaryCard('centre_ground')!.score({ ...st, mode: 'match' }, 'player', ctx, { id: 'centre_ground', drawn: 1 });
+    expect(card(s)).toBe(5); // no enemies anywhere near
+    const near = spawn(s, 'foe', 'ai', 'troop', 34, 22, 1); // ~4" from centre
+    expect(card(near)).toBe(3);
+    const close = spawn(s, 'foe2', 'ai', 'troop', 32, 22, 1); // ~2" from centre
+    expect(card(close)).toBe(0);
   });
 
-  it('turn end scores the ending player and the opponent-turn cards, discards scored, caps at 40', () => {
-    // player ends its turn holding its home objective AND ai holds Defend Stronghold (opponent_turn).
-    let s = spawn(createInitialState(layout), 'mine', 'player', 'troop', 10, 22, 5);
+  it('turn end scores the ending player and the opponent-turn cards, discards scored, caps at 45', () => {
+    // player ends its turn holding two NML-ish objectives; ai holds Defend Stronghold (opponent_turn).
+    let s = spawn(createInitialState(layout), 'mine', 'player', 'troop', 30, 22, 5);
     s = spawn(s, 'theirs', 'ai', 'troop', 50, 22, 5);
-    s = { ...s, mode: 'match', activePlayer: 'player' };
+    s = { ...s, mode: 'match', round: 2, activePlayer: 'player' };
     s = {
       ...s,
       secondaries: {
-        player: { ...emptySide(), hand: [{ id: 'extend_battle_lines', drawn: 1 }], vp: 38 },
-        ai: { ...emptySide(), hand: [{ id: 'defend_stronghold', drawn: 1 }], vp: 0 },
+        player: { ...emptySide(), hand: [{ id: 'no_prisoners', drawn: 2 }], vp: 43 },
+        ai: { ...emptySide(), hand: [{ id: 'defend_stronghold', drawn: 2 }], vp: 0 },
       },
+      turnKills: [
+        { side: 'ai', datasheetIds: ['troop'], maxWounds: 1, onObjective: false },
+        { side: 'ai', datasheetIds: ['troop'], maxWounds: 1, onObjective: false },
+      ],
     };
     const next = secondariesOnTurnEnd(s, ctx);
-    // player: own objective only → raw 2, capped to 40 (38 + 2)
-    expect(next.secondaries!.player.vp).toBe(40);
+    // player: 2 kills → raw 4, capped at 45 total (43 + 2)
+    expect(next.secondaries!.player.vp).toBe(45);
     expect(next.secondaries!.player.hand).toEqual([]);
     expect(next.score.player).toBe(2);
-    // ai: Defend Stronghold scores at the END OF THE OPPONENT'S (player's) turn
-    expect(next.secondaries!.ai.vp).toBe(3);
-    // the cap holds even if more would score
-    const over = secondariesOnTurnEnd({ ...s, secondaries: { ...s.secondaries!, player: { ...emptySide(), hand: [{ id: 'capture_enemy_outpost', drawn: 1 }], vp: 40 } } }, ctx);
-    expect(over.secondaries!.player.vp).toBe(40);
+    // ai: Defend Stronghold scores at the END OF THE OPPONENT'S (player's) turn — holds its home
+    // (the objective at x=50 sits in the ai zone; legacy layouts fall back to zone membership)
+    expect(next.secondaries!.ai.vp).toBe(5); // 3 + 2 (no enemies in its zone)
   });
 
-  it('secondaryPositionBonus pulls toward the enemy zone / scoring markers while cards are active', () => {
+  it('secondaryPositionBonus pulls toward the enemy zone while cards are active', () => {
     let s = spawn(createInitialState(layout), 'sq', 'player', 'troop', 10, 22, 5);
-    s = withHand(s, 'player', ['behind_enemy_lines', 'capture_enemy_outpost']);
-    expect(secondaryPositionBonus(s, 'player', { x: 50, y: 22 }, ctx)).toBeGreaterThan(10); // in zone + on outpost
-    expect(secondaryPositionBonus(s, 'player', { x: 10, y: 22 }, ctx)).toBe(0);
+    s = withHand(s, 'player', ['behind_enemy_lines', 'secure_no_mans_land']);
+    expect(secondaryPositionBonus(s, 'player', { x: 50, y: 22 }, ctx)).toBeGreaterThan(5); // in enemy zone
     expect(secondaryPositionBonus(s, 'ai', { x: 50, y: 22 }, ctx)).toBe(0); // no cards
   });
 });
@@ -213,9 +233,9 @@ describe('full AI game with secondaries', () => {
     expect(last.secondary.ai).toBeGreaterThan(0);
     expect(last.secondary.player).toBeLessThanOrEqual(SECONDARY_VP_CAP);
     expect(last.secondary.ai).toBeLessThanOrEqual(SECONDARY_VP_CAP);
-    // totals: primary (≤50) + secondary (≤40)
-    expect(result.score.player).toBeLessThanOrEqual(90);
-    expect(result.score.ai).toBeLessThanOrEqual(90);
+    // totals: primary (≤50 legacy) + secondary (≤45)
+    expect(result.score.player).toBeLessThanOrEqual(95);
+    expect(result.score.ai).toBeLessThanOrEqual(95);
     expect(result.score.player).toBeGreaterThanOrEqual(last.secondary.player);
   }, 120_000);
 });

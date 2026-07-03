@@ -1,12 +1,13 @@
-// Deployment legality (10e Core Rules + Pariah Nexus). PURE — no React, no DOM.
+// Deployment legality (11e Core Rules). PURE — no React, no DOM.
 //
 // During deployment, every model of a unit must be set up wholly within its own deployment zone,
 // UNLESS the unit has a deployment ability:
-//   • Infiltrators — set up anywhere on the battlefield that is more than 9" horizontally from the
-//     enemy deployment zone and from all enemy models (we approximate "enemy models" with the enemy
-//     zone since enemies are not yet placed when Infiltrators deploy).
-//   • Deep Strike / Strategic Reserves — set up in Reserves instead of on the battlefield, then
-//     arrive later (see `deepStrikeArrivalLegal`).
+//   • Infiltrators (24.20) — set up anywhere on the battlefield more than 8" horizontally from the
+//     enemy deployment zone and from all enemy models.
+//   • Deep Strike / Strategic Reserves (20) — set up in strategic reserves instead, then arrive
+//     via an INGRESS MOVE (20.04): wholly within 6" of a battlefield edge and more than 8" from
+//     all enemy units (not in the enemy deployment zone before round 3). Deep Strike (24.09)
+//     upgrades the ingress to anywhere on the battlefield more than 8" from enemies.
 //
 // These predicates are what the deployment UI gates placement on (ghost turns red when illegal),
 // and what the AI calls to keep its own deployment legal.
@@ -18,7 +19,9 @@ import type { OccupiedBase } from './collision';
 /** A unit's deployment ability, derived from its datasheet keywords/abilities. */
 export type DeployAbility = 'standard' | 'infiltrators' | 'deep_strike';
 
-const INFILTRATE_MIN = 9; // inches from the enemy deployment zone / enemy models
+const INFILTRATE_MIN = 8; // inches from the enemy deployment zone / enemy models (11e: MORE than 8")
+const INGRESS_ENEMY_MIN = 8; // ingress moves: more than 8" from all enemy units (20.04)
+const INGRESS_EDGE_MAX = 6; // strategic reserves: wholly within 6" of a battlefield edge (20.04)
 
 export function zoneFor(layout: Layout, side: Side): Vec2[] {
   return side === 'player' ? layout.deploymentZones.player : layout.deploymentZones.opponent;
@@ -100,7 +103,7 @@ export function checkUnitDeployment(
         ? undefined
         : stacked
           ? 'Models cannot be set up on top of other models'
-          : 'Infiltrators must be set up > 9" from the enemy zone and enemy models',
+          : 'Infiltrators must be set up more than 8" from the enemy zone and enemy models',
     };
   }
 
@@ -129,9 +132,11 @@ export function isEntryPlaced(state: GameState, entryKey: string): boolean {
 }
 
 /**
- * Deep Strike arrival legality: when a unit arrives from Reserves it must be set up so that every
- * model is more than 9" horizontally from all enemy models. Strategic/Deep-Strike reserves also
- * cannot arrive during the first battle round.
+ * Ingress-move legality (11e, 20.04): a strategic reserves unit arrives wholly within 6" of one or
+ * more battlefield edges and more than 8" from all enemy units; before the third battle round it
+ * cannot be set up within the enemy deployment zone. A unit whose every model has Deep Strike
+ * (24.09) may instead be set up ANYWHERE more than 8" from all enemy units (enemy zone included).
+ * Reserves cannot arrive in the first battle round (20.03).
  */
 export function deepStrikeArrivalLegal(
   positions: Vec2[],
@@ -139,15 +144,36 @@ export function deepStrikeArrivalLegal(
   enemyModels: { pos: Vec2; shape: BaseShape }[],
   round: number,
   occupied: OccupiedBase[] = [],
+  opts: { deepStrike?: boolean; layout?: Layout; side?: Side } = {},
 ): DeploymentCheck {
   if (round < 2) {
     return { legal: false, perModel: positions.map(() => false), reason: 'Reserves cannot arrive in the first battle round' };
   }
   const clearOfModels = (p: Vec2) => occupied.every((o) => !basesOverlap(p, baseShape, o.pos, o.shape));
   const stacked = positions.some((p) => !clearOfModels(p));
-  const perModel = positions.map(
-    (p) => enemyModels.every((e) => gapBetweenBases(p, baseShape, e.pos, e.shape) > INFILTRATE_MIN) && clearOfModels(p),
-  );
+  const deepStrike = opts.deepStrike ?? true; // legacy callers treated every arrival as Deep Strike
+  const layout = opts.layout;
+  const r = baseRadius(baseShape);
+
+  const nearEdge = (p: Vec2): boolean => {
+    if (!layout) return true;
+    const d = Math.min(p.x, p.y, layout.boardWidth - p.x, layout.boardHeight - p.y);
+    return d + r <= INGRESS_EDGE_MAX; // the whole base within 6" of an edge
+  };
+  const inEnemyZone = (p: Vec2): boolean => {
+    if (!layout || !opts.side) return false;
+    const zone = zoneFor(layout, opts.side === 'player' ? 'ai' : 'player');
+    return zone.length > 0 && pointInPolygon(p, zone);
+  };
+
+  const perModel = positions.map((p) => {
+    const farFromEnemies = enemyModels.every((e) => gapBetweenBases(p, baseShape, e.pos, e.shape) > INGRESS_ENEMY_MIN);
+    if (!farFromEnemies || !clearOfModels(p)) return false;
+    if (deepStrike) return true;
+    if (!nearEdge(p)) return false;
+    if (round < 3 && inEnemyZone(p)) return false;
+    return true;
+  });
   return {
     legal: perModel.every(Boolean),
     perModel,
@@ -155,7 +181,10 @@ export function deepStrikeArrivalLegal(
       ? undefined
       : stacked
         ? 'Models cannot be set up on top of other models'
-        : 'Deep Strike must arrive > 9" from all enemy models',
+        : deepStrike
+          ? 'Deep Strike must arrive more than 8" from all enemy units'
+          : 'Reserves must arrive wholly within 6" of a battlefield edge, more than 8" from enemies' +
+            (round < 3 ? ', outside the enemy deployment zone' : ''),
   };
 }
 

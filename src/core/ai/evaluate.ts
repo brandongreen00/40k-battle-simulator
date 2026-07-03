@@ -53,9 +53,10 @@ export function poolStats(
   return { pSuccess: pOk + pReroll * pOk, pCrit: pCrit + pReroll * pCrit };
 }
 
-/** P(a save roll fails) given armour/AP/invuln/cover — mirrors combat.ts effectiveSave + "1 fails". */
-export function pSaveFail(save: number, ap: number, invuln: number | undefined, cover: boolean): number {
-  const sv = effectiveSave(save, ap, invuln, cover);
+/** P(a save roll fails) given armour/AP/invuln — mirrors combat.ts effectiveSave + "1 fails".
+ *  (11e: the Benefit of Cover worsens the attacker's BS instead of boosting the save.) */
+export function pSaveFail(save: number, ap: number, invuln: number | undefined): number {
+  const sv = effectiveSave(save, ap, invuln);
   if (sv > 6) return 1;
   const pSave = (7 - Math.max(2, sv)) / 6;
   return 1 - pSave;
@@ -113,14 +114,16 @@ export function expectedWeaponDamage(
   if (kw.blast) attacksPerModel += Math.floor(def.modelCount / 5);
   const attacks = carriers * attacksPerModel;
 
-  // 2. hits
+  // 2. hits — 11e: the Benefit of Cover worsens the attack's BS by 1 (13.08)
+  const cover = !!sit.cover && !kw.ignoresCover;
   let hitsToWound: number;
   let lethalWounds = 0;
   if (kw.torrent) {
     hitsToWound = attacks;
   } else {
     const hitMod = (sit.hitMod ?? 0) + (kw.heavy && sit.stationary ? 1 : 0);
-    const { pSuccess, pCrit } = poolStats(weapon.skill, hitMod, 6, 'none');
+    const skill = weapon.skill + (cover ? 1 : 0);
+    const { pSuccess, pCrit } = poolStats(skill, hitMod, 6, 'none');
     const sustained = kw.sustainedHits ? pCrit * kw.sustainedHits : 0;
     lethalWounds = kw.lethalHits ? attacks * pCrit : 0;
     hitsToWound = attacks * (pSuccess + sustained) - lethalWounds;
@@ -138,8 +141,7 @@ export function expectedWeaponDamage(
   const saveable = hitsToWound * pW - devastating + lethalWounds;
 
   // 4 + 5. saves & damage
-  const cover = !!sit.cover && !kw.ignoresCover;
-  const pFail = pSaveFail(def.save, weapon.AP, def.invuln, cover);
+  const pFail = pSaveFail(def.save, weapon.AP, def.invuln);
   const woundsThrough = saveable * pFail + devastating;
   let dmgPerWound = meanDice(weapon.D);
   if (kw.melta && sit.halfRange) dmgPerWound += kw.melta;

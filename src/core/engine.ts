@@ -13,8 +13,8 @@ import { parseKeywords } from './keywords';
 import { parseDice } from './dice';
 import { checkCoherency } from './coherency';
 import { anyOverlap, clampDeltaAvoidingOverlap, occupiedBases, unitBases, type OccupiedBase } from './collision';
-import { resolveAttacks, woundThreshold, effectiveSave, type AttackProfile, type DefenderProfile, type CombatSituation } from './combat';
-import { losBlocked, unitCanSee, unitHasCover } from './los';
+import { resolveAttacks, woundThreshold, effectiveSave, hazardRoll, type AttackProfile, type DefenderProfile, type CombatSituation } from './combat';
+import { isHidden, pointLosBlocked, unitCanSeeIn, unitCoverIn, DEFAULT_DETECTION_RANGE } from './visibility';
 import { controlOfObjective, scorePrimary, type OcModel } from './objectives';
 import { battleShockTest } from './battleshock';
 import { rollCharge } from './movement';
@@ -36,6 +36,8 @@ export interface AttackParams {
   weaponSourceDsId?: string;
   /** Override the number of firing models (defaults to the models that carry the weapon). */
   attackerCount?: number;
+  /** Snap shooting (15.09, Fire Overwatch): only unmodified 6s hit, no re-rolls. */
+  snapShooting?: boolean;
 }
 
 export interface AttackOutcome {
@@ -45,7 +47,7 @@ export interface AttackOutcome {
   rejected?: string; // reason the attack could not be made (out of range, no LoS later, etc.)
 }
 
-const ENGAGEMENT_RANGE = 1; // inches
+const ENGAGEMENT_RANGE = 2; // inches (11e, 03.04)
 
 function attackProfileForWeapon(w: WeaponProfile): AttackProfile {
   return { name: w.name, attacks: w.attacks, skill: w.skill, S: w.S, AP: w.AP, D: w.D, keywords: parseKeywords(w.keywords) };
@@ -141,16 +143,34 @@ function effectsOf(unit: UnitInstance, ctx?: EngineContext): string[] {
 
 function defenderProfileFor(unit: UnitInstance, ctx: EngineContext, ordered?: ModelInstance[]): DefenderProfile {
   const primary = ctx.datasheets.get(unit.datasheetId)!;
-  const pm = primary.models[0]!; // the unit's main profile (used for the wound roll's Toughness)
+  const pm = primary.models[0]!; // the unit's main profile
+  // 19.02 (11e): attacks against an attached unit use the highest BODYGUARD Toughness while any
+  // bodyguard models remain; only the leaders' T when they alone survive.
+  const bodyguardAlive = unit.models.some(
+    (m) => m.alive && (m.datasheetId ?? unit.datasheetId) === unit.datasheetId,
+  );
+  let T = pm.T;
+  if (!bodyguardAlive) {
+    for (const m of unit.models) {
+      if (!m.alive) continue;
+      const mds = modelDatasheet(m, unit, ctx);
+      if (mds?.models[0]) T = Math.max(T, mds.models[0].T);
+    }
+  }
   return {
-    T: pm.T,
+    T,
     save: pm.Sv,
     invuln: pm.invuln,
     keywords: primary.keywords,
     models: (ordered ?? unit.models.filter((x) => x.alive))
       .map((x) => {
         // Per-model profile: a merged Leader model uses its own datasheet's W / Sv / invuln.
-        const base = (modelDatasheet(x, unit, ctx) ?? primary).models[0]!;
+        const mds = modelDatasheet(x, unit, ctx) ?? primary;
+        const base = mds.models[0]!;
+        // Merged CHARACTER models form their own allocation groups, damaged last (05.03).
+        const character =
+          (x.datasheetId != null && x.datasheetId !== unit.datasheetId &&
+            mds.keywords.some((k) => k.toLowerCase() === 'character')) || undefined;
         let invuln = base.invuln;
         let save: number | undefined = base.Sv !== pm.Sv ? base.Sv : undefined;
         for (const item of x.wargear ?? []) {
@@ -159,7 +179,13 @@ function defenderProfileFor(unit: UnitInstance, ctx: EngineContext, ordered?: Mo
           if (def.invuln != null) invuln = Math.min(invuln ?? 7, def.invuln);
           if (def.saveBonus != null) save = Math.max(2, (save ?? base.Sv) - def.saveBonus);
         }
-        return { maxW: base.W, wounds: x.wounds, ...(invuln != null ? { invuln } : {}), ...(save != null ? { save } : {}) };
+        return {
+          maxW: base.W,
+          wounds: x.wounds,
+          ...(invuln != null ? { invuln } : {}),
+          ...(save != null ? { save } : {}),
+          ...(character ? { character } : {}),
+        };
       }),
   };
 }
@@ -278,24 +304,47 @@ export function resolveAttack(
     }
   }
 
-  // Line of sight + cover from terrain (Phase 2). Indirect Fire may target unseen units.
+  // Line of sight + cover from terrain. Indirect Fire may target unseen units (10.07).
   const aPts = attacker.models.filter((m) => m.alive).map((m) => m.pos);
   const tPts = target.models.filter((m) => m.alive).map((m) => m.pos);
-  const terrain = state.layout.terrain;
   let hitPenalty = 0;
   let forceCover = false;
-  // Big Guns Never Tire: ranged attacks made while within Engagement Range of an enemy take -1 to
-  // hit (Pistols are exempt). Only Monsters/Vehicles/Pistols may shoot while engaged at all —
-  // that eligibility is enforced by phases.ts / resolveUnitShooting.
-  if (!isMelee && !kw.pistol && enemiesInEngagement(state, attacker, ctx).length > 0) {
-    hitPenalty -= 1;
+  let indirect = false;
+  let indirectSpotted = false;
+  // Close-quarters shooting (10.06): a MONSTER/VEHICLE shooting while engaged takes -1 to hit,
+  // except with [CLOSE-QUARTERS] weapons targeting a unit it is engaged with. Other engaged
+  // shooters may only fire [CLOSE-QUARTERS] weapons — enforced by phases.ts/resolveUnitShooting.
+  const attackerEngagedWith = !isMelee ? enemiesInEngagement(state, attacker, ctx) : [];
+  if (!isMelee && attackerEngagedWith.length > 0) {
+    const cqAtEngaged = kw.pistol && attackerEngagedWith.some((e) => e.id === target.id);
+    if (!cqAtEngaged) hitPenalty -= 1;
+  }
+  // Shooting at an engaged target (17.03): only MONSTER/VEHICLE units can be targeted while
+  // engaged (by units not themselves engaged with them), at -1 to hit; [BLAST] never can.
+  if (!isMelee && attackerEngagedWith.every((e) => e.id !== target.id)) {
+    const targetEngaged = enemiesInEngagement(state, target, ctx).length > 0;
+    if (targetEngaged) {
+      const tMV = tDs.keywords.some((k) => /^(monster|vehicle)$/i.test(k));
+      if (!tMV) return { state, summary: '', rejected: 'target is engaged (only engaged MONSTERS/VEHICLES can be shot)' };
+      if (kw.blast) return { state, summary: '', rejected: '[BLAST] weapons cannot target engaged units' };
+      hitPenalty -= 1;
+    }
   }
   if (!isMelee) {
-    const visible = unitCanSee(aPts, tPts, terrain);
+    const visible = unitCanSeeIn(aPts, target, state, ctx);
     if (!visible) {
       if (!kw.indirectFire) return { state, summary: '', rejected: 'no line of sight' };
-      hitPenalty -= 1; // Indirect Fire: -1 to hit and the target gets cover
+      // Indirect shooting (10.07): unmod 1-5 fails (1-3 if stationary + target visible to a
+      // friendly unit), no hit re-rolls, target has the Benefit of Cover.
+      indirect = true;
       forceCover = true;
+      if (attacker.status.remainedStationary) {
+        indirectSpotted = state.units.some((u) => {
+          if (u.owner !== attacker.owner || u.id === attacker.id || u.inReserves) return false;
+          const spotters = u.models.filter((m) => m.alive).map((m) => m.pos);
+          return spotters.length > 0 && unitCanSeeIn(spotters, target, state, ctx);
+        });
+      }
     } else if (!kw.indirectFire) {
       // Per-model visibility (10e: a model can only shoot a target it can see). Only the bearers
       // that themselves have line of sight fire — a squad mostly hidden behind a tall ruin no
@@ -303,7 +352,14 @@ export function resolveAttack(
       const bearers = attacker.models.filter(
         (m) => m.alive && (m.datasheetId ?? attacker.datasheetId) === found.sourceDsId,
       );
-      const seeing = bearers.filter((m) => tPts.some((t) => !losBlocked(m.pos, t, terrain))).length;
+      const hidden = isHidden(target, state, ctx);
+      const seeing = bearers.filter((m) =>
+        tPts.some(
+          (t) =>
+            !(hidden && Math.hypot(m.pos.x - t.x, m.pos.y - t.y) > DEFAULT_DETECTION_RANGE) &&
+            !pointLosBlocked(m.pos, t, state.layout),
+        ),
+      ).length;
       if (seeing === 0) return { state, summary: '', rejected: 'no line of sight' };
       if (seeing < aliveAttackers) {
         aliveAttackers = seeing;
@@ -324,7 +380,18 @@ export function resolveAttack(
   };
   const mods = gatherAttackModifiers(abilityCtx, effectsOf(attacker, ctx), effectsOf(target, ctx));
 
-  const cover = (forceCover || (!isMelee && unitHasCover(aPts, tPts, terrain))) && !mods.ignoresCover;
+  const cover = (forceCover || (!isMelee && unitCoverIn(aPts, target, state, ctx))) && !mods.ignoresCover;
+  // [PRECISION] (24.28): with a visible CHARACTER in the target unit, the attacker may promote
+  // that CHARACTER's allocation group to current. The AI/engine always does when it can.
+  const precisionActive =
+    kw.precision &&
+    target.models.some(
+      (m) =>
+        m.alive &&
+        m.datasheetId != null &&
+        m.datasheetId !== target.datasheetId &&
+        (ctx.datasheets.get(m.datasheetId)?.keywords ?? []).some((k) => k.toLowerCase() === 'character'),
+    );
   const situation: CombatSituation = {
     attackerCount: params.attackerCount ?? aliveAttackers,
     hitModifier: hitPenalty + mods.hitModifier,
@@ -335,6 +402,10 @@ export function resolveAttack(
     charged: attacker.status.charged,
     stationary: attacker.status.remainedStationary,
     cover,
+    indirect,
+    indirectSpotted,
+    snapShooting: params.snapShooting,
+    precisionActive,
     targetModelCount: aliveTargets,
     critHitOn: mods.critHitOn,
     critWoundOn: mods.critWoundOn,
@@ -358,6 +429,39 @@ export function resolveAttack(
   }
   const result = resolveAttacks(profile, defender, situation, rng);
 
+  // [HAZARDOUS] (24.15): after resolving, one hazard roll per hazardous weapon selected — this
+  // call resolves one weapon, so one roll. Fails on 1-2: 1 mortal wound (3 if all M/V).
+  let hazardLog: string[] = [];
+  let attackerModels = attacker.models;
+  if (kw.hazardous) {
+    const aMV = aDs.keywords.some((k) => /^(monster|vehicle)$/i.test(k));
+    const { roll, mortals } = hazardRoll(rng, aMV);
+    if (mortals > 0) {
+      attackerModels = [...attacker.models];
+      let left = mortals;
+      // Mortal-wound allocation (06.02): wounded non-CHARACTERs, then non-CHARACTERs, then chars.
+      while (left > 0) {
+        const alive = attackerModels.filter((m) => m.alive);
+        if (alive.length === 0) break;
+        const isChar = (m: ModelInstance) =>
+          m.datasheetId != null && m.datasheetId !== attacker.datasheetId;
+        const mds = (m: ModelInstance) => modelDatasheet(m, attacker, ctx) ?? aDs;
+        const pick =
+          alive.find((m) => !isChar(m) && m.wounds < mds(m).models[0]!.W) ??
+          alive.find((m) => !isChar(m)) ??
+          alive.find((m) => m.wounds < mds(m).models[0]!.W) ??
+          alive[0]!;
+        const k = attackerModels.indexOf(pick);
+        const wounds = pick.wounds - 1;
+        attackerModels[k] = { ...pick, wounds, alive: wounds > 0 };
+        left--;
+      }
+      hazardLog = [`  Hazardous: rolled ${roll} — ${mortals} mortal wound(s) to ${aDs.name}`];
+    } else {
+      hazardLog = [`  Hazardous: rolled ${roll} — safe`];
+    }
+  }
+
   // Map the updated wound state back onto the target's models (result order == allocation order).
   const updatedById = new Map<string, { wounds: number }>();
   result.defenderModels.forEach((dm, k) => {
@@ -374,7 +478,15 @@ export function resolveAttack(
   const newUnits = state.units.map((u) => {
     if (u.id === target.id) return { ...u, models: newTargetModels };
     if (u.id === attacker.id) {
-      return { ...u, status: { ...u.status, [isMelee ? 'hasFought' : 'hasShot']: true } };
+      return {
+        ...u,
+        models: attackerModels,
+        status: {
+          ...u.status,
+          [isMelee ? 'hasFought' : 'hasShot']: true,
+          ...(!isMelee ? { lastShotOnTurn: state.turnCounter ?? 0 } : {}),
+        },
+      };
     }
     return u;
   });
@@ -386,7 +498,7 @@ export function resolveAttack(
     `${result.damageDealt} damage, ${result.modelsSlain} slain`;
 
   return {
-    state: { ...state, units: newUnits, log: [...state.log, summary, ...result.log.map((l) => `  ${l.step}: ${l.detail}`)] },
+    state: { ...state, units: newUnits, log: [...state.log, summary, ...result.log.map((l) => `  ${l.step}: ${l.detail}`), ...hazardLog] },
     summary,
   };
 }
@@ -530,7 +642,11 @@ export function resolveUnitShooting(
     return { state, summary: '', rejected: `no weapon could fire (${skipped[0]?.trim() ?? 'nothing in range / line of sight'})` };
   }
 
-  const units = cur.units.map((u) => (u.id === attacker.id ? { ...u, status: { ...u.status, hasShot: true } } : u));
+  const units = cur.units.map((u) =>
+    u.id === attacker.id
+      ? { ...u, status: { ...u.status, hasShot: true, lastShotOnTurn: cur.turnCounter ?? 0 } }
+      : u,
+  );
   const aliveAfter = units.find((u) => u.id === target.id)?.models.filter((m) => m.alive).length ?? 0;
   const summary = `${aDs.name} shooting at ${tDs.name}: ${firedCount} weapon(s) fired, ${aliveBefore - aliveAfter} model(s) slain`;
   return { state: { ...cur, units, log: [...cur.log, summary] }, summary };
@@ -545,7 +661,7 @@ function meleeProfileRank(w: WeaponProfile, def: { T: number; save: number; invu
   const attacks = Math.max(0, a.count * ((a.sides + 1) / 2) + a.flat);
   const pHit = kw.torrent ? 1 : Math.max(1 / 6, Math.min(5 / 6, (7 - w.skill) / 6));
   const pWound = Math.max(1 / 6, Math.min(5 / 6, (7 - woundThreshold(w.S, def.T)) / 6));
-  const sv = effectiveSave(def.save, w.AP, def.invuln, false);
+  const sv = effectiveSave(def.save, w.AP, def.invuln);
   const pFail = sv > 6 ? 1 : 1 - (7 - Math.max(2, sv)) / 6;
   const d = parseDice(w.D);
   const dmg = Math.max(1, d.count * ((d.sides + 1) / 2) + d.flat);
@@ -741,13 +857,15 @@ export function objectiveControl(state: GameState, ctx: EngineContext) {
  */
 export function runCommandPhase(state: GameState, ctx: EngineContext, rng: RNG): GameState {
   const side = state.activePlayer;
+  const other: import('./types').Side = side === 'player' ? 'ai' : 'player';
   const log: string[] = [`— ${side} Command phase (round ${state.round}) —`];
 
-  // 1. Command points: +1 at the start of each player's Command phase.
-  const cp = { ...state.cp, [side]: state.cp[side] + 1 };
-  log.push(`${side} gains 1 CP (now ${cp[side]})`);
+  // 1. Gain Core CP (08.02, 11e): BOTH players gain 1 CP in each Command phase.
+  const cp = { player: state.cp.player + 1, ai: state.cp.ai + 1 };
+  log.push(`both players gain 1 CP (${side}: ${cp[side]}, ${other}: ${cp[other]})`);
 
-  // 2. Battle-shock tests for the active player's below-half units.
+  // 2. Battle-shock (08.03, 11e): the active player rolls for each of their units that is at or
+  // below half-strength OR already battle-shocked; a successful roll clears the state.
   const reports: import('./types').BattleShockReport[] = [];
   const units = state.units.map((u) => {
     if (u.owner !== side) return u;
@@ -758,7 +876,7 @@ export function runCommandPhase(state: GameState, ctx: EngineContext, rng: RNG):
     const ld = ds.models[0]!.Ld - ldBonusFromOrders(u); // +Ld = a lower target number (easier test)
     const woundsFraction =
       u.startingModels === 1 ? u.models[0]!.wounds / Math.max(1, ds.models[0]!.W) : undefined;
-    const test = battleShockTest(alive, u.startingModels, ld, rng, woundsFraction);
+    const test = battleShockTest(alive, u.startingModels, ld, rng, woundsFraction, u.status.battleShocked);
     if (test.required) {
       reports.push({ unitId: u.id, unitName: ds.name, roll: [test.roll[0]!, test.roll[1]!], total: test.total, ld, passed: test.passed });
       log.push(
@@ -768,10 +886,12 @@ export function runCommandPhase(state: GameState, ctx: EngineContext, rng: RNG):
     return { ...u, status: { ...u.status, battleShocked: test.required && !test.passed } };
   });
 
-  // 3. Primary scoring for objectives the active player controls (from battle round 2+).
+  // Primary VP: 11e mission games score via missions11.ts (Command-end + turn-end windows).
+  // Legacy layouts (no mission state) keep the old Pariah-style hold-objectives scoring so the
+  // 10e maps stay playable.
   const stateForScore = { ...state, units };
   let score = state.score;
-  if (state.round >= 2) {
+  if (!state.missions && state.round >= 2) {
     const { controlled } = objectiveControl(stateForScore, ctx);
     const gained = scorePrimary(controlled[side], state.score[side]);
     if (gained > 0) {

@@ -45,16 +45,16 @@ describe('coherency', () => {
     expect(r.inCoherency).toBe(false);
   });
 
-  it('requires two neighbours for units of 7+ models', () => {
-    // A 7-model line: adjacent centres 2.9" apart -> gap 1.9" (<=2, neighbours), but the
-    // next-but-one neighbour is 4.8" away (>2). So interior models have 2 neighbours; the ENDS have 1.
+  it('11e: one neighbour suffices for any size, but the 9" spread cap binds', () => {
+    // A 7-model line at 2.9" spacing: every model has a 2" neighbour (gap 1.9"), but the ends
+    // are ~17" apart base-to-base — far beyond the 9" every-model-to-every-model cap.
     const line: Vec2[] = Array.from({ length: 7 }, (_, i) => ({ x: i * 2.9, y: 0 }));
     const r = checkCoherency(line, circle);
-    expect(r.required).toBe(2);
-    // End models (index 0 and 6) only have one neighbour within 2".
-    expect(r.outOfCoherency).toContain(0);
-    expect(r.outOfCoherency).toContain(6);
-    expect(r.inCoherency).toBe(false);
+    expect(r.required).toBe(1);
+    expect(r.inCoherency).toBe(false); // spread cap violated
+    // A compact 7-model blob (all within 9" of each other) is coherent with single neighbours.
+    const blob: Vec2[] = Array.from({ length: 7 }, (_, i) => ({ x: (i % 4) * 2.2, y: Math.floor(i / 4) * 2.2 }));
+    expect(checkCoherency(blob, circle).inCoherency).toBe(true);
   });
 });
 

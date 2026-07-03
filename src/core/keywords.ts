@@ -20,22 +20,27 @@ export interface ParsedKeywords {
   rapidFire?: number; // +N attacks at half range
   melta?: number; // +N damage at half range
   sustainedHits?: number; // each critical hit -> +N extra hits
-  lethalHits?: boolean; // critical hit -> auto-wound
-  devastatingWounds?: boolean; // critical wound -> mortal-style wounds (no save)
+  lethalHits?: boolean; // critical hit -> may auto-wound
+  devastatingWounds?: boolean; // critical wound -> D mortal wounds (11e, 24.10)
   anti?: AntiClause[]; // Anti-X N+ : wound crit threshold vs matching targets
-  blast?: boolean; // +1 attack per 5 models in target unit; cannot target engaged
+  /** [BLAST]/[BLAST X]: +1/+X attack dice per 5 models in the target; cannot target engaged. */
+  blast?: boolean | number;
+  /** [CLEAVE X] (11e): +X attack dice per 5 models when the melee weapon has a single target. */
+  cleave?: number;
   torrent?: boolean; // auto-hits (no hit roll)
-  heavy?: boolean; // +1 to hit if the bearer Remained Stationary
-  assault?: boolean; // may fire after Advancing
-  pistol?: boolean; // may fire while engaged; cannot fire alongside non-pistols
+  heavy?: boolean; // +1 to hit if the bearer braced (moved <= 3", unengaged — 24.16)
+  assault?: boolean; // enables assault shooting after an Advance (10.05)
+  /** [CLOSE-QUARTERS] / [PISTOL] (identical in 11e, 24.27): enables close-quarters shooting. */
+  pistol?: boolean;
   ignoresCover?: boolean; // target gets no Cover benefit
   lance?: boolean; // +1 to wound if the bearer charged this turn
-  precision?: boolean; // may allocate wounds to attached CHARACTERS
-  indirectFire?: boolean; // may target units not visible (with penalties)
-  hazardous?: boolean; // risk to the bearer after firing
+  precision?: boolean; // may pick a visible CHARACTER's allocation group (24.28)
+  indirectFire?: boolean; // enables indirect shooting (10.07)
+  hazardous?: boolean; // hazard roll per selected weapon after resolving (24.15)
   twinLinked?: boolean; // re-roll the wound roll
   extraAttacks?: boolean; // resolved in addition to the model's other melee weapons
-  conversion?: boolean; // crit hit at long range
+  psychic?: boolean; // may ignore BS/WS and hit-roll modifiers (24.29); psychic attack
+  conversion?: boolean; // crit hit at long range (legacy 10e data)
   oneShot?: boolean; // usable once per battle
   /** Anything we didn't recognise, kept verbatim (lower-cased) for visibility/debugging. */
   unknown: string[];
@@ -67,11 +72,13 @@ export function parseKeywords(raw: string[]): ParsedKeywords {
       const threshold = NUM_AFTER(body) || 4;
       const keyword = body.replace(/\s*\d+\+?.*$/, '').trim().toUpperCase();
       (out.anti ??= []).push({ keyword, threshold });
-    } else if (k === 'blast') out.blast = true;
+    } else if (k.startsWith('blast')) out.blast = NUM_AFTER(k) || true;
+    else if (k.startsWith('cleave')) out.cleave = NUM_AFTER(k) || 1;
     else if (k === 'torrent') out.torrent = true;
     else if (k === 'heavy') out.heavy = true;
     else if (k === 'assault') out.assault = true;
-    else if (k === 'pistol') out.pistol = true;
+    else if (k === 'pistol' || k === 'close-quarters' || k === 'close quarters') out.pistol = true;
+    else if (k === 'psychic') out.psychic = true;
     else if (k === 'ignores cover') out.ignoresCover = true;
     else if (k === 'lance') out.lance = true;
     else if (k === 'precision') out.precision = true;

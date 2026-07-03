@@ -139,23 +139,66 @@ export interface TerrainPiece {
   note?: string;
 }
 
+// ── 11th edition terrain areas & objectives (Event Companion layouts) ─────────
+/** 11e terrain categories (13.02): exposed terrain has no rules effect and isn't drawn. */
+export type TerrainCategory = 'dense' | 'light';
+
+/** A terrain feature placed on a terrain area (a tinted footprint from the layout diagrams). */
+export interface TerrainFeature {
+  kind: TerrainCategory;
+  polygon: Vec2[]; // footprint, inches, board coords (possibly rotated quad)
+  /** Battlefields: Armageddon component letters (AB/CD/EF/GH), when identifiable. */
+  letter?: string;
+}
+
+/** An 11e terrain area (13.01): the rules boundary that cover/Hidden/objectives key off. */
+export interface TerrainArea {
+  id: string;
+  polygon: Vec2[];
+  features: TerrainFeature[];
+  /** Areas sharing a groupId count as ONE terrain area (the layouts' "single terrain area"
+   *  eye markers merge adjacent footprints). Absent = the area stands alone. */
+  groupId?: string;
+}
+
+/** An 11e objective: usually a terrain objective (the whole `areaId` terrain area, 14.01);
+ *  without `areaId` it is a 40mm objective marker with 3" control range (Rules Appendix). */
+export interface ObjectivePoint {
+  pos: Vec2;
+  kind: 'home' | 'central' | 'expansion';
+  /** Home objectives belong to a battlefield role; mapped to a Side once roles are known. */
+  owner?: 'attacker' | 'defender';
+  areaId?: string;
+}
+
 export interface Layout {
-  id: string; // "ca2025-hammer-and-anvil-1"
+  id: string; // "ca2025-hammer-and-anvil-1" | "ec2026-take-and-hold_vs_take-and-hold-a"
   name?: string;
-  boardWidth: number; // 60
-  boardHeight: number; // 44
-  deployment: string; // "Hammer and Anvil"
+  boardWidth: number; // 60 (10e) or 44 (11e vertical)
+  boardHeight: number; // 44 or 60
+  deployment: string; // "Hammer and Anvil" | "Take and Hold vs Purge the Foe — Layout A"
   /** Stable deployment id from the source pack, e.g. "hammer-and-anvil-sf-2025". */
   deploymentId?: string;
-  /** Where the layout came from (e.g. labrador.dev + extractor). */
+  /** Where the layout came from (e.g. labrador.dev / GW Event Companion + extractor). */
   source?: string;
   terrain: TerrainPiece[];
-  objectives: Vec2[]; // marker centres
+  objectives: Vec2[]; // marker centres (kept for all layouts — 11e objectives mirror into this)
   /** Objective marker diameter in inches (40mm ≈ 1.575"). Uniform across GW maps. */
   objectiveMarkerDiameterIn?: number;
-  /** Horizontal objective-control range in inches (3" in Pariah Nexus / Chapter Approved). */
+  /** Horizontal objective-control range in inches (3", markers only in 11e). */
   objectiveControlRadiusIn?: number;
   deploymentZones: { player: Vec2[]; opponent: Vec2[] }; // polygons (attacker→player, defender→opponent)
+  // ── 11e Event Companion extensions (absent on 10e layouts) ──
+  /** 11e terrain areas with dense/light features. Presence marks a layout as 11e. */
+  terrainAreas?: TerrainArea[];
+  /** Typed objectives (home/central/expansion), index-aligned with `objectives`. */
+  objectivePoints?: ObjectivePoint[];
+  /** Attacker/Defender territory divider (a straight segment; territories = each side of it). */
+  territoryDivider?: [Vec2, Vec2];
+  /** Which board edge the Attacker's zone hugs. */
+  attackerEdge?: 'top' | 'bottom' | 'left' | 'right';
+  /** The Force Disposition pairing this layout is recommended for, plus its A/B/C letter. */
+  pairing?: { dispositions: [string, string]; missions: [string, string]; letter: string };
 }
 
 // ── Live game state (skeleton; grows in later stages) ────────────────────────
@@ -189,6 +232,8 @@ export interface UnitStatus {
   battleShocked?: boolean; // failed a Battle-shock test this round
   /** Resolved (or declined) its pre-battle Scouts X" move. */
   scouted?: boolean;
+  /** Absolute player-turn index the unit last made ranged attacks in (Hidden, 13.09). */
+  lastShotOnTurn?: number;
   /** Active ability/Order/Stratagem effect ids (see core/effects.ts). Expire at turn reset. */
   activeEffects?: string[];
   // ── Movement-phase activation (transient; set by BeginMove, cleared by EndMove/turn) ──
@@ -240,31 +285,116 @@ export interface BattleShockReport {
 }
 
 // ── Secondary (Tactical) Missions ────────────────────────────────────────────
-/** One card in a side's hand: the card id and the round it was drawn in (staleness). */
+/** One card in a side's hand: the card id, the round it was drawn in (staleness), and any
+ *  When-Drawn pick (Beacon's unit id / A Tempting Target's objective index). */
 export interface SecondaryCardInHand {
   id: string;
   drawn: number;
+  data?: string | number;
 }
 
-/** One side's Tactical Mission state (Pariah Nexus): a personal shuffled deck, a hand of up to
- *  two active missions, the discard pile, and the secondary VP scored so far (cap 40). */
+/** One side's Tactical Mission state (11e): a personal shuffled 18-card deck, the active hand
+ *  (draw 2 per Command phase, no hand limit), the discard pile, and the secondary VP scored
+ *  so far (cap 45; 15 per battle round). */
 export interface SecondarySideState {
   deck: string[];
   hand: SecondaryCardInHand[];
   discard: string[];
   vp: number;
+  /** Secondary VP per battle round (15/round cap). */
+  roundVp?: Record<number, number>;
 }
 
-/** A unit destroyed this turn — what the kill-based secondary cards score from. */
+/** A unit destroyed this turn — what kill-based primary/secondary conditions score from. */
 export interface KillRecord {
   /** Owner of the DESTROYED unit. */
   side: Side;
+  /** The destroyed unit's instance id. */
+  unitId?: string;
   /** Every datasheet in the destroyed unit (Bodyguard + merged Leaders). */
   datasheetIds: string[];
-  /** Highest Wounds characteristic among those datasheets' profiles (Bring It Down tiers). */
+  /** Highest Wounds characteristic among those datasheets' profiles (Bring It Down). */
   maxWounds: number;
-  /** Was any of its models within objective control range when it was destroyed? */
+  /** Was any of its models within objective range when it was destroyed? */
   onObjective: boolean;
+  /** The unit's starting strength (A Grievous Blow: 13+). */
+  startingStrength?: number;
+  /** CHARACTER models destroyed with the unit (Assassination). */
+  charactersSlain?: number;
+  /** Highest W among CHARACTER models slain (Assassination cumulative: W4+). */
+  characterMaxW?: number;
+  /** Did the unit start the turn within range of an objective? (Overwhelming Force etc.) */
+  startedTurnOnObjective?: boolean;
+  /** Did it start the turn within range of a CENTRAL objective? (Secure Asset.) */
+  startedTurnOnCentral?: boolean;
+  /** Terrain area id the unit started the turn within, if any (Death Trap / Search and Scour). */
+  startedTurnInArea?: string;
+  /** Was the killer within range of an objective? (Purge and Secure.) */
+  killerOnObjective?: boolean;
+}
+
+// ── 11th edition missions (Chapter Approved deck) ────────────────────────────
+/** An operation marker placed by a mission rule or Objective Action. */
+export interface OperationMarker {
+  side: Side;
+  pos: Vec2;
+  /** Terrain area the marker sits in (Locate and Deny / Extract Relic). */
+  areaId?: string;
+  /** Objective index the marker is within range of (Vital Link / Triangulation / Gather Intel). */
+  objectiveIdx?: number;
+}
+
+/** An Objective Action a unit has started this turn (16.01 + mission card reverses). */
+export interface ActiveAction {
+  side: Side;
+  unitId: string;
+  actionId: string;
+  objectiveIdx?: number;
+  areaId?: string;
+  targetUnitId?: string;
+}
+
+/** Per-side 11e mission state. */
+export interface MissionSideState {
+  /** Force Disposition id (take_and_hold | purge_the_foe | disruption | reconnaissance | priority_assets). */
+  disposition: string;
+  /** Primary Mission id (from the disposition pairing matrix). */
+  mission: string;
+  /** Primary VP scored so far (cap 45). */
+  primaryVp: number;
+  /** Primary VP scored per battle round (cap 15/round). */
+  roundVp: Record<number, number>;
+  /** Playing Fixed secondaries: the two chosen card ids (Tactical otherwise). */
+  fixedCards?: string[];
+}
+
+/** Whole-game 11e mission state (present when a match uses an Event Companion layout). */
+export interface MissionState {
+  perSide: Record<Side, MissionSideState>;
+  /** Operation markers on the battlefield. */
+  markers: OperationMarker[];
+  /** Objective indices consecrated (Consecrate) / decoyed (Smoke and Mirrors) /
+   *  triangulated (Triangulation). */
+  consecrated?: { idx: number; side: Side }[];
+  decoyed?: number[];
+  triangulated?: number[];
+  /** Terrain area ids trapped (Death Trap), plus the ones trapped this turn. */
+  trapped?: string[];
+  trappedThisTurn?: string[];
+  /** Units condemned by Punishment until the start of that player's next turn. */
+  condemned?: string[];
+  /** Units that destroyed an enemy unit and haven't consecrated yet (Consecrate). */
+  consecrationUnits?: string[];
+  /** Enemy unit ids surveilled this turn (Surveil the Foe). */
+  surveilledThisTurn?: string[];
+  /** Per-side action completions this turn (actionId → count). */
+  actionsDoneThisTurn?: Partial<Record<Side, Record<string, number>>>;
+  /** Kill ledger from the PREVIOUS turn (Meatgrinder / Destroyer's Wrath comparisons). */
+  prevTurnKills?: KillRecord[];
+  /** Snapshot at the start of the current turn: unit id → objective/terrain flags. */
+  unitStartTurnFlags?: Record<string, { onObjective: boolean; onCentral: boolean; areaId?: string }>;
+  /** Objectives secured (14.03) by a side (index-aligned flags). */
+  securedBy?: (Side | null)[];
 }
 
 // ── Pre-battle setup / deployment ────────────────────────────────────────────
@@ -302,6 +432,8 @@ export interface WarrantState {
 
 export interface SetupState {
   step: DeployStep;
+  /** Each side's chosen Force Disposition (11e missions). */
+  dispositions?: Record<Side, string>;
   /** Roll-off that set Attacker/Defender (for the dice display). */
   roleRoll?: RollOff;
   attacker?: Side;
@@ -330,8 +462,12 @@ export interface GameState {
   /** Core Stratagem "Command Re-roll" usage: side → phase key (`round:turn:phase`) it was last
    *  used in. Enforces once per phase per side (match-mode; currently bound to charge rolls). */
   rerollUsed?: Partial<Record<Side, string>>;
-  /** Pariah Nexus Tactical (Secondary) Missions — per-side deck/hand/VP (match mode only). */
+  /** Tactical (Secondary) Missions — per-side deck/hand/VP (match mode only). */
   secondaries?: Record<Side, SecondarySideState>;
+  /** 11e Chapter Approved mission state (dispositions, primaries, markers, actions). */
+  missions?: MissionState;
+  /** Actions started this turn and not yet completed (16.01). */
+  activeActions?: ActiveAction[];
   /** Units destroyed during the CURRENT turn (secondary scoring); reset at every turn end. */
   turnKills?: KillRecord[];
   /** Objective control snapshot taken at the start of the active player's turn
@@ -340,7 +476,9 @@ export interface GameState {
   /** Pre-battle deployment sub-state (present while `stage === 'setup'`). */
   setup?: SetupState;
   round: number; // 1..5
-  /** Which side took the first turn of the battle (rounds alternate starting with this side). */
+  /** Absolute player-turn counter (increments at every turn change — Hidden's two-turn window). */
+  turnCounter?: number;
+  /** Which side took the first turn of the battle (the SAME side goes first every round in 11e). */
   firstPlayer: Side;
   activePlayer: Side;
   phase: string; // kept as data, not hard-coded into UI (architecture rule #4)

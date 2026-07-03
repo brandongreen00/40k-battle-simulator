@@ -30,12 +30,12 @@ describe('ai/evaluate — dice & pool math', () => {
     expect(chargeProb(12.5)).toBe(0);
   });
 
-  it('pSaveFail respects AP, invuln and cover', () => {
-    expect(pSaveFail(3, 0, undefined, false)).toBeCloseTo(2 / 6, 10); // 3+ save
-    expect(pSaveFail(3, -3, undefined, false)).toBeCloseTo(5 / 6, 10); // worsened to a 6+
-    expect(pSaveFail(5, -2, undefined, false)).toBeCloseTo(1, 10); // pushed past 6+ → no save
-    expect(pSaveFail(3, -3, 4, false)).toBeCloseTo(3 / 6, 10); // 4++ floor
-    expect(pSaveFail(4, -1, undefined, true)).toBeCloseTo(3 / 6, 10); // cover cancels the AP
+  it('pSaveFail respects AP and invuln (11e: cover moved to the hit roll)', () => {
+    expect(pSaveFail(3, 0, undefined)).toBeCloseTo(2 / 6, 10); // 3+ save
+    expect(pSaveFail(3, -3, undefined)).toBeCloseTo(5 / 6, 10); // worsened to a 6+
+    expect(pSaveFail(5, -2, undefined)).toBeCloseTo(1, 10); // pushed past 6+ → no save
+    expect(pSaveFail(3, -3, 4)).toBeCloseTo(3 / 6, 10); // 4++ floor
+    expect(pSaveFail(4, -1, undefined)).toBeCloseTo(4 / 6, 10); // AP-1 on a 4+ → 5+
   });
 });
 

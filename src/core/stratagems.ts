@@ -28,19 +28,18 @@ export interface Stratagem {
   effectId?: string;
 }
 
-/** The universal Core stratagems (10e). */
+/** The universal Core stratagems (11e Core Rules 15.02–15.12). */
 export const CORE_STRATAGEMS: Stratagem[] = [
-  { id: 'core:command_reroll', name: 'Command Re-roll', cp: 1, phase: 'Any phase', turn: 'either', text: 'Re-roll one dice (a single hit/wound/save/etc. roll, or a roll made for a 2D6/3D6 charge etc.).' },
-  { id: 'core:counter_offensive', name: 'Counter-offensive', cp: 2, phase: 'Fight phase', turn: 'either', text: 'After an enemy unit fights, fight with one of your eligible units out of sequence.' },
-  { id: 'core:epic_challenge', name: 'Epic Challenge', cp: 1, phase: 'Fight phase', turn: 'either', text: 'A CHARACTER in a fighting unit gains Precision until the end of the phase.' },
-  { id: 'core:insane_bravery', name: 'Insane Bravery', cp: 1, phase: 'Command phase', turn: 'your', text: 'One of your units automatically passes its Battle-shock test (once per battle).' },
-  { id: 'core:go_to_ground', name: 'Go to Ground', cp: 1, phase: 'Shooting phase', turn: 'opponent', effectId: 'stealth', text: 'An INFANTRY target gains the Benefit of Cover and a 6+ invulnerable save until the end of the phase.' },
-  { id: 'core:smokescreen', name: 'Smokescreen', cp: 1, phase: 'Shooting phase', turn: 'opponent', effectId: 'stealth', text: 'A SMOKE target gains the Benefit of Cover and Stealth until the end of the phase.' },
-  { id: 'core:tank_shock', name: 'Tank Shock', cp: 1, phase: 'Charge phase', turn: 'your', text: 'A charging VEHICLE rolls dice based on its Strength, dealing mortal wounds to an enemy it is in base contact with.' },
-  { id: 'core:grenade', name: 'Grenade', cp: 1, phase: 'Shooting phase', turn: 'your', text: 'A GRENADES unit throws a grenade at a nearby enemy: D6 hits, mortal wounds on 4+.' },
-  { id: 'core:fire_overwatch', name: 'Fire Overwatch', cp: 1, phase: 'Movement or Charge phase', turn: 'opponent', text: 'When an enemy unit moves, a unit shoots it, scoring hits only on unmodified 6s.' },
-  { id: 'core:rapid_ingress', name: 'Rapid Ingress', cp: 1, phase: 'Movement phase', turn: 'opponent', text: 'At the end of your opponent’s Movement phase, set up one of your Reserves units as if it were the Reinforcements step.' },
-  { id: 'core:heroic_intervention', name: 'Heroic Intervention', cp: 2, phase: 'Charge phase', turn: 'opponent', text: 'When an enemy ends a Charge move nearby, one of your eligible units can declare a charge against it.' },
+  { id: 'core:command_reroll', name: 'Command Re-roll', cp: 1, phase: 'Any phase', turn: 'either', text: 'Re-roll one advance/charge/damage/hazard/hit/save/wound/attacks roll (charge rolls re-roll the full 2D6).' },
+  { id: 'core:epic_challenge', name: 'Epic Challenge', cp: 1, phase: 'Fight phase', turn: 'either', effectId: 'precision_melee', text: 'When a friendly CHARACTER unit is selected to fight: one CHARACTER model’s melee weapons gain [PRECISION] this phase.' },
+  { id: 'core:insane_bravery', name: 'Insane Bravery', cp: 1, phase: 'Command phase', turn: 'your', text: 'One battle-shock roll is automatically successful (once per battle).' },
+  { id: 'core:explosives', name: 'Explosives', cp: 1, phase: 'Shooting phase', turn: 'your', text: 'An unengaged EXPLOSIVES/GRENADES unit that did not advance: pick an enemy unit within 8" and visible — roll 6D6; each 4+ inflicts 1 mortal wound.' },
+  { id: 'core:crushing_impact', name: 'Crushing Impact', cp: 1, phase: 'Charge phase', turn: 'your', text: 'After a friendly MONSTER/VEHICLE ends a charge move: roll dice equal to its Toughness — each 1 = 1 mortal wound to it, each 5+ = 1 mortal wound to an engaged enemy unit (max 6).' },
+  { id: 'core:rapid_ingress', name: 'Rapid Ingress', cp: 1, phase: 'Movement phase', turn: 'opponent', text: 'End of your opponent’s Movement phase: one of your strategic reserves units makes an ingress move (not in the first battle round).' },
+  { id: 'core:fire_overwatch', name: 'Fire Overwatch', cp: 1, phase: 'Movement phase', turn: 'opponent', text: 'End of your opponent’s Movement phase: one unengaged non-TITANIC unit shoots one visible enemy unit within 24" using snap shooting (only unmodified 6s hit).' },
+  { id: 'core:smokescreen', name: 'Smokescreen', cp: 1, phase: 'Shooting phase', turn: 'opponent', effectId: 'stealth', text: 'Start of your opponent’s Shooting phase: a SMOKE unit (and units it screens) has the Benefit of Cover this phase.' },
+  { id: 'core:heroic_intervention', name: 'Heroic Intervention', cp: 1, phase: 'Charge phase', turn: 'opponent', text: 'End of your opponent’s Charge phase: an unengaged unit within 12" of an enemy resolves a charge (Leap to Defend: chargers only; +1CP Into the Fray: roll capped at 6, targets within 6").' },
+  { id: 'core:counter_offensive', name: 'Counteroffensive', cp: 2, phase: 'Fight phase', turn: 'opponent', text: 'After an enemy unit resolves its attacks in the Fight step: one of your eligible units gains Fights First and must be selected next.' },
 ];
 
 /** Normalise the data export's turn string ("Either player’s turn" / "Your turn" / "Opponent’s turn"). */

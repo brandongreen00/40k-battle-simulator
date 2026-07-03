@@ -51,6 +51,11 @@ describe('Deployment flow', () => {
     expect(container.querySelectorAll('svg[aria-label^="die showing"]').length).toBeGreaterThan(0);
     expect(container.textContent).toMatch(/is Attacker/);
 
+    // Whoever deploys first may be the AI seat (the roll-off is seeded) — flip both seats to
+    // Human so the sidebar offers manual deployment buttons.
+    const humanButtons = within(container.querySelector('.ai-bar') as HTMLElement).getAllByText('Human');
+    for (const b of humanButtons) fireEvent.click(b);
+
     // The side that deploys first now has units offered for deployment.
     const sidebar = container.querySelector('.sidebar')!;
     expect(within(sidebar as HTMLElement).getAllByText('+ Deploy').length).toBeGreaterThan(0);

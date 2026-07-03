@@ -9,13 +9,13 @@ import type { Datasheet, GameState, Side, UnitInstance, Vec2 } from './types';
 import type { EngineContext } from './engine';
 import { closestGap, planUnitShooting, unitWeapons } from './engine';
 import { parseKeywords } from './keywords';
-import { unitCanSee } from './los';
+import { isHidden, pointLosBlocked, DEFAULT_DETECTION_RANGE } from './visibility';
 import { canActAfterAdvance, hasFightsFirstAbility, hasLoneOperative, ignoresLoneOperative, unitScoutDistance } from './abilities';
 import { checkCoherency, type CoherencyResult } from './coherency';
 
 const FALLBACK_SHAPE = { kind: 'circle' as const, radius: 0.63 };
 
-export const ENGAGEMENT_RANGE = 1; // inches
+export const ENGAGEMENT_RANGE = 2; // inches (11e, 03.04)
 export const CHARGE_THREAT = 12; // inches — a unit may declare a charge within 12"
 
 export interface Eligibility {
@@ -76,20 +76,21 @@ export function hasPistol(ds: Datasheet | undefined): boolean {
 export const isMonsterOrVehicle = (ds: Datasheet | undefined): boolean =>
   hasKeyword(ds, 'Monster') || hasKeyword(ds, 'Vehicle');
 
-/** Is `u` eligible to be selected to shoot this phase? (10e shooting eligibility.) */
+/** Is `u` eligible to be selected to shoot this phase? (11e shooting types, 10.04–10.07.) */
 export function eligibleToShoot(u: UnitInstance, state: GameState, ctx: EngineContext): Eligibility {
   if (!isOnBoard(u)) return { eligible: false, reason: 'not on the battlefield' };
   if (u.status.hasShot) return { eligible: false, reason: 'already shot this turn' };
   const ds = dsOf(u, ctx);
-  // Frenzon-style abilities ("eligible to shoot … in a turn in which it Advanced") lift the
-  // Advance restriction entirely; Assault weapons lift it for themselves.
+  // Advance: only ASSAULT SHOOTING is available (10.05) — the unit needs an [ASSAULT] weapon
+  // (Frenzon-style abilities lift the restriction entirely).
   if (u.status.advanced && !hasAssaultWeapon(ds) && !canActAfterAdvance(ds).shoot) {
-    return { eligible: false, reason: 'Advanced this turn (no Assault weapons)' };
+    return { eligible: false, reason: 'made an advance move (no [ASSAULT] weapons)' };
   }
-  if (u.status.fellBack) return { eligible: false, reason: 'Fell Back this turn' };
-  // A unit within Engagement Range can only shoot via Big Guns Never Tire (Monster/Vehicle) or Pistols.
+  if (u.status.fellBack) return { eligible: false, reason: 'fell back this turn' };
+  // Engaged: only CLOSE-QUARTERS SHOOTING is available (10.06) — the unit needs a
+  // [CLOSE-QUARTERS]/[PISTOL] weapon or must be a MONSTER/VEHICLE unit.
   if (engagedEnemies(u, state, ctx).length > 0 && !isMonsterOrVehicle(ds) && !hasPistol(ds)) {
-    return { eligible: false, reason: 'within Engagement Range (no Pistols / not a Monster or Vehicle)' };
+    return { eligible: false, reason: 'engaged (no [CLOSE-QUARTERS] weapons / not a MONSTER or VEHICLE)' };
   }
   return { eligible: true };
 }
@@ -121,12 +122,18 @@ export function validShootingTargets(
   const range = weapon.range ?? 0;
   const kw = parseKeywords(weapon.keywords);
   const out: UnitInstance[] = [];
+  const myEngaged = engagedEnemies(attacker, state, ctx).map((x) => x.id);
   for (const e of enemiesOf(attacker, state)) {
     if (isLeaderProtected(e, state)) continue;
     const eDs = dsOf(e, ctx);
     if (!eDs) continue;
     const gap = gapBetween(attacker, e, ctx);
     if (gap > range) continue;
+    // 17.03 (11e): an ENGAGED enemy unit can only be shot if the shooter is itself engaged with
+    // it (close-quarters shooting), or the target is a MONSTER/VEHICLE ([BLAST] never can).
+    if (!myEngaged.includes(e.id) && engagedEnemies(e, state, ctx).length > 0) {
+      if (!isMonsterOrVehicle(eDs) || kw.blast) continue;
+    }
     // Lone Operative: unless attached, only targetable by ranged attacks within 12"
     // (ignored by a Deadshot attacker, e.g. the Vindicare).
     if (
@@ -137,7 +144,15 @@ export function validShootingTargets(
     ) {
       continue;
     }
-    const visible = kw.indirectFire || unitCanSee(aPts, alivePts(e), state.layout.terrain);
+    const hidden = isHidden(e, state, ctx);
+    const bearerSees = aPts.some((a) =>
+      alivePts(e).some(
+        (t) =>
+          !(hidden && Math.hypot(a.x - t.x, a.y - t.y) > DEFAULT_DETECTION_RANGE) &&
+          !pointLosBlocked(a, t, state.layout),
+      ),
+    );
+    const visible = kw.indirectFire || bearerSees;
     if (visible) out.push(e);
   }
   return out;

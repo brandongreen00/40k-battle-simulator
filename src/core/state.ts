@@ -16,10 +16,12 @@ import { clamp, clampToRange, gapBetweenBases } from './geometry';
 import { formationPositions, type Formation } from './formation';
 import { defensiveProfileForItem } from './wargear';
 import { rollOff, otherSide } from './setup';
-import { checkUnitDeployment, deepStrikeArrivalLegal, whollyInOwnZone, type DeployAbility } from './deployment';
+import { checkUnitDeployment, deepStrikeArrivalLegal, deployAbilityFromKeywords, whollyInOwnZone, type DeployAbility } from './deployment';
 import { checkCoherency } from './coherency';
 import { occupiedBases, unitOverlaps } from './collision';
 import { initSecondaries, recordKills, secondariesOnTurnEnd, secondariesOnTurnStart } from './secondaries';
+import { initMissions, missionsOnBattleEnd, missionsOnCommandEnd, missionsOnTurnEnd, missionsOnTurnStart, startAction, type StartActionParams } from './missionflow';
+import type { DispositionId } from './missions11';
 import { canAttach, leaderJoinPositions } from './leaders';
 import { unitScoutDistance } from './abilities';
 import { maxMoveDistance, rollAdvance, type MoveMode } from './movement';
@@ -105,9 +107,12 @@ export type Intent =
   /** Discard one of your active Tactical Missions (the end-of-turn discard choice; the AI relies
    *  on the automatic stale-discard instead). */
   | { type: 'DiscardSecondary'; side: Side; cardId: string }
+  /** Start (or perform) an 11e Objective Action with a unit (your Shooting phase). */
+  | ({ type: 'StartAction' } & StartActionParams)
   // ── Pre-battle setup / deployment (Stage: setup) ──────────────────────────────
-  /** Start a new battle: clear the board and enter deployment at the roll-off step. */
-  | { type: 'NewBattle' }
+  /** Start a new battle: clear the board and enter deployment at the roll-off step.
+   *  `dispositions` selects each side's Force Disposition (11e missions; defaults apply). */
+  | { type: 'NewBattle'; dispositions?: Record<Side, DispositionId> }
   /** Roll off to determine Attacker (winner) and Defender; Defender then deploys first. */
   | { type: 'RollRoles' }
   /** Manually set the Attacker (the other side is Defender). Defender deploys first. */
@@ -178,8 +183,9 @@ export type Intent =
   | { type: 'EndMove'; unitIds: string[] }
   /** Abort a Movement activation: snap the units back to their origins, record no move. */
   | { type: 'CancelMove'; unitIds: string[] }
-  /** Bring a Reserves unit onto the board (Deep Strike), validated > 9" from enemies, round 2+. */
-  | { type: 'ArriveFromReserves'; unitId: string; anchor: Vec2; formation?: Formation; rotation?: number };
+  /** Bring a Reserves unit onto the board via an ingress move (11e, 20.04): within 6" of an
+   *  edge and >8" from enemies — or anywhere >8" with Deep Strike. Round 2+. */
+  | { type: 'ArriveFromReserves'; unitId: string; anchor: Vec2; formation?: Formation; rotation?: number; ability?: DeployAbility };
 
 export function createInitialState(layout: Layout): GameState {
   return {
@@ -203,7 +209,16 @@ export function createInitialState(layout: Layout): GameState {
 function beginTurnFor(state: GameState, side: Side): UnitInstance[] {
   return state.units.map((u) =>
     u.owner === side
-      ? { ...u, status: {}, models: u.models.map((m) => (m.moveStart ? { ...m, moveStart: undefined } : m)) }
+      ? {
+          ...u,
+          // lastShotOnTurn survives the per-turn reset (Hidden's two-turn window, 13.09);
+          // battleShocked persists until a successful recovery roll (08.03).
+          status: {
+            ...(u.status.lastShotOnTurn != null ? { lastShotOnTurn: u.status.lastShotOnTurn } : {}),
+            ...(u.status.battleShocked ? { battleShocked: true } : {}),
+          },
+          models: u.models.map((m) => (m.moveStart ? { ...m, moveStart: undefined } : m)),
+        }
       : u,
   );
 }
@@ -228,7 +243,40 @@ function cancelOpenActivations(state: GameState): { units: UnitInstance[]; cance
   return { units, cancelled };
 }
 
-/** Advance the Pariah Nexus sequencer one step. Phases→turns→rounds; ends after round 5. */
+/**
+ * End of Turn step (11e, 03.03 "Regaining Coherency"): units not in coherency must remove models
+ * (destroyed, no death triggers) until they are coherent again. Applies to BOTH players' units.
+ * Removal order: keep the largest coherent subset (greedily drop the model whose absence best
+ * restores coherency — models furthest from the unit centroid go first).
+ */
+function enforceEndOfTurnCoherency(state: GameState, ctx?: EngineContext): GameState {
+  let log = state.log;
+  const units = state.units.map((u) => {
+    if (u.inReserves) return u;
+    const shape = ctx?.datasheets.get(u.datasheetId)?.baseShape ?? FALLBACK_SHAPE;
+    let alive = u.models.filter((m) => m.alive);
+    if (alive.length <= 1) return u;
+    if (checkCoherency(alive.map((m) => m.pos), shape).inCoherency) return u;
+    const dead = new Set<string>();
+    while (alive.length > 1 && !checkCoherency(alive.map((m) => m.pos), shape).inCoherency) {
+      const cx = alive.reduce((s, m) => s + m.pos.x, 0) / alive.length;
+      const cy = alive.reduce((s, m) => s + m.pos.y, 0) / alive.length;
+      const far = [...alive].sort(
+        (a, b) =>
+          Math.hypot(b.pos.x - cx, b.pos.y - cy) - Math.hypot(a.pos.x - cx, a.pos.y - cy),
+      )[0]!;
+      dead.add(far.id);
+      alive = alive.filter((m) => m.id !== far.id);
+    }
+    if (dead.size === 0) return u;
+    const name = ctx?.datasheets.get(u.datasheetId)?.name ?? u.id;
+    log = [...log, `${name}: ${dead.size} model(s) destroyed to regain coherency (End of Turn)`];
+    return { ...u, models: u.models.map((m) => (dead.has(m.id) ? { ...m, alive: false, wounds: 0 } : m)) };
+  });
+  return { ...state, units, log };
+}
+
+/** The 11e turn sequencer as data (rule #4). Phases→turns→rounds; ends after round 5. */
 function advancePhase(state: GameState, ctx?: EngineContext): GameState {
   if (state.ended || state.stage !== 'battle') return state;
   // An unconfirmed move activation does not survive the phase ending.
@@ -240,9 +288,10 @@ function advancePhase(state: GameState, ctx?: EngineContext): GameState {
   if (i >= 0 && i < PARIAH_NEXUS_PHASES.length - 1) {
     return { ...state, phase: PARIAH_NEXUS_PHASES[i + 1]! };
   }
-  // End of the Fight phase — the active player's turn ends: score Tactical Missions first
-  // (the ending player's end-of-your-turn cards, the opponent's end-of-opponent's-turn cards),
-  // then clear the per-turn kill ledger.
+  // End of the Fight phase — the End of Turn step (11e): enforce coherency (03.03), then the
+  // mission consults (primary + secondary scoring hooks), then clear the per-turn kill ledger.
+  state = enforceEndOfTurnCoherency(state, ctx);
+  state = missionsOnTurnEnd(state, ctx);
   state = secondariesOnTurnEnd(state, ctx);
   if (state.activePlayer === state.firstPlayer) {
     const next = otherSide(state.activePlayer);
@@ -252,13 +301,29 @@ function advancePhase(state: GameState, ctx?: EngineContext): GameState {
       phase: PARIAH_NEXUS_PHASES[0]!,
       commandRun: false,
       turnKills: [],
+      turnCounter: (state.turnCounter ?? 0) + 1,
       units: beginTurnFor(state, next),
       log: [...state.log, `— ${next} turn, round ${state.round} —`],
     };
   }
-  // Second player just finished: advance the round (or end the battle after round 5).
+  // Second player just finished — End of Battle Round. At the end of round 3, strategic reserves
+  // that never arrived are destroyed (20.03).
+  if (state.round === 3) {
+    const stranded = state.units.filter((u) => u.inReserves && u.models.some((m) => m.alive));
+    if (stranded.length > 0) {
+      state = {
+        ...state,
+        units: state.units.map((u) =>
+          u.inReserves ? { ...u, models: u.models.map((m) => ({ ...m, alive: false, wounds: 0 })) } : u,
+        ),
+        log: [...state.log, `${stranded.length} reserves unit(s) destroyed (never arrived by the end of round 3)`],
+      };
+    }
+  }
   if (state.round >= 5) {
-    return { ...state, ended: true, turnKills: [], log: [...state.log, '— battle ends (round 5 complete) —'] };
+    // End of the battle: END OF BATTLE mission scoring + Battle Ready VP (missions11).
+    const finished = missionsOnBattleEnd({ ...state, ended: true }, ctx);
+    return { ...finished, turnKills: [], log: [...finished.log, '— battle ends (round 5 complete) —'] };
   }
   const round = state.round + 1;
   const next = state.firstPlayer;
@@ -269,6 +334,7 @@ function advancePhase(state: GameState, ctx?: EngineContext): GameState {
     phase: PARIAH_NEXUS_PHASES[0]!,
     commandRun: false,
     turnKills: [],
+    turnCounter: (state.turnCounter ?? 0) + 1,
     units: beginTurnFor(state, next),
     log: [...state.log, `— ${next} turn, round ${round} —`],
   };
@@ -404,10 +470,15 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
           return { ...state, log: [...state.log, 'Command phase rejected: already run this turn'] };
         }
       }
-      // Run the phase (CP / Battle-shock / Primary), then the Tactical Mission upkeep for the
-      // active player: snapshot objective control, discard stale cards, draw back up to 2.
+      // Run the phase (both players' CP, battle-shock), then the 11e mission bookkeeping:
+      // start-of-turn snapshots + preambles, Tactical Mission draws (2/Command phase), and the
+      // "end of your Command phase" primary scoring window (round 2+; round 5 fires at turn end).
       let next: GameState = { ...runCommandPhase(state, ctx, rng), commandRun: true };
-      if (next.mode === 'match' && next.stage === 'battle') next = secondariesOnTurnStart(next, ctx);
+      if (next.mode === 'match' && next.stage === 'battle') {
+        next = missionsOnTurnStart(next, ctx);
+        next = secondariesOnTurnStart(next, ctx);
+        next = missionsOnCommandEnd(next, ctx);
+      }
       return next;
     }
 
@@ -458,47 +529,67 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       };
     }
 
+    case 'StartAction': {
+      if (!ctx) return { ...state, log: [...state.log, 'Action ignored: no datasheet context supplied'] };
+      const { type: _t, ...params } = intent;
+      return startAction(state, ctx, params);
+    }
+
     // ── Pre-battle setup / deployment ──────────────────────────────────────────
-    case 'NewBattle':
+    case 'NewBattle': {
+      const dispositions = intent.dispositions ?? { player: 'take_and_hold' as DispositionId, ai: 'take_and_hold' as DispositionId };
       return {
         ...createInitialState(state.layout),
         stage: 'setup',
         mode: 'match',
-        setup: { step: 'roll_roles' },
+        setup: { step: 'roll_roles', dispositions },
         // Each side shuffles its own Tactical Mission deck now (seeded — games stay reproducible).
         secondaries: initSecondaries(rng),
         turnKills: [],
         log: ['— Deployment — roll off to determine Attacker and Defender —'],
       };
+    }
 
     case 'RollRoles': {
       const ro = rollOff(rng);
       const attacker = ro.winner;
       const defender = otherSide(attacker);
-      return {
+      let next: GameState = {
         ...state,
         stage: 'setup',
+        layout: layoutForAttacker(state.layout, attacker),
         setup: {
           ...(state.setup ?? { step: 'roll_roles' }),
           step: 'deploy',
           roleRoll: ro,
           attacker,
           defender,
-          toDeploy: defender, // the Defender deploys first
+          toDeploy: defender, // the Defender deploys first (mission sequence step 8)
         },
         log: [...state.log, `Roll-off: player ${ro.player}, ai ${ro.ai} → ${attacker} is Attacker; ${defender} deploys first`],
       };
+      const dispositions = state.setup?.dispositions as Record<Side, DispositionId> | undefined;
+      if (dispositions && next.layout.terrainAreas) {
+        next = initMissions(next, ctx, dispositions, attacker);
+      }
+      return next;
     }
 
     case 'SetAttacker': {
       const attacker = intent.side;
       const defender = otherSide(attacker);
-      return {
+      let next: GameState = {
         ...state,
         stage: 'setup',
+        layout: layoutForAttacker(state.layout, attacker),
         setup: { ...(state.setup ?? { step: 'roll_roles' }), step: 'deploy', attacker, defender, toDeploy: defender },
         log: [...state.log, `${attacker} is Attacker; ${defender} deploys first`],
       };
+      const dispositions = state.setup?.dispositions as Record<Side, DispositionId> | undefined;
+      if (dispositions && next.layout.terrainAreas) {
+        next = initMissions(next, ctx, dispositions, attacker);
+      }
+      return next;
     }
 
     case 'DeployUnit': {
@@ -932,10 +1023,28 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
           : mode === 'fall_back' ? { fellBack: true, moved: true }
           : mode === 'stationary' ? { remainedStationary: true }
           : { moved: true };
+        let models = u.models.map((m) => (m.moveStart ? { ...m, moveStart: undefined } : m));
+        // Desperate Escape (11e, 09.07): a battle-shocked unit MUST use this fall-back mode —
+        // one hazard roll per model (1-2: 1 mortal wound; the unit is already battle-shocked).
+        if (mode === 'fall_back' && u.status.battleShocked && state.mode === 'match') {
+          const aliveIdx = models.map((m, k) => (m.alive ? k : -1)).filter((k) => k >= 0);
+          let mortals = 0;
+          for (let n = 0; n < aliveIdx.length; n++) if (rng.d6() <= 2) mortals++;
+          for (let n = 0; n < mortals; n++) {
+            const k = models.findIndex((m) => m.alive);
+            if (k < 0) break;
+            const wounds = models[k]!.wounds - 1;
+            models = models.map((m, j) => (j === k ? { ...m, wounds, alive: wounds > 0 } : m));
+          }
+          if (mortals > 0) {
+            const name = ctx?.datasheets.get(u.datasheetId)?.name ?? u.id;
+            log = [...log, `${name} Desperate Escape: ${mortals} mortal wound(s) while fleeing`];
+          }
+        }
         return {
           ...u,
           status: { ...u.status, ...flag, moveMode: undefined, moveBudget: undefined },
-          models: u.models.map((m) => (m.moveStart ? { ...m, moveStart: undefined } : m)),
+          models,
         };
       });
       if (!anyRejected) log = [...log, `Move confirmed`];
@@ -952,11 +1061,20 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         anchor: intent.anchor, formation: intent.formation, rotation: intent.rotation,
       };
       const enemies = enemyModelsOnBoard(state, unit.owner, ctx);
+      // 11e ingress (20.04): strategic reserves arrive within 6" of an edge; Deep Strike (24.09)
+      // arrives anywhere. Both must be more than 8" from all enemy units. The caller passes the
+      // resolved deployment ability (the catalog lives in the data layer); keywords are the
+      // fallback for direct reducer calls.
+      const ds = ctx?.datasheets.get(unit.datasheetId);
+      const ability =
+        intent.ability ??
+        (ds ? deployAbilityFromKeywords(ds.keywords, (ds.abilities ?? []).map((a) => a.name)) : 'standard');
       const check = deepStrikeArrivalLegal(
         formationWorld(opts), shape, enemies, state.round,
         occupiedBases(state, ctx, [unit.id]),
+        { deepStrike: ability === 'deep_strike', layout: state.layout, side: unit.owner },
       );
-      if (!check.legal) return { ...state, log: [...state.log, `Deep Strike rejected: ${check.reason}`] };
+      if (!check.legal) return { ...state, log: [...state.log, `Reserves arrival rejected: ${check.reason}`] };
       const newModels = layoutModels(opts, state.layout).map((m, i) => ({
         ...m,
         wounds: unit.models[i]?.wounds ?? m.wounds,
@@ -1027,6 +1145,23 @@ function formationWorld(opts: LayoutOpts): Vec2[] {
 }
 
 const FALLBACK_SHAPE: BaseShape = { kind: 'circle', radius: 0.63 };
+
+/**
+ * 11e Event Companion layouts store the ATTACKER's zone under `deploymentZones.player` (loader
+ * convention). Once the roll-off decides who attacks, make sure the attacker side owns that
+ * zone — swapping the two polygons when the AI is the Attacker. `attackerZone` records the
+ * current assignment so repeated calls (SetAttacker after RollRoles) never double-swap.
+ */
+function layoutForAttacker(layout: Layout, attacker: Side): Layout {
+  if (!layout.terrainAreas) return layout; // legacy layouts keep their fixed zones
+  const current = (layout as Layout & { attackerZone?: Side }).attackerZone ?? 'player';
+  if (current === attacker) return layout;
+  return {
+    ...layout,
+    deploymentZones: { player: layout.deploymentZones.opponent, opponent: layout.deploymentZones.player },
+    ...( { attackerZone: attacker } as Partial<Layout>),
+  };
+}
 
 /** Is a deployment-entry id on the board / in Reserves (directly or as a merged Leader)? */
 function isUnitPlaced(state: GameState, entryKey: string): boolean {

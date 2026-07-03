@@ -1,0 +1,170 @@
+// 11e terrain & visibility (Core Rules 13). PURE — no React, no DOM.
+//
+// Layout-aware dispatch: Event Companion layouts carry `terrainAreas` and use the 11e model —
+//   • OBSCURING (13.10): a terrain area containing any light/dense feature blocks every line of
+//     sight that crosses it, unless one of the two models is within that area.
+//   • SOLID (13.11): dense features block sight through themselves (we treat the feature's
+//     footprint polygon as the solid block; endpoints inside the feature see out/in).
+//   • BENEFIT OF COVER (13.08): the target has cover when every model is INFANTRY/BEASTS/SWARM
+//     within a terrain area, or is not fully visible because of intervening features/areas.
+//     Cover worsens the attacker's BS by 1 (combat.ts).
+//   • HIDDEN (13.09): an I/B/S unit within a dense-containing terrain area that has not made
+//     ranged attacks this turn or the previous turn is only visible within 15" detection range.
+// Legacy (10e labrador) layouts keep the old ruin-blocking model in los.ts.
+//
+// 2D simplifications (documented): sight lines are centre-to-centre between models; "fully
+// visible" ≈ the firing line clips no feature/area edge; vertical terrain rules are moot.
+
+import type { Datasheet, GameState, Layout, TerrainArea, UnitInstance, Vec2 } from './types';
+import type { EngineContext } from './engine';
+import { pointInPolygon } from './geometry';
+import { losBlocked as legacyLosBlocked, hasCover as legacyHasCover, segmentIntersectsPolygon } from './los';
+
+export const DEFAULT_DETECTION_RANGE = 15; // inches (13.09)
+
+export const is11eLayout = (layout: Layout): boolean => !!layout.terrainAreas?.length;
+
+/** Terrain areas that are obscuring (contain one or more light/dense features). */
+function obscuringAreas(layout: Layout): TerrainArea[] {
+  return (layout.terrainAreas ?? []).filter((a) => a.features.length > 0);
+}
+
+/** Is the sight line a→b blocked (Obscuring areas + Solid dense features)? */
+export function losBlocked11(a: Vec2, b: Vec2, layout: Layout): boolean {
+  for (const area of obscuringAreas(layout)) {
+    const aIn = pointInPolygon(a, area.polygon);
+    const bIn = pointInPolygon(b, area.polygon);
+    if (aIn || bIn) continue; // you can see into/out of an obscuring area, not through it
+    if (segmentIntersectsPolygon(a, b, area.polygon)) return true;
+  }
+  // Solid: dense features block even within/into an area (unless the model is inside the feature).
+  for (const area of layout.terrainAreas ?? []) {
+    for (const f of area.features) {
+      if (f.kind !== 'dense') continue;
+      if (pointInPolygon(a, f.polygon) || pointInPolygon(b, f.polygon)) continue;
+      if (segmentIntersectsPolygon(a, b, f.polygon)) return true;
+    }
+  }
+  return false;
+}
+
+/** Layout-dispatching point LoS. */
+export function pointLosBlocked(a: Vec2, b: Vec2, layout: Layout): boolean {
+  if (is11eLayout(layout)) return losBlocked11(a, b, layout);
+  return legacyLosBlocked(a, b, layout.terrain);
+}
+
+const IBS = ['infantry', 'beasts', 'swarm'];
+
+export function isIBS(ds: Datasheet | undefined): boolean {
+  return !!ds?.keywords.some((k) => IBS.includes(k.toLowerCase()));
+}
+
+/** The terrain area containing a point (if any). */
+export function areaAt(pos: Vec2, layout: Layout): TerrainArea | undefined {
+  return (layout.terrainAreas ?? []).find((a) => pointInPolygon(pos, a.polygon));
+}
+
+/**
+ * Is `target` hidden from observers beyond detection range (13.09)?
+ * Every model I/B/S within a dense-containing terrain area, and the unit made no ranged attacks
+ * this turn or the previous player-turn.
+ */
+export function isHidden(target: UnitInstance, state: GameState, ctx: EngineContext): boolean {
+  if (!is11eLayout(state.layout)) return false;
+  const ds = ctx.datasheets.get(target.datasheetId);
+  if (!isIBS(ds)) return false;
+  const lastShot = target.status.lastShotOnTurn;
+  const turnCounter = state.turnCounter ?? 0;
+  if (lastShot != null && turnCounter - lastShot < 2) return false;
+  const alive = target.models.filter((m) => m.alive);
+  if (alive.length === 0) return false;
+  return alive.every((m) => {
+    const area = areaAt(m.pos, state.layout);
+    if (!area) return false;
+    const members = area.groupId
+      ? (state.layout.terrainAreas ?? []).filter((x) => x.groupId === area.groupId)
+      : [area];
+    return members.some((x) => x.features.some((f) => f.kind === 'dense'));
+  });
+}
+
+/**
+ * Unit-level visibility under 11e: any attacker model sees any target model within the terrain
+ * rules; a hidden target is only visible within the detection range.
+ */
+export function unitCanSee11(
+  attackerPts: Vec2[],
+  target: UnitInstance,
+  state: GameState,
+  ctx: EngineContext,
+  detectionRange = DEFAULT_DETECTION_RANGE,
+): boolean {
+  const layout = state.layout;
+  const hidden = isHidden(target, state, ctx);
+  for (const a of attackerPts) {
+    for (const m of target.models) {
+      if (!m.alive) continue;
+      if (hidden && Math.hypot(a.x - m.pos.x, a.y - m.pos.y) > detectionRange) continue;
+      if (!pointLosBlocked(a, m.pos, layout)) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Benefit of Cover (13.08): every model in the target qualifies —
+ *  (a) I/B/S within a terrain area, or
+ *  (b) not fully visible to the attacker (the closest clear firing line clips an intervening
+ *      feature footprint — 2D approximation of "not fully visible").
+ */
+export function unitHasCover11(
+  attackerPts: Vec2[],
+  target: UnitInstance,
+  state: GameState,
+  ctx: EngineContext,
+): boolean {
+  const layout = state.layout;
+  const ds = ctx.datasheets.get(target.datasheetId);
+  const ibs = isIBS(ds);
+  const alive = target.models.filter((m) => m.alive);
+  if (alive.length === 0) return false;
+  return alive.every((m) => {
+    if (ibs && areaAt(m.pos, layout)) return true;
+    // Not fully visible: every attacker sightline to this model clips a feature or area edge.
+    return attackerPts.every((a) => {
+      if (pointLosBlocked(a, m.pos, layout)) return true; // not visible at all
+      for (const area of layout.terrainAreas ?? []) {
+        for (const f of area.features) {
+          if (pointInPolygon(a, f.polygon) || pointInPolygon(m.pos, f.polygon)) continue;
+          if (segmentIntersectsPolygon(a, m.pos, f.polygon)) return true;
+        }
+      }
+      return false;
+    });
+  });
+}
+
+/** Layout-dispatching unit cover (legacy layouts use the 10e-style heuristic). */
+export function unitCoverIn(
+  attackerPts: Vec2[],
+  target: UnitInstance,
+  state: GameState,
+  ctx: EngineContext,
+): boolean {
+  if (is11eLayout(state.layout)) return unitHasCover11(attackerPts, target, state, ctx);
+  const tPts = target.models.filter((m) => m.alive).map((m) => m.pos);
+  return tPts.some((b) => attackerPts.some((a) => !legacyLosBlocked(a, b, state.layout.terrain) && legacyHasCover(a, b, state.layout.terrain)));
+}
+
+/** Layout-dispatching unit visibility. */
+export function unitCanSeeIn(
+  attackerPts: Vec2[],
+  target: UnitInstance,
+  state: GameState,
+  ctx: EngineContext,
+): boolean {
+  if (is11eLayout(state.layout)) return unitCanSee11(attackerPts, target, state, ctx);
+  const tPts = target.models.filter((m) => m.alive).map((m) => m.pos);
+  return attackerPts.some((a) => tPts.some((b) => !legacyLosBlocked(a, b, state.layout.terrain)));
+}

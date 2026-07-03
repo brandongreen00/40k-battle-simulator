@@ -24,8 +24,12 @@ describe('parseKeywords', () => {
     ]);
   });
   it('keeps unrecognised keywords in `unknown`', () => {
-    const k = parseKeywords(['Psychic', 'Lethal Hits']);
-    expect(k.unknown).toContain('psychic');
+    const k = parseKeywords(['Some New Rule', 'Lethal Hits']);
+    expect(k.unknown).toContain('some new rule');
     expect(k.lethalHits).toBe(true);
+    // 11e additions parse structurally.
+    expect(parseKeywords(['Psychic']).psychic).toBe(true);
+    expect(parseKeywords(['Cleave 1']).cleave).toBe(1);
+    expect(parseKeywords(['Close-Quarters']).pistol).toBe(true);
   });
 });

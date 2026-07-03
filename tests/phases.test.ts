@@ -107,14 +107,14 @@ describe('fight phase', () => {
     expect(closestGap(after.units.find((u) => u.id === 'a')!, circle, after.units.find((u) => u.id === 'b')!, circle)).toBeLessThanOrEqual(0.2);
   });
 
-  it('a successful charge moves the charger into Engagement Range', () => {
+  it('a successful charge moves the charger into Engagement Range (2\" in 11e)', () => {
     // centres 4" apart, 0.5" radii -> 3" gap. 2D6 (>=2) always clears it, so the charge succeeds.
     const s = withUnits([unit('a', 'player', 'melee', 10, 22), unit('b', 'ai', 'gun', 14, 22)]);
     expect(closestGap(s.units[0]!, circle, s.units[1]!, circle)).toBeCloseTo(3, 1);
     const after = reduce(s, { type: 'Charge', chargerUnitId: 'a', targetUnitId: 'b' }, makeRNG(3), ctx);
     const charger = after.units.find((u) => u.id === 'a')!;
     expect(charger.status.charged).toBe(true);
-    expect(closestGap(charger, circle, after.units.find((u) => u.id === 'b')!, circle)).toBeLessThanOrEqual(1);
+    expect(closestGap(charger, circle, after.units.find((u) => u.id === 'b')!, circle)).toBeLessThanOrEqual(2);
   });
 
   it('a multi-target charge reaches every declared target', () => {
@@ -127,8 +127,8 @@ describe('fight phase', () => {
     const after = reduce(s, { type: 'Charge', chargerUnitId: 'a', targetUnitIds: ['b', 'c'] }, makeRNG(5), ctx);
     const charger = after.units.find((u) => u.id === 'a')!;
     expect(charger.status.charged).toBe(true);
-    expect(closestGap(charger, circle, after.units.find((u) => u.id === 'b')!, circle)).toBeLessThanOrEqual(1);
-    expect(closestGap(charger, circle, after.units.find((u) => u.id === 'c')!, circle)).toBeLessThanOrEqual(1);
+    expect(closestGap(charger, circle, after.units.find((u) => u.id === 'b')!, circle)).toBeLessThanOrEqual(2);
+    expect(closestGap(charger, circle, after.units.find((u) => u.id === 'c')!, circle)).toBeLessThanOrEqual(2);
   });
 
   it('rejects a charge against a target more than 12" away', () => {

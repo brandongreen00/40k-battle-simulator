@@ -32,7 +32,7 @@ describe('usableStratagems', () => {
   it('offers Core stratagems to anyone but detachment ones only to that detachment', () => {
     const mine = usableStratagems(all, { phase: 'Shooting', isYourTurn: true, detachment: 'Grizzled Company' });
     expect(mine.map((s) => s.name)).toContain('Ruthless'); // my detachment
-    expect(mine.map((s) => s.name)).toContain('Grenade'); // core, shooting, your turn
+    expect(mine.map((s) => s.name)).toContain('Explosives'); // core, shooting, your turn (11e)
 
     const other = usableStratagems(all, { phase: 'Shooting', isYourTurn: true, detachment: 'Siege Regiment' });
     expect(other.map((s) => s.name)).not.toContain('Ruthless');
@@ -40,9 +40,9 @@ describe('usableStratagems', () => {
 
   it('surfaces reactive stratagems on the opponent turn only', () => {
     const reactive = usableStratagems(CORE_STRATAGEMS, { phase: 'Shooting', isYourTurn: false });
-    expect(reactive.map((s) => s.name)).toContain('Go to Ground'); // opponent's Shooting phase
+    expect(reactive.map((s) => s.name)).toContain('Smokescreen'); // opponent's Shooting phase
     const myTurn = usableStratagems(CORE_STRATAGEMS, { phase: 'Shooting', isYourTurn: true });
-    expect(myTurn.map((s) => s.name)).not.toContain('Go to Ground');
+    expect(myTurn.map((s) => s.name)).not.toContain('Smokescreen');
   });
 
   it('Command Re-roll (Any phase, either) is always available', () => {
