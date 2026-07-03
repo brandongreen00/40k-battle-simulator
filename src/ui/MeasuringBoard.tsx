@@ -10,7 +10,8 @@ import {
   aiAction, aiMayAct, aiReactionToShooting, resolveProfile, sharedAction, whoActs, type AiDeps,
 } from '../core/ai/controller';
 import { formationForBodyguard, isPairedLeader, pairDeployAbility } from '../core/ai/deploy';
-import { dataIndex, datasheetsById, deployAbilityForDatasheet, getDatasheet, layouts, rosters, stratagems } from '../data/loaders';
+import { dataIndex, datasheetsById, deployAbilityForDatasheet, getDatasheet, layouts, layoutsForPairing, rosters, stratagems } from '../data/loaders';
+import { DISPOSITIONS, MISSION_MATRIX, MISSION_NAMES, type DispositionId } from '../core/missions11';
 import { Board, type Placement, type MovementUI } from './Board';
 import { GamePanel } from './GamePanel';
 import { DeploymentPanel, effectiveSide } from './DeploymentPanel';
@@ -124,6 +125,25 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
     ai: firstWithUnits?.name ?? '',
   });
   const [owner, setOwner] = useState<Side>('player'); // sandbox spawn-as
+  // 11e Force Dispositions: each side picks a card; the pairing fixes both Primary Missions and
+  // restricts the battle to the pairing's three recommended layouts (A/B/C).
+  const [dispositions, setDispositions] = useState<Record<Side, DispositionId>>({
+    player: 'take_and_hold',
+    ai: 'take_and_hold',
+  });
+  const recommendedLayouts = useMemo(
+    () => layoutsForPairing(dispositions.player, dispositions.ai),
+    [dispositions],
+  );
+  const setDisposition = (side: Side, id: DispositionId) => {
+    const next = { ...dispositions, [side]: id };
+    setDispositions(next);
+    // Keep the board on a recommended map for the pairing (pick layout A when leaving the set).
+    const rec = layoutsForPairing(next.player, next.ai);
+    if (rec.length > 0 && !rec.some((l) => l.id === state.layout.id)) {
+      dispatch({ type: 'SetLayout', layout: rec[0]! });
+    }
+  };
   const [placing, setPlacing] = useState<Placing | null>(null);
   const [selectedUnitIds, setSelectedUnitIds] = useState<string[]>([]);
   // Attacker/target picked in the game panel — highlighted on the board (rings + firing line).
@@ -378,7 +398,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
                 if (!window.confirm('Abandon the battle in progress and start a new one?')) return;
               }
               setPlacing(null);
-              dispatch({ type: 'NewBattle' });
+              dispatch({ type: 'NewBattle', dispositions });
             }}
           >
             {inSetup ? '↻ Restart deployment' : '⚔ New battle'}
@@ -386,6 +406,26 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
         </div>
 
         <section>
+          {!inMatch && (
+            <div className="dispositions">
+              <h2>Force Dispositions (11e)</h2>
+              {(['player', 'ai'] as const).map((side) => (
+                <label className="field" key={side}>
+                  <span style={{ color: OWNER_COLOR[side].fill }}>{side === 'player' ? 'your' : 'computer'} disposition</span>
+                  <select value={dispositions[side]} onChange={(e) => setDisposition(side, e.target.value as DispositionId)}>
+                    {DISPOSITIONS.map((d) => (
+                      <option key={d.id} value={d.id} title={d.blurb}>{d.name}</option>
+                    ))}
+                  </select>
+                </label>
+              ))}
+              <p className="hint">
+                Missions: you play <strong>{MISSION_NAMES[MISSION_MATRIX[dispositions.player][dispositions.ai]]}</strong>,
+                {' '}the computer plays <strong>{MISSION_NAMES[MISSION_MATRIX[dispositions.ai][dispositions.player]]}</strong>.
+                {' '}This pairing restricts the battle to {recommendedLayouts.length || 'its'} recommended layouts.
+              </p>
+            </div>
+          )}
           <label className="field">
             <span>Map{inMatch && !inSetup ? ' (locked during battle)' : ''}</span>
             <select
@@ -394,6 +434,13 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
               title={inMatch && !inSetup ? 'Changing the map resets the board — finish or abandon the battle first' : undefined}
               onChange={(e) => { const next = layouts.find((l) => l.id === e.target.value); if (next) dispatch({ type: 'SetLayout', layout: next }); }}
             >
+              {recommendedLayouts.length > 0 && (
+                <optgroup label={`Recommended for this pairing (A/B/C)`}>
+                  {recommendedLayouts.map((l) => (
+                    <option key={`rec-${l.id}`} value={l.id}>Layout {l.pairing?.letter ?? '?'} — {l.deployment}</option>
+                  ))}
+                </optgroup>
+              )}
               {layoutGroups.map(([deployment, group]) => (
                 <optgroup key={deployment} label={deployment}>
                   {group.map((l) => <option key={l.id} value={l.id}>{l.name?.split('·').pop()?.trim() ?? l.id}</option>)}
@@ -524,6 +571,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
 
       <main className="board-main">
         <Board
+          operationMarkers={state.missions?.markers}
           layout={layout}
           units={state.units}
           datasheetsById={datasheetsById}

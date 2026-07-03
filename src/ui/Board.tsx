@@ -49,6 +49,8 @@ interface Props {
   movement?: MovementUI | null;
   /** Combat targeting (from the game panel): highlight the attacker and its target on the board. */
   targeting?: { attackerUnitId?: string; targetUnitId?: string } | null;
+  /** 11e operation markers (mission rules) to draw on the terrain layer. */
+  operationMarkers?: import('../core/types').OperationMarker[];
 }
 
 const FALLBACK_SHAPE: BaseShape = { kind: 'circle', radius: 0.63 };
@@ -82,6 +84,7 @@ export function Board({
   onPlacementCancel,
   movement,
   targeting,
+  operationMarkers,
 }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -490,7 +493,7 @@ export function Board({
           onPointerLeave={() => setCursor(null)}
         >
           <rect x={0} y={0} width={widthPx} height={heightPx} fill="#1f2430" stroke="#3a4150" strokeWidth={2} />
-          <TerrainLayer layout={layout} />
+          <TerrainLayer layout={layout} markers={operationMarkers} />
 
           {units.map((u) =>
             u.inReserves

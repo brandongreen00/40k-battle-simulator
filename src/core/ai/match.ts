@@ -27,6 +27,8 @@ export interface MatchConfig {
   layout: Layout;
   rosters: Record<Side, Roster>;
   profiles: Record<Side, string | AiProfile>;
+  /** 11e Force Dispositions per side (defaults to Take and Hold for both). */
+  dispositions?: Record<Side, import('../missions11').DispositionId>;
   seed: number;
   /** Hard safety budget; a finished 5-round game uses a few hundred intents. */
   maxIntents?: number;
@@ -84,7 +86,7 @@ export function runMatch(cfg: MatchConfig, data: MatchData): MatchResult {
   };
   const maxIntents = cfg.maxIntents ?? 5000;
 
-  let state = reduce(createInitialState(cfg.layout), { type: 'NewBattle' }, rng, data.ctx);
+  let state = reduce(createInitialState(cfg.layout), { type: 'NewBattle', dispositions: cfg.dispositions }, rng, data.ctx);
   let intentCount = 1;
   let forcedAdvances = 0;
   const snapshots: TurnSnapshot[] = [];

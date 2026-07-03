@@ -11,6 +11,8 @@ import {
 } from '../core/phases';
 import { AM_ORDERS, unitIsOfficer } from '../core/orders';
 import { secondaryCard } from '../core/secondaries';
+import { dispositionName, MISSION_NAMES, PRIMARY_CAP, actionsForSide, objectivePoints } from '../core/missions11';
+import { canStartAction, SECONDARY_ACTIONS } from '../core/missionflow';
 import { usableStratagems } from '../core/stratagems';
 import { stratagems } from '../data/loaders';
 import { Die } from './Dice';
@@ -222,6 +224,31 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
         ))}
       </div>
 
+      {/* 11e Primary Missions: each side's disposition, mission and primary VP. */}
+      {inMatch && state.missions && (
+        <div className="phase-block">
+          <h3>Primary Missions</h3>
+          {(['player', 'ai'] as const).map((s) => {
+            const ms = state.missions!.perSide[s];
+            return (
+              <div key={s} className="order-officer">
+                <strong style={{ color: OWNER_COLOR[s].fill }}>{s}</strong>{' '}
+                <span>{dispositionName(ms.disposition)} → <strong>{MISSION_NAMES[ms.mission] ?? ms.mission}</strong></span>
+                <span className="muted"> · {ms.primaryVp}/{PRIMARY_CAP} primary VP</span>
+              </div>
+            );
+          })}
+          {(state.missions.markers.length > 0) && (
+            <p className="muted">Operation markers on the field: {state.missions.markers.length}</p>
+          )}
+        </div>
+      )}
+
+      {/* 11e Objective Actions — started in your Shooting phase, complete at end of turn. */}
+      {inMatch && state.missions && state.stage === 'battle' && state.phase === 'Shooting' && (
+        <ActionsBlock state={state} dispatch={dispatch} datasheetsById={datasheetsById} ctx={ctx} />
+      )}
+
       {/* Tactical (Secondary) Missions — drawn in the Command phase, scored at turn end. */}
       {inMatch && state.secondaries && state.stage === 'battle' && (
         <div className="phase-block">
@@ -229,7 +256,7 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
           {(['player', 'ai'] as const).map((s) => (
             <div key={s} className="order-officer">
               <strong style={{ color: OWNER_COLOR[s].fill }}>{s}</strong>{' '}
-              <span className="muted">{state.secondaries![s].vp}/40 secondary VP · {state.secondaries![s].deck.length} in deck</span>
+              <span className="muted">{state.secondaries![s].vp}/45 secondary VP · {state.secondaries![s].deck.length} in deck</span>
               {state.secondaries![s].hand.length === 0 ? (
                 <div className="muted">— no active missions (drawn when the Command phase runs)</div>
               ) : (
@@ -639,5 +666,115 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
         )}
       </div>
     </section>
+  );
+}
+
+/** 11e Objective Actions: pick a unit + action + target; validity comes from missionflow. */
+function ActionsBlock({
+  state,
+  dispatch,
+  datasheetsById,
+  ctx,
+}: {
+  state: GameState;
+  dispatch: (i: Intent) => void;
+  datasheetsById: Map<string, Datasheet>;
+  ctx: EngineContext;
+}) {
+  const side = state.activePlayer;
+  const defs = [
+    ...actionsForSide(state, side),
+    // Cleanse / Plunder become available while the matching Tactical Mission is in hand.
+    ...SECONDARY_ACTIONS.filter((a) => state.secondaries?.[side]?.hand.some((c) => c.id === a.id)),
+  ];
+  const [unitId, setUnitId] = useState('');
+  const [actionId, setActionId] = useState(defs[0]?.id ?? '');
+  const [objectiveIdx, setObjectiveIdx] = useState(0);
+  const [areaId, setAreaId] = useState('');
+  const [targetUnitId, setTargetUnitId] = useState('');
+  if (defs.length === 0) return null;
+  const def = defs.find((d) => d.id === actionId) ?? defs[0]!;
+  const mine = state.units.filter((u) => u.owner === side && !u.inReserves && u.models.some((m) => m.alive));
+  const params = {
+    unitId,
+    actionId: def.id,
+    ...(def.kind === 'objective' ? { objectiveIdx } : {}),
+    ...(def.kind === 'area' ? { areaId } : {}),
+    ...(def.kind === 'enemy' ? { targetUnitId } : {}),
+  };
+  const check = unitId ? canStartAction(state, ctx, params) : { ok: false, reason: 'pick a unit' };
+  const points = objectivePoints(state.layout);
+  return (
+    <div className="phase-block">
+      <h3>Objective Actions</h3>
+      <p className="hint">Starting an action means the unit cannot shoot or charge this turn (16.01).</p>
+      <label className="field">
+        <span>Action</span>
+        <select value={def.id} onChange={(e) => setActionId(e.target.value)}>
+          {defs.map((d) => (
+            <option key={d.id} value={d.id}>{d.name}</option>
+          ))}
+        </select>
+      </label>
+      <label className="field">
+        <span>Unit</span>
+        <select value={unitId} onChange={(e) => setUnitId(e.target.value)}>
+          <option value="">— pick —</option>
+          {mine.map((u) => (
+            <option key={u.id} value={u.id}>{datasheetsById.get(u.datasheetId)?.name ?? u.id}</option>
+          ))}
+        </select>
+      </label>
+      {def.kind === 'objective' && (
+        <label className="field">
+          <span>Objective</span>
+          <select value={objectiveIdx} onChange={(e) => setObjectiveIdx(Number(e.target.value))}>
+            {points.map((o, i) => (
+              <option key={i} value={i}>#{i + 1} {o.kind} ({o.pos.x.toFixed(0)}", {o.pos.y.toFixed(0)}")</option>
+            ))}
+          </select>
+        </label>
+      )}
+      {def.kind === 'area' && (
+        <label className="field">
+          <span>Terrain area</span>
+          <select value={areaId} onChange={(e) => setAreaId(e.target.value)}>
+            <option value="">— pick —</option>
+            {(state.layout.terrainAreas ?? []).map((a) => (
+              <option key={a.id} value={a.id}>{a.id}</option>
+            ))}
+          </select>
+        </label>
+      )}
+      {def.kind === 'enemy' && (
+        <label className="field">
+          <span>Enemy unit</span>
+          <select value={targetUnitId} onChange={(e) => setTargetUnitId(e.target.value)}>
+            <option value="">— pick —</option>
+            {state.units
+              .filter((u) => u.owner !== side && !u.inReserves && u.models.some((m) => m.alive))
+              .map((u) => (
+                <option key={u.id} value={u.id}>{datasheetsById.get(u.datasheetId)?.name ?? u.id}</option>
+              ))}
+          </select>
+        </label>
+      )}
+      <div className="btnrow">
+        <button disabled={!check.ok} onClick={() => dispatch({ type: 'StartAction', ...params })}>
+          Start {def.name}
+        </button>
+        {!check.ok && unitId && <span className="muted">{check.reason}</span>}
+      </div>
+      {(state.activeActions ?? []).length > 0 && (
+        <ul className="dep-attached">
+          {(state.activeActions ?? []).map((a, i) => (
+            <li key={i}>
+              <span style={{ color: OWNER_COLOR[a.side].fill }}>{a.side}</span> ·{' '}
+              {datasheetsById.get(state.units.find((u) => u.id === a.unitId)?.datasheetId ?? '')?.name ?? a.unitId}: {a.actionId}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
