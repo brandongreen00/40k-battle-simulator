@@ -19,6 +19,7 @@ import { gapBetweenBases, dist, baseRadius } from '../geometry';
 import { objectiveControl } from '../engine';
 import { unitScoutDistance } from '../abilities';
 import { secondaryPositionBonus } from '../secondaries';
+import { missionPositionBonus } from './missionplay';
 import { shootingEV, unitThreat, unitValue, unitGap, unitOC, maxWeaponRange, meleeEV } from './evaluate';
 import { homeGarrisonId, unitRolePlan, type RolePlan } from './roles';
 import type { AiAction, AiDeps } from './types';
@@ -118,6 +119,9 @@ function positionScore(
 
   // Active Tactical Missions: standing where a card scores (enemy DZ, outpost/NML markers…).
   score += secondaryPositionBonus(state, unit.owner, at, ctx);
+  // The PRIMARY mission: standing where the side's disposition pays VP (enemy home for
+  // Outmanoeuvre, centrals for Immovable Object, quarters for Reconnaissance Sweep…).
+  score += missionPositionBonus(state, unit.owner, at, ctx) * 1.5 * profile.objective;
 
   // Shooting from the new spot: best target's expected points of damage (role bonus vs CHARACTERs).
   let bestEV = 0;

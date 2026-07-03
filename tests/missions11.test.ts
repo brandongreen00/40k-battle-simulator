@@ -203,3 +203,18 @@ describe('full 11e AI acceptance game', () => {
     expect(result.log.some((l) => l.includes('Battle Ready'))).toBe(true);
   }, 180_000);
 });
+
+describe('AI mission play', () => {
+  it('bestMissionAction proposes a legal Objective Action for a unit holding the objective', async () => {
+    const { bestMissionAction } = await import('../src/core/ai/missionplay');
+    let s = battle11({ player: 'priority_assets', ai: 'take_and_hold' });
+    s = spawn(s, 'squad', 'player', 22, 30, 5);
+    s = { ...s, phase: 'Shooting', activePlayer: 'player' };
+    s = missionsOnTurnStart(s, ctx);
+    const deps = { ctx } as never;
+    const pick = bestMissionAction(s, 'player', deps);
+    expect(pick).not.toBeNull();
+    expect(pick!.params.actionId).toBe('secure_asset');
+    expect(pick!.vp).toBeGreaterThanOrEqual(4);
+  });
+});

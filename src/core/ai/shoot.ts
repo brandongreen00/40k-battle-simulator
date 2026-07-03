@@ -9,6 +9,7 @@ import type { GameState, Side } from '../types';
 import { eligibleToShoot, validUnitShootingTargets, isOnBoard } from '../phases';
 import { objectiveControl } from '../engine';
 import { secondaryKillBonus } from '../secondaries';
+import { bestMissionAction } from './missionplay';
 import { shootingEV, unitThreat, unitValue } from './evaluate';
 import { unitRolePlan } from './roles';
 import type { AiAction, AiDeps } from './types';
@@ -63,6 +64,27 @@ export function aiShootingAction(state: GameState, side: Side, profile: AiProfil
       intents: [{ intent: { type: 'ShootUnit', attackerUnitId: pick.shooter, targetUnitId: pick.target } }],
       note: `${side} shoots: ${pick.names}`,
     };
+  }
+
+  // Objective Actions (11e): a unit sitting on a mission objective with little worth shooting
+  // should perform its mission's action instead — VP is the win condition. Keep the current
+  // best shooter free; convert action VP to the shooting-EV scale (~12 points of expected
+  // damage per VP, scaled by the profile's actionPriority knob).
+  const exclude = new Set<string>();
+  if (best) exclude.add(best.shooter);
+  const action = bestMissionAction(state, side, deps, exclude);
+  if (action) {
+    const actionScore = action.vp * 12 * (profile.actionPriority ?? 1);
+    const shooterBestEv = (unitId: string): number => {
+      const u = state.units.find((x) => x.id === unitId);
+      if (!u || !eligibleToShoot(u, state, ctx).eligible) return 0;
+      let ev = 0;
+      for (const t of validUnitShootingTargets(u, state, ctx)) ev = Math.max(ev, shootingEV(state, u, t, ctx));
+      return ev;
+    };
+    if (actionScore > shooterBestEv(action.params.unitId)) {
+      return { intents: [{ intent: { type: 'StartAction', ...action.params } }], note: action.note };
+    }
   }
 
   if (best) {
