@@ -39,7 +39,9 @@ export function aiChargeAction(state: GameState, side: Side, profile: AiProfile,
     for (const t of chargeTargets(c, state, ctx)) {
       const names = `${ctx.datasheets.get(c.datasheetId)?.name ?? c.id} → ${ctx.datasheets.get(t.datasheetId)?.name ?? t.id}`;
       options.push({ charger: c.id, target: t.id, names });
-      const need = unitGap(c, t, ctx) - 1; // reach Engagement Range
+      // 11.04 roll-first: a target is only selectable when within the ROLLED distance, so the
+      // needed roll is the full gap (not gap minus Engagement Range).
+      const need = unitGap(c, t, ctx);
       const p = chargeProb(need);
       if (p <= 0) continue;
       const value =

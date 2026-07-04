@@ -979,9 +979,13 @@ function findChargeMove(
 }
 
 /**
- * Resolve a charge (2D6) against one or more targets. Succeeds only when a single coherent move of
- * up to the rolled distance reaches Engagement Range of every target without ending within
- * Engagement Range of a non-target enemy. On success, moves the charger and marks it charged.
+ * Resolve a charge with 11e sequencing (11.02/11.04): the 2D6 charge roll is made FIRST, and
+ * targets are selected AFTER the roll — each selected target must be within 12" AND within the
+ * rolled distance. `targetUnitIds` carries the player's INTENDED targets; after the roll the
+ * engine selects the best subset it can actually engage (dropping the furthest intended targets
+ * first), exactly as a player choosing targets post-roll would. Any intended target NOT selected
+ * counts as a non-target (the move cannot end engaged with it). On success, moves the charger,
+ * marks it charged, and grants Fights First (via the charged flag).
  */
 export function resolveCharge(
   state: GameState,
@@ -1012,7 +1016,8 @@ export function resolveCharge(
     .map((u) => ({ unit: u, shape: ctx.datasheets.get(u.datasheetId)?.baseShape ?? cDs.baseShape }));
   if (targets.length === 0) return { state, success: false, summary: 'no valid target' };
 
-  // Declaration legality: every target must be within 12".
+  // Intent legality: every INTENDED target must be within 12" (11.04 — targets beyond 12" can
+  // never be selected, so declaring one is an illegal intent, not a failed charge).
   for (const t of targets) {
     if (closestGap(charger, cDs.baseShape, t.unit, t.shape) > 12) {
       const summary = `Charge illegal: ${ctx.datasheets.get(t.unit.datasheetId)?.name ?? t.unit.id} is over 12" away`;
@@ -1020,22 +1025,43 @@ export function resolveCharge(
     }
   }
 
-  // Non-target enemies on the board (the charge may not end within Engagement Range of these).
-  const targetSet = new Set(targets.map((t) => t.unit.id));
-  const nonTargets = state.units
-    .filter((u) => u.owner !== charger.owner && !u.inReserves && !targetSet.has(u.id) && u.models.some((m) => m.alive))
-    .map((u) => ({ unit: u, shape: ctx.datasheets.get(u.datasheetId)?.baseShape ?? cDs.baseShape }));
+  // Enemies that end up unselected are non-targets: the move may not end within Engagement Range
+  // of them. (Computed per-attempt below, since target selection follows the roll.)
+  const enemyShape = (u: UnitInstance) => ctx.datasheets.get(u.datasheetId)?.baseShape ?? cDs.baseShape;
+  const otherEnemies = state.units
+    .filter((u) => u.owner !== charger.owner && !u.inReserves && u.models.some((m) => m.alive))
+    .map((u) => ({ unit: u, shape: enemyShape(u) }));
+
+  const occupied = occupiedBases(state, ctx, [charger.id]);
+  // 11.04: select targets AFTER the roll — intended targets within the rolled distance, best
+  // engageable subset first (drop the furthest intended target when the full set has no path).
+  const attempt = (dist: number): { move: Vec2; selected: typeof targets } | null => {
+    const selectable = targets
+      .filter((t) => closestGap(charger, cDs.baseShape, t.unit, t.shape) <= dist)
+      .sort(
+        (a, b) =>
+          closestGap(charger, cDs.baseShape, a.unit, a.shape) -
+          closestGap(charger, cDs.baseShape, b.unit, b.shape),
+      );
+    for (let n = selectable.length; n >= 1; n--) {
+      const selected = selectable.slice(0, n);
+      const selectedIds = new Set(selected.map((t) => t.unit.id));
+      const nonTargets = otherEnemies.filter((e) => !selectedIds.has(e.unit.id));
+      const move = findChargeMove(charger, cDs.baseShape, selected, nonTargets, dist, occupied, (u) => unitBases(u, ctx));
+      if (move) return { move, selected };
+    }
+    return null;
+  };
 
   let { distance, rolls } = rollCharge(rng);
-  const occupied = occupiedBases(state, ctx, [charger.id]);
-  let move = findChargeMove(charger, cDs.baseShape, targets, nonTargets, distance, occupied, (u) => unitBases(u, ctx));
+  let result = attempt(distance);
 
   // Core Stratagem "Command Re-roll": on a failed charge the issuer may spend 1 CP to re-roll
   // the full 2D6 (once per phase per side, match mode only).
   let cp = state.cp;
   let rerollUsed = state.rerollUsed;
   const extraLog: string[] = [];
-  if (!move && params.commandReroll && state.mode === 'match') {
+  if (!result && params.commandReroll && state.mode === 'match') {
     const phaseKey = `${state.round}:${state.activePlayer}:${state.phase}`;
     if (cp[charger.owner] >= 1 && rerollUsed?.[charger.owner] !== phaseKey) {
       cp = { ...cp, [charger.owner]: cp[charger.owner] - 1 };
@@ -1043,20 +1069,26 @@ export function resolveCharge(
       const first = `${rolls.join('+')}=${distance}"`;
       ({ distance, rolls } = rollCharge(rng));
       extraLog.push(`${charger.owner} spends 1 CP on Command Re-roll: charge 2D6 ${first} re-rolled`);
-      move = findChargeMove(charger, cDs.baseShape, targets, nonTargets, distance, occupied, (u) => unitBases(u, ctx));
+      result = attempt(distance);
     }
   }
 
-  const success = move !== null;
-  const names = targets.map((t) => ctx.datasheets.get(t.unit.datasheetId)?.name ?? t.unit.id).join(' + ');
-  // Tell a short roll apart from a blocked path: the minimum distance that could possibly work
-  // is the furthest target's gap minus Engagement Range.
-  const needed = Math.max(...targets.map((t) => closestGap(charger, cDs.baseShape, t.unit, t.shape))) - ENGAGEMENT_RANGE;
+  const success = result !== null;
+  const move = result?.move ?? null;
+  const engagedTargets = result?.selected ?? targets;
+  const names = engagedTargets.map((t) => ctx.datasheets.get(t.unit.datasheetId)?.name ?? t.unit.id).join(' + ');
+  // Tell a short roll apart from a blocked path. A target is only SELECTABLE when it is within
+  // the rolled distance (11.04), so the minimum roll that could possibly work is the closest
+  // intended target's full gap — not gap minus Engagement Range.
+  const needed = Math.min(...targets.map((t) => closestGap(charger, cDs.baseShape, t.unit, t.shape)));
+  const dropped = success && engagedTargets.length < targets.length
+    ? ` (${targets.length - engagedTargets.length} intended target(s) out of reach and not selected)`
+    : '';
   const reason = success
-    ? 'SUCCESS'
+    ? `SUCCESS${dropped}`
     : distance < needed - 1e-6
       ? `failed — needed ${Math.max(0, needed).toFixed(1)}", rolled ${distance}"`
-      : 'failed — no clear path (cannot reach every target without ending within 1" of another enemy)';
+      : 'failed — no clear path (cannot reach a target without ending within Engagement Range of another enemy)';
   const summary = `${cDs.name} charges ${names}: 2D6=${rolls.join('+')}=${distance}" → ${reason}`;
 
   // The declaration is spent whether or not the roll/path succeeded (match mode; the sandbox
