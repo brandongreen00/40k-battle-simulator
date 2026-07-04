@@ -1118,17 +1118,59 @@ export function closestAxis(a: UnitInstance, b: UnitInstance): Vec2 {
   return { x: dx / len, y: dy / len };
 }
 
-// ── Fight-phase moves: Pile In / Consolidate (3") ──────────────────────────────
+// ── Fight-phase moves: Pile In (12.03) / Consolidate (12.08) ───────────────────
 export interface FightMoveParams {
   unitId: string;
   mode: 'pile_in' | 'consolidate';
 }
 
 /**
- * Pile In (before attacking) and Consolidate (after) — each lets a unit move every model up to 3"
- * toward the closest enemy model. Modelled as a coherency-preserving rigid translate toward the
- * nearest enemy unit, capped at 3" and at base contact (so it never overlaps). A simplification of
- * the per-model rule that keeps the unit legal; faithful enough for engaged combats.
+ * Stamp `engagedAtFightStart` on every on-board unit — called when the Fight phase begins.
+ * 12.04 keeps a unit eligible to fight even if its combat evaporates mid-phase (its enemy is
+ * destroyed by another fight, or emergency-disembarks away); such a unit fights via an
+ * OVERRUN FIGHT (12.06).
+ */
+export function stampFightStepEngagement(state: GameState, ctx: EngineContext): GameState {
+  const alive = state.units.filter((u) => !u.inReserves && u.models.some((m) => m.alive));
+  const engaged = new Set<string>();
+  for (const u of alive) {
+    const uDs = ctx.datasheets.get(u.datasheetId);
+    if (!uDs) continue;
+    for (const e of alive) {
+      if (e.owner === u.owner) continue;
+      const eDs = ctx.datasheets.get(e.datasheetId);
+      if (!eDs) continue;
+      if (closestGap(u, uDs.baseShape, e, eDs.baseShape) <= ENGAGEMENT_RANGE) {
+        engaged.add(u.id);
+        break;
+      }
+    }
+  }
+  return {
+    ...state,
+    units: state.units.map((u) => ({ ...u, status: { ...u.status, engagedAtFightStart: engaged.has(u.id) } })),
+  };
+}
+
+/**
+ * Pile In (12.03) and Consolidation (12.08) moves — up to 3", modelled as a coherency-preserving
+ * rigid translate (per-model movement is approximated; the unit-level constraints are enforced).
+ *
+ * Pile In: targets are the units we're engaged with, otherwise enemy units within 5" (the overrun
+ * fight's extra pile-in). The unit must END engaged, or it does not move.
+ *
+ * Consolidation selects its mode by the 11e mandatory priority:
+ *  • Ongoing (engaged): move toward the closest engaged enemy, staying engaged.
+ *  • Engaging (enemy within 3"): move toward it and END engaged — or don't move at all. Enemy
+ *    units engaged this way that have not fought become eligible to fight (the caller's live
+ *    eligibility check picks them up — "chain fights").
+ *  • Objective (objective within reach): end within control range of it if possible.
+ *  • Otherwise the unit cannot consolidate (11e removed the free 3" toward the nearest enemy).
+ *
+ * Timing note: the Core Rules resolve Pile In (12.02) and Consolidate (12.07) as whole-phase
+ * steps (active player's units all at once, then the opponent's); this engine resolves them
+ * per-activation around each unit's fight, which preserves the same reach and the same chain-fight
+ * consequences under alternating activations. Documented simplification.
  */
 export function resolveFightMove(
   state: GameState,
@@ -1139,6 +1181,7 @@ export function resolveFightMove(
   if (!unit) return { state, summary: 'unit not found' };
   const ds = ctx.datasheets.get(unit.datasheetId);
   if (!ds) return { state, summary: 'datasheet not found' };
+  const verb = params.mode === 'pile_in' ? 'piles in' : 'consolidates';
 
   // Phase legality (real matches only).
   if (state.mode === 'match' && state.stage === 'battle' && state.phase !== 'Fight') {
@@ -1146,35 +1189,107 @@ export function resolveFightMove(
     return { state: { ...state, log: [...state.log, summary] }, summary };
   }
 
-  // Nearest enemy unit by base-to-base gap.
-  let nearest: UnitInstance | undefined;
-  let minGap = Infinity;
+  // Enemy units by base-to-base gap.
+  const enemies: { unit: UnitInstance; gap: number }[] = [];
   for (const e of state.units) {
     if (e.owner === unit.owner || e.inReserves || !e.models.some((m) => m.alive)) continue;
     const eDs = ctx.datasheets.get(e.datasheetId);
     if (!eDs) continue;
-    const g = closestGap(unit, ds.baseShape, e, eDs.baseShape);
-    if (g < minGap) { minGap = g; nearest = e; }
+    enemies.push({ unit: e, gap: closestGap(unit, ds.baseShape, e, eDs.baseShape) });
   }
-  if (!nearest) return { state, summary: 'no enemy to move toward' };
+  enemies.sort((a, b) => a.gap - b.gap);
+  const engagedWith = enemies.filter((e) => e.gap <= ENGAGEMENT_RANGE);
 
-  const dir = closestAxis(unit, nearest);
-  let moveDist = Math.min(3, Math.max(0, minGap)); // up to 3", stopping at base contact
+  const noMove = (why: string): { state: GameState; summary: string } => {
+    const summary = `${ds.name} does not ${params.mode === 'pile_in' ? 'pile in' : 'consolidate'} (${why})`;
+    return { state: { ...state, log: [...state.log, summary] }, summary };
+  };
+
+  // Pick the move goal by mode.
+  let goal: { unit: UnitInstance; gap: number } | undefined;
+  let mustEndEngaged = false;
+  let modeNote = '';
+  let objectiveGoal: Vec2 | undefined;
+  if (params.mode === 'pile_in') {
+    // 12.03: targets = engaged enemies; an unengaged unit (overrun fight, 12.06) may pick
+    // enemies within 5". Either way the unit must END engaged.
+    const pool = engagedWith.length ? engagedWith : enemies.filter((e) => e.gap <= 5);
+    if (!pool.length) return noMove('no enemy within pile-in reach');
+    goal = pool[0]!;
+    if (!engagedWith.length) {
+      mustEndEngaged = true;
+      modeNote = ' (overrun)';
+      if (goal.gap - 3 > ENGAGEMENT_RANGE) return noMove('cannot end the pile-in engaged');
+    }
+  } else if (engagedWith.length) {
+    goal = engagedWith[0]!; // Ongoing Consolidation: closer to the closest engaged enemy
+    modeNote = ' (ongoing)';
+  } else if (enemies.length && enemies[0]!.gap <= 3) {
+    goal = enemies[0]!; // Engaging Consolidation: must end engaged
+    mustEndEngaged = true;
+    modeNote = ' (engaging)';
+  } else {
+    // Objective Consolidation: the closest objective the unit could end within range of.
+    const controlR = state.layout.objectiveControlRadiusIn ?? 3;
+    const objPts: Vec2[] = state.layout.objectivePoints?.map((o) => o.pos) ?? state.layout.objectives;
+    let bestObj: { pos: Vec2; d: number } | undefined;
+    for (const o of objPts) {
+      // Distance from the unit's closest model to the marker/area centre.
+      let d = Infinity;
+      for (const m of unit.models) {
+        if (!m.alive) continue;
+        d = Math.min(d, Math.hypot(m.pos.x - o.x, m.pos.y - o.y));
+      }
+      if ((!bestObj || d < bestObj.d) && d > controlR && d - 3 <= controlR + 1) bestObj = { pos: o, d };
+    }
+    if (!bestObj) return noMove('no eligible consolidation mode — stays put');
+    objectiveGoal = bestObj.pos;
+    modeNote = ' (objective)';
+  }
+
+  let dir: Vec2;
+  let moveDist: number;
+  if (goal) {
+    dir = closestAxis(unit, goal.unit);
+    moveDist = Math.min(3, Math.max(0, goal.gap)); // up to 3", stopping at base contact
+  } else {
+    // Toward the objective centre, just far enough to be in range.
+    const controlR = state.layout.objectiveControlRadiusIn ?? 3;
+    const from = aliveCentroid(unit);
+    const dx = objectiveGoal!.x - from.x;
+    const dy = objectiveGoal!.y - from.y;
+    const len = Math.hypot(dx, dy) || 1;
+    dir = { x: dx / len, y: dy / len };
+    let need = Infinity;
+    for (const m of unit.models) {
+      if (!m.alive) continue;
+      need = Math.min(need, Math.hypot(m.pos.x - objectiveGoal!.x, m.pos.y - objectiveGoal!.y) - controlR);
+    }
+    moveDist = Math.min(3, Math.max(0, need + 0.1));
+  }
+
   // Never end on top of another model's base (a friendly unit can sit between us and the enemy).
   const occupied = occupiedBases(state, ctx, [unit.id]);
   const clamped = clampDeltaAvoidingOverlap(
     unitBases(unit, ctx), occupied, { x: dir.x * moveDist, y: dir.y * moveDist },
   );
   moveDist = Math.hypot(clamped.x, clamped.y);
+
+  // "Must end engaged" modes: if the clamped move still leaves us out of Engagement Range, the
+  // move cannot be made at all (12.03 / 12.08 Engaging).
+  if (mustEndEngaged && goal) {
+    const endGap = goal.gap - moveDist; // rigid translate along the closest axis
+    if (endGap > ENGAGEMENT_RANGE + 1e-6) return noMove('cannot end the move engaged');
+  }
+
   if (moveDist <= 1e-6) {
-    return { state: { ...state, log: [...state.log, `${ds.name} ${params.mode === 'pile_in' ? 'piles in' : 'consolidates'} (already in base contact)`] }, summary: 'no move' };
+    return { state: { ...state, log: [...state.log, `${ds.name} ${verb}${modeNote} (already in position)`] }, summary: 'no move' };
   }
   const units = state.units.map((u) =>
     u.id === unit.id
       ? { ...u, models: u.models.map((m) => (m.alive ? { ...m, pos: { x: m.pos.x + clamped.x, y: m.pos.y + clamped.y } } : m)) }
       : u,
   );
-  const verb = params.mode === 'pile_in' ? 'piles in' : 'consolidates';
-  const summary = `${ds.name} ${verb} ${moveDist.toFixed(1)}" toward the enemy`;
+  const summary = `${ds.name} ${verb}${modeNote} ${moveDist.toFixed(1)}" ${goal ? 'toward the enemy' : 'toward the objective'}`;
   return { state: { ...state, units, log: [...state.log, summary] }, summary };
 }

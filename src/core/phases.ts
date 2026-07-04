@@ -210,13 +210,22 @@ export function eligibleToCharge(u: UnitInstance, state: GameState, ctx: EngineC
 }
 
 // ── Fight ────────────────────────────────────────────────────────────────────
+/**
+ * 12.04: a unit is eligible to fight if it is engaged, OR it was engaged at the start of the
+ * Fight step, OR it made a charge move this turn. An unengaged-but-eligible unit fights via an
+ * OVERRUN FIGHT (12.06): one extra pile-in (3") first — so it also needs an enemy within
+ * pile-in-and-engage reach (Engagement Range + 3"), or there is nothing it could fight.
+ */
 export function eligibleToFight(u: UnitInstance, state: GameState, ctx: EngineContext): Eligibility {
   if (!isOnBoard(u)) return { eligible: false, reason: 'not on the battlefield' };
   if (u.status.hasFought) return { eligible: false, reason: 'already fought this turn' };
-  if (engagedEnemies(u, state, ctx).length === 0) {
-    return { eligible: false, reason: 'not within Engagement Range of an enemy' };
+  if (engagedEnemies(u, state, ctx).length > 0) return { eligible: true };
+  if (state.phase === 'Fight' && (u.status.engagedAtFightStart || u.status.charged)) {
+    const reachable = enemiesOf(u, state).some((e) => gapBetween(u, e, ctx) <= ENGAGEMENT_RANGE + 3);
+    if (reachable) return { eligible: true };
+    return { eligible: false, reason: 'no enemy within overrun pile-in reach (5")' };
   }
-  return { eligible: true };
+  return { eligible: false, reason: 'not within Engagement Range of an enemy' };
 }
 
 /** Does this unit have Fights First this turn? (It charged, or has an innate Fights First.) */

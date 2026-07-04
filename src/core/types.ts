@@ -231,6 +231,9 @@ export interface UnitStatus {
   chargeAttempted?: boolean;
   charged?: boolean; // completed a charge this turn (Lance, Fights First)
   hasFought?: boolean; // already fought this turn
+  /** Was engaged when the Fight step began (12.04) — an unengaged unit with this flag (or that
+   *  charged) fights via an OVERRUN FIGHT (12.06). Stamped on entering the Fight phase. */
+  engagedAtFightStart?: boolean;
   battleShocked?: boolean; // failed a Battle-shock test this round
   /** Resolved (or declined) its pre-battle Scouts X" move. */
   scouted?: boolean;

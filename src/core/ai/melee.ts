@@ -95,7 +95,15 @@ export function aiFightAction(state: GameState, side: Side, profile: AiProfile, 
   if (!eligibleToFight(unit, state, ctx).eligible) return null;
 
   const unitId = unit.id;
-  const enemies = engagedEnemies(unit, state, ctx).sort(
+  // Engaged targets — or, for an OVERRUN FIGHT (12.06: eligible but unengaged), enemies within
+  // pile-in-and-engage reach (ER + 3"); the pile-in intent below moves us into Engagement Range.
+  let pool = engagedEnemies(unit, state, ctx);
+  if (pool.length === 0) {
+    pool = state.units.filter(
+      (e) => e.owner !== side && isOnBoard(e) && unitGap(unit, e, ctx) <= 5,
+    );
+  }
+  const enemies = pool.sort(
     (a, b) => meleeEV(unit, b, ctx) - meleeEV(unit, a, ctx) || unitValue(b, ctx) - unitValue(a, ctx) || a.id.localeCompare(b.id),
   );
   const target = profile.random && enemies.length > 1 ? enemies[deps.rng.int(0, enemies.length - 1)]! : enemies[0];

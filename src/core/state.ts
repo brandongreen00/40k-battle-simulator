@@ -33,6 +33,7 @@ import {
   resolveUnitFight,
   resolveUnitShooting,
   runCommandPhase,
+  stampFightStepEngagement,
   type AttackParams,
   type ChargeParams,
   type FightMoveParams,
@@ -286,7 +287,11 @@ function advancePhase(state: GameState, ctx?: EngineContext): GameState {
   }
   const i = PARIAH_NEXUS_PHASES.indexOf(state.phase as Phase);
   if (i >= 0 && i < PARIAH_NEXUS_PHASES.length - 1) {
-    return { ...state, phase: PARIAH_NEXUS_PHASES[i + 1]! };
+    const next: GameState = { ...state, phase: PARIAH_NEXUS_PHASES[i + 1]! };
+    // Entering the Fight phase: snapshot who is engaged (12.04) — a unit whose combat evaporates
+    // mid-phase stays eligible and fights via an overrun fight (12.06).
+    if (PARIAH_NEXUS_PHASES[i + 1] === 'Fight' && ctx) return stampFightStepEngagement(next, ctx);
+    return next;
   }
   // End of the Fight phase — the End of Turn step (11e): enforce coherency (03.03), then the
   // mission consults (primary + secondary scoring hooks), then clear the per-turn kill ledger.
