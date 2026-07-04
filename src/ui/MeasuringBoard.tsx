@@ -9,7 +9,7 @@ import { unitCoherency, unitCentroid } from '../core/phases';
 import { gapBetweenBases } from '../core/geometry';
 import { canEmbark } from '../core/transport';
 import {
-  aiAction, aiMayAct, aiReactionToShooting, resolveProfile, sharedAction, whoActs, type AiDeps,
+  aiAction, aiMayAct, aiReactionToPhaseEnd, aiReactionToShooting, resolveProfile, sharedAction, whoActs, type AiDeps,
 } from '../core/ai/controller';
 import { formationForBodyguard, isPairedLeader, pairDeployAbility } from '../core/ai/deploy';
 import { dataIndex, datasheetsById, deployAbilityForDatasheet, getDatasheet, layouts, layoutsForPairing, rosters, stratagems } from '../data/loaders';
@@ -33,6 +33,8 @@ interface Placing {
   entryKey?: string;
   /** Set during a Deep Strike arrival: the Reserves unit id being brought onto the board. */
   arriveUnitId?: string;
+  /** The arrival is a Rapid Ingress stratagem play (15.07 — opponent's Movement phase, 1 CP). */
+  arriveRapid?: boolean;
   /** Set during a disembark: the embarked unit id being set up near its transport (18.04). */
   disembarkUnitId?: string;
   ability: DeployAbility;
@@ -80,6 +82,19 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
         const reactions = aiReactionToShooting(
           cur, target.owner, i.attackerUnitId, i.targetUnitId, resolveProfile(seat.profile), aiDepsRef.current,
         );
+        for (const r of reactions) {
+          if (r.skipIf?.(cur)) continue;
+          cur = reduce(cur, r.intent, rng, { datasheets: datasheetsById });
+        }
+      }
+    }
+    // End-of-phase reactive window: an AI defender may Fire Overwatch (end of your Movement) or
+    // Heroically Intervene (end of your Charge phase) before the phase advances.
+    if (i.type === 'AdvancePhase' && cur.stage === 'battle' && (cur.phase === 'Movement' || cur.phase === 'Charge') && aiDepsRef.current) {
+      const defender: Side = cur.activePlayer === 'player' ? 'ai' : 'player';
+      const seat = aiSeatsRef.current[defender];
+      if (seat?.enabled) {
+        const reactions = aiReactionToPhaseEnd(cur, defender, resolveProfile(seat.profile), aiDepsRef.current);
         for (const r of reactions) {
           if (r.skipIf?.(cur)) continue;
           cur = reduce(cur, r.intent, rng, { datasheets: datasheetsById });
@@ -271,7 +286,11 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
     if (placing.disembarkUnitId) {
       dispatch({ type: 'DisembarkUnit', unitId: placing.disembarkUnitId, anchor, formation: placing.formation, rotation: placing.rotation });
     } else if (placing.arriveUnitId) {
-      dispatch({ type: 'ArriveFromReserves', unitId: placing.arriveUnitId, anchor, formation: placing.formation, rotation: placing.rotation });
+      dispatch({
+        type: 'ArriveFromReserves', unitId: placing.arriveUnitId, anchor,
+        formation: placing.formation, rotation: placing.rotation,
+        ...(placing.arriveRapid ? { rapidIngress: true } : {}),
+      });
     } else if (placing.entryKey) {
       dispatch({ type: 'DeployUnit', unitId: placing.entryKey, owner: placing.side, anchor, formation: placing.formation, rotation: placing.rotation, ability: placing.ability, ...common });
       // A declared pair deploys as ONE unit: the Leader cannot be dropped ON the unit (bases
@@ -298,8 +317,9 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
     setPlacing(null);
   }
 
-  /** Begin a Deep Strike arrival: ghost the Reserves unit, gated by the > 9" rule. */
-  function beginArrival(unitId: string) {
+  /** Begin a Deep Strike arrival: ghost the Reserves unit, gated by the > 8" rule. With
+   *  `rapidIngress` the arrival resolves as the Rapid Ingress stratagem (opponent's Movement). */
+  function beginArrival(unitId: string, rapidIngress?: boolean) {
     const u = state.units.find((x) => x.id === unitId);
     const ds = u && getDatasheet(u.datasheetId);
     if (!u || !ds) return;
@@ -307,6 +327,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
     setPlacing({
       unit: { datasheetId: ds.id, modelCount: u.models.length },
       ds, formation: 'block', rotation: 0, side: u.owner, arriveUnitId: unitId, ability: 'deep_strike',
+      ...(rapidIngress ? { arriveRapid: true } : {}),
     });
   }
 

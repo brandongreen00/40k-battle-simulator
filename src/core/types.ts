@@ -479,6 +479,14 @@ export interface GameState {
   /** Core Stratagem "Command Re-roll" usage: side → phase key (`round:turn:phase`) it was last
    *  used in. Enforces once per phase per side (match-mode; currently bound to charge rolls). */
   rerollUsed?: Partial<Record<Side, string>>;
+  /** Stratagem usage tracker: `${side}:${stratId}` → the phase key it was last used in.
+   *  Enforces "each stratagem once per phase" (15.01) for the engine-bound stratagems. */
+  stratUsed?: Record<string, string>;
+  /** Counteroffensive (15.12): this unit must be the next selected to fight. Cleared when it
+   *  fights or the phase ends. */
+  fightNext?: string;
+  /** Insane Bravery (15.04) is once per BATTLE per side. */
+  insaneBraveryUsed?: Partial<Record<Side, boolean>>;
   /** Tactical (Secondary) Missions — per-side deck/hand/VP (match mode only). */
   secondaries?: Record<Side, SecondarySideState>;
   /** 11e Chapter Approved mission state (dispositions, primaries, markers, actions). */

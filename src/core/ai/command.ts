@@ -43,7 +43,22 @@ function bestOrderFor(state: GameState, unit: UnitInstance, deps: AiDeps): strin
  */
 export function aiCommandAction(state: GameState, side: Side, profile: AiProfile, deps: AiDeps): AiAction {
   if (!state.commandRun) {
-    return { intents: [{ intent: { type: 'RunCommandPhase' } }], note: `${side} runs the Command phase` };
+    const pre: AiIntent[] = [];
+    // Insane Bravery (15.04, once per battle): auto-pass the battle-shock roll of the most
+    // valuable below-half unit when losing it to OC-0 would hurt (applied BEFORE Run Command).
+    if (state.mode === 'match' && !state.insaneBraveryUsed?.[side] && state.cp[side] >= 1) {
+      const atRisk = state.units
+        .filter((u) => {
+          if (u.owner !== side || !isOnBoard(u)) return false;
+          const alive = u.models.filter((m) => m.alive).length;
+          return (alive <= u.startingModels / 2 || u.status.battleShocked) && unitValue(u, deps.ctx) >= 150;
+        })
+        .sort((a, b) => unitValue(b, deps.ctx) - unitValue(a, deps.ctx))[0];
+      if (atRisk) {
+        pre.push({ intent: { type: 'InsaneBravery', unitId: atRisk.id }, skipIf: (s) => s.cp[side] < 1 });
+      }
+    }
+    return { intents: [...pre, { intent: { type: 'RunCommandPhase' } }], note: `${side} runs the Command phase` };
   }
 
   const { ctx } = deps;

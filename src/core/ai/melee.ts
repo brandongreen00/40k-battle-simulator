@@ -68,16 +68,33 @@ export function aiChargeAction(state: GameState, side: Side, profile: AiProfile,
   candidates.sort((a, b) => b.score - a.score || a.charger.localeCompare(b.charger) || a.target.localeCompare(b.target));
   for (const cand of candidates) {
     if (!chargePathExists(state, cand.charger, [cand.target], ctx)) continue;
-    return {
-      intents: [
-        {
-          // commandReroll: a declared charge is the AI's best-scored play this phase, so spending
-          // 1 CP to salvage a failed roll outranks holding it (engine enforces once-per-phase).
-          intent: { type: 'Charge', chargerUnitId: cand.charger, targetUnitIds: [cand.target], commandReroll: true },
+    const chargerUnit = state.units.find((u) => u.id === cand.charger)!;
+    const isMV = !!ctx.datasheets.get(chargerUnit.datasheetId)?.keywords.some((k) => /^(monster|vehicle)$/i.test(k));
+    const chargerId = cand.charger;
+    const targetId = cand.target;
+    const intents: AiIntent[] = [
+      {
+        // commandReroll: a declared charge is the AI's best-scored play this phase, so spending
+        // 1 CP to salvage a failed roll outranks holding it (engine enforces once-per-phase).
+        intent: { type: 'Charge', chargerUnitId: chargerId, targetUnitIds: [targetId], commandReroll: true },
+      },
+    ];
+    if (isMV) {
+      // Crushing Impact (15.06): T dice of mortal wounds is nearly always worth 1 CP after a
+      // successful tank/monster charge. The guard mirrors the reducer's full legality.
+      intents.push({
+        intent: { type: 'CrushingImpact', unitId: chargerId, targetUnitId: targetId },
+        skipIf: (s) => {
+          if (s.cp[side] < 1) return true;
+          if (s.stratUsed?.[`${side}:core:crushing_impact`] === `${s.round}:${s.activePlayer}:${s.phase}`) return true;
+          const me = s.units.find((x) => x.id === chargerId);
+          const t = s.units.find((x) => x.id === targetId);
+          if (!me?.status.charged || !t || !t.models.some((m) => m.alive)) return true;
+          return unitGap(me, t, ctx) > 2;
         },
-      ],
-      note: `${side} charges: ${cand.names}`,
-    };
+      });
+    }
+    return { intents, note: `${side} charges: ${cand.names}` };
   }
   return { intents: [{ intent: { type: 'AdvancePhase' } }], note: `${side} ends the Charge phase` };
 }

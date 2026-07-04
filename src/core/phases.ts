@@ -234,9 +234,11 @@ export function eligibleToFight(u: UnitInstance, state: GameState, ctx: EngineCo
   return { eligible: false, reason: 'not within Engagement Range of an enemy' };
 }
 
-/** Does this unit have Fights First this turn? (It charged, or has an innate Fights First.) */
+/** Does this unit have Fights First this turn? (It charged, has an innate Fights First, or was
+ *  granted it — Counteroffensive, 15.12.) */
 export function hasFightsFirst(u: UnitInstance, ctx: EngineContext): boolean {
   if (u.status.charged) return true;
+  if (u.status.activeEffects?.includes('fights_first_granted')) return true;
   // The ability list carries resolved names; abilityIds are numeric Wahapedia ids, so the old
   // id-based check could never match (the Callidus' innate Fights First was silently lost).
   return hasFightsFirstAbility(dsOf(u, ctx));
@@ -264,7 +266,13 @@ export function fightActivationOrder(state: GameState, ctx: EngineContext): Unit
 
   const fightsFirst = eligible.filter((u) => hasFightsFirst(u, ctx));
   const rest = eligible.filter((u) => !hasFightsFirst(u, ctx));
-  return [...interleave(fightsFirst), ...interleave(rest)];
+  const order = [...interleave(fightsFirst), ...interleave(rest)];
+  // Counteroffensive (15.12): the paid-for unit MUST be the next one selected to fight.
+  if (state.fightNext) {
+    const i = order.findIndex((u) => u.id === state.fightNext);
+    if (i > 0) return [order[i]!, ...order.slice(0, i), ...order.slice(i + 1)];
+  }
+  return order;
 }
 
 // ── Coherency (for the Movement-phase confirm gate + warning markers) ─────────

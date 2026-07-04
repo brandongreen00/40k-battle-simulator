@@ -10,7 +10,7 @@ import { createInitialState, reduce, type Intent } from '../state';
 import { makeRNG } from '../rng';
 import type { EngineContext } from '../engine';
 import { aiAction, sharedAction, whoActs } from './controller';
-import { aiReactionToShooting } from './react';
+import { aiReactionToPhaseEnd, aiReactionToShooting } from './react';
 import { resolveProfile, type AiProfile } from './profile';
 import type { AiDeps } from './types';
 import type { Datasheet } from '../types';
@@ -103,6 +103,17 @@ export function runMatch(cfg: MatchConfig, data: MatchData): MatchResult {
           state = reduce(state, r.intent, rng, data.ctx);
           intentCount++;
         }
+      }
+    }
+    // End-of-phase reactive window: Fire Overwatch (end of Movement) / Heroic Intervention (end
+    // of Charge) resolve just before the active player's AdvancePhase.
+    if (intent.type === 'AdvancePhase' && state.stage === 'battle' && (state.phase === 'Movement' || state.phase === 'Charge')) {
+      const defender: Side = state.activePlayer === 'player' ? 'ai' : 'player';
+      const reactions = aiReactionToPhaseEnd(state, defender, profiles[defender], deps);
+      for (const r of reactions) {
+        if (r.skipIf?.(state)) continue;
+        state = reduce(state, r.intent, rng, data.ctx);
+        intentCount++;
       }
     }
     state = reduce(state, intent, rng, data.ctx);

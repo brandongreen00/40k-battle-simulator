@@ -38,10 +38,13 @@ describe('GamePanel — Shooting phase', () => {
     // Phase-aware combat section present, with an eligible attacker count.
     expect(getByText(/Attacker \(\d+ eligible\)/)).toBeTruthy();
 
-    // Stratagems section lists at least one Core stratagem (Grenade / Command Re-roll).
+    // Stratagems section renders. Engine-bound Core stratagems (Command Re-roll, Explosives,
+    // Fire Overwatch…) are NOT in the generic spend-CP list — they resolve through their own
+    // dedicated controls (charge-block checkbox / "Stratagem plays").
     expect(getByText('Stratagems')).toBeTruthy();
     const stratList = container.querySelector('.strat-list')!;
-    expect(within(stratList as HTMLElement).getAllByText(/Re-roll|Grenade|Go to Ground/).length).toBeGreaterThan(0);
+    expect(within(stratList as HTMLElement).queryByText(/Command Re-roll/)).toBeNull();
+    expect(stratList.querySelectorAll('button.strat').length).toBeGreaterThan(0);
   });
 
   it('shows the unit fire plan and the Shoot button once an attacker is picked', () => {

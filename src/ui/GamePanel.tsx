@@ -683,7 +683,12 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
         {strats.length === 0 ? (
           <p className="muted">No stratagems usable in the {phase} phase for {stratSide}.</p>
         ) : (
-          strats.map((st) => {
+          strats
+            // Engine-bound Core stratagems resolve through their own controls (the Charge
+            // block's re-roll checkbox and the "Stratagem plays" block below) — hide the
+            // generic spend-CP button so they can't be paid for twice.
+            .filter((st) => !ENGINE_BOUND_STRATS.has(st.id))
+            .map((st) => {
             const afford = state.cp[stratSide] >= st.cp;
             return (
               <button
@@ -701,6 +706,8 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
           })
         )}
       </div>
+
+      <StratagemPlays state={state} dispatch={dispatch} ctx={ctx} nameOfUnit={nameOfUnit} onBeginArrival={onBeginArrival} />
 
       {/* Dice log */}
       <h3>Dice log</h3>
@@ -826,5 +833,201 @@ function ActionsBlock({
         </ul>
       )}
     </div>
+  );
+}
+
+/** Core stratagems with dedicated engine bindings — hidden from the generic spend-CP list. */
+const ENGINE_BOUND_STRATS = new Set([
+  'core:command_reroll', 'core:fire_overwatch', 'core:heroic_intervention', 'core:crushing_impact',
+  'core:explosives', 'core:rapid_ingress', 'core:counter_offensive', 'core:insane_bravery',
+]);
+
+/**
+ * Phase-aware controls for the engine-bound Core Stratagem plays (15.03–15.12): Insane Bravery
+ * (Command), Fire Overwatch + Rapid Ingress (opponent's Movement), Explosives (your Shooting),
+ * Crushing Impact + Heroic Intervention (Charge), Counteroffensive (opponent's Fight). The
+ * reducer enforces CP, once-per-phase and all the rule gates; these controls only offer plays
+ * that are plausibly legal right now.
+ */
+function StratagemPlays({
+  state, dispatch, ctx, nameOfUnit, onBeginArrival,
+}: {
+  state: GameState;
+  dispatch: (i: Intent) => void;
+  ctx: EngineContext;
+  nameOfUnit: (id: string) => string;
+  onBeginArrival?: (unitId: string, rapidIngress?: boolean) => void;
+}) {
+  const [heroicMode, setHeroicMode] = useState<'leap_to_defend' | 'into_the_fray'>('leap_to_defend');
+  if (state.mode !== 'match' || state.stage !== 'battle') return null;
+  const phase = state.phase;
+  const active = state.activePlayer;
+  const defender: Side = active === 'player' ? 'ai' : 'player';
+  const onBoard = (u: UnitInstance) => !u.inReserves && u.models.some((m) => m.alive);
+  const isMV = (u: UnitInstance) =>
+    !!ctx.datasheets.get(u.datasheetId)?.keywords.some((k) => /^(monster|vehicle)$/i.test(k));
+  const plays: JSX.Element[] = [];
+
+  if (phase === 'Command' && !state.commandRun && !state.insaneBraveryUsed?.[active] && state.cp[active] >= 1) {
+    const candidates = state.units.filter(
+      (u) => u.owner === active && onBoard(u) &&
+        (u.models.filter((m) => m.alive).length <= u.startingModels / 2 || u.status.battleShocked),
+    );
+    if (candidates.length) {
+      plays.push(
+        <div className="btnrow" key="ib">
+          <span className="muted">Insane Bravery (1 CP, once per battle):</span>
+          {candidates.map((u) => (
+            <button key={u.id} onClick={() => dispatch({ type: 'InsaneBravery', unitId: u.id })}>
+              {nameOfUnit(u.id)}
+            </button>
+          ))}
+        </div>,
+      );
+    }
+  }
+
+  if (phase === 'Movement' && state.cp[defender] >= 1) {
+    const shooters = state.units.filter(
+      (u) =>
+        u.owner === defender && onBoard(u) &&
+        !ctx.datasheets.get(u.datasheetId)?.keywords.some((k) => k.toLowerCase() === 'titanic') &&
+        engagedEnemies(u, state, ctx).length === 0,
+    );
+    for (const u of shooters.slice(0, 4)) {
+      const targets = state.units.filter(
+        (e) => e.owner === active && onBoard(e) && gapBetween(u, e, ctx) <= 24,
+      );
+      if (!targets.length) continue;
+      plays.push(
+        <div className="btnrow" key={`ow:${u.id}`}>
+          <span className="muted">Fire Overwatch (1 CP, {defender}): {nameOfUnit(u.id)} →</span>
+          {targets.slice(0, 3).map((t) => (
+            <button key={t.id} onClick={() => dispatch({ type: 'FireOverwatch', unitId: u.id, targetUnitId: t.id })}>
+              {nameOfUnit(t.id)}
+            </button>
+          ))}
+        </div>,
+      );
+    }
+    const reserves = state.units.filter((u) => u.owner === defender && u.inReserves && !u.embarkedIn && u.models.some((m) => m.alive));
+    if (state.round >= 2 && reserves.length && onBeginArrival) {
+      plays.push(
+        <div className="btnrow" key="ri">
+          <span className="muted">Rapid Ingress (1 CP, {defender}):</span>
+          {reserves.map((u) => (
+            <button key={u.id} onClick={() => onBeginArrival(u.id, true)}>
+              ⤓ {nameOfUnit(u.id)}
+            </button>
+          ))}
+        </div>,
+      );
+    }
+  }
+
+  if (phase === 'Shooting' && state.activePlayer === active && state.cp[active] >= 1) {
+    const throwers = state.units.filter(
+      (u) =>
+        u.owner === active && onBoard(u) && !u.status.advanced && !u.status.hasShot &&
+        engagedEnemies(u, state, ctx).length === 0 &&
+        ctx.datasheets.get(u.datasheetId)?.keywords.some((k) => /^(explosives|grenades)$/i.test(k)),
+    );
+    for (const u of throwers.slice(0, 3)) {
+      const targets = state.units.filter(
+        (e) => e.owner !== active && onBoard(e) && engagedEnemies(e, state, ctx).length === 0 && gapBetween(u, e, ctx) <= 8,
+      );
+      if (!targets.length) continue;
+      plays.push(
+        <div className="btnrow" key={`ex:${u.id}`}>
+          <span className="muted">Explosives (1 CP): {nameOfUnit(u.id)} →</span>
+          {targets.slice(0, 3).map((t) => (
+            <button key={t.id} onClick={() => dispatch({ type: 'ThrowExplosives', unitId: u.id, targetUnitId: t.id })}>
+              {nameOfUnit(t.id)}
+            </button>
+          ))}
+        </div>,
+      );
+    }
+  }
+
+  if (phase === 'Charge') {
+    // Crushing Impact — your charged MONSTER/VEHICLE against an engaged enemy.
+    if (state.cp[active] >= 1) {
+      const rammers = state.units.filter((u) => u.owner === active && onBoard(u) && u.status.charged && isMV(u));
+      for (const u of rammers) {
+        const targets = engagedEnemies(u, state, ctx);
+        if (!targets.length) continue;
+        plays.push(
+          <div className="btnrow" key={`ci:${u.id}`}>
+            <span className="muted">Crushing Impact (1 CP): {nameOfUnit(u.id)} →</span>
+            {targets.map((t) => (
+              <button key={t.id} onClick={() => dispatch({ type: 'CrushingImpact', unitId: u.id, targetUnitId: t.id })}>
+                {nameOfUnit(t.id)}
+              </button>
+            ))}
+          </div>,
+        );
+      }
+    }
+    // Heroic Intervention — the defender counter-charges at the end of your Charge phase.
+    if (state.cp[defender] >= 1) {
+      const heroes = state.units.filter(
+        (u) => u.owner === defender && onBoard(u) && engagedEnemies(u, state, ctx).length === 0,
+      );
+      for (const u of heroes) {
+        const kws = ctx.datasheets.get(u.datasheetId)?.keywords.map((k) => k.toLowerCase()) ?? [];
+        if (kws.includes('vehicle') && !kws.includes('character') && !kws.includes('walker')) continue;
+        const range = heroicMode === 'into_the_fray' ? 6 : 12;
+        const targets = state.units.filter(
+          (e) =>
+            e.owner === active && onBoard(e) && gapBetween(u, e, ctx) <= range &&
+            (heroicMode !== 'leap_to_defend' || e.status.charged),
+        );
+        if (!targets.length) continue;
+        plays.push(
+          <div className="btnrow" key={`hi:${u.id}`}>
+            <span className="muted">Heroic Intervention ({defender}): {nameOfUnit(u.id)}</span>
+            <select value={heroicMode} onChange={(e) => setHeroicMode(e.target.value as typeof heroicMode)}>
+              <option value="leap_to_defend">Leap to Defend (1 CP)</option>
+              <option value="into_the_fray">Into the Fray (2 CP, roll capped at 6)</option>
+            </select>
+            {targets.slice(0, 3).map((t) => (
+              <button
+                key={t.id}
+                onClick={() => dispatch({ type: 'Charge', chargerUnitId: u.id, targetUnitIds: [t.id], heroic: heroicMode })}
+              >
+                → {nameOfUnit(t.id)}
+              </button>
+            ))}
+          </div>,
+        );
+      }
+    }
+  }
+
+  if (phase === 'Fight' && state.cp[defender] >= 2 && !state.fightNext) {
+    const candidates = state.units.filter(
+      (u) => u.owner === defender && onBoard(u) && !u.status.hasFought && engagedEnemies(u, state, ctx).length > 0,
+    );
+    if (candidates.length) {
+      plays.push(
+        <div className="btnrow" key="co">
+          <span className="muted">Counteroffensive (2 CP, {defender} fights next):</span>
+          {candidates.slice(0, 4).map((u) => (
+            <button key={u.id} onClick={() => dispatch({ type: 'Counteroffensive', unitId: u.id })}>
+              {nameOfUnit(u.id)}
+            </button>
+          ))}
+        </div>,
+      );
+    }
+  }
+
+  if (plays.length === 0) return null;
+  return (
+    <>
+      <h3>Stratagem plays</h3>
+      {plays}
+    </>
   );
 }

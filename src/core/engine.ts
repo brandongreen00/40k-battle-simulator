@@ -277,11 +277,12 @@ export function resolveAttack(
   const profile = attackProfileForWeapon(weaponDef);
   const isMelee = weaponDef.type === 'melee';
 
-  // Phase legality (real matches only — the sandbox stays a free dice calculator).
-  // NOTE: a future Overwatch implementation will need its own carve-out here.
+  // Phase legality (real matches only — the sandbox stays a free dice calculator). Snap shooting
+  // (Fire Overwatch, 15.09) resolves ranged attacks in the opponent's Movement phase.
   if (state.mode === 'match' && state.stage === 'battle') {
     const requiredPhase = isMelee ? 'Fight' : 'Shooting';
-    if (state.phase !== requiredPhase) {
+    const overwatchOk = !isMelee && params.snapShooting && state.phase === 'Movement';
+    if (state.phase !== requiredPhase && !overwatchOk) {
       return { state, summary: '', rejected: `${isMelee ? 'melee' : 'ranged'} attacks only in the ${requiredPhase} phase (now ${state.phase})` };
     }
   }
@@ -396,10 +397,12 @@ export function resolveAttack(
   const mods = gatherAttackModifiers(abilityCtx, effectsOf(attacker, ctx), effectsOf(target, ctx));
 
   const cover = (forceCover || (!isMelee && unitCoverIn(aPts, target, state, ctx))) && !mods.ignoresCover;
+  // Epic Challenge (15.03) grants [PRECISION] to the bearer's melee weapons for the phase.
+  if (mods.grantPrecision && !kw.precision) profile.keywords = { ...profile.keywords, precision: true };
   // [PRECISION] (24.28): with a visible CHARACTER in the target unit, the attacker may promote
   // that CHARACTER's allocation group to current. The AI/engine always does when it can.
   const precisionActive =
-    kw.precision &&
+    (kw.precision || mods.grantPrecision) &&
     target.models.some(
       (m) =>
         m.alive &&
@@ -635,6 +638,9 @@ export function planUnitShooting(state: GameState, attacker: UnitInstance, ctx: 
 export interface UnitShootParams {
   attackerUnitId: string;
   targetUnitId: string;
+  /** Fire Overwatch (15.08): resolve in the opponent's Movement phase with snap shooting —
+   *  only unmodified 6s hit, target within 24". CP/once-per-phase gating is the reducer's. */
+  overwatch?: boolean;
 }
 
 /**
@@ -655,11 +661,29 @@ export function resolveUnitShooting(
   const tDs = ctx.datasheets.get(target.datasheetId);
   if (!aDs || !tDs) return { state, summary: '', rejected: 'datasheet not found' };
 
-  if (state.mode === 'match' && state.stage === 'battle' && state.phase !== 'Shooting') {
-    return { state, summary: '', rejected: `shooting only in the Shooting phase (now ${state.phase})` };
-  }
-  if (state.mode === 'match' && attacker.status.hasShot) {
-    return { state, summary: '', rejected: 'this unit has already shot this turn' };
+  if (params.overwatch) {
+    // Fire Overwatch (15.08): end of the opponent's Movement phase; an unengaged non-TITANIC
+    // unit snap-shoots one visible enemy within 24". CP/once-per-phase are the reducer's job.
+    if (state.mode === 'match' && state.stage === 'battle') {
+      if (state.phase !== 'Movement') return { state, summary: '', rejected: `Fire Overwatch only in the Movement phase (now ${state.phase})` };
+      if (attacker.owner === state.activePlayer) return { state, summary: '', rejected: 'Fire Overwatch fires in the OPPONENT\'s Movement phase' };
+    }
+    if (aDs.keywords.some((k) => k.toLowerCase() === 'titanic')) {
+      return { state, summary: '', rejected: 'TITANIC units cannot Fire Overwatch' };
+    }
+    if (enemiesInEngagement(state, attacker, ctx).length > 0) {
+      return { state, summary: '', rejected: 'an engaged unit cannot Fire Overwatch' };
+    }
+    if (closestGap(attacker, aDs.baseShape, target, tDs.baseShape) > 24) {
+      return { state, summary: '', rejected: 'Fire Overwatch targets must be within 24"' };
+    }
+  } else {
+    if (state.mode === 'match' && state.stage === 'battle' && state.phase !== 'Shooting') {
+      return { state, summary: '', rejected: `shooting only in the Shooting phase (now ${state.phase})` };
+    }
+    if (state.mode === 'match' && attacker.status.hasShot) {
+      return { state, summary: '', rejected: 'this unit has already shot this turn' };
+    }
   }
 
   // While engaged, ranged attacks (Pistols / Big Guns Never Tire) may only target a unit the
@@ -697,6 +721,8 @@ export function resolveUnitShooting(
         weaponSourceDsId: w.sourceDsId,
         // Firing Deck (24.14): the transport counts as equipped with the passenger's weapon.
         ...(w.viaFiringDeck ? { weaponOverride: w.weapon, attackerCount: w.carriers } : {}),
+        // Fire Overwatch (15.09): every attack is snap shooting — only unmodified 6s hit.
+        ...(params.overwatch ? { snapShooting: true } : {}),
       },
       ctx,
       rng,
@@ -714,9 +740,18 @@ export function resolveUnitShooting(
     return { state, summary: '', rejected: `no weapon could fire (${skipped[0]?.trim() ?? 'nothing in range / line of sight'})` };
   }
 
+  // Overwatch happens in the opponent's turn: the unit's own-turn shooting is untouched (its
+  // hasShot resets at its own turn start anyway), but it HAS made ranged attacks (Hidden, 13.09).
   const units = cur.units.map((u) =>
     u.id === attacker.id
-      ? { ...u, status: { ...u.status, hasShot: true, lastShotOnTurn: cur.turnCounter ?? 0 } }
+      ? {
+          ...u,
+          status: {
+            ...u.status,
+            ...(params.overwatch ? {} : { hasShot: true }),
+            lastShotOnTurn: cur.turnCounter ?? 0,
+          },
+        }
       : deckUnits.has(u.id)
         ? { ...u, status: { ...u.status, hasShot: true } } // Firing Deck: contributors may not shoot again
         : u,
@@ -888,7 +923,9 @@ export function resolveUnitFight(
   const units = cur.units.map((u) => (u.id === attacker.id ? { ...u, status: { ...u.status, hasFought: true } } : u));
   const aliveAfter = units.find((u) => u.id === target.id)?.models.filter((m) => m.alive).length ?? 0;
   const summary = `${aDs.name} fighting ${tDs.name}: ${swungCount} weapon(s), ${aliveBefore - aliveAfter} model(s) slain`;
-  return { state: { ...cur, units, log: [...cur.log, summary] }, summary };
+  // Counteroffensive's "must be selected next" is satisfied once the unit fights.
+  const fightNext = cur.fightNext === attacker.id ? undefined : cur.fightNext;
+  return { state: { ...cur, units, fightNext, log: [...cur.log, summary] }, summary };
 }
 
 // ── Objective control & scoring (Phase 2) ──────────────────────────────────────
@@ -950,6 +987,22 @@ export function runCommandPhase(state: GameState, ctx: EngineContext, rng: RNG):
     const ld = ds.models[0]!.Ld - ldBonusFromOrders(u); // +Ld = a lower target number (easier test)
     const woundsFraction =
       u.startingModels === 1 ? u.models[0]!.wounds / Math.max(1, ds.models[0]!.W) : undefined;
+    // Insane Bravery (15.04): a pre-paid battle-shock roll is automatically successful. The
+    // effect is applied via UseStratagem/InsaneBravery before Run Command; consumed here.
+    if (u.status.activeEffects?.includes('insane_bravery')) {
+      const wouldTest = alive <= u.startingModels / 2 || u.status.battleShocked;
+      if (wouldTest) {
+        log.push(`${ds.name} Battle-shock: automatically passed (Insane Bravery)`);
+        return {
+          ...u,
+          status: {
+            ...u.status,
+            battleShocked: false,
+            activeEffects: u.status.activeEffects.filter((e) => e !== 'insane_bravery'),
+          },
+        };
+      }
+    }
     const test = battleShockTest(alive, u.startingModels, ld, rng, woundsFraction, u.status.battleShocked);
     if (test.required) {
       reports.push({ unitId: u.id, unitName: ds.name, roll: [test.roll[0]!, test.roll[1]!], total: test.total, ld, passed: test.passed });
@@ -986,6 +1039,10 @@ export interface ChargeParams {
   /** Spend 1 CP on the Core Stratagem "Command Re-roll" if the charge roll fails (match mode;
    *  once per phase per side — the engine enforces both and re-rolls the full 2D6). */
   commandReroll?: boolean;
+  /** Heroic Intervention (15.11): resolve this charge at the end of the OPPONENT's Charge phase.
+   *  'leap_to_defend' (1 CP): only enemy units that charged this turn may be targets.
+   *  'into_the_fray' (2 CP): any enemy within 6", but the charge roll is capped at 6. */
+  heroic?: 'leap_to_defend' | 'into_the_fray';
 }
 
 /** Rigid copy of a unit translated by `v` (alive models only). */
@@ -1077,24 +1134,54 @@ export function resolveCharge(
     const summary = `Charge rejected: only in the Charge phase (now ${state.phase})`;
     return { state: { ...state, log: [...state.log, summary] }, success: false, summary };
   }
-  // 10e: a unit is selected to declare a charge once per phase — no re-rolling a failed charge.
-  if (state.mode === 'match' && charger.status.chargeAttempted) {
+  // A unit is selected to declare a charge once per phase — no re-rolling a failed charge.
+  // (Heroic Intervention is a stratagem play in the OPPONENT's phase; the once-per-phase
+  // stratagem tracker gates it instead.)
+  if (state.mode === 'match' && charger.status.chargeAttempted && !params.heroic) {
     const summary = 'Charge rejected: this unit already declared a charge this phase';
     return { state: { ...state, log: [...state.log, summary] }, success: false, summary };
+  }
+
+  // Heroic Intervention (15.11) eligibility + CP (match mode).
+  let heroicCp = 0;
+  const stratKey = `${charger.owner}:core:heroic_intervention`;
+  const phaseKeyNow = `${state.round}:${state.activePlayer}:${state.phase}`;
+  if (params.heroic && state.mode === 'match') {
+    const reject = (why: string) => {
+      const summary = `Heroic Intervention rejected: ${why}`;
+      return { state: { ...state, log: [...state.log, summary] }, success: false, summary };
+    };
+    if (charger.owner === state.activePlayer) return reject("used at the end of the OPPONENT's Charge phase");
+    const kws = cDs.keywords.map((k) => k.toLowerCase());
+    if (kws.includes('vehicle') && !kws.includes('character') && !kws.includes('walker')) {
+      return reject('a VEHICLE unit must be a CHARACTER or WALKER');
+    }
+    const engagedNow = state.units.some(
+      (u) => u.owner !== charger.owner && !u.inReserves && u.models.some((m) => m.alive) &&
+        closestGap(charger, cDs.baseShape, u, ctx.datasheets.get(u.datasheetId)?.baseShape ?? cDs.baseShape) <= ENGAGEMENT_RANGE,
+    );
+    if (engagedNow) return reject('the unit must be unengaged');
+    heroicCp = params.heroic === 'into_the_fray' ? 2 : 1;
+    if (state.cp[charger.owner] < heroicCp) return reject(`needs ${heroicCp} CP`);
+    if (state.stratUsed?.[stratKey] === phaseKeyNow) return reject('already used this phase');
   }
 
   const targetIds = params.targetUnitIds ?? (params.targetUnitId ? [params.targetUnitId] : []);
   const targets = targetIds
     .map((id) => state.units.find((u) => u.id === id))
     .filter((u): u is UnitInstance => !!u && u.models.some((m) => m.alive))
+    // Leap to Defend: only enemy units that made a charge move this turn can be targets.
+    .filter((u) => params.heroic !== 'leap_to_defend' || u.status.charged)
     .map((u) => ({ unit: u, shape: ctx.datasheets.get(u.datasheetId)?.baseShape ?? cDs.baseShape }));
   if (targets.length === 0) return { state, success: false, summary: 'no valid target' };
 
   // Intent legality: every INTENDED target must be within 12" (11.04 — targets beyond 12" can
-  // never be selected, so declaring one is an illegal intent, not a failed charge).
+  // never be selected, so declaring one is an illegal intent, not a failed charge). Into the
+  // Fray narrows the selection to enemies within 6".
+  const maxDeclare = params.heroic === 'into_the_fray' ? 6 : 12;
   for (const t of targets) {
-    if (closestGap(charger, cDs.baseShape, t.unit, t.shape) > 12) {
-      const summary = `Charge illegal: ${ctx.datasheets.get(t.unit.datasheetId)?.name ?? t.unit.id} is over 12" away`;
+    if (closestGap(charger, cDs.baseShape, t.unit, t.shape) > maxDeclare) {
+      const summary = `Charge illegal: ${ctx.datasheets.get(t.unit.datasheetId)?.name ?? t.unit.id} is over ${maxDeclare}" away`;
       return { state: { ...state, log: [...state.log, summary] }, success: false, summary };
     }
   }
@@ -1128,13 +1215,23 @@ export function resolveCharge(
   };
 
   let { distance, rolls } = rollCharge(rng);
+  // Into the Fray: a charge roll greater than 6 becomes 6.
+  if (params.heroic === 'into_the_fray' && distance > 6) distance = 6;
   let result = attempt(distance);
 
   // Core Stratagem "Command Re-roll": on a failed charge the issuer may spend 1 CP to re-roll
   // the full 2D6 (once per phase per side, match mode only).
   let cp = state.cp;
   let rerollUsed = state.rerollUsed;
+  let stratUsed = state.stratUsed;
   const extraLog: string[] = [];
+  if (heroicCp > 0) {
+    cp = { ...cp, [charger.owner]: cp[charger.owner] - heroicCp };
+    stratUsed = { ...(stratUsed ?? {}), [stratKey]: phaseKeyNow };
+    extraLog.push(
+      `${charger.owner} spends ${heroicCp} CP on Heroic Intervention (${params.heroic === 'into_the_fray' ? 'Into the Fray' : 'Leap to Defend'})`,
+    );
+  }
   if (!result && params.commandReroll && state.mode === 'match') {
     const phaseKey = `${state.round}:${state.activePlayer}:${state.phase}`;
     if (cp[charger.owner] >= 1 && rerollUsed?.[charger.owner] !== phaseKey) {
@@ -1142,6 +1239,7 @@ export function resolveCharge(
       rerollUsed = { ...(rerollUsed ?? {}), [charger.owner]: phaseKey };
       const first = `${rolls.join('+')}=${distance}"`;
       ({ distance, rolls } = rollCharge(rng));
+      if (params.heroic === 'into_the_fray' && distance > 6) distance = 6;
       extraLog.push(`${charger.owner} spends 1 CP on Command Re-roll: charge 2D6 ${first} re-rolled`);
       result = attempt(distance);
     }
@@ -1173,7 +1271,7 @@ export function resolveCharge(
     if (success) return { ...translatedModels(u, move!), status: { ...u.status, ...attempted, charged: true, moved: true } };
     return { ...u, status: { ...u.status, ...attempted } };
   });
-  return { state: { ...state, units, cp, rerollUsed, log: [...state.log, ...extraLog, summary] }, success, summary };
+  return { state: { ...state, units, cp, rerollUsed, stratUsed, log: [...state.log, ...extraLog, summary] }, success, summary };
 }
 
 /**
