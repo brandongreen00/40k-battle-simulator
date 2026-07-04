@@ -7,8 +7,10 @@ import type { MoveMode } from '../core/movement';
 import { EFFECT_REGISTRY } from '../core/effects';
 import {
   reservesArrivable, unitCoherency, eligibleToShoot, eligibleToCharge, eligibleToFight,
-  validUnitShootingTargets, chargeTargets, engagedEnemies, fightActivationOrder, orderableUnits, type Eligibility,
+  validUnitShootingTargets, chargeTargets, engagedEnemies, fightActivationOrder, orderableUnits,
+  gapBetween, type Eligibility,
 } from '../core/phases';
+import { disembarkMode, embarkOptions } from '../core/transport';
 import { AM_ORDERS, unitIsOfficer } from '../core/orders';
 import { secondaryCard } from '../core/secondaries';
 import { dispositionName, MISSION_NAMES, PRIMARY_CAP, actionsForSide, objectivePoints } from '../core/missions11';
@@ -28,6 +30,8 @@ interface Props {
   setSelectedUnitIds?: (ids: string[]) => void;
   /** Begin a Deep Strike arrival placement for a Reserves unit (handled by the board). */
   onBeginArrival?: (unitId: string) => void;
+  /** Begin a disembark placement for an embarked unit (handled by the board). */
+  onBeginDisembark?: (unitId: string) => void;
   /** Each side's army detachment (drives which detachment stratagems are available). */
   detachmentBySide?: Record<Side, string>;
   /** Reports the currently selected attacker/target so the board can highlight them. */
@@ -46,7 +50,7 @@ const MOVE_MODES: { mode: MoveMode; label: string }[] = [
  * scoreboard, attack/charge resolution between on-board units, Order/Stratagem application, and the
  * live dice log. All actions go through the same intent reducer the rest of the app uses.
  */
-export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [], setSelectedUnitIds, onBeginArrival, detachmentBySide, onTargeting }: Props) {
+export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [], setSelectedUnitIds, onBeginArrival, onBeginDisembark, detachmentBySide, onTargeting }: Props) {
   const units = state.units;
   const phase = state.phase;
   const inMatch = state.mode === 'match';
@@ -425,6 +429,52 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
               ))}
             </div>
           )}
+
+          {/* Transports (11e, 18): disembark passengers / embark a unit that just moved. */}
+          {(() => {
+            const embarked = units.filter(
+              (u) => u.owner === state.activePlayer && u.embarkedIn && u.models.some((m) => m.alive),
+            );
+            const embarkable = units.filter((u) => {
+              if (u.owner !== state.activePlayer || u.inReserves || !u.models.some((m) => m.alive)) return false;
+              if (!(u.status.moved || u.status.advanced || u.status.fellBack) || u.status.setUpThisTurn) return false;
+              return embarkOptions(state, u, ctx).some((t) => gapBetween(u, t, ctx) <= 3);
+            });
+            if (embarked.length === 0 && embarkable.length === 0) return null;
+            return (
+              <div className="arrivals">
+                <h4>Transports</h4>
+                {embarked.map((u) => {
+                  const bus = units.find((t) => t.id === u.embarkedIn);
+                  const mode = bus ? disembarkMode(u, bus) : null;
+                  return (
+                    <button
+                      key={u.id}
+                      className="arrive"
+                      disabled={!mode}
+                      title={mode ? '' : 'The transport advanced/fell back this phase (or the unit embarked this turn)'}
+                      onClick={() => onBeginDisembark?.(u.id)}
+                    >
+                      ⇤ Disembark {nameOfUnit(u.id)} (from {bus ? nameOfUnit(bus.id) : '?'})
+                    </button>
+                  );
+                })}
+                {embarkable.map((u) =>
+                  embarkOptions(state, u, ctx)
+                    .filter((t) => gapBetween(u, t, ctx) <= 3)
+                    .map((t) => (
+                      <button
+                        key={`${u.id}:${t.id}`}
+                        className="arrive"
+                        onClick={() => dispatch({ type: 'EmbarkUnit', unitId: u.id, transportId: t.id })}
+                      >
+                        ⇥ Embark {nameOfUnit(u.id)} → {nameOfUnit(t.id)}
+                      </button>
+                    )),
+                )}
+              </div>
+            );
+          })()}
           {state.round < 2 && state.units.some((u) => u.inReserves && u.owner === state.activePlayer) && (
             <p className="hint">Reserves arrive from battle round 2.</p>
           )}

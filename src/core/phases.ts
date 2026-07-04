@@ -11,6 +11,7 @@ import { closestGap, planUnitShooting, unitWeapons } from './engine';
 import { parseKeywords } from './keywords';
 import { isHidden, pointLosBlocked, DEFAULT_DETECTION_RANGE } from './visibility';
 import { canActAfterAdvance, hasFightsFirstAbility, hasLoneOperative, ignoresLoneOperative, unitScoutDistance } from './abilities';
+import { canFly, isAircraft } from './transport';
 import { checkCoherency, type CoherencyResult } from './coherency';
 
 const FALLBACK_SHAPE = { kind: 'circle' as const, radius: 0.63 };
@@ -184,9 +185,13 @@ export function validUnitShootingTargets(
 }
 
 // ── Charge ───────────────────────────────────────────────────────────────────
-/** Enemy units within 12" that `u` could declare as charge targets. */
+/** Enemy units within 12" that `u` could declare as charge targets. Only FLYING units can select
+ *  AIRCRAFT as charge targets (23.04). */
 export function chargeTargets(u: UnitInstance, state: GameState, ctx: EngineContext): UnitInstance[] {
-  return enemiesOf(u, state).filter((e) => gapBetween(u, e, ctx) <= CHARGE_THREAT);
+  const flies = canFly(dsOf(u, ctx));
+  return enemiesOf(u, state).filter(
+    (e) => gapBetween(u, e, ctx) <= CHARGE_THREAT && (flies || !isAircraft(dsOf(e, ctx))),
+  );
 }
 
 export function eligibleToCharge(u: UnitInstance, state: GameState, ctx: EngineContext): Eligibility {
@@ -198,6 +203,7 @@ export function eligibleToCharge(u: UnitInstance, state: GameState, ctx: EngineC
   if (u.status.fellBack) return { eligible: false, reason: 'Fell Back this turn' };
   if (u.status.charged) return { eligible: false, reason: 'already charged this turn' };
   if (u.status.chargeAttempted) return { eligible: false, reason: 'already declared a charge this phase' };
+  if (u.status.cannotCharge) return { eligible: false, reason: 'not eligible to charge this turn (disembark/Overwatch)' };
   const ds = dsOf(u, ctx);
   if (hasKeyword(ds, 'Aircraft')) return { eligible: false, reason: 'Aircraft cannot charge' };
   if (engagedEnemies(u, state, ctx).length > 0) {
@@ -298,10 +304,11 @@ export function orderableUnits(officer: UnitInstance, state: GameState, ctx: Eng
 }
 
 // ── Reserves ─────────────────────────────────────────────────────────────────
-/** Units held in Reserves that are allowed to arrive this Movement phase (battle round 2+). */
+/** Units held in Reserves that are allowed to arrive this Movement phase (battle round 2+).
+ *  Embarked units are aboard a transport, not in Strategic Reserves — they disembark instead. */
 export function reservesArrivable(state: GameState): UnitInstance[] {
   if (state.round < 2) return [];
-  return state.units.filter((u) => u.inReserves && u.owner === state.activePlayer);
+  return state.units.filter((u) => u.inReserves && !u.embarkedIn && u.owner === state.activePlayer);
 }
 
 // ── Scout moves (pre-battle) ─────────────────────────────────────────────────

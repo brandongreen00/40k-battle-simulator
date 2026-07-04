@@ -18,7 +18,9 @@ import { defensiveProfileForItem } from './wargear';
 import { rollOff, otherSide } from './setup';
 import { checkUnitDeployment, deepStrikeArrivalLegal, deployAbilityFromKeywords, whollyInOwnZone, type DeployAbility } from './deployment';
 import { checkCoherency } from './coherency';
-import { occupiedBases, unitOverlaps } from './collision';
+import { anyOverlap, occupiedBases, unitOverlaps } from './collision';
+import { canEmbark, disembarkMode, isAircraft } from './transport';
+import { hazardRoll } from './combat';
 import { initSecondaries, recordKills, secondariesOnTurnEnd, secondariesOnTurnStart } from './secondaries';
 import { initMissions, missionsOnBattleEnd, missionsOnCommandEnd, missionsOnTurnEnd, missionsOnTurnStart, startAction, type StartActionParams } from './missionflow';
 import type { DispositionId } from './missions11';
@@ -31,6 +33,7 @@ import {
   resolveCharge,
   resolveFightMove,
   resolveUnitFight,
+  resolveEmergencyDisembarks,
   resolveUnitShooting,
   runCommandPhase,
   stampFightStepEngagement,
@@ -133,6 +136,9 @@ export type Intent =
       wargear?: Record<string, number>;
       /** Deployment ability — gates zone legality (Infiltrators may deploy in no-man's-land). */
       ability?: DeployAbility;
+      /** Start the battle embarked within this already-deployed friendly TRANSPORT (18.01) —
+       *  the anchor/zone checks are skipped; capacity and keywords are validated. */
+      intoTransportId?: string;
     }
   /** Place a unit into Reserves (Deep Strike / Strategic Reserves) instead of on the board. */
   | {
@@ -186,7 +192,15 @@ export type Intent =
   | { type: 'CancelMove'; unitIds: string[] }
   /** Bring a Reserves unit onto the board via an ingress move (11e, 20.04): within 6" of an
    *  edge and >8" from enemies — or anywhere >8" with Deep Strike. Round 2+. */
-  | { type: 'ArriveFromReserves'; unitId: string; anchor: Vec2; formation?: Formation; rotation?: number; ability?: DeployAbility };
+  | { type: 'ArriveFromReserves'; unitId: string; anchor: Vec2; formation?: Formation; rotation?: number; ability?: DeployAbility }
+  // ── Transports (11e, 18) ─────────────────────────────────────────────────────
+  /** Embark within a friendly TRANSPORT after a normal/advance/fall-back move (18.02): every
+   *  model within 3" of it, capacity permitting. The unit leaves the battlefield. */
+  | { type: 'EmbarkUnit'; unitId: string; transportId: string }
+  /** Disembark from a transport (18.04). The mode is derived from the transport's state and the
+   *  anchor: Rapid (transport moved: 3", no charge), Tactical (transport unmoved: 3", the unit may
+   *  then move normally), Combat (6", hazard roll per model, battle-shocked, no charge). */
+  | { type: 'DisembarkUnit'; unitId: string; anchor: Vec2; formation?: Formation; rotation?: number };
 
 export function createInitialState(layout: Layout): GameState {
   return {
@@ -298,6 +312,22 @@ function advancePhase(state: GameState, ctx?: EngineContext): GameState {
   state = enforceEndOfTurnCoherency(state, ctx);
   state = missionsOnTurnEnd(state, ctx);
   state = secondariesOnTurnEnd(state, ctx);
+  // 23.02: at the end of your opponent's turn, your AIRCRAFT on the battlefield return to
+  // Strategic Reserves. The turn ending belongs to `activePlayer`, so the OTHER side's aircraft
+  // leave now.
+  if (ctx) {
+    const other = otherSide(state.activePlayer);
+    const leaving = state.units.filter(
+      (u) => u.owner === other && !u.inReserves && u.models.some((m) => m.alive) && isAircraft(ctx.datasheets.get(u.datasheetId)),
+    );
+    if (leaving.length > 0) {
+      state = {
+        ...state,
+        units: state.units.map((u) => (leaving.some((l) => l.id === u.id) ? { ...u, inReserves: true } : u)),
+        log: [...state.log, `${leaving.length} AIRCRAFT return to Strategic Reserves (end of opponent's turn)`],
+      };
+    }
+  }
   if (state.activePlayer === state.firstPlayer) {
     const next = otherSide(state.activePlayer);
     return {
@@ -314,14 +344,19 @@ function advancePhase(state: GameState, ctx?: EngineContext): GameState {
   // Second player just finished — End of Battle Round. At the end of round 3, strategic reserves
   // that never arrived are destroyed (20.03).
   if (state.round === 3) {
-    const stranded = state.units.filter((u) => u.inReserves && u.models.some((m) => m.alive));
-    if (stranded.length > 0) {
+    // Embarked units are aboard a transport (not in Strategic Reserves), and AIRCRAFT legally
+    // cycle on and off the battlefield — neither is destroyed by 20.03.
+    const stranded = (u: UnitInstance): boolean =>
+      !!u.inReserves && !u.embarkedIn && u.models.some((m) => m.alive) &&
+      !(ctx && isAircraft(ctx.datasheets.get(u.datasheetId)));
+    const count = state.units.filter(stranded).length;
+    if (count > 0) {
       state = {
         ...state,
         units: state.units.map((u) =>
-          u.inReserves ? { ...u, models: u.models.map((m) => ({ ...m, alive: false, wounds: 0 })) } : u,
+          stranded(u) ? { ...u, models: u.models.map((m) => ({ ...m, alive: false, wounds: 0 })) } : u,
         ),
-        log: [...state.log, `${stranded.length} reserves unit(s) destroyed (never arrived by the end of round 3)`],
+        log: [...state.log, `${count} reserves unit(s) destroyed (never arrived by the end of round 3)`],
       };
     }
   }
@@ -424,7 +459,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       if (outcome.rejected) {
         return { ...state, log: [...state.log, `Attack rejected: ${outcome.rejected}`] };
       }
-      return recordKills(state, outcome.state, ctx);
+      return recordKills(state, resolveEmergencyDisembarks(outcome.state, ctx, rng), ctx);
     }
 
     case 'ShootUnit': {
@@ -436,7 +471,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       if (outcome.rejected) {
         return { ...state, log: [...state.log, `Shooting rejected: ${outcome.rejected}`] };
       }
-      return recordKills(state, outcome.state, ctx);
+      return recordKills(state, resolveEmergencyDisembarks(outcome.state, ctx, rng), ctx);
     }
 
     case 'FightUnit': {
@@ -448,7 +483,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       if (outcome.rejected) {
         return { ...state, log: [...state.log, `Fight rejected: ${outcome.rejected}`] };
       }
-      return recordKills(state, outcome.state, ctx);
+      return recordKills(state, resolveEmergencyDisembarks(outcome.state, ctx, rng), ctx);
     }
 
     case 'Charge': {
@@ -598,6 +633,35 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
     }
 
     case 'DeployUnit': {
+      // Aircraft must start in Strategic Reserves (23.01).
+      if (state.mode === 'match' && ctx && isAircraft(ctx.datasheets.get(intent.datasheetId))) {
+        return { ...state, log: [...state.log, 'Deployment rejected: AIRCRAFT must start in Strategic Reserves'] };
+      }
+      // Start the battle embarked within a friendly transport (18.01) — capacity-checked; the
+      // models are placeholders off the board until the unit disembarks.
+      if (intent.intoTransportId) {
+        const transport = state.units.find((u) => u.id === intent.intoTransportId);
+        if (!transport || !ctx) {
+          return { ...state, log: [...state.log, 'Deployment rejected: transport not found'] };
+        }
+        const models = layoutModels({ ...intent, anchor: { x: 0, y: 0 } }, state.layout);
+        const unit: UnitInstance = {
+          id: intent.unitId, owner: intent.owner, datasheetId: intent.datasheetId,
+          models, startingModels: models.length, status: {},
+          inReserves: true, embarkedIn: transport.id,
+          ...(intent.wargear ? { wargearCounts: intent.wargear } : {}),
+        };
+        const check = canEmbark(state, unit, transport, ctx);
+        if (!check.ok) {
+          return { ...state, log: [...state.log, `Deployment rejected: ${check.reason}`] };
+        }
+        const setup = state.setup ? { ...state.setup, toDeploy: otherSide(intent.owner) } : state.setup;
+        const tName = ctx.datasheets.get(transport.datasheetId)?.name ?? transport.id;
+        return {
+          ...state, units: [...state.units, unit], setup,
+          log: [...state.log, `${intent.owner} deploys a unit embarked within ${tName}`],
+        };
+      }
       const ability = intent.ability ?? 'standard';
       const positions = formationWorld(intent);
       const enemies = enemyModelsOnBoard(state, intent.owner, ctx);
@@ -924,6 +988,13 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       if (state.mode === 'match' && state.stage !== 'battle') {
         return { ...state, log: [...log, 'Move rejected: the battle has not begun'] };
       }
+      // Aircraft only make ingress moves (23.02).
+      if (state.mode === 'match' && ctx) {
+        const aircraft = state.units.find(
+          (u) => intent.unitIds.includes(u.id) && isAircraft(ctx.datasheets.get(u.datasheetId)),
+        );
+        if (aircraft) return { ...state, log: [...log, 'Move rejected: AIRCRAFT only make ingress moves'] };
+      }
       // A unit moves once per Movement phase — in a match, re-activating an already-moved unit
       // (even after an Advance) is rejected. The flags reset at the start of the unit's next turn.
       const alreadyMoved = (u: UnitInstance) =>
@@ -1053,12 +1124,15 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         };
       });
       if (!anyRejected) log = [...log, `Move confirmed`];
-      return { ...state, units, log };
+      // A transport destroyed by Desperate Escape mortals spills its passengers (18.05).
+      const settled: GameState = { ...state, units, log };
+      return ctx ? resolveEmergencyDisembarks(settled, ctx, rng) : settled;
     }
 
     case 'ArriveFromReserves': {
       const unit = state.units.find((u) => u.id === intent.unitId);
       if (!unit || !unit.inReserves) return { ...state, log: [...state.log, 'Arrival rejected: not in Reserves'] };
+      if (unit.embarkedIn) return { ...state, log: [...state.log, 'Arrival rejected: the unit is embarked (disembark instead)'] };
       const shape = ctx?.datasheets.get(unit.datasheetId)?.baseShape ?? FALLBACK_SHAPE;
       const wounds = unit.models[0]?.wounds ?? 1;
       const opts: LayoutOpts = {
@@ -1090,10 +1164,162 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         ...state,
         units: state.units.map((u) =>
           u.id === unit.id
-            ? { ...u, models: newModels, inReserves: false, arrivedRound: state.round, status: { ...u.status, moved: true } }
+            ? { ...u, models: newModels, inReserves: false, arrivedRound: state.round, status: { ...u.status, moved: true, setUpThisTurn: true } }
             : u,
         ),
         log: [...state.log, `A unit arrives from Reserves via Deep Strike (round ${state.round})`],
+      };
+    }
+
+    case 'EmbarkUnit': {
+      const unit = state.units.find((u) => u.id === intent.unitId);
+      const transport = state.units.find((u) => u.id === intent.transportId);
+      if (!unit || !transport || !ctx) return { ...state, log: [...state.log, 'Embark rejected: unit not found'] };
+      const reject = (why: string): GameState => ({ ...state, log: [...state.log, `Embark rejected: ${why}`] });
+      if (unit.inReserves) return reject('unit is not on the battlefield');
+      if (transport.inReserves || !transport.models.some((m) => m.alive)) return reject('transport is not on the battlefield');
+      if (state.mode === 'match' && state.stage === 'battle') {
+        if (state.phase !== 'Movement') return reject(`only in the Movement phase (now ${state.phase})`);
+        if (state.activePlayer !== unit.owner) return reject('not your turn');
+        // 18.02: after a normal/advance/fall-back move (not Remain Stationary), and the unit must
+        // not have been set up on the battlefield this turn.
+        if (!(unit.status.moved || unit.status.advanced || unit.status.fellBack) || unit.status.remainedStationary) {
+          return reject('a unit embarks after making a normal, advance or fall-back move');
+        }
+        if (unit.status.setUpThisTurn) return reject('the unit was set up on the battlefield this turn');
+      }
+      const legal = canEmbark(state, unit, transport, ctx);
+      if (!legal.ok) return reject(legal.reason!);
+      // Every model within 3" of the transport (18.02).
+      const shape = ctx.datasheets.get(unit.datasheetId)?.baseShape ?? FALLBACK_SHAPE;
+      const tShape = ctx.datasheets.get(transport.datasheetId)?.baseShape ?? FALLBACK_SHAPE;
+      const tAlive = transport.models.filter((m) => m.alive);
+      const near = unit.models.every(
+        (m) => !m.alive || tAlive.some((tm) => gapBetweenBases(m.pos, shape, tm.pos, tShape) <= 3),
+      );
+      if (!near) return reject('every model must be within 3" of the transport');
+      const tName = ctx.datasheets.get(transport.datasheetId)?.name ?? transport.id;
+      const uName = ctx.datasheets.get(unit.datasheetId)?.name ?? unit.id;
+      return {
+        ...state,
+        units: state.units.map((u) =>
+          u.id === unit.id
+            ? {
+                ...u,
+                inReserves: true,
+                embarkedIn: transport.id,
+                status: { ...u.status, justEmbarked: true, moveMode: undefined, moveBudget: undefined },
+                models: u.models.map((m) => (m.moveStart ? { ...m, moveStart: undefined } : m)),
+              }
+            : u,
+        ),
+        log: [...state.log, `${uName} embarks within ${tName}`],
+      };
+    }
+
+    case 'DisembarkUnit': {
+      const unit = state.units.find((u) => u.id === intent.unitId);
+      if (!unit || !unit.embarkedIn) return { ...state, log: [...state.log, 'Disembark rejected: not embarked'] };
+      const reject = (why: string): GameState => ({ ...state, log: [...state.log, `Disembark rejected: ${why}`] });
+      const transport = state.units.find((u) => u.id === unit.embarkedIn);
+      if (!transport || transport.inReserves || !transport.models.some((m) => m.alive)) {
+        return reject('the transport is not on the battlefield');
+      }
+      if (state.mode === 'match' && state.stage === 'battle') {
+        if (state.phase !== 'Movement') return reject(`only in the Movement phase (now ${state.phase})`);
+        if (state.activePlayer !== unit.owner) return reject('not your turn');
+      }
+      const modeAvail = disembarkMode(unit, transport);
+      if (!modeAvail) return reject('the transport advanced or fell back this phase (or the unit embarked this turn)');
+
+      const shape = ctx?.datasheets.get(unit.datasheetId)?.baseShape ?? FALLBACK_SHAPE;
+      const tShape = ctx?.datasheets.get(transport.datasheetId)?.baseShape ?? FALLBACK_SHAPE;
+      const wounds = unit.models[0]?.wounds ?? 1;
+      const opts: LayoutOpts = {
+        unitId: unit.id, baseShape: shape, modelCount: unit.models.length, wounds,
+        anchor: intent.anchor, formation: intent.formation, rotation: intent.rotation,
+      };
+      const placed = layoutModels(opts, state.layout);
+      const positions = placed.map((m) => m.pos);
+      const tAlive = transport.models.filter((m) => m.alive);
+      const distToTransport = (p: Vec2): number =>
+        Math.min(...tAlive.map((tm) => gapBetweenBases(p, shape, tm.pos, tShape)));
+      // Enemy units, with whether each is engaged with the TRANSPORT (combat disembark may set up
+      // engaged with those — 18.04).
+      const ER = 2; // Engagement Range (11e, 03.04)
+      const enemyUnits = state.units.filter(
+        (u) => u.owner !== unit.owner && !u.inReserves && u.models.some((m) => m.alive),
+      );
+      const enemyInfo = enemyUnits.map((e) => {
+        const eShape = ctx?.datasheets.get(e.datasheetId)?.baseShape ?? FALLBACK_SHAPE;
+        const pts = e.models.filter((m) => m.alive).map((m) => m.pos);
+        const engagedWithTransport = tAlive.some((tm) =>
+          pts.some((p) => gapBetweenBases(tm.pos, tShape, p, eShape) <= ER),
+        );
+        return { pts, eShape, engagedWithTransport };
+      });
+      const erViolations = (allowTransportEngaged: boolean): boolean =>
+        positions.some((p) =>
+          enemyInfo.some(
+            (e) =>
+              !(allowTransportEngaged && e.engagedWithTransport) &&
+              e.pts.some((ep) => gapBetweenBases(p, shape, ep, e.eShape) <= ER),
+          ),
+        );
+      if (anyOverlap(positions.map((p) => ({ pos: p, shape })), occupiedBases(state, ctx, [unit.id]))) {
+        return reject('models would be set up on top of another model\'s base');
+      }
+      const whollyWithin = (d: number): boolean => positions.every((p) => distToTransport(p) <= d);
+
+      let mode: 'rapid' | 'tactical' | 'combat';
+      if (modeAvail === 'rapid') {
+        if (!whollyWithin(3)) return reject('rapid disembark: set up wholly within 3" of the transport');
+        if (erViolations(false)) return reject('cannot be set up within Engagement Range of an enemy');
+        mode = 'rapid';
+      } else if (whollyWithin(3) && !erViolations(false)) {
+        mode = 'tactical';
+      } else if (whollyWithin(6) && !erViolations(true)) {
+        mode = 'combat';
+      } else {
+        return reject('set up wholly within 3" (tactical) or 6" (combat) of the transport, clear of enemies');
+      }
+
+      let log = [...state.log];
+      let models = placed.map((m, i) => ({
+        ...m,
+        wounds: unit.models[i]?.wounds ?? m.wounds,
+        alive: unit.models[i]?.alive ?? true,
+        ...(unit.models[i]?.wargear ? { wargear: unit.models[i]!.wargear } : {}),
+      }));
+      // Combat disembark: one hazard roll per model (06.03) — 1-2 fails, 1 mortal wound each.
+      let shocked = false;
+      if (mode === 'combat') {
+        const aliveCount = models.filter((m) => m.alive).length;
+        let mortals = 0;
+        for (let n = 0; n < aliveCount; n++) if (hazardRoll(rng, false).mortals > 0) mortals++;
+        for (let n = 0; n < mortals; n++) {
+          const k = models.findIndex((m) => m.alive);
+          if (k < 0) break;
+          const w = models[k]!.wounds - 1;
+          models = models.map((m, j) => (j === k ? { ...m, wounds: w, alive: w > 0 } : m));
+        }
+        if (mortals > 0) log = [...log, `Combat disembark hazard: ${mortals} mortal wound(s)`];
+        shocked = true;
+      }
+      const uName = ctx?.datasheets.get(unit.datasheetId)?.name ?? unit.id;
+      const flags =
+        mode === 'tactical'
+          ? { setUpThisTurn: true } // 18.04: the unit is then selected for a normal or advance move
+          : { setUpThisTurn: true, moved: true, cannotCharge: true, ...(shocked ? { battleShocked: true } : {}) };
+      log = [...log, `${uName} disembarks (${mode})${mode === 'tactical' ? ' and may move' : ''}`];
+      return {
+        ...state,
+        units: state.units.map((u) =>
+          u.id === unit.id
+            ? { ...u, models, inReserves: false, embarkedIn: undefined, status: { ...u.status, ...flags } }
+            : u,
+        ),
+        log,
       };
     }
   }

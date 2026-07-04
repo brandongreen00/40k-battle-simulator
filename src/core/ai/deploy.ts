@@ -14,6 +14,7 @@ import { formationPositions } from '../formation';
 import { canAttach, isCharacter } from '../leaders';
 import { pointInPolygon, distancePointToPolygon, dist } from '../geometry';
 import { hasBackroomDeals, hasLoneOperative } from '../abilities';
+import { canEmbark, embarkedUnits, isAircraft } from '../transport';
 import { modelValue } from './evaluate';
 import { classifyDatasheet, rolePlan } from './roles';
 import type { AiAction, AiDeps, AiIntent } from './types';
@@ -275,6 +276,9 @@ export function desiredFormations(state: GameState, side: Side, deps: AiDeps): A
 /** Should this entry start in Reserves? Deep Strikers do (profile-gated), Characters don't
  *  (they want to merge with a bodyguard on the board), and never more than half the army. */
 function wantsReserves(state: GameState, side: Side, entry: DeployEntry, ability: DeployAbility, profile: AiProfile, deps: AiDeps): boolean {
+  // AIRCRAFT must start in Strategic Reserves (23.01) — the reducer enforces it, so this is
+  // not profile-gated.
+  if (isAircraft(entry.ds)) return true;
   if (!profile.useReserves) return false;
   // Lone Operative characters that ALSO have Deep Strike (the Callidus has Infiltrators too, so
   // her classified ability is 'infiltrators') survive by arriving from Reserves on round 2 —
@@ -393,6 +397,28 @@ export function aiDeployAction(state: GameState, side: Side, profile: AiProfile,
       intents: [...attaches, { intent: { type: 'PlaceInReserves', ...common } }],
       note: `${side} holds ${entry.ds.name} in Reserves (Deep Strike)`,
     };
+  }
+  // Start embarked (18.01): an unpaired INFANTRY unit rides an already-deployed, still-empty
+  // friendly transport it fits in — it deploys safe and disembarks near the action from round 2.
+  if (!pair && !isCharacter(entry.ds) && entry.ds.keywords.some((k) => k.toLowerCase() === 'infantry')) {
+    const bus = state.units.find((t) => {
+      if (t.owner !== side || t.inReserves || !t.models.some((m) => m.alive)) return false;
+      if (embarkedUnits(state, t.id).length > 0) return false; // one passenger unit per transport (policy)
+      const probe: import('../types').UnitInstance = {
+        id: entry.key, owner: side, datasheetId: entry.ds.id,
+        models: Array.from({ length: entry.unit.modelCount }, (_, i) => ({
+          id: `${entry.key}:m${i}`, unitId: entry.key, pos: { x: 0, y: 0 }, wounds: 1, alive: true,
+        })),
+        startingModels: entry.unit.modelCount, status: {},
+      };
+      return canEmbark(state, probe, t, deps.ctx).ok;
+    });
+    if (bus) {
+      return {
+        intents: [...attaches, { intent: { type: 'DeployUnit', ...common, anchor: { x: 0, y: 0 }, intoTransportId: bus.id } }],
+        note: `${side} deploys ${entry.ds.name} embarked within ${deps.ctx.datasheets.get(bus.datasheetId)?.name ?? bus.id}`,
+      };
+    }
   }
   // A paired unit where BOTH halves Deep Strike may start in Reserves together.
   if (pair && leaderCommon && ability === 'deep_strike' && profile.useReserves) {

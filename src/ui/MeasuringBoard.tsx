@@ -4,8 +4,10 @@ import { reduce, createInitialState, type Intent } from '../core/state';
 import { makeRNG } from '../core/rng';
 import { nextFormation, type Formation } from '../core/formation';
 import { checkUnitDeployment, deepStrikeArrivalLegal, isEntryPlaced, type DeployAbility } from '../core/deployment';
-import { occupiedBases, unitOverlaps } from '../core/collision';
+import { anyOverlap, occupiedBases, unitOverlaps } from '../core/collision';
 import { unitCoherency, unitCentroid } from '../core/phases';
+import { gapBetweenBases } from '../core/geometry';
+import { canEmbark } from '../core/transport';
 import {
   aiAction, aiMayAct, aiReactionToShooting, resolveProfile, sharedAction, whoActs, type AiDeps,
 } from '../core/ai/controller';
@@ -31,6 +33,8 @@ interface Placing {
   entryKey?: string;
   /** Set during a Deep Strike arrival: the Reserves unit id being brought onto the board. */
   arriveUnitId?: string;
+  /** Set during a disembark: the embarked unit id being set up near its transport (18.04). */
+  disembarkUnitId?: string;
   ability: DeployAbility;
 }
 
@@ -264,7 +268,9 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
       wounds: placing.ds.models[0]?.W ?? 1,
       ...(placing.unit.wargearCounts ? { wargear: placing.unit.wargearCounts } : {}),
     };
-    if (placing.arriveUnitId) {
+    if (placing.disembarkUnitId) {
+      dispatch({ type: 'DisembarkUnit', unitId: placing.disembarkUnitId, anchor, formation: placing.formation, rotation: placing.rotation });
+    } else if (placing.arriveUnitId) {
       dispatch({ type: 'ArriveFromReserves', unitId: placing.arriveUnitId, anchor, formation: placing.formation, rotation: placing.rotation });
     } else if (placing.entryKey) {
       dispatch({ type: 'DeployUnit', unitId: placing.entryKey, owner: placing.side, anchor, formation: placing.formation, rotation: placing.rotation, ability: placing.ability, ...common });
@@ -304,6 +310,19 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
     });
   }
 
+  /** Begin a disembark placement: ghost the embarked unit around its transport (3"/6" rule —
+   *  the reducer derives the tactical/combat mode from where it lands). */
+  function beginDisembark(unitId: string) {
+    const u = state.units.find((x) => x.id === unitId);
+    const ds = u && getDatasheet(u.datasheetId);
+    if (!u || !ds || !u.embarkedIn) return;
+    setSelectedUnitIds([]);
+    setPlacing({
+      unit: { datasheetId: ds.id, modelCount: u.models.length },
+      ds, formation: 'block', rotation: 0, side: u.owner, disembarkUnitId: unitId, ability: 'standard',
+    });
+  }
+
   function placeReserves(entry: DeployEntry, side: Side) {
     const ds = entry.ds;
     dispatch({ type: 'PlaceInReserves', unitId: entry.key, owner: side, datasheetId: ds.id, baseShape: ds.baseShape, modelCount: entry.unit.modelCount, wounds: ds.models[0]?.W ?? 1, ...(entry.unit.wargearCounts ? { wargear: entry.unit.wargearCounts } : {}) });
@@ -329,7 +348,27 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
         owner: placing.side,
         formation: placing.formation,
         rotation: placing.rotation,
-        ...(placing.arriveUnitId
+        ...(placing.disembarkUnitId
+          ? {
+              legal: (positions: Vec2[]) => {
+                // Within 6" of the transport (3" = tactical, 6" = combat — the reducer picks the
+                // mode) and never on top of another base. ER legality is the reducer's final say.
+                const me = state.units.find((x) => x.id === placing.disembarkUnitId);
+                const bus = me?.embarkedIn ? state.units.find((x) => x.id === me.embarkedIn) : undefined;
+                const busDs = bus && datasheetsById.get(bus.datasheetId);
+                if (!bus || !busDs) return false;
+                const hull = bus.models.filter((m) => m.alive);
+                const near = positions.every((p) =>
+                  hull.some((tm) => gapBetweenBases(p, placing.ds.baseShape, tm.pos, busDs.baseShape) <= 6),
+                );
+                if (!near) return false;
+                return !anyOverlap(
+                  positions.map((p) => ({ pos: p, shape: placing.ds.baseShape })),
+                  occupiedBases(state, { datasheets: datasheetsById }, [placing.disembarkUnitId!]),
+                );
+              },
+            }
+          : placing.arriveUnitId
           ? { legal: (positions: Vec2[]) => deepStrikeArrivalLegal(positions, placing.ds.baseShape, enemyModels(placing.side), state.round, occupiedBases(state, { datasheets: datasheetsById }, placing.arriveUnitId ? [placing.arriveUnitId] : [])).legal }
           : placing.entryKey
           ? { legal: (positions: Vec2[]) => checkUnitDeployment(positions, placing.ds.baseShape, layout, placing.side, placing.ability, enemyModels(placing.side), occupiedBases(state, { datasheets: datasheetsById })).legal }
@@ -500,6 +539,42 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
                           {active ? 'Placing…' : '+ Deploy'}
                         </button>
                         <button className="reserve-btn" title="Place in Reserves (Deep Strike, arrives round 2+)" onClick={() => placeReserves(e, sideToPlace)}>⤓</button>
+                        {(() => {
+                          // Start embarked (18.01): offer the first deployed friendly transport
+                          // this unit legally fits in.
+                          if (pair || !e.ds.keywords.some((k) => k.toLowerCase() === 'infantry')) return null;
+                          const probe = {
+                            id: e.key, owner: sideToPlace, datasheetId: e.ds.id,
+                            models: Array.from({ length: e.unit.modelCount }, (_, mi) => ({
+                              id: `${e.key}:m${mi}`, unitId: e.key, pos: { x: 0, y: 0 }, wounds: 1, alive: true,
+                            })),
+                            startingModels: e.unit.modelCount, status: {},
+                          };
+                          const bus = state.units.find(
+                            (t) =>
+                              t.owner === sideToPlace && !t.inReserves && t.models.some((m) => m.alive) &&
+                              canEmbark(state, probe, t, { datasheets: datasheetsById }).ok,
+                          );
+                          if (!bus) return null;
+                          const busName = getDatasheet(bus.datasheetId)?.name ?? bus.id;
+                          return (
+                            <button
+                              className="reserve-btn"
+                              title={`Start the battle embarked within ${busName}`}
+                              onClick={() =>
+                                dispatch({
+                                  type: 'DeployUnit', unitId: e.key, owner: sideToPlace, datasheetId: e.ds.id,
+                                  baseShape: e.ds.baseShape, modelCount: e.unit.modelCount,
+                                  wounds: e.ds.models[0]?.W ?? 1, anchor: { x: 0, y: 0 },
+                                  intoTransportId: bus.id,
+                                  ...(e.unit.wargearCounts ? { wargear: e.unit.wargearCounts } : {}),
+                                })
+                              }
+                            >
+                              ⇥
+                            </button>
+                          );
+                        })()}
                       </>
                     )}
                     <span className="unit-name">{e.ds.name}{pair ? ' ⚑' : ''}</span>
@@ -617,6 +692,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
             selectedUnitIds={selectedUnitIds}
             setSelectedUnitIds={setSelectedUnitIds}
             onBeginArrival={beginArrival}
+            onBeginDisembark={beginDisembark}
             detachmentBySide={{ player: rosterFor('player')?.detachment ?? '', ai: rosterFor('ai')?.detachment ?? '' }}
             onTargeting={setTargeting}
           />

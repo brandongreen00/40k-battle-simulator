@@ -72,6 +72,9 @@ export interface Datasheet {
   wargearNotes?: string[]; // footnotes constraining the options
   canLead?: string[]; // datasheet ids this CHARACTER can attach to
   canBeLedBy?: string[]; // CHARACTER datasheet ids that can attach to this unit
+  /** Transport capacity rules text, verbatim from the data (e.g. "This model has a transport
+   *  capacity of 12 Astra Militarum Infantry models. …"). Parsed by core/transport.ts. */
+  transport?: string;
 }
 
 /** A datasheet ability — a Core/Faction ability (resolved from the catalog) or a unit-specific
@@ -237,6 +240,12 @@ export interface UnitStatus {
   battleShocked?: boolean; // failed a Battle-shock test this round
   /** Resolved (or declined) its pre-battle Scouts X" move. */
   scouted?: boolean;
+  /** Embarked within a transport this turn (18.04: may not disembark again the same phase). */
+  justEmbarked?: boolean;
+  /** Was set up on the battlefield this turn (disembark/reserves) — such a unit cannot embark. */
+  setUpThisTurn?: boolean;
+  /** Not eligible to declare a charge this turn (rapid/combat/emergency disembark, Overwatch…). */
+  cannotCharge?: boolean;
   /** Absolute player-turn index the unit last made ranged attacks in (Hidden, 13.09). */
   lastShotOnTurn?: number;
   /** Active ability/Order/Stratagem effect ids (see core/effects.ts). Expire at turn reset. */
@@ -259,8 +268,11 @@ export interface UnitInstance {
   /** Full wargear item→count map from the roster (e.g. {"Meltagun": 1, "Navis shotgun": 7}).
    *  Drives how many models fire a given weapon. Absent for units spawned without loadout data. */
   wargearCounts?: Record<string, number>;
-  /** Held in Reserves (Deep Strike / Strategic Reserves) — off the board until it arrives. */
+  /** Held in Reserves (Deep Strike / Strategic Reserves) — off the board until it arrives.
+   *  Also true while embarked within a transport (see `embarkedIn`). */
   inReserves?: boolean;
+  /** Embarked within this friendly TRANSPORT unit id (18). Off the board while set. */
+  embarkedIn?: string;
   /** Battle round this unit arrived from Reserves (undefined if deployed normally). */
   arrivedRound?: number;
   /** Leader attachment: the Bodyguard unit id this CHARACTER unit is attached to. */

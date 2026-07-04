@@ -22,6 +22,8 @@ import { gatherAttackModifiers, type AttackContext } from './effects';
 import { hasLoneOperative, ignoresLoneOperative, innateEffectIds } from './abilities';
 import { defensiveProfileForItem } from './wargear';
 import { ocBonusFromOrders, ldBonusFromOrders } from './orders';
+import { canFly, embarkedUnits, firingDeckX, isAircraft } from './transport';
+import { formationPositions } from './formation';
 
 /** Injected lookup the engine needs to read unit stats. Not imported — passed in (rule #1/#2). */
 export interface EngineContext {
@@ -38,6 +40,10 @@ export interface AttackParams {
   attackerCount?: number;
   /** Snap shooting (15.09, Fire Overwatch): only unmodified 6s hit, no re-rolls. */
   snapShooting?: boolean;
+  /** Fire a weapon the unit does not itself carry — Firing Deck (24.14): the transport counts as
+   *  equipped with an embarked model's weapon. Bypasses the carrier lookup; positions/LoS come
+   *  from the transport's own models. Requires `attackerCount`. */
+  weaponOverride?: WeaponProfile;
 }
 
 export interface AttackOutcome {
@@ -258,11 +264,14 @@ export function resolveAttack(
   if (!aDs || !tDs) return { state, summary: '', rejected: 'datasheet not found' };
 
   // Find the weapon across the unit's datasheets (primary + merged Leaders) and count only the
-  // models that actually carry it as firing it.
+  // models that actually carry it as firing it. A Firing Deck weaponOverride (24.14) is a
+  // passenger's weapon the transport counts as being equipped with.
   const candidates = unitWeapons(attacker, ctx).filter((w) => w.weapon.name === params.weaponName);
-  const found = params.weaponSourceDsId
-    ? candidates.find((w) => w.sourceDsId === params.weaponSourceDsId)
-    : candidates[0];
+  const found = params.weaponOverride
+    ? { weapon: params.weaponOverride, sourceDsId: attacker.datasheetId }
+    : params.weaponSourceDsId
+      ? candidates.find((w) => w.sourceDsId === params.weaponSourceDsId)
+      : candidates[0];
   if (!found) return { state, summary: '', rejected: 'weapon not found' };
   const weaponDef = found.weapon;
   const profile = attackProfileForWeapon(weaponDef);
@@ -277,7 +286,9 @@ export function resolveAttack(
     }
   }
 
-  const carriers = weaponCarrierCount(attacker, weaponDef, found.sourceDsId);
+  const carriers = params.weaponOverride
+    ? (params.attackerCount ?? 1)
+    : weaponCarrierCount(attacker, weaponDef, found.sourceDsId);
   if (carriers == null) return { state, summary: '', rejected: `no models in the unit carry ${weaponDef.name}` };
   let aliveAttackers = carriers;
   const aliveTargets = target.models.filter((m) => m.alive).length;
@@ -289,6 +300,10 @@ export function resolveAttack(
   // Legality + situational flags from real positions.
   if (isMelee) {
     if (gap > ENGAGEMENT_RANGE) return { state, summary: '', rejected: 'not in engagement range' };
+    // 23.04: only FLYING models can make melee attacks that target AIRCRAFT, and AIRCRAFT can
+    // only make melee attacks that target FLYING units.
+    if (isAircraft(tDs) && !canFly(aDs)) return { state, summary: '', rejected: 'only FLYING models can fight AIRCRAFT' };
+    if (isAircraft(aDs) && !canFly(tDs)) return { state, summary: '', rejected: 'AIRCRAFT can only fight FLYING units' };
   } else {
     const range = weaponDef.range ?? 0;
     if (gap > range) return { state, summary: '', rejected: `out of range (${gap.toFixed(1)}" > ${range}")` };
@@ -518,9 +533,27 @@ function enemiesInEngagement(state: GameState, unit: UnitInstance, ctx: EngineCo
 
 export interface FirePlan {
   /** The weapon profiles that will actually fire, with how many models carry each. */
-  fire: { weapon: WeaponProfile; sourceDsId: string; carriers: number }[];
+  fire: {
+    weapon: WeaponProfile;
+    sourceDsId: string;
+    carriers: number;
+    /** Firing Deck (24.14): the weapon belongs to a model embarked in this unit. */
+    viaFiringDeck?: boolean;
+    /** The embarked unit contributing the Firing Deck weapon. */
+    passengerUnitId?: string;
+  }[];
   /** Human-readable rule notes (Pistols held, profile collapses, engagement restriction). */
   notes: string[];
+}
+
+/** Average of a dice expression ("2", "D6", "2D6+1") — a deterministic weapon-rank helper. */
+function diceAverage(expr: string): number {
+  const m = /^(\d*)D(\d+)([+-]\d+)?$/i.exec(expr.trim());
+  if (!m) return parseFloat(expr) || 1;
+  const n = m[1] ? parseInt(m[1], 10) : 1;
+  const faces = parseInt(m[2]!, 10);
+  const mod = m[3] ? parseInt(m[3]!, 10) : 0;
+  return n * ((faces + 1) / 2) + mod;
 }
 
 /**
@@ -560,11 +593,43 @@ export function planUnitShooting(state: GameState, attacker: UnitInstance, ctx: 
   }
   const pistols = ranged.filter(isPistol);
   const others = ranged.filter((w) => !isPistol(w));
+  let fire: FirePlan['fire'];
   if (others.length && pistols.length) {
     notes.push('Pistols held — a model fires either its Pistol or all its other weapons');
-    return { fire: others, notes };
+    fire = others;
+  } else {
+    fire = ranged;
   }
-  return { fire: ranged, notes };
+
+  // Firing Deck X (24.14): when this TRANSPORT shoots, up to X embarked models (whose units have
+  // not shot) each contribute one ranged weapon. The best weapons are picked deterministically.
+  const deckX = firingDeckX(aDs);
+  if (deckX > 0 && !engaged) {
+    const passengers = embarkedUnits(state, attacker.id).filter((p) => !p.status.hasShot);
+    const cands: { weapon: WeaponProfile; sourceDsId: string; carriers: number; unitId: string; rank: number }[] = [];
+    for (const p of passengers) {
+      const seen = new Set<string>();
+      for (const w of availableUnitWeapons(p, ctx)) {
+        if (w.weapon.type !== 'ranged') continue;
+        if (/one shot/i.test(w.weapon.keywords.join(' '))) continue;
+        const key = `${w.sourceDsId}|${weaponItemName(w.weapon.name)}`;
+        if (seen.has(key)) continue; // one profile per weapon
+        seen.add(key);
+        const rank = diceAverage(w.weapon.attacks) * (w.weapon.S + diceAverage(w.weapon.D)) + (w.weapon.range ?? 0) / 24;
+        cands.push({ weapon: w.weapon, sourceDsId: w.sourceDsId, carriers: w.carriers, unitId: p.id, rank });
+      }
+    }
+    cands.sort((a, b) => b.rank - a.rank || a.weapon.name.localeCompare(b.weapon.name));
+    let slots = deckX;
+    for (const c of cands) {
+      if (slots <= 0) break;
+      const n = Math.min(c.carriers, slots);
+      slots -= n;
+      fire = [...fire, { weapon: c.weapon, sourceDsId: c.sourceDsId, carriers: n, viaFiringDeck: true, passengerUnitId: c.unitId }];
+      notes.push(`Firing Deck: ${n}× ${c.weapon.name} fired by embarked passengers`);
+    }
+  }
+  return { fire, notes };
 }
 
 export interface UnitShootParams {
@@ -618,6 +683,7 @@ export function resolveUnitShooting(
   };
   let firedCount = 0;
   const skipped: string[] = [];
+  const deckUnits = new Set<string>();
   for (const w of fire) {
     const tNow = cur.units.find((u) => u.id === target.id);
     if (!tNow || !tNow.models.some((m) => m.alive)) {
@@ -626,7 +692,12 @@ export function resolveUnitShooting(
     }
     const out = resolveAttack(
       cur,
-      { attackerUnitId: attacker.id, targetUnitId: target.id, weaponName: w.weapon.name, weaponSourceDsId: w.sourceDsId },
+      {
+        attackerUnitId: attacker.id, targetUnitId: target.id, weaponName: w.weapon.name,
+        weaponSourceDsId: w.sourceDsId,
+        // Firing Deck (24.14): the transport counts as equipped with the passenger's weapon.
+        ...(w.viaFiringDeck ? { weaponOverride: w.weapon, attackerCount: w.carriers } : {}),
+      },
       ctx,
       rng,
     );
@@ -635,6 +706,7 @@ export function resolveUnitShooting(
       continue;
     }
     firedCount++;
+    if (w.viaFiringDeck && w.passengerUnitId) deckUnits.add(w.passengerUnitId);
     cur = out.state;
   }
   if (skipped.length) cur = { ...cur, log: [...cur.log, ...skipped] };
@@ -645,7 +717,9 @@ export function resolveUnitShooting(
   const units = cur.units.map((u) =>
     u.id === attacker.id
       ? { ...u, status: { ...u.status, hasShot: true, lastShotOnTurn: cur.turnCounter ?? 0 } }
-      : u,
+      : deckUnits.has(u.id)
+        ? { ...u, status: { ...u.status, hasShot: true } } // Firing Deck: contributors may not shoot again
+        : u,
   );
   const aliveAfter = units.find((u) => u.id === target.id)?.models.filter((m) => m.alive).length ?? 0;
   const summary = `${aDs.name} shooting at ${tDs.name}: ${firedCount} weapon(s) fired, ${aliveBefore - aliveAfter} model(s) slain`;
@@ -1221,12 +1295,15 @@ export function resolveFightMove(
     return { state: { ...state, log: [...state.log, summary] }, summary };
   }
 
-  // Enemy units by base-to-base gap.
+  // Enemy units by base-to-base gap. Non-FLYING units ignore AIRCRAFT when selecting pile-in /
+  // consolidation targets (23.02).
+  const moverFlies = canFly(ds);
   const enemies: { unit: UnitInstance; gap: number }[] = [];
   for (const e of state.units) {
     if (e.owner === unit.owner || e.inReserves || !e.models.some((m) => m.alive)) continue;
     const eDs = ctx.datasheets.get(e.datasheetId);
     if (!eDs) continue;
+    if (isAircraft(eDs) && !moverFlies) continue;
     enemies.push({ unit: e, gap: closestGap(unit, ds.baseShape, e, eDs.baseShape) });
   }
   enemies.sort((a, b) => a.gap - b.gap);
@@ -1324,4 +1401,118 @@ export function resolveFightMove(
   );
   const summary = `${ds.name} ${verb}${modeNote} ${moveDist.toFixed(1)}" ${goal ? 'toward the enemy' : 'toward the objective'}`;
   return { state: { ...state, units, log: [...state.log, summary] }, summary };
+}
+
+// ── Transports: emergency disembark (18.05) ─────────────────────────────────────
+/**
+ * When a TRANSPORT is destroyed, each unit embarked within it makes an emergency disembark move:
+ * set up wholly within 6" of the wreck (as close as possible), one hazard roll per model, the
+ * unit is battle-shocked and cannot charge this turn. Models that cannot be set up (no legal
+ * spot) are destroyed — if NO legal spot exists at all, the whole unit is lost.
+ * Called by the reducer after any intent that can destroy units.
+ */
+export function resolveEmergencyDisembarks(state: GameState, ctx: EngineContext, rng: RNG): GameState {
+  let cur = state;
+  for (const u of state.units) {
+    if (!u.embarkedIn || !u.models.some((m) => m.alive)) continue;
+    const transport = cur.units.find((t) => t.id === u.embarkedIn);
+    if (transport && transport.models.some((m) => m.alive)) continue; // transport still alive
+    cur = emergencyDisembark(cur, u.id, ctx, rng);
+  }
+  return cur;
+}
+
+function emergencyDisembark(state: GameState, unitId: string, ctx: EngineContext, rng: RNG): GameState {
+  const unit = state.units.find((u) => u.id === unitId);
+  if (!unit) return state;
+  const ds = ctx.datasheets.get(unit.datasheetId);
+  const name = ds?.name ?? unitId;
+  const shape = ds?.baseShape ?? { kind: 'circle' as const, radius: 0.63 };
+  const transport = state.units.find((t) => t.id === unit.embarkedIn);
+  const hull = (transport?.models ?? []).map((m) => ({
+    pos: m.pos,
+    shape: ctx.datasheets.get(transport!.datasheetId)?.baseShape ?? shape,
+  }));
+  const origin = hull.length
+    ? { x: hull.reduce((s, h) => s + h.pos.x, 0) / hull.length, y: hull.reduce((s, h) => s + h.pos.y, 0) / hull.length }
+    : { x: state.layout.boardWidth / 2, y: state.layout.boardHeight / 2 };
+
+  const enemies: { pos: Vec2; shape: BaseShape }[] = [];
+  for (const e of state.units) {
+    if (e.owner === unit.owner || e.inReserves) continue;
+    const eShape = ctx.datasheets.get(e.datasheetId)?.baseShape ?? shape;
+    for (const m of e.models) if (m.alive) enemies.push({ pos: m.pos, shape: eShape });
+  }
+  const occupied = occupiedBases(state, ctx, [unit.id, unit.embarkedIn ?? '']);
+  const rMax = Math.max(shape.kind === 'circle' ? shape.radius ?? 0.5 : Math.max(shape.rx ?? 0.5, shape.ry ?? 0.5), 0.3);
+
+  const legalAnchor = (): Vec2 | null => {
+    for (let r = 1; r <= 5; r += 1) {
+      for (let a = 0; a < 16; a++) {
+        const ang = (a * Math.PI) / 8;
+        const anchor = { x: origin.x + r * Math.cos(ang), y: origin.y + r * Math.sin(ang) };
+        const positions = formationPositions({
+          anchor, count: unit.models.length, baseShape: shape, formation: 'block', rotation: 0,
+        });
+        const ok = positions.every((p) => {
+          if (p.x < rMax || p.y < rMax || p.x > state.layout.boardWidth - rMax || p.y > state.layout.boardHeight - rMax) return false;
+          if (hull.length && Math.min(...hull.map((h) => gapBetweenBases(p, shape, h.pos, h.shape))) > 6) return false;
+          if (enemies.some((e) => gapBetweenBases(p, shape, e.pos, e.shape) <= 2)) return false;
+          return true;
+        });
+        if (!ok) continue;
+        if (anyOverlap(positions.map((p) => ({ pos: p, shape })), occupied)) continue;
+        return anchor;
+      }
+    }
+    return null;
+  };
+
+  const anchor = legalAnchor();
+  if (!anchor) {
+    return {
+      ...state,
+      units: state.units.map((u) =>
+        u.id === unitId
+          ? { ...u, embarkedIn: undefined, models: u.models.map((m) => ({ ...m, alive: false, wounds: 0 })) }
+          : u,
+      ),
+      log: [...state.log, `${name} is destroyed — no room to emergency disembark from the wreck`],
+    };
+  }
+
+  const positions = formationPositions({
+    anchor, count: unit.models.length, baseShape: shape, formation: 'block', rotation: 0,
+  });
+  let models = unit.models.map((m, i) => ({ ...m, pos: positions[i] ?? m.pos }));
+  // One hazard roll per model (06.03): 1-2 fails → 1 mortal wound.
+  const aliveCount = models.filter((m) => m.alive).length;
+  let mortals = 0;
+  for (let n = 0; n < aliveCount; n++) if (hazardRoll(rng, false).mortals > 0) mortals++;
+  for (let n = 0; n < mortals; n++) {
+    const k = models.findIndex((m) => m.alive);
+    if (k < 0) break;
+    const w = models[k]!.wounds - 1;
+    models = models.map((m, j) => (j === k ? { ...m, wounds: w, alive: w > 0 } : m));
+  }
+  return {
+    ...state,
+    units: state.units.map((u) =>
+      u.id === unitId
+        ? {
+            ...u,
+            models,
+            inReserves: false,
+            embarkedIn: undefined,
+            status: { ...u.status, setUpThisTurn: true, moved: true, cannotCharge: true, battleShocked: true },
+          }
+        : u,
+    ),
+    log: [
+      ...state.log,
+      `${name} makes an emergency disembark from the destroyed transport` +
+        (mortals > 0 ? ` — hazard: ${mortals} mortal wound(s)` : '') +
+        ' (battle-shocked, cannot charge)',
+    ],
+  };
 }
