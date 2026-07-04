@@ -23,7 +23,7 @@ import { canEmbark, disembarkMode, isAircraft } from './transport';
 import { hazardRoll } from './combat';
 import { eligibleToShoot } from './phases';
 import { pointLosBlocked } from './visibility';
-import { initSecondaries, recordKills, secondariesOnTurnEnd, secondariesOnTurnStart } from './secondaries';
+import { initSecondaries, recordKills, secondariesOnTurnEnd, secondariesOnTurnStart, secondaryCard } from './secondaries';
 import { initMissions, missionsOnBattleEnd, missionsOnCommandEnd, missionsOnTurnEnd, missionsOnTurnStart, startAction, type StartActionParams } from './missionflow';
 import type { DispositionId } from './missions11';
 import { canAttach, leaderJoinPositions } from './leaders';
@@ -114,6 +114,9 @@ export type Intent =
   /** Discard one of your active Tactical Missions (the end-of-turn discard choice; the AI relies
    *  on the automatic stale-discard instead). */
   | { type: 'DiscardSecondary'; side: Side; cardId: string }
+  /** Pre-battle (secret) Secondary Missions choice: Tactical (draw from the deck — the default)
+   *  or Fixed with exactly two FIXED-capable cards, scored all battle at 20VP each. */
+  | { type: 'ChooseSecondaryMode'; side: Side; fixedCardIds?: [string, string] }
   /** Start (or perform) an 11e Objective Action with a unit (your Shooting phase). */
   | ({ type: 'StartAction' } & StartActionParams)
   // ── Pre-battle setup / deployment (Stage: setup) ──────────────────────────────
@@ -594,6 +597,33 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       if (!ctx) return { ...state, log: [...state.log, 'Action ignored: no datasheet context supplied'] };
       const { type: _t, ...params } = intent;
       return startAction(state, ctx, params);
+    }
+
+    case 'ChooseSecondaryMode': {
+      const sec = state.secondaries?.[intent.side];
+      if (!sec) return { ...state, log: [...state.log, 'Secondary mode rejected: no mission decks (start a battle first)'] };
+      if (state.stage !== 'setup') return { ...state, log: [...state.log, 'Secondary mode rejected: choose before the battle begins'] };
+      if (sec.mode) return { ...state, log: [...state.log, 'Secondary mode rejected: already chosen'] };
+      if (intent.fixedCardIds) {
+        const [a, b] = intent.fixedCardIds;
+        const cards = [secondaryCard(a), secondaryCard(b)];
+        if (a === b || cards.some((c) => !c?.fixed)) {
+          return { ...state, log: [...state.log, 'Secondary mode rejected: pick two DIFFERENT fixed-capable cards'] };
+        }
+        return {
+          ...state,
+          secondaries: {
+            ...state.secondaries!,
+            [intent.side]: { ...sec, mode: 'fixed' as const, fixed: [{ id: a, drawn: 0 }, { id: b, drawn: 0 }], fixedVp: {}, deck: [] },
+          },
+          log: [...state.log, `${intent.side} chooses FIXED Secondary Missions (kept secret until the battle begins)`],
+        };
+      }
+      return {
+        ...state,
+        secondaries: { ...state.secondaries!, [intent.side]: { ...sec, mode: 'tactical' as const } },
+        log: [...state.log, `${intent.side} will draw Tactical Missions`],
+      };
     }
 
     // ── Pre-battle setup / deployment ──────────────────────────────────────────

@@ -45,6 +45,11 @@ export interface SecondaryCard {
   desc: string;
   /** VP scored at the relevant turn end (0 = not scored; the card stays in hand). */
   score: (state: GameState, side: Side, ctx: EngineContext, card: SecondaryCardInHand) => number;
+  /** The FIXED-mode scoring block (used when the card is one of your two chosen Fixed Missions —
+   *  usually per-instance instead of flat). Falls back to `score` when absent. */
+  scoreFixed?: (state: GameState, side: Side, ctx: EngineContext, card: SecondaryCardInHand) => number;
+  /** The FIXED-mode scoring window (falls back to `scoreAt`). */
+  fixedScoreAt?: 'your_turn' | 'opponent_turn' | 'either';
   /** When-Drawn: return a redraw decision and/or card data (picked unit/objective). */
   whenDrawn?: (state: GameState, side: Side, ctx: EngineContext) => { redraw?: boolean; data?: string | number };
 }
@@ -114,6 +119,9 @@ export const SECONDARY_CARDS: SecondaryCard[] = [
     }),
     score: (s, side) =>
       killsBy(s, side).some((k) => (k.startingStrength ?? 0) >= 13) ? 5 : 0,
+    // FIXED: 4VP for EACH Starting-Strength-13+ enemy unit destroyed this turn.
+    scoreFixed: (s, side) =>
+      killsBy(s, side).filter((k) => k.unitId != null && (k.startingStrength ?? 0) >= 13).length * 4,
   },
   {
     id: 'a_tempting_target',
@@ -165,6 +173,12 @@ export const SECONDARY_CARDS: SecondaryCard[] = [
       );
       return anyCharacterExisted && !anyCharacterAlive ? 5 : 0;
     },
+    // FIXED: 3VP per enemy CHARACTER model destroyed this turn, +1 each with W4+.
+    scoreFixed: (s, side) =>
+      killsBy(s, side).reduce(
+        (vp, k) => vp + (k.charactersSlain ?? 0) * 3 + (k.charactersSlain4W ?? 0),
+        0,
+      ),
   },
   {
     id: 'beacon',
@@ -222,6 +236,8 @@ export const SECONDARY_CARDS: SecondaryCard[] = [
       ),
     }),
     score: (s, side) => (killsBy(s, side).some((k) => k.maxWounds >= 10) ? 5 : 0),
+    // FIXED: 4VP for EACH enemy model with a Wounds characteristic of 10+ destroyed this turn.
+    scoreFixed: (s, side) => killsBy(s, side).reduce((vp, k) => vp + (k.bigModelsSlain ?? 0) * 4, 0),
   },
   {
     id: 'burden_of_trust',
@@ -331,6 +347,12 @@ export const SECONDARY_CARDS: SecondaryCard[] = [
       if (!s.missions) return 0;
       const q = quartersWithPresence(buildMissionEval(s, ctx, side));
       return q >= 4 ? 5 : q >= 3 ? 3 : 0;
+    },
+    // FIXED: 2VP for three quarters / 4VP for four (lower — it scores every turn).
+    scoreFixed: (s, side, ctx) => {
+      if (!s.missions) return 0;
+      const q = quartersWithPresence(buildMissionEval(s, ctx, side));
+      return q >= 4 ? 4 : q >= 3 ? 2 : 0;
     },
   },
   {
@@ -448,6 +470,8 @@ export function secondariesOnTurnStart(state: GameState, ctx: EngineContext): Ga
   const log: string[] = [];
 
   const mine = state.secondaries[side];
+  // Fixed Missions mode: no drawing — the two chosen cards score all battle.
+  if (mine.mode === 'fixed') return state;
   const hand = [...mine.hand];
   const deck = [...mine.deck];
   const discard = [...mine.discard];
@@ -496,6 +520,7 @@ export function secondariesOnTurnEnd(state: GameState, ctx: EngineContext | unde
     const discard = [...sec.discard];
     let vp = sec.vp;
     const roundVp = { ...(sec.roundVp ?? {}) };
+    const fixedVp = { ...(sec.fixedVp ?? {}) };
     let score = next.score[side];
     const log: string[] = [];
     for (const c of sec.hand) {
@@ -524,9 +549,33 @@ export function secondariesOnTurnEnd(state: GameState, ctx: EngineContext | unde
       discard.push(c.id);
       log.push(`${side} scores Tactical Mission "${card.name}": +${gained} VP (secondary ${vp}/${SECONDARY_VP_CAP})`);
     }
+    // Fixed Missions mode: the two chosen cards score at their FIXED windows every turn, each
+    // capped at 20 VP for the battle, inside the 45/15 secondary caps.
+    for (const c of sec.mode === 'fixed' ? sec.fixed ?? [] : []) {
+      const card = secondaryCard(c.id);
+      if (!card) continue;
+      const window = card.fixedScoreAt ?? card.scoreAt;
+      if (!relevant.includes(window)) continue;
+      const raw = (card.scoreFixed ?? card.score)(next, side, ctx, c);
+      if (raw <= 0) continue;
+      const roundSoFar = roundVp[next.round] ?? 0;
+      const cardSoFar = fixedVp[c.id] ?? 0;
+      const gained = Math.max(
+        0,
+        Math.min(raw, SECONDARY_VP_CAP - vp, SECONDARY_ROUND_CAP - roundSoFar, FIXED_CARD_CAP - cardSoFar),
+      );
+      if (gained <= 0) continue;
+      vp += gained;
+      roundVp[next.round] = roundSoFar + gained;
+      fixedVp[c.id] = cardSoFar + gained;
+      score += gained;
+      log.push(
+        `${side} scores Fixed Mission "${card.name}": +${gained} VP (card ${fixedVp[c.id]}/${FIXED_CARD_CAP}, secondary ${vp}/${SECONDARY_VP_CAP})`,
+      );
+    }
     next = {
       ...next,
-      secondaries: { ...next.secondaries!, [side]: { ...sec, hand, discard, vp, roundVp } },
+      secondaries: { ...next.secondaries!, [side]: { ...sec, hand, discard, vp, roundVp, fixedVp } },
       score: { ...next.score, [side]: score },
       log: [...next.log, ...log],
     };
@@ -570,18 +619,23 @@ export function recordKills(before: GameState, after: GameState, ctx: EngineCont
     const wasAlive = prev.models.some((m) => m.alive);
     const isAlive = u.models.some((m) => m.alive);
 
-    // CHARACTER models slain (whether or not the unit died with them).
+    // CHARACTER / big (W10+) models slain (whether or not the unit died with them).
     let charactersSlain = 0;
     let characterMaxW = 0;
+    let charactersSlain4W = 0;
+    let bigModelsSlain = 0;
     for (let i = 0; i < u.models.length; i++) {
       const now = u.models[i]!;
       const then = prev.models[i];
       if (!then?.alive || now.alive) continue;
       const ds = ctx.datasheets.get(now.datasheetId ?? u.datasheetId);
+      const w = ds?.models[0]?.W ?? 0;
       if (ds?.keywords.some((k) => k.toLowerCase() === 'character')) {
         charactersSlain++;
-        characterMaxW = Math.max(characterMaxW, ds.models[0]?.W ?? 0);
+        characterMaxW = Math.max(characterMaxW, w);
+        if (w >= 4) charactersSlain4W++;
       }
+      if (w >= 10) bigModelsSlain++;
     }
 
     if (wasAlive && !isAlive) {
@@ -602,20 +656,21 @@ export function recordKills(before: GameState, after: GameState, ctx: EngineCont
         maxWounds,
         onObjective,
         startingStrength: u.startingModels,
-        ...(charactersSlain ? { charactersSlain, characterMaxW } : {}),
+        ...(charactersSlain ? { charactersSlain, characterMaxW, charactersSlain4W } : {}),
+        ...(bigModelsSlain ? { bigModelsSlain } : {}),
         ...(f?.onObjective ? { startedTurnOnObjective: true } : {}),
         ...(f?.onCentral ? { startedTurnOnCentral: true } : {}),
         ...(f?.areaId ? { startedTurnInArea: f.areaId } : {}),
         killerOnObjective: killerNearObjective(before, u.owner, ctx),
       });
-    } else if (charactersSlain > 0) {
+    } else if (charactersSlain > 0 || bigModelsSlain > 0) {
       kills.push({
         side: u.owner,
         datasheetIds: [u.datasheetId],
         maxWounds: characterMaxW,
         onObjective: false,
-        charactersSlain,
-        characterMaxW,
+        ...(charactersSlain ? { charactersSlain, characterMaxW, charactersSlain4W } : {}),
+        ...(bigModelsSlain ? { bigModelsSlain } : {}),
       });
     }
   }
@@ -640,8 +695,16 @@ function killerNearObjective(before: GameState, victimSide: Side, ctx: EngineCon
 }
 
 // ── AI hooks (light touch — the AI plays toward its active cards) ─────────────
-const activeIds = (state: GameState, side: Side): Set<string> =>
-  new Set((state.secondaries?.[side]?.hand ?? []).map((c) => c.id));
+const activeIds = (state: GameState, side: Side): Set<string> => {
+  const sec = state.secondaries?.[side];
+  return new Set([
+    ...(sec?.hand ?? []).map((c) => c.id),
+    // Fixed cards are active every turn (until their 20VP cap is reached).
+    ...(sec?.mode === 'fixed'
+      ? (sec.fixed ?? []).filter((c) => (sec.fixedVp?.[c.id] ?? 0) < FIXED_CARD_CAP).map((c) => c.id)
+      : []),
+  ]);
+};
 
 /** Multiplier on shooting/charge EV against `target` while a kill card wants it dead. */
 export function secondaryKillBonus(state: GameState, side: Side, target: UnitInstance, ctx: EngineContext): number {

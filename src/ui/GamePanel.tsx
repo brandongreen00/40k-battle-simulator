@@ -253,31 +253,47 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
         <ActionsBlock state={state} dispatch={dispatch} datasheetsById={datasheetsById} ctx={ctx} />
       )}
 
-      {/* Tactical (Secondary) Missions — drawn in the Command phase, scored at turn end. */}
+      {/* Tactical / Fixed (Secondary) Missions — drawn or chosen, scored at turn end. */}
       {inMatch && state.secondaries && state.stage === 'battle' && (
         <div className="phase-block">
-          <h3>Tactical Missions</h3>
-          {(['player', 'ai'] as const).map((s) => (
-            <div key={s} className="order-officer">
-              <strong style={{ color: OWNER_COLOR[s].fill }}>{s}</strong>{' '}
-              <span className="muted">{state.secondaries![s].vp}/45 secondary VP · {state.secondaries![s].deck.length} in deck</span>
-              {state.secondaries![s].hand.length === 0 ? (
-                <div className="muted">— no active missions (drawn when the Command phase runs)</div>
-              ) : (
-                state.secondaries![s].hand.map((c) => {
-                  const card = secondaryCard(c.id);
-                  return (
-                    <div key={c.id} className="order-row">
-                      <span title={card?.desc}>{card?.name ?? c.id} <span className="muted">· drawn R{c.drawn}</span></span>
-                      {s === state.activePlayer && (
-                        <button onClick={() => dispatch({ type: 'DiscardSecondary', side: s, cardId: c.id })}>discard</button>
-                      )}
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          ))}
+          <h3>Secondary Missions</h3>
+          {(['player', 'ai'] as const).map((s) => {
+            const sec = state.secondaries![s];
+            return (
+              <div key={s} className="order-officer">
+                <strong style={{ color: OWNER_COLOR[s].fill }}>{s}</strong>{' '}
+                <span className="muted">
+                  {sec.vp}/45 secondary VP · {sec.mode === 'fixed' ? 'FIXED missions' : `${sec.deck.length} in deck`}
+                </span>
+                {sec.mode === 'fixed' ? (
+                  (sec.fixed ?? []).map((c) => {
+                    const card = secondaryCard(c.id);
+                    return (
+                      <div key={c.id} className="order-row">
+                        <span title={card?.desc}>
+                          {card?.name ?? c.id} <span className="muted">· fixed · {sec.fixedVp?.[c.id] ?? 0}/20 VP</span>
+                        </span>
+                      </div>
+                    );
+                  })
+                ) : sec.hand.length === 0 ? (
+                  <div className="muted">— no active missions (drawn when the Command phase runs)</div>
+                ) : (
+                  sec.hand.map((c) => {
+                    const card = secondaryCard(c.id);
+                    return (
+                      <div key={c.id} className="order-row">
+                        <span title={card?.desc}>{card?.name ?? c.id} <span className="muted">· drawn R{c.drawn}</span></span>
+                        {s === state.activePlayer && (
+                          <button onClick={() => dispatch({ type: 'DiscardSecondary', side: s, cardId: c.id })}>discard</button>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 

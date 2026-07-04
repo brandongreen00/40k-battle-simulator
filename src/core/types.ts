@@ -320,6 +320,13 @@ export interface SecondarySideState {
   vp: number;
   /** Secondary VP per battle round (15/round cap). */
   roundVp?: Record<number, number>;
+  /** Secondary Missions mode: 'tactical' draws from the deck (default); 'fixed' scores the two
+   *  chosen FIXED cards all battle instead (no drawing). Chosen secretly before the battle. */
+  mode?: 'tactical' | 'fixed';
+  /** Fixed Missions mode: the two chosen FIXED-capable cards (never discarded). */
+  fixed?: SecondaryCardInHand[];
+  /** VP scored per fixed card (each caps at 20 — FIXED_CARD_CAP). */
+  fixedVp?: Record<string, number>;
 }
 
 /** A unit destroyed this turn — what kill-based primary/secondary conditions score from. */
@@ -340,6 +347,10 @@ export interface KillRecord {
   charactersSlain?: number;
   /** Highest W among CHARACTER models slain (Assassination cumulative: W4+). */
   characterMaxW?: number;
+  /** CHARACTER models slain with a Wounds characteristic of 4+ (Assassination FIXED rider). */
+  charactersSlain4W?: number;
+  /** Models slain whose datasheet W is 10+ (Bring It Down FIXED: per-model scoring). */
+  bigModelsSlain?: number;
   /** Did the unit start the turn within range of an objective? (Overwhelming Force etc.) */
   startedTurnOnObjective?: boolean;
   /** Did it start the turn within range of a CENTRAL objective? (Secure Asset.) */
