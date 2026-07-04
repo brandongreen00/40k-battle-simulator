@@ -330,6 +330,59 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-07-04] — 11e GAPS CLOSED. The owner asked to "research and implement the gaps" from the
+  11e overhaul — all nine documented gaps are now implemented (or researched and ruled out), in
+  seven commits.** All gates green: `pnpm typecheck`, `pnpm test` (**416 tests**, +63 across 7 new
+  suites: fight11/charge11/transport11/stratplays/fixedSecondaries/surgeSplit/detachments),
+  `pnpm build`; AI-vs-AI sims across 1k+2k, 11e-mission and legacy maps all end naturally with
+  ZERO rejected intents, with every new mechanic verified FIRING in the logs.
+
+  **1 · Fight-phase fidelity (12.02–12.08):** eligibility includes engaged-at-Fight-step-start
+  (stamped on phase entry) and charged-this-turn; unengaged eligible units make **overrun fights**
+  (pile-in reaches 5", must end engaged); **consolidation modes** with the mandatory priority —
+  Ongoing / Engaging (must end engaged; newly-engaged un-fought enemies become eligible: **chain
+  fights**, via live eligibility) / Objective (end within control range) / else no move. Timing
+  note: pile-in/consolidate resolve per-activation (documented simplification of the whole-phase
+  steps). **2 · Roll-first charges (11.02/11.04):** the 2D6 comes FIRST; targets are then selected
+  only if within 12" AND the rolled distance (needed roll = full gap, not gap−ER; the AI's charge
+  odds updated); unselected intended targets are non-targets.
+  **3 · Transports (18) + Firing Deck (24.14) + Aircraft (23):** capacity parsed from the
+  Wahapedia `transport` column (patched into datasheets.json; converter re-captures on ingest);
+  start embarked at Declare Battle Formations; EmbarkUnit ≤3" after a move; DisembarkUnit by mode
+  priority (Rapid 3"/no charge · Tactical 3"+the unit may then move · Combat 6"+hazard+shock);
+  emergency disembark on destruction (6", hazard/model, unplaceable = lost); Firing Deck X adds
+  the best X embarked weapons to the transport's plan; aircraft are reserves-only, ingress-only,
+  return to reserves at the end of the opponent's turn, only FLY charges/fights them. The AI
+  deploys a passenger per empty transport and disembarks tactically from round 2 (the Corvus
+  Blackstar in Deathwatch Vigil now cycles legally — it had silently wedged AI deployment).
+  **4 · Core Stratagem bindings (15.03–15.12):** Fire Overwatch (snap shooting at the end of the
+  opponent's Movement — new end-of-phase reactive window in runner+UI), Heroic Intervention
+  (Leap to Defend / Into the Fray with the roll capped at 6), Crushing Impact, Explosives,
+  Counteroffensive (Fights First + `fightNext` ordering), Insane Bravery (auto-pass, once per
+  battle, consumed in runCommandPhase), Rapid Ingress, Epic Challenge ([PRECISION] via the new
+  grantPrecision effect). All CP-gated + a once-per-phase tracker (15.01). AI plays Overwatch,
+  Heroic Intervention, Crushing Impact (every M/V charge), Explosives and Insane Bravery;
+  normal reserves arrivals are now correctly own-Movement-phase-only.
+  **5 · Fixed Secondary Missions:** pre-battle secret ChooseSecondaryMode (UI picker + AI
+  heuristic vs the enemy roster); the four FIXED-capable cards score their per-instance FIXED
+  blocks every turn at 20VP/card inside the 45/15 caps; kill ledger gained per-model W10+/W4+
+  character counts. **6 · Surge moves (21.02):** engine primitive + intent (no 10e-data ability
+  triggers it yet). **7 · Per-weapon target splitting (04.02):** ShootUnit.splitTargets; the AI
+  reassigns weapons whose EV is clearly better elsewhere (~29% of sim volleys split).
+  **8 · Detachment Points:** curated DP table (AM 1–3 DP, all Agents 3 DP) + official budgets
+  (1k = 2 DP + 2 enh, 2k = 3 DP + 4) in core/detachments.ts, list-builder DP display, 11e
+  enhancement caps, lone-detachment over-budget = warning per GW stated intent — sources and
+  confidence in **docs/11e_detachment_points.md**. **9 · Twist cards:** researched and ruled OUT
+  of scope (6 retail-only cards, text unpublished, excluded from Event/tournament play).
+  Wahapedia re-checked 2026-07-04: still no 11e data (stale 10e mirror).
+
+  **Remaining honest gaps:** the strict whole-phase pile-in/consolidate step timing; embarked
+  units are invisible on the board (no passenger badge on the transport token); surge has no
+  ability bindings; multi-detachment armies not modelled (one detachment per list); UI per-weapon
+  split targeting (engine+AI only — the panel still fires the volley at one target); AI doesn't
+  play Rapid Ingress/Counteroffensive/Epic Challenge (human-only via the new Stratagem plays
+  block); Firing Deck rarely triggers under the AI's round-2-disembark policy.
+
 - **[2026-07-03] — 11TH EDITION. The owner asked for a full 11e overhaul: core rules from the new
   Core Rules PDF, the Event Companion maps (disposition-restricted to 3 per pairing), an AI that
   plays for VP, and community-informed 1000/2000pt teams. All four delivered.** All gates green:
