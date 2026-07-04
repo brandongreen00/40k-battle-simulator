@@ -283,6 +283,44 @@ export function shootingEV(
   return Math.min(ev, unitValue(target, ctx));
 }
 
+/** Expected points of damage from ONE weapon entry of a unit's fire plan into `target` — the
+ *  per-weapon ranking behind target splitting (04.02). Same model as shootingEV. */
+export function weaponEV(
+  state: GameState,
+  attacker: UnitInstance,
+  w: { weapon: import('../types').WeaponProfile; carriers: number },
+  target: UnitInstance,
+  ctx: EngineContext,
+): number {
+  const aDs = ctx.datasheets.get(attacker.datasheetId);
+  const tDs = ctx.datasheets.get(target.datasheetId);
+  const def = defenderSummary(target, ctx);
+  if (!aDs || !tDs || !def) return 0;
+  const aPts = aliveModels(attacker).map((m) => m.pos);
+  const tPts = aliveModels(target).map((m) => m.pos);
+  if (aPts.length === 0 || tPts.length === 0) return 0;
+  let gap = Infinity;
+  for (const a of aPts) for (const t of tPts) gap = Math.min(gap, gapBetweenBases(a, aDs.baseShape, t, tDs.baseShape));
+  if (
+    hasLoneOperative(tDs) && (target.attachedLeaders ?? []).length === 0 && gap > 12 && !ignoresLoneOperative(aDs)
+  ) {
+    return 0;
+  }
+  const range = w.weapon.range ?? 0;
+  if (gap > range) return 0;
+  const kw = parseKeywords(w.weapon.keywords);
+  const visible = unitCanSee(samplePts(aPts), samplePts(tPts), state.layout.terrain);
+  if (!visible && !kw.indirectFire) return 0;
+  const sit: FireSituation = {
+    halfRange: gap <= range / 2,
+    hitMod: !visible && kw.indirectFire ? -1 : 0,
+    cover: !visible && kw.indirectFire ? true : undefined,
+    stationary: attacker.status.remainedStationary,
+  };
+  const ev = expectedWeaponDamage(w.weapon, w.carriers, def, sit).kills * modelValue(tDs);
+  return Math.min(ev, unitValue(target, ctx));
+}
+
 /** Expected points of damage from one Fight activation of `attacker` into `target` (all melee weapons). */
 export function meleeEV(attacker: UnitInstance, target: UnitInstance, ctx: EngineContext, charged = false): number {
   const def = defenderSummary(target, ctx);

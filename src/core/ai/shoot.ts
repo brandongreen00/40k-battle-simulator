@@ -7,9 +7,10 @@
 
 import type { GameState, Side } from '../types';
 import { eligibleToShoot, engagedEnemies, validUnitShootingTargets, isOnBoard } from '../phases';
-import { objectiveControl } from '../engine';
+import { objectiveControl, planUnitShooting } from '../engine';
 import { gapBetweenBases } from '../geometry';
 import { pointLosBlocked } from '../visibility';
+import { weaponEV } from './evaluate';
 import { secondaryKillBonus } from '../secondaries';
 import { bestMissionAction } from './missionplay';
 import { shootingEV, unitThreat, unitValue } from './evaluate';
@@ -137,9 +138,36 @@ export function aiShootingAction(state: GameState, side: Side, profile: AiProfil
   }
 
   if (best) {
+    // Per-weapon target splitting (04.02): weapons that do clearly better work elsewhere are
+    // reassigned (the anti-tank gun leaves the infantry volley). Only meaningfully better
+    // alternatives split — the main target keeps the unit's focus.
+    const shooter = state.units.find((u) => u.id === best!.shooter)!;
+    const mainTarget = state.units.find((u) => u.id === best!.target)!;
+    const targets = validUnitShootingTargets(shooter, state, ctx);
+    const splitTargets: Record<string, string> = {};
+    if (targets.length > 1) {
+      const { fire } = planUnitShooting(state, shooter, ctx);
+      for (const w of fire) {
+        const evMain = weaponEV(state, shooter, w, mainTarget, ctx);
+        let alt: { id: string; ev: number } | null = null;
+        for (const t of targets) {
+          if (t.id === best.target) continue;
+          const ev = weaponEV(state, shooter, w, t, ctx) * secondaryKillBonus(state, side, t, ctx);
+          if (!alt || ev > alt.ev) alt = { id: t.id, ev };
+        }
+        if (alt && alt.ev > evMain * 1.3 + 5) splitTargets[`${w.sourceDsId}|${w.weapon.name}`] = alt.id;
+      }
+    }
     return {
-      intents: [{ intent: { type: 'ShootUnit', attackerUnitId: best.shooter, targetUnitId: best.target } }],
-      note: `${side} shoots: ${best.names} (EV ${best.score.toFixed(0)})`,
+      intents: [
+        {
+          intent: {
+            type: 'ShootUnit', attackerUnitId: best.shooter, targetUnitId: best.target,
+            ...(Object.keys(splitTargets).length ? { splitTargets } : {}),
+          },
+        },
+      ],
+      note: `${side} shoots: ${best.names}${Object.keys(splitTargets).length ? ` (+${Object.keys(splitTargets).length} weapon(s) split)` : ''} (EV ${best.score.toFixed(0)})`,
     };
   }
   return { intents: [{ intent: { type: 'AdvancePhase' } }], note: `${side} ends the Shooting phase` };

@@ -641,6 +641,9 @@ export interface UnitShootParams {
   /** Fire Overwatch (15.08): resolve in the opponent's Movement phase with snap shooting —
    *  only unmodified 6s hit, target within 24". CP/once-per-phase gating is the reducer's. */
   overwatch?: boolean;
+  /** Per-weapon target split (04.02: targets are selected per weapon): weapon key
+   *  `${sourceDsId}|${weaponName}` → target unit id. Unlisted weapons fire at `targetUnitId`. */
+  splitTargets?: Record<string, string>;
 }
 
 /**
@@ -709,15 +712,23 @@ export function resolveUnitShooting(
   const skipped: string[] = [];
   const deckUnits = new Set<string>();
   for (const w of fire) {
-    const tNow = cur.units.find((u) => u.id === target.id);
+    // Targets are selected per weapon (04.02): a split assignment overrides the main target.
+    const tId = params.splitTargets?.[`${w.sourceDsId}|${w.weapon.name}`] ?? target.id;
+    const tNow = cur.units.find((u) => u.id === tId);
     if (!tNow || !tNow.models.some((m) => m.alive)) {
-      cur = { ...cur, log: [...cur.log, '  target destroyed — remaining weapons not fired'] };
-      break;
+      skipped.push(`  ${w.weapon.name} not fired: its target is already destroyed`);
+      continue;
+    }
+    // While engaged, ranged attacks may only target a unit within Engagement Range — applies to
+    // every split target, not just the main one.
+    if (engagedUnits.length > 0 && !engagedUnits.some((e) => e.id === tId)) {
+      skipped.push(`  ${w.weapon.name} not fired: split target is not within Engagement Range`);
+      continue;
     }
     const out = resolveAttack(
       cur,
       {
-        attackerUnitId: attacker.id, targetUnitId: target.id, weaponName: w.weapon.name,
+        attackerUnitId: attacker.id, targetUnitId: tId, weaponName: w.weapon.name,
         weaponSourceDsId: w.sourceDsId,
         // Firing Deck (24.14): the transport counts as equipped with the passenger's weapon.
         ...(w.viaFiringDeck ? { weaponOverride: w.weapon, attackerCount: w.carriers } : {}),
@@ -1613,4 +1624,78 @@ function emergencyDisembark(state: GameState, unitId: string, ctx: EngineContext
         ' (battle-shocked, cannot charge)',
     ],
   };
+}
+
+// ── Surge moves (11e, 21.02) ────────────────────────────────────────────────────
+export interface SurgeMoveParams {
+  unitId: string;
+  /** Maximum distance in inches, as stated by the triggering rule (e.g. D6"). */
+  maxDistance: number;
+}
+
+/**
+ * A surge move (21.02): triggered by an ability, the unit moves up to `maxDistance` toward the
+ * CLOSEST enemy unit (the surge target), ending engaged with it if possible — and never engaged
+ * with any other enemy. Requires: not battle-shocked, unengaged, has not moved this phase.
+ * No datasheet ability in the two supported factions' 10e data grants surge moves yet; this is
+ * the engine primitive future ability bindings (and the sandbox) call.
+ */
+export function resolveSurgeMove(
+  state: GameState,
+  params: SurgeMoveParams,
+  ctx: EngineContext,
+): { state: GameState; summary: string } {
+  const unit = state.units.find((u) => u.id === params.unitId);
+  if (!unit) return { state, summary: 'unit not found' };
+  const ds = ctx.datasheets.get(unit.datasheetId);
+  if (!ds) return { state, summary: 'datasheet not found' };
+  const noMove = (why: string): { state: GameState; summary: string } => {
+    const summary = `${ds.name} cannot surge (${why})`;
+    return { state: { ...state, log: [...state.log, summary] }, summary };
+  };
+  if (unit.status.battleShocked) return noMove('battle-shocked');
+  if (unit.status.moved || unit.status.advanced || unit.status.fellBack) return noMove('already moved this phase');
+
+  // The surge target is the CLOSEST enemy unit (non-FLY units ignore AIRCRAFT, 23.02).
+  const moverFlies = canFly(ds);
+  const enemies: { unit: UnitInstance; shape: BaseShape; gap: number }[] = [];
+  for (const e of state.units) {
+    if (e.owner === unit.owner || e.inReserves || !e.models.some((m) => m.alive)) continue;
+    const eDs = ctx.datasheets.get(e.datasheetId);
+    if (!eDs || (isAircraft(eDs) && !moverFlies)) continue;
+    enemies.push({ unit: e, shape: eDs.baseShape, gap: closestGap(unit, ds.baseShape, e, eDs.baseShape) });
+  }
+  enemies.sort((a, b) => a.gap - b.gap);
+  const surgeTarget = enemies[0];
+  if (!surgeTarget) return noMove('no enemy on the battlefield');
+  if (surgeTarget.gap <= ENGAGEMENT_RANGE) return noMove('already engaged');
+
+  const dir = closestAxis(unit, surgeTarget.unit);
+  const occupied = occupiedBases(state, ctx, [unit.id]);
+  let d = Math.min(params.maxDistance, surgeTarget.gap); // toward contact, never past it
+  // The move may not END engaged with any enemy that is not the surge target.
+  const others = enemies.slice(1);
+  const legalAt = (dist: number): boolean => {
+    const moved = { ...unit, models: unit.models.map((m) => (m.alive ? { ...m, pos: { x: m.pos.x + dir.x * dist, y: m.pos.y + dir.y * dist } } : m)) };
+    return others.every((o) => closestGap(moved, ds.baseShape, o.unit, o.shape) > ENGAGEMENT_RANGE);
+  };
+  while (d > 0.05 && !legalAt(d)) d -= 0.2;
+  if (d <= 0.05) return noMove('cannot avoid engaging a non-target enemy');
+  const clamped = clampDeltaAvoidingOverlap(unitBases(unit, ctx), occupied, { x: dir.x * d, y: dir.y * d });
+  const dist = Math.hypot(clamped.x, clamped.y);
+  if (dist <= 0.05) return noMove('no room to move');
+
+  const units = state.units.map((u) =>
+    u.id === unit.id
+      ? {
+          ...u,
+          models: u.models.map((m) => (m.alive ? { ...m, pos: { x: m.pos.x + clamped.x, y: m.pos.y + clamped.y } } : m)),
+          status: { ...u.status, moved: true }, // cannot move again this phase
+        }
+      : u,
+  );
+  const tName = ctx.datasheets.get(surgeTarget.unit.datasheetId)?.name ?? surgeTarget.unit.id;
+  const engagedNow = surgeTarget.gap - dist <= ENGAGEMENT_RANGE;
+  const summary = `${ds.name} surges ${dist.toFixed(1)}" toward ${tName}${engagedNow ? ' — engaged' : ''}`;
+  return { state: { ...state, units, log: [...state.log, summary] }, summary };
 }

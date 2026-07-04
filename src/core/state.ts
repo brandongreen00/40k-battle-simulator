@@ -39,8 +39,10 @@ import {
   resolveEmergencyDisembarks,
   resolveUnitShooting,
   runCommandPhase,
+  resolveSurgeMove,
   stampFightStepEngagement,
   type AttackParams,
+  type SurgeMoveParams,
   type ChargeParams,
   type FightMoveParams,
   type UnitFightParams,
@@ -216,6 +218,9 @@ export type Intent =
   /** Insane Bravery (15.04, 1 CP, once per battle): apply BEFORE running your Command phase —
    *  that unit's battle-shock roll automatically succeeds. */
   | { type: 'InsaneBravery'; unitId: string }
+  /** Surge move (21.02): ability-triggered — up to `maxDistance` toward the closest enemy (the
+   *  surge target), ending engaged with it if possible and never engaged with another enemy. */
+  | ({ type: 'SurgeMove' } & SurgeMoveParams)
   // ── Transports (11e, 18) ─────────────────────────────────────────────────────
   /** Embark within a friendly TRANSPORT after a normal/advance/fall-back move (18.02): every
    *  model within 3" of it, capacity permitting. The unit leaves the battlefield. */
@@ -520,6 +525,12 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       if (!ctx) return { ...state, log: [...state.log, 'Fight move ignored: no datasheet context supplied'] };
       const { type: _t, ...params } = intent;
       return resolveFightMove(state, params, ctx).state;
+    }
+
+    case 'SurgeMove': {
+      if (!ctx) return { ...state, log: [...state.log, 'Surge move ignored: no datasheet context supplied'] };
+      const { type: _t, ...params } = intent;
+      return resolveSurgeMove(state, params, ctx).state;
     }
 
     case 'RunCommandPhase': {
