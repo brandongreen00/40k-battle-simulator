@@ -106,6 +106,9 @@ export type Intent =
   | { type: 'RunCommandPhase' }
   /** Set per-unit status flags (movement/charge bookkeeping that later phases drive). */
   | { type: 'SetUnitStatus'; unitId: string; status: Partial<UnitInstance['status']> }
+  /** The owner's casualty-allocation preference for a unit (who soaks incoming wounds first).
+   *  Persists for the battle — unlike status flags it survives turn resets. */
+  | { type: 'SetAllocation'; unitId: string; allocation: 'shields_first' | 'bodies_first' }
   // ── Abilities / Orders / Stratagems (Phase 3) ─────────────────────────────────
   /** Issue an Order to a unit: applies an effect (from core/effects.ts) until end of turn. */
   | { type: 'IssueOrder'; unitId: string; effectId: string }
@@ -477,6 +480,13 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         units: state.units.map((u) =>
           u.id === intent.unitId ? { ...u, status: { ...u.status, ...intent.status } } : u,
         ),
+      };
+
+    case 'SetAllocation':
+      return {
+        ...state,
+        units: state.units.map((u) => (u.id === intent.unitId ? { ...u, allocation: intent.allocation } : u)),
+        log: [...state.log, `Casualty allocation for ${intent.unitId}: ${intent.allocation === 'bodies_first' ? 'regular models first (preserve wargear bearers)' : 'wargear bearers soak first'}`],
       };
 
     case 'Attack': {

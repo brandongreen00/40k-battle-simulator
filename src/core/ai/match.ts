@@ -10,7 +10,7 @@ import { createInitialState, reduce, type Intent } from '../state';
 import { makeRNG } from '../rng';
 import type { EngineContext } from '../engine';
 import { aiAction, sharedAction, whoActs } from './controller';
-import { aiReactionToPhaseEnd, aiReactionToShooting } from './react';
+import { aiReactionToFight, aiReactionToPhaseEnd, aiReactionToShooting } from './react';
 import { resolveProfile, type AiProfile } from './profile';
 import type { AiDeps } from './types';
 import type { Datasheet } from '../types';
@@ -118,6 +118,18 @@ export function runMatch(cfg: MatchConfig, data: MatchData): MatchResult {
     }
     state = reduce(state, intent, rng, data.ctx);
     intentCount++;
+    // Counteroffensive window: just AFTER an enemy unit resolves its Fight attacks.
+    if (intent.type === 'FightUnit') {
+      const attacker = state.units.find((u) => u.id === intent.attackerUnitId);
+      if (attacker) {
+        const defender: Side = attacker.owner === 'player' ? 'ai' : 'player';
+        for (const r of aiReactionToFight(state, defender, profiles[defender], deps)) {
+          if (r.skipIf?.(state)) continue;
+          state = reduce(state, r.intent, rng, data.ctx);
+          intentCount++;
+        }
+      }
+    }
     cfg.observe?.(state);
   };
 

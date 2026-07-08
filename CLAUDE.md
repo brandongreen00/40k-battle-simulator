@@ -330,6 +330,44 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-07-08] — COMBAT UX (incoming fire + defender allocation + shot tracers) and the
+  remaining edge-case sweep.** The owner asked for (a) the outstanding edge cases and (b) visible
+  shooting — an animation between shooter and target, and the ability to choose who soaks the
+  damage (e.g. 4++ shield-bearers first). All gates green: `pnpm typecheck`, `pnpm test`
+  (**423 tests**, +3 suites: allocation/reactions + extended gamepanel), `pnpm build`; sims still
+  end with ZERO rejected intents; a Playwright drive of the REAL app passed **10/10 checks**
+  (deployment → battle → incoming-fire pause → allocation → resolve → tracer → auto-play resumes,
+  zero console errors).
+
+  **Incoming fire (the headline).** When an AI seat's `ShootUnit` targets a HUMAN-owned unit, the
+  volley is HELD before the dice roll: auto-play pauses and a pulsing "🎯 Incoming fire!" panel
+  shows the attacker, the full fire plan, defensive-stratagem buttons (Go to Ground/Smokescreen,
+  1 CP), and the casualty-allocation choice. The board draws targeting rings + the firing line
+  while held. Allocation is a persistent per-unit preference (`UnitInstance.allocation`, new
+  `SetAllocation` intent — survives turn resets): 'shields_first' (default — defensive-wargear
+  bearers soak, their invuln takes the brunt) or 'bodies_first' (preserve the bearers).
+  `casualtyOrder` honours it; the 11e allocation groups follow. Race guarded: advancing the phase
+  past a held volley auto-resolves it FIRST in its own phase (synchronous `incomingRef`).
+  **Shot tracers.** Every ShootUnit / FireOverwatch / ThrowExplosives dispatch pushes an animated
+  SVG tracer (streak racing the firing line, muzzle flash, expanding impact ring; overwatch amber,
+  explosives orange) that self-expires — AI fire is now visible at a glance.
+  **Edge cases closed:** passenger badges (🧍N on loaded transports, tooltip lists the embarked
+  units); per-weapon split-target selects in the Shooting panel (wired to ShootUnit.splitTargets,
+  jsdom-tested); AI now plays **Rapid Ingress** (saves reserves that would die to 20.03 at the end
+  of the opponent's round-3 Movement), **Counteroffensive** (new `aiReactionToFight` window after
+  an enemy FightUnit — pays 2 CP when an un-fought enemy would wreck our engaged unit and our
+  swing matters; threshold = half reactThreshold), **Epic Challenge** (character vs a squad hiding
+  a character); Firing-Deck transports keep passengers until round 3 unless within 9" of an
+  objective (the Stormlord shoots its deck). Also: favicon added (killed the 404 console error).
+  **Deliberately NOT done (unchanged simplifications):** the strict whole-phase
+  pile-in/consolidate step timing (per-activation stays, documented); multi-detachment armies
+  (the 11e 1-DP detachments aren't in the 10e data, so there is nothing to combine yet); surge
+  ability bindings (no owned-faction ability grants surge in the current data).
+  **Known nits:** the incoming-fire pause covers AI `ShootUnit` (the common case); AI Fire
+  Overwatch volleys resolve inside the dispatch reactive window and are NOT paused (the tracer +
+  log still show them); the dice log's 40-line window can scroll the allocation line out of view
+  after a fat volley.
+
 - **[2026-07-04] — 11e GAPS CLOSED. The owner asked to "research and implement the gaps" from the
   11e overhaul — all nine documented gaps are now implemented (or researched and ruled out), in
   seven commits.** All gates green: `pnpm typecheck`, `pnpm test` (**416 tests**, +63 across 7 new

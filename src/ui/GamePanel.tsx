@@ -65,6 +65,8 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
   const [stratSide, setStratSide] = useState<Side>(state.activePlayer);
   const [chargeTargetIds, setChargeTargetIds] = useState<string[]>([]);
   const [chargeReroll, setChargeReroll] = useState(false);
+  // Per-weapon target splits (04.02): weapon key → target unit id; cleared when the volley fires.
+  const [splitSel, setSplitSel] = useState<Record<string, string>>({});
 
   const ctx: EngineContext = useMemo(() => ({ datasheets: datasheetsById }), [datasheetsById]);
   // Only the ACTIVE player's open activations belong to this panel — an opponent's unit left
@@ -525,7 +527,7 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
       <h3>Resolve combat</h3>
       <label className="field">
         <span>Attacker {combatPhase ? `(${eligibleAttackers.length} eligible)` : ''}</span>
-        <select value={attackerId} onChange={(e) => { setAttackerId(e.target.value); setWeaponSel(''); setTargetId(''); setChargeTargetIds([]); }}>
+        <select value={attackerId} onChange={(e) => { setAttackerId(e.target.value); setWeaponSel(''); setTargetId(''); setChargeTargetIds([]); setSplitSel({}); }}>
           <option value="">{attackerOptions.length === 0 && combatPhase ? '— no eligible units —' : '— pick a unit —'}</option>
           {attackerOptions.map((u) => (
             <option key={u.id} value={u.id}>{nameOf(u.id)} ({u.owner}, ×{aliveOf(u.id)})</option>
@@ -553,17 +555,44 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
       )}
       {phase === 'Shooting' && attacker && firePlan && (
         <div className="fire-plan">
-          <span className="muted">Will fire ({firePlan.fire.length} weapon{firePlan.fire.length === 1 ? '' : 's'}, resolved sequentially):</span>
+          <span className="muted">
+            Will fire ({firePlan.fire.length} weapon{firePlan.fire.length === 1 ? '' : 's'}, resolved sequentially
+            {validTargets.length > 1 ? ' — each weapon may pick its own target' : ''}):
+          </span>
           {firePlan.fire.length === 0 ? (
             <p className="coh-bad">No ranged weapons can fire.</p>
           ) : (
             <ul>
-              {firePlan.fire.map((w) => (
-                <li key={`${w.sourceDsId}|${w.weapon.name}`}>
-                  {w.carriers}× {w.weapon.name} ({w.weapon.range}", A{w.weapon.attacks})
-                  {w.sourceDsId !== attacker.datasheetId ? ` — ${datasheetsById.get(w.sourceDsId)?.name ?? w.sourceDsId}` : ''}
-                </li>
-              ))}
+              {firePlan.fire.map((w) => {
+                const key = `${w.sourceDsId}|${w.weapon.name}`;
+                return (
+                  <li key={key}>
+                    {w.carriers}× {w.weapon.name} ({w.weapon.range}", A{w.weapon.attacks})
+                    {w.sourceDsId !== attacker.datasheetId && !w.viaFiringDeck ? ` — ${datasheetsById.get(w.sourceDsId)?.name ?? w.sourceDsId}` : ''}
+                    {w.viaFiringDeck ? ' — Firing Deck' : ''}
+                    {/* Per-weapon target split (04.02): defaults to the main target below. */}
+                    {validTargets.length > 1 && (
+                      <select
+                        value={splitSel[key] ?? ''}
+                        onChange={(e) =>
+                          setSplitSel((prev) => {
+                            const next = { ...prev };
+                            if (e.target.value) next[key] = e.target.value;
+                            else delete next[key];
+                            return next;
+                          })
+                        }
+                        title="Send this weapon at a different target than the rest of the unit"
+                      >
+                        <option value="">→ main target</option>
+                        {validTargets.map((t) => (
+                          <option key={t.id} value={t.id}>→ {nameOf(t.id)}</option>
+                        ))}
+                      </select>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
           {firePlan.notes.map((n, i) => <p key={i} className="hint">{n}</p>)}
@@ -620,7 +649,16 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
           <button
             className="primary"
             disabled={!attackerId || !targetId || !firePlan || firePlan.fire.length === 0}
-            onClick={() => dispatch({ type: 'ShootUnit', attackerUnitId: attackerId, targetUnitId: targetId })}
+            onClick={() => {
+              const splitTargets = Object.fromEntries(
+                Object.entries(splitSel).filter(([, v]) => v && v !== targetId),
+              );
+              dispatch({
+                type: 'ShootUnit', attackerUnitId: attackerId, targetUnitId: targetId,
+                ...(Object.keys(splitTargets).length ? { splitTargets } : {}),
+              });
+              setSplitSel({});
+            }}
           >
             🔫 Shoot — all weapons
           </button>

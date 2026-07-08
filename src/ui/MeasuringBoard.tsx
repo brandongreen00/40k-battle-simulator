@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { BaseShape, Datasheet, Roster, RosterUnit, Side, Vec2 } from '../core/types';
+import type { BaseShape, Datasheet, GameState, Roster, RosterUnit, Side, Vec2 } from '../core/types';
 import { reduce, createInitialState, type Intent } from '../core/state';
 import { makeRNG } from '../core/rng';
 import { nextFormation, type Formation } from '../core/formation';
@@ -8,13 +8,15 @@ import { anyOverlap, occupiedBases, unitOverlaps } from '../core/collision';
 import { unitCoherency, unitCentroid } from '../core/phases';
 import { gapBetweenBases } from '../core/geometry';
 import { canEmbark } from '../core/transport';
+import { planUnitShooting } from '../core/engine';
+import { defensiveProfileForItem } from '../core/wargear';
 import {
-  aiAction, aiMayAct, aiReactionToPhaseEnd, aiReactionToShooting, resolveProfile, sharedAction, whoActs, type AiDeps,
+  aiAction, aiMayAct, aiReactionToFight, aiReactionToPhaseEnd, aiReactionToShooting, resolveProfile, sharedAction, whoActs, type AiDeps,
 } from '../core/ai/controller';
 import { formationForBodyguard, isPairedLeader, pairDeployAbility } from '../core/ai/deploy';
 import { dataIndex, datasheetsById, deployAbilityForDatasheet, getDatasheet, layouts, layoutsForPairing, rosters, stratagems } from '../data/loaders';
 import { DISPOSITIONS, MISSION_MATRIX, MISSION_NAMES, type DispositionId } from '../core/missions11';
-import { Board, type Placement, type MovementUI } from './Board';
+import { Board, type Placement, type MovementUI, type ShotFx } from './Board';
 import { GamePanel } from './GamePanel';
 import { DeploymentPanel, effectiveSide } from './DeploymentPanel';
 import { AiBar, type AiSeats } from './AiBar';
@@ -71,8 +73,39 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
   const aiSeatsRef = useRef(aiSeats);
   aiSeatsRef.current = aiSeats;
   const aiDepsRef = useRef<AiDeps | null>(null);
+  /** Push a shot tracer between two units' closest models (positions read pre-resolution). */
+  const pushShotFx = useCallback((cur: GameState, attackerId: string, targetId: string, kind: ShotFx['kind']) => {
+    const att = cur.units.find((u) => u.id === attackerId && !u.inReserves);
+    const tgt = cur.units.find((u) => u.id === targetId && !u.inReserves);
+    if (!att || !tgt) return;
+    let best = Infinity;
+    let from: Vec2 | null = null;
+    let to: Vec2 | null = null;
+    for (const am of att.models) {
+      if (!am.alive) continue;
+      for (const tm of tgt.models) {
+        if (!tm.alive) continue;
+        const d = Math.hypot(am.pos.x - tm.pos.x, am.pos.y - tm.pos.y);
+        if (d < best) { best = d; from = am.pos; to = tm.pos; }
+      }
+    }
+    if (!from || !to) return;
+    const id = ++fxSeq.current;
+    setFx((f) => [...f, { id, from: from!, to: to!, kind }]);
+    setTimeout(() => setFx((f) => f.filter((x) => x.id !== id)), 1300);
+  }, []);
+
   const dispatch = useCallback((i: Intent) => {
+    // Moving the game on past a held incoming volley resolves it first with the default
+    // allocation — the shot must land in ITS phase, not whichever one the click reaches.
+    if (incomingRef.current && (i.type === 'AdvancePhase' || i.type === 'RunCommandPhase')) {
+      resolveIncomingRef.current();
+    }
     let cur = stateRef.current;
+    // Combat flair: a tracer + impact flash whenever a ranged volley resolves (human or AI).
+    if (i.type === 'ShootUnit') pushShotFx(cur, i.attackerUnitId, i.targetUnitId, 'shoot');
+    else if (i.type === 'FireOverwatch') pushShotFx(cur, i.unitId, i.targetUnitId, 'overwatch');
+    else if (i.type === 'ThrowExplosives') pushShotFx(cur, i.unitId, i.targetUnitId, 'explosives');
     // Reactive window (architecture rule #3): before a unit shoots, an AI-controlled defender may
     // answer with a defensive stratagem — exactly as the headless match runner does.
     if (i.type === 'ShootUnit' && aiDepsRef.current) {
@@ -101,10 +134,23 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
         }
       }
     }
-    const next = reduce(cur, i, rng, { datasheets: datasheetsById });
+    let next = reduce(cur, i, rng, { datasheets: datasheetsById });
+    // Counteroffensive window: just AFTER an enemy unit resolves its Fight attacks, an
+    // AI-controlled defender may pay 2 CP to fight next.
+    if (i.type === 'FightUnit' && aiDepsRef.current) {
+      const attacker = next.units.find((u) => u.id === i.attackerUnitId);
+      const defender: Side | undefined = attacker ? (attacker.owner === 'player' ? 'ai' : 'player') : undefined;
+      const seat = defender ? aiSeatsRef.current[defender] : undefined;
+      if (defender && seat?.enabled) {
+        for (const r of aiReactionToFight(next, defender, resolveProfile(seat.profile), aiDepsRef.current)) {
+          if (r.skipIf?.(next)) continue;
+          next = reduce(next, r.intent, rng, { datasheets: datasheetsById });
+        }
+      }
+    }
     stateRef.current = next;
     setState(next);
-  }, []);
+  }, [pushShotFx]);
   const layout = state.layout;
   const inSetup = state.stage === 'setup';
   const inMatch = state.mode === 'match';
@@ -168,6 +214,26 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
   // Attacker/target picked in the game panel — highlighted on the board (rings + firing line).
   const [targeting, setTargeting] = useState<{ attackerUnitId?: string; targetUnitId?: string }>({});
   const spawnCount = useRef(0);
+  // Transient shot tracers/impacts on the board (auto-expire).
+  const [fx, setFx] = useState<ShotFx[]>([]);
+  const fxSeq = useRef(0);
+  // An AI volley aimed at a HUMAN-owned unit is held here so the defender can choose casualty
+  // allocation (and reactive stratagems) before the dice roll. Auto-play pauses while set.
+  type HeldVolley = {
+    intent: Intent & { type: 'ShootUnit' | 'FireOverwatch' };
+    rest: { intent: Intent; skipIf?: (s: GameState) => boolean }[];
+    note: string;
+  };
+  const [incoming, setIncomingState] = useState<HeldVolley | null>(null);
+  // The ref is the synchronous source of truth (dispatch/resolve run outside the render cycle).
+  const incomingRef = useRef<HeldVolley | null>(null);
+  const setIncoming = useCallback((v: HeldVolley | null) => {
+    incomingRef.current = v;
+    setIncomingState(v);
+  }, []);
+  // resolveIncoming is defined after dispatch (it dispatches) but dispatch needs to trigger it
+  // when the human advances the phase past a held volley — bridge with a ref.
+  const resolveIncomingRef = useRef<(allocation?: 'shields_first' | 'bodies_first') => void>(() => {});
 
   const rosterFor = (side: Side): Roster | undefined => allRosters.find((r) => r.name === rosterNameBySide[side]);
   const setRosterName = (side: Side, name: string) => setRosterNameBySide((m) => ({ ...m, [side]: name }));
@@ -187,27 +253,66 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
   );
   aiDepsRef.current = aiDeps;
 
-  /** Take one AI action if the game is waiting on an AI seat. Returns true when something ran. */
+  /** Take one AI action if the game is waiting on an AI seat. Returns true when something ran.
+   *  An AI volley aimed at a HUMAN-owned unit is intercepted: the intent is held in `incoming`
+   *  and the defender chooses casualty allocation (and reactions) before the dice roll. */
   const aiTick = useCallback((): boolean => {
     const cur = stateRef.current;
     if (cur.mode !== 'match') return false; // the AI plays matches, never the free sandbox
+    if (incomingRef.current) return false; // waiting on the defender's allocation choice
     const seats = aiSeatsRef.current;
     const actor = aiMayAct(whoActs(cur, aiDeps), { player: seats.player.enabled, ai: seats.ai.enabled });
     if (!actor) return false;
     const action = actor === 'shared' ? sharedAction(cur) : aiAction(cur, actor, seats[actor].profile, aiDeps);
     if (!action || action.intents.length === 0) return false;
-    for (const item of action.intents) {
+    for (let i = 0; i < action.intents.length; i++) {
+      const item = action.intents[i]!;
       if (item.skipIf?.(stateRef.current)) continue;
-      dispatch(item.intent);
+      const it = item.intent;
+      if (it.type === 'ShootUnit') {
+        const target = stateRef.current.units.find((u) => u.id === it.targetUnitId);
+        if (target && !aiSeatsRef.current[target.owner].enabled && target.models.some((m) => m.alive)) {
+          setIncoming({ intent: it, rest: action.intents.slice(i + 1), note: action.note });
+          setAiNote('⚠ Incoming fire — choose your casualty allocation');
+          return true;
+        }
+      }
+      dispatch(it);
     }
     setAiNote(action.note);
     return true;
   }, [aiDeps, dispatch]);
 
+  /** The defender confirmed: apply the allocation choice, then let the held volley resolve
+   *  (plus whatever followed it in the AI's batch). */
+  const resolveIncoming = useCallback((allocation?: 'shields_first' | 'bodies_first') => {
+    const held = incomingRef.current;
+    if (!held) return;
+    setIncoming(null); // clears the ref synchronously — dispatch below cannot re-enter here
+    const cur = stateRef.current;
+    const targetId = held.intent.type === 'ShootUnit' ? held.intent.targetUnitId : held.intent.targetUnitId;
+    const target = cur.units.find((u) => u.id === targetId);
+    if (allocation && target && target.allocation !== allocation) {
+      dispatch({ type: 'SetAllocation', unitId: targetId, allocation });
+    }
+    const attackerId = held.intent.type === 'ShootUnit' ? held.intent.attackerUnitId : held.intent.unitId;
+    const attacker = stateRef.current.units.find((u) => u.id === attackerId);
+    if (attacker?.models.some((m) => m.alive) && target?.models.some((m) => m.alive)) {
+      dispatch(held.intent);
+    }
+    for (const item of held.rest) {
+      if (item.skipIf?.(stateRef.current)) continue;
+      dispatch(item.intent);
+    }
+  }, [dispatch, setIncoming]);
+  resolveIncomingRef.current = resolveIncoming;
+
   // Whether the game is currently waiting on an AI seat (drives auto-play and the Step button).
+  // A held incoming volley pauses auto-play until the defender resolves it.
   const aiCanAct =
     state.mode === 'match' &&
     !placing &&
+    !incoming &&
     aiMayAct(whoActs(state, aiDeps), { player: aiSeats.player.enabled, ai: aiSeats.ai.enabled }) !== null;
 
   // Auto-play: whenever the game waits on an AI seat, take the next action after a short beat
@@ -225,6 +330,15 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
   useEffect(() => {
     if (placing?.entryKey && aiSeats[placing.side].enabled) setPlacing(null);
   }, [placing, aiSeats]);
+
+  // A held incoming volley only makes sense mid-match; drop it if the game resets — and resolve
+  // it automatically if the defender's seat flips to AI (no human left to choose).
+  useEffect(() => {
+    if (!incoming) return;
+    if (state.mode !== 'match') { setIncoming(null); return; }
+    const target = state.units.find((u) => u.id === incoming.intent.targetUnitId);
+    if (!target || aiSeats[target.owner].enabled) resolveIncoming();
+  }, [incoming, state.mode, aiSeats, resolveIncoming, state.units]);
 
   // Deployment entries per side, and which are already on the board / in reserves.
   const entriesFor = (side: Side): DeployEntry[] => {
@@ -678,7 +792,17 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
           onPlacementCycle={() => setPlacing((p) => (p ? { ...p, formation: nextFormation(p.formation) } : p))}
           onPlacementCancel={() => setPlacing(null)}
           movement={movement}
-          targeting={inSetup ? null : targeting}
+          targeting={
+            incoming
+              ? {
+                  attackerUnitId: incoming.intent.type === 'ShootUnit' ? incoming.intent.attackerUnitId : incoming.intent.unitId,
+                  targetUnitId: incoming.intent.targetUnitId,
+                }
+              : inSetup
+                ? null
+                : targeting
+          }
+          fx={fx}
         />
       </main>
 
@@ -693,6 +817,15 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
           note={aiNote}
           active={inMatch}
         />
+        {incoming && (
+          <IncomingFirePanel
+            state={state}
+            held={incoming}
+            datasheetsById={datasheetsById}
+            onResolve={resolveIncoming}
+            dispatch={dispatch}
+          />
+        )}
         {inSetup ? (
           <DeploymentPanel
             state={state}
@@ -720,5 +853,83 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
         )}
       </aside>
     </div>
+  );
+}
+
+/**
+ * "Incoming fire!" — an AI volley aimed at one of YOUR units, held before the dice roll so you
+ * choose how to take it: casualty allocation (shield-bearers soak first vs. spread to the
+ * regular bodies) and reactive defensive stratagems (Go to Ground / Smokescreen). The tracer
+ * on the board shows who is shooting whom; Resolve rolls the dice.
+ */
+function IncomingFirePanel({
+  state, held, datasheetsById, onResolve, dispatch,
+}: {
+  state: GameState;
+  held: { intent: Intent & { type: 'ShootUnit' | 'FireOverwatch' }; note: string };
+  datasheetsById: Map<string, Datasheet>;
+  onResolve: (allocation?: 'shields_first' | 'bodies_first') => void;
+  dispatch: (i: Intent) => void;
+}) {
+  const attackerId = held.intent.type === 'ShootUnit' ? held.intent.attackerUnitId : held.intent.unitId;
+  const attacker = state.units.find((u) => u.id === attackerId);
+  const target = state.units.find((u) => u.id === held.intent.targetUnitId);
+  const [alloc, setAlloc] = useState<'shields_first' | 'bodies_first'>(target?.allocation ?? 'shields_first');
+  if (!attacker || !target) return null;
+  const name = (u: typeof attacker) => datasheetsById.get(u.datasheetId)?.name ?? u.id;
+  const plan = planUnitShooting(state, attacker, { datasheets: datasheetsById });
+  const gearBearers = target.models.filter(
+    (m) => m.alive && (m.wargear ?? []).some((item) => defensiveProfileForItem(item)),
+  ).length;
+  const side = target.owner;
+  const kw = (datasheetsById.get(target.datasheetId)?.keywords ?? []).map((k) => k.toUpperCase());
+  const stealthUp = target.status.activeEffects?.includes('stealth');
+  const canReact = state.cp[side] >= 1 && !stealthUp && (kw.includes('SMOKE') || kw.includes('INFANTRY'));
+  const reactName = kw.includes('SMOKE') ? 'Smokescreen' : 'Go to Ground';
+
+  return (
+    <section className="incoming-fire">
+      <h4>🎯 Incoming fire!</h4>
+      <p className="fire-plan">
+        <strong>{name(attacker)}</strong> is shooting <strong>{name(target)}</strong>
+        {held.intent.type === 'FireOverwatch' ? ' (Overwatch)' : ''}:
+      </p>
+      <div className="fire-plan">
+        {plan.fire.map((w, i) => (
+          <div key={i} className="muted">• {w.carriers}× {w.weapon.name}</div>
+        ))}
+      </div>
+      {gearBearers > 0 ? (
+        <div>
+          <p className="fire-plan"><strong>Allocate casualties:</strong> ({gearBearers} wargear bearer(s) alive)</p>
+          <label className="alloc">
+            <input type="radio" checked={alloc === 'shields_first'} onChange={() => setAlloc('shields_first')} />
+            {' '}Shield/wargear bearers soak first (their invuln takes the brunt)
+          </label>
+          <label className="alloc">
+            <input type="radio" checked={alloc === 'bodies_first'} onChange={() => setAlloc('bodies_first')} />
+            {' '}Regular models first (preserve the wargear bearers)
+          </label>
+        </div>
+      ) : (
+        <p className="muted">No defensive-wargear bearers in the target — casualties come from the back.</p>
+      )}
+      {canReact && (
+        <div className="btnrow">
+          <button
+            title={`Spend 1 CP: the unit gains Stealth (-1 to be hit) this phase`}
+            onClick={() => dispatch({ type: 'UseStratagem', name: reactName, side, cost: 1, targetUnitId: target.id, effectId: 'stealth' })}
+          >
+            🛡 {reactName} (1 CP)
+          </button>
+        </div>
+      )}
+      {stealthUp && <p className="muted">Stealth is up (-1 to be hit).</p>}
+      <div className="btnrow">
+        <button className="primary" onClick={() => onResolve(gearBearers > 0 ? alloc : undefined)}>
+          🎲 Resolve incoming fire
+        </button>
+      </div>
+    </section>
   );
 }

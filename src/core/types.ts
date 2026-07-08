@@ -268,6 +268,10 @@ export interface UnitInstance {
   /** Full wargear item→count map from the roster (e.g. {"Meltagun": 1, "Navis shotgun": 7}).
    *  Drives how many models fire a given weapon. Absent for units spawned without loadout data. */
   wargearCounts?: Record<string, number>;
+  /** Defender's casualty-allocation preference (persists; set by the owner):
+   *  'shields_first' (default) — defensive-wargear bearers (4++ shields…) soak wounds first;
+   *  'bodies_first' — regular models die first, preserving the wargear bearers for later. */
+  allocation?: 'shields_first' | 'bodies_first';
   /** Held in Reserves (Deep Strike / Strategic Reserves) — off the board until it arrives.
    *  Also true while embarked within a transport (see `embarkedIn`). */
   inReserves?: boolean;

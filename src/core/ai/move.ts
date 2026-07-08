@@ -18,6 +18,7 @@ import { formationPositions } from '../formation';
 import { gapBetweenBases, dist, baseRadius } from '../geometry';
 import { objectiveControl } from '../engine';
 import { unitScoutDistance } from '../abilities';
+import { firingDeckX } from '../transport';
 import { secondaryPositionBonus } from '../secondaries';
 import { missionPositionBonus } from './missionplay';
 import { shootingEV, unitThreat, unitValue, unitGap, unitOC, maxWeaponRange, meleeEV } from './evaluate';
@@ -428,6 +429,18 @@ export function aiMovementAction(state: GameState, side: Side, profile: AiProfil
       const transport = state.units.find((t) => t.id === u.embarkedIn);
       if (!transport || transport.inReserves || !transport.models.some((m) => m.alive)) continue;
       if (transport.status.advanced || transport.status.fellBack) continue;
+      // A Firing Deck platform keeps its passengers an extra round — they shoot from the deck
+      // (24.14) instead of hopping out. They still disembark early to grab a nearby objective.
+      if (firingDeckX(ctx.datasheets.get(transport.datasheetId)) > 0 && state.round < 3) {
+        const tAlive = transport.models.filter((m) => m.alive);
+        const tc = {
+          x: tAlive.reduce((s, m) => s + m.pos.x, 0) / tAlive.length,
+          y: tAlive.reduce((s, m) => s + m.pos.y, 0) / tAlive.length,
+        };
+        const objs = state.layout.objectivePoints?.map((o) => o.pos) ?? state.layout.objectives;
+        const nearObjective = objs.some((o) => dist(tc, o) <= 9);
+        if (!nearObjective) continue;
+      }
       const anchor = findDisembarkAnchor(state, u, transport, deps);
       if (!anchor) continue;
       const unitId = u.id;

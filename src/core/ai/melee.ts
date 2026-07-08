@@ -131,6 +131,22 @@ export function aiFightAction(state: GameState, side: Side, profile: AiProfile, 
   const hasMelee = availableUnitWeapons(unit, ctx).some((w) => w.weapon.type === 'melee');
   if (target && hasMelee) {
     const targetId = target.id;
+    // Epic Challenge (15.03): when our CHARACTER fights a unit that is hiding a CHARACTER inside
+    // a squad, 1 CP of [PRECISION] lets the melee wounds go straight for that character.
+    const isChar = (dsId: string) => ctx.datasheets.get(dsId)?.keywords.some((k) => k.toLowerCase() === 'character');
+    const weAreCharacter = isChar(unit.datasheetId) || (unit.attachedLeaders ?? []).some((l) => isChar(l.datasheetId));
+    const targetHidesCharacter =
+      target.models.filter((m) => m.alive).length > 1 &&
+      target.models.some((m) => m.alive && m.datasheetId && m.datasheetId !== target.datasheetId && isChar(m.datasheetId));
+    const alreadyGranted = state.units.some(
+      (u) => u.owner === side && u.status.activeEffects?.includes('precision_melee'),
+    );
+    if (weAreCharacter && targetHidesCharacter && !alreadyGranted && state.cp[side] >= 2) {
+      intents.push({
+        intent: { type: 'UseStratagem', name: 'Epic Challenge', side, cost: 1, targetUnitId: unitId, effectId: 'precision_melee' },
+        skipIf: (s) => s.cp[side] < 1,
+      });
+    }
     // The target may die to overwatch/abilities, or the pile-in may not reach — stand down silently.
     const cannotHit = (s: GameState): boolean => {
       const me = s.units.find((x) => x.id === unitId);

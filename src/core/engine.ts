@@ -197,22 +197,27 @@ function defenderProfileFor(unit: UnitInstance, ctx: EngineContext, ordered?: Mo
 }
 
 /**
- * The order casualties are allocated in (10e: the owner removes models, normally keeping the unit
- * coherent and pulling from the back). Defensive-wargear bearers still soak first (they carry the
- * best save — the existing allocate→save behaviour); within each pool, models furthest from the
- * attacker die first, skipping any model whose removal would split the survivors apart.
+ * The order casualties are allocated in (the owner removes models, normally keeping the unit
+ * coherent and pulling from the back). The unit's `allocation` preference decides who soaks:
+ *  • 'shields_first' (default): defensive-wargear bearers first — they carry the best save
+ *    (the classic "my 4++ shield-bearers take the brunt" play);
+ *  • 'bodies_first': regular models first, preserving the wargear bearers for a later volley.
+ * Within each pool, models furthest from the attacker die first, skipping any model whose
+ * removal would split the survivors apart.
  */
 function casualtyOrder(target: UnitInstance, ctx: EngineContext, attackerCentroid: Vec2): ModelInstance[] {
   const shape = ctx.datasheets.get(target.datasheetId)?.baseShape ?? { kind: 'circle' as const, radius: 0.63 };
   const hasDefensiveGear = (m: ModelInstance) =>
     (m.wargear ?? []).some((item) => defensiveProfileForItem(item));
   const dist = (m: ModelInstance) => Math.hypot(m.pos.x - attackerCentroid.x, m.pos.y - attackerCentroid.y);
+  const preferGear = target.allocation !== 'bodies_first';
 
   const remaining = target.models.filter((m) => m.alive);
   const order: ModelInstance[] = [];
   while (remaining.length > 0) {
-    // Candidates: defensive-gear bearers while any remain, then the rest; furthest first.
-    const pool = remaining.some(hasDefensiveGear) ? remaining.filter(hasDefensiveGear) : remaining;
+    // Candidates: the preferred pool while any of it remains, then the rest; furthest first.
+    const preferred = remaining.filter((m) => hasDefensiveGear(m) === preferGear);
+    const pool = preferred.length > 0 ? preferred : remaining;
     const sorted = [...pool].sort((a, b) => dist(b) - dist(a));
     const pick =
       sorted.find((m) => {
