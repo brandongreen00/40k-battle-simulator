@@ -169,12 +169,18 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
       {setup.attacker && setup.step === 'deploy' && (
         <div className="dep-step">
           <h3>2 · Deploy units</h3>
-          <p className="muted">
-            Now placing:{' '}
-            <strong style={{ color: OWNER_COLOR[effectiveSide(setup, remaining)].fill }}>{effectiveSide(setup, remaining)}</strong>
-            {' '}· remaining — player {remaining.player}, ai {remaining.ai}
-          </p>
-          <p className="hint">Pick a unit on the left, drop it inside your zone (Infiltrators may deploy in no-man's-land). Use “Reserves” for Deep Strike.</p>
+          {remaining.player + remaining.ai === 0 ? (
+            <p className="muted">✓ All units placed — attach Leaders below if you want, then finish deploying.</p>
+          ) : (
+            <>
+              <p className="muted">
+                Now placing:{' '}
+                <strong style={{ color: OWNER_COLOR[effectiveSide(setup, remaining)].fill }}>{effectiveSide(setup, remaining)}</strong>
+                {' '}· remaining — player {remaining.player}, ai {remaining.ai}
+              </p>
+              <p className="hint">Pick a unit on the left, drop it inside your zone (Infiltrators may deploy in no-man's-land). Use “Reserves” for Deep Strike.</p>
+            </>
+          )}
 
           {/* Secondary Missions choice (secret, pre-battle): Tactical (draw) or two Fixed cards. */}
           {state.secondaries && (

@@ -330,6 +330,45 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-07-09] — Inquisitors import + Purgation Force bindings, and the MOBILE game-start fix
+  ("I tried starting a game and it didn't feel good").** All gates green: `pnpm typecheck`,
+  `pnpm test` (**425 tests**), `pnpm build`; desktop Playwright suite still 10/10; a NEW
+  iPhone-13 touch walkthrough passes **15/15** (new battle → roll-off → touch deployment →
+  finish → first turn → battle → incoming-fire panel → allocation resolve, zero console errors,
+  zero horizontal overflow at every stage).
+  - **Inquisitors list imported** (`data/rosters/inquisitors.json`, source export in
+    `tools/rosters/imports/inquisitors.txt`): 985pts, 11 units, Ordo Hereticus Purgation Force.
+    The 11e app export format needed importer fixes: `normalizeDetachment` strips the
+    `(N Detachment Points)` suffix (the reported enhancement errors were this mismatch),
+    "Attached as:" bullets are skipped, and `Force Dispositions:` is captured →
+    `recommended.disposition/profile` on the roster.
+  - **Purgation Force stratagem bindings** (`stratagems.DETACHMENT_STRAT_EFFECTS`, applied by the
+    loader): Dispense Justice → granted [LETHAL HITS] (new `grantLethalHits` effect output),
+    Inviolate Jurisdiction → FNP 5+, Execution Order → granted [PRECISION], Stun Grenades →
+    -1 to hit on the enemy unit. Line of Fire / Exact Punishment stay text-only (targeting
+    carve-outs).
+  - **THE mobile bug — a deployment dead end.** Root cause (found by instrumenting the real app
+    under Playwright): once BOTH sides finish placing, `whoActs` waits on the human (leader
+    attaches / first-turn roll — all in the game panel), but the mobile flow left the user on the
+    "Deploy units" tab, whose sidebar `effectiveSide` fell back to `toDeploy` = the AI side and
+    rendered "Deploy · ai — 🤖 the computer controls this side" with NO actionable buttons. On
+    desktop both panels are visible so nobody noticed. Fixes: `deployDone` state (both sides'
+    remaining = 0) now (a) auto-flips the mobile tab to the game panel (`flowKey 'setupflow'` —
+    also covers the scouts step), (b) replaces the sidebar block with "✓ Deployment complete —
+    continue in the game panel", and (c) the DeploymentPanel's "Now placing: ai · remaining 0/0"
+    line becomes "✓ All units placed — attach Leaders below, then finish deploying".
+  - **Silent auto-play stall guard:** `aiTick` now mirrors the headless runner — if the AI seat
+    returns an EMPTY battle action, the UI dispatches `AdvancePhase` instead of silently doing
+    nothing (no dispatch → no state change → the auto-play effect never re-fires = permanent
+    wedge; the runner has had this forced-advance since Stage 5).
+  - **Mobile layout polish** (styles.css): the tab bar is sticky as part of the top stack (above
+    the board, below the nav), the board svg is capped at 40vh so panels stay reachable, and the
+    board wrap can't overflow the viewport.
+  - **Handoff:** the mobile walkthrough script lives in the session scratchpad (not committed) —
+    it drives: tab bar, roll-off, 3 touch placements, reserves, auto-tab follow, finish → battle,
+    incoming-fire panel visibility + 42px touch target + resolve. Known nits unchanged (sticky
+    board costs viewport on short phones; landscape gets the desktop layout).
+
 - **[2026-07-08] — COMBAT UX (incoming fire + defender allocation + shot tracers) and the
   remaining edge-case sweep.** The owner asked for (a) the outstanding edge cases and (b) visible
   shooting — an animation between shooter and target, and the ability to choose who soaks the
