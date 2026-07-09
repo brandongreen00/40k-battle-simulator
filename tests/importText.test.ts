@@ -7,6 +7,8 @@ import { normalizeExport } from '../tools/rosters/import-text';
 import { parseArmyText } from '../src/core/importer';
 import { validate, listPoints, toRoster } from '../src/core/army';
 import { dataIndex } from '../src/data/loaders';
+import { DISPOSITIONS } from '../src/core/missions11';
+import { profileForDisposition } from '../src/core/ai/profile';
 import type { Roster } from '../src/core/types';
 
 const root = join(__dirname, '..');
@@ -39,12 +41,15 @@ describe('imported owner lists', () => {
   const cases = [
     { txt: 'bane.txt', json: 'bane.json', name: 'Bane', units: 7, points: 985 },
     { txt: 'rogue_traders_army.txt', json: 'rogue_traders_army.json', name: 'Rogue Trader’s Army', units: 10, points: 985 },
+    // v2.0.5 (11e) export format: ATTACHED UNITS sections, "Attached as:" bullets, a detachment
+    // line with a DP suffix and comma variant, and a Force Dispositions line.
+    { txt: 'inquisitors.txt', json: 'inquisitors.json', name: 'Inquisitors', units: 11, points: 985 },
   ];
 
   for (const c of cases) {
     it(`${c.name}: parses with no warnings, is legal, and the committed JSON is in sync`, () => {
       const text = readFileSync(join(root, 'tools', 'rosters', 'imports', c.txt), 'utf-8');
-      const { list, warnings } = parseArmyText(normalizeExport(text), deps);
+      const { list, warnings, disposition } = parseArmyText(normalizeExport(text), deps);
       expect(warnings).toEqual([]);
       expect(list.name).toBe(c.name);
       expect(list.units).toHaveLength(c.units);
@@ -58,9 +63,32 @@ describe('imported owner lists', () => {
         readFileSync(join(root, 'data', 'rosters', c.json), 'utf-8'),
       ) as Roster;
       const note = `Imported from the 40k-app text export ${c.txt} via pnpm import:roster.`;
-      expect(onDisk).toEqual({ ...toRoster(list, dataIndex), note });
+      const dispId = disposition
+        ? DISPOSITIONS.find((d) => d.name.toLowerCase() === disposition.toLowerCase())?.id
+        : undefined;
+      expect(onDisk).toEqual({
+        ...toRoster(list, dataIndex),
+        ...(dispId ? { recommended: { disposition: dispId, profile: profileForDisposition(dispId) } } : {}),
+        note,
+      });
     });
   }
+
+  it('Inquisitors (11e export): detachment normalized, disposition captured, attachments not wargear', () => {
+    const text = readFileSync(join(root, 'tools', 'rosters', 'imports', 'inquisitors.txt'), 'utf-8');
+    const { list, disposition } = parseArmyText(normalizeExport(text), deps);
+    expect(list.detachment).toBe('Ordo Hereticus Purgation Force'); // comma + "(3 Detachment Points)" stripped
+    expect(disposition).toBe('Purge the Foe');
+    // "Attached as:" metadata bullets never end up in a loadout.
+    for (const u of list.units) {
+      expect(Object.keys(u.loadout ?? {}).some((k) => /attached as/i.test(k))).toBe(false);
+    }
+    // Both 11e "Enhancements:" (plural) lines resolved.
+    const enhNames = list.units
+      .map((u) => u.enhancementId && dataIndex.enhancements.get(u.enhancementId)?.name)
+      .filter(Boolean);
+    expect(enhNames.sort()).toEqual(['Ignis Judicium', 'Liber Heresius']);
+  });
 
   it('Bane carries the full per-model wargear through normalization (the glyphless lines)', () => {
     const onDisk = JSON.parse(

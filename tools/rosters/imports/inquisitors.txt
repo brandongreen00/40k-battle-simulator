@@ -1,0 +1,124 @@
+Inquisitors (990 Points)
+
+Imperial Agents
+Ordo Hereticus, Purgation Force (3 Detachment Points)
+Force Dispositions: Purge the Foe
+Incursion (1,000 Points)
+
+ATTACHED UNITS
+
+Attached unit 1
+
+Inquisitor Draxus (75 Points)
+  • Attached as: Leader (Character)
+  • 1x Dirgesinger
+  • 1x Power fist
+  • 1x Psychic Tempest
+
+Exaction Squad (90 Points)
+  • Attached as: Bodyguard ()
+  • 1x Proctor-Exactant
+     ◦ 1x Arbites combat shotgun
+     ◦ 1x Arbites shotpistol
+     ◦ 1x Close combat weapon
+  • 9x Exaction Vigilant
+     ◦ 1x Arbites Medi-kit
+     ◦ 7x Arbites combat shotgun
+     ◦ 1x Arbites grenade launcher
+     ◦ 9x Arbites shotpistol
+     ◦ 9x Close combat weapon
+     ◦ 1x Excruciator maul
+     ◦ 1x Heavy stubber
+     ◦ 1x Soulguilt Scanner
+  • 1x Cyber-mastiff
+     ◦ 1x Mechanical bite
+
+Attached unit 2
+
+Inquisitor Coteaz (75 Points)
+  • Attached as: Leader (Character)
+  • 1x Bolt pistol
+  • 1x Glovodan Psyber‐eagle
+  • 1x Nemesis daemon hammer
+  • 1x Psychic Blast
+
+Grey Knights Terminator Squad (195 Points)
+  • Attached as: Bodyguard ()
+  • 1x Terminator Justicar
+     ◦ 1x Nemesis force weapon
+     ◦ 1x Storm bolter
+  • 4x Grey Knights Terminators
+     ◦ 1x Narthecium
+     ◦ 4x Nemesis force weapon
+     ◦ 1x Psycannon
+     ◦ 2x Storm bolter
+
+Attached unit 3
+
+Inquisitor (65 Points)
+  • Attached as: Leader (Character)
+  • 1x Bolt pistol
+  • 1x Force weapon
+  • 1x Psychic Gifts
+  • 1x Psychic Shock Wave
+  • Enhancements: Liber Heresius
+
+Ministorum Priest (50 Points)
+  • Attached as: Support (Character)
+  • 1x Zealot’s vindictor
+  • Enhancements: Ignis Judicium
+
+Inquisitorial Agents (100 Points)
+  • Attached as: Bodyguard ()
+  • 10x Inquisitorial Agent
+     ◦ 10x Agent firearm
+     ◦ 10x Agent melee weapon
+     ◦ 2x Eviscerator
+     ◦ 2x Mystic stave
+     ◦ 2x Plasma pistol
+  • 2x Gun Servitor
+     ◦ 2x Agent melee weapon
+     ◦ 2x Heavy bolter
+
+CHARACTERS
+
+Inquisitor Kroyle (100 Points)
+  • Warlord
+  • 1x Butcher blade
+  • 1x Garralisk’s claws and teeth
+  • 1x Jindarii tox‑cycler
+  • 1x Stubcarbine
+
+DEDICATED TRANSPORTS
+
+Inquisitorial Chimera (70 Points)
+  • 1x Armoured tracks
+  • 1x Heavy bolter
+  • 1x Heavy bolter
+  • 1x Heavy stubber
+  • 1x Hunter-killer missile
+  • 1x Lasgun array
+
+OTHER DATASHEETS
+
+Subductor Squad (85 Points)
+  • 1x Proctor-Subductor
+     ◦ 1x Arbites shotpistol
+     ◦ 1x Shock maul
+  • 9x Subductor
+     ◦ 9x Arbites shotpistol
+     ◦ 9x Shock maul
+  • 1x Cyber-mastiff
+     ◦ 1x Mechanical bite
+
+Subductor Squad (85 Points)
+  • 1x Proctor-Subductor
+     ◦ 1x Arbites shotpistol
+     ◦ 1x Shock maul
+  • 9x Subductor
+     ◦ 9x Arbites shotpistol
+     ◦ 9x Shock maul
+  • 1x Cyber-mastiff
+     ◦ 1x Mechanical bite
+
+Exported with App Version: v2.0.5 (2), Data Version: v886

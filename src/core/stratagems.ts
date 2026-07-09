@@ -42,6 +42,24 @@ export const CORE_STRATAGEMS: Stratagem[] = [
   { id: 'core:counter_offensive', name: 'Counteroffensive', cp: 2, phase: 'Fight phase', turn: 'opponent', text: 'After an enemy unit resolves its attacks in the Fight step: one of your eligible units gains Fights First and must be selected next.' },
 ];
 
+/**
+ * Curated effect bindings for detachment stratagems from the data, keyed by UPPERCASE name.
+ * The loader attaches these so "apply to target" works through the generic stratagem panel:
+ *  • Dispense Justice → the unit's weapons gain [LETHAL HITS] (target YOUR unit);
+ *  • Inviolate Jurisdiction → Feel No Pain 5+ (target YOUR unit under fire);
+ *  • Execution Order → [PRECISION] on the unit's weapons (target YOUR unit; the
+ *    "against one chosen CHARACTER" rider is the player's aim, not enforced);
+ *  • Stun Grenades → -1 to hit on the ENEMY unit's attacks (target the ENEMY unit; its
+ *    battle-shock test is rolled by the owner, not automated).
+ * Line of Fire / Exact Punishment are targeting carve-outs and stay text-only.
+ */
+export const DETACHMENT_STRAT_EFFECTS: Record<string, string> = {
+  'DISPENSE JUSTICE': 'lethal_hits_granted',
+  'INVIOLATE JURISDICTION': 'fnp_5',
+  'EXECUTION ORDER': 'precision_granted',
+  'STUN GRENADES': 'stunned',
+};
+
 /** Normalise the data export's turn string ("Either player’s turn" / "Your turn" / "Opponent’s turn"). */
 export function parseTurn(raw: string): StratTurn {
   const t = raw.toLowerCase();

@@ -402,8 +402,9 @@ export function resolveAttack(
   const mods = gatherAttackModifiers(abilityCtx, effectsOf(attacker, ctx), effectsOf(target, ctx));
 
   const cover = (forceCover || (!isMelee && unitCoverIn(aPts, target, state, ctx))) && !mods.ignoresCover;
-  // Epic Challenge (15.03) grants [PRECISION] to the bearer's melee weapons for the phase.
+  // Granted weapon abilities (Epic Challenge's [PRECISION], Dispense Justice's [LETHAL HITS]).
   if (mods.grantPrecision && !kw.precision) profile.keywords = { ...profile.keywords, precision: true };
+  if (mods.grantLethalHits && !kw.lethalHits) profile.keywords = { ...profile.keywords, lethalHits: true };
   // [PRECISION] (24.28): with a visible CHARACTER in the target unit, the attacker may promote
   // that CHARACTER's allocation group to current. The AI/engine always does when it can.
   const precisionActive =
