@@ -41,6 +41,7 @@ export interface EffectOutput {
   ignoresCover?: boolean;
   extraAttacks?: number; // +N to the Attacks characteristic, per firing model (e.g. First Rank Fire!)
   grantPrecision?: boolean; // the bearer's weapons gain [PRECISION] (Epic Challenge)
+  grantLethalHits?: boolean; // the bearer's weapons gain [LETHAL HITS] (Dispense Justice)
   // Defensive (the bearer is being attacked)
   toBeHitModifier?: number; // e.g. Stealth -1 (subtracts from the attacker's hit roll)
   damageReduction?: number; // e.g. -1 Damage
@@ -82,11 +83,17 @@ export const EFFECT_REGISTRY: Record<string, Effect> = {
   'reroll_hits_1': { id: 'reroll_hits_1', name: 'Re-roll Hit rolls of 1', side: 'attacker', output: { rerollHits: 'ones' } },
   'reroll_wounds_1': { id: 'reroll_wounds_1', name: 'Re-roll Wound rolls of 1', side: 'attacker', output: { rerollWounds: 'ones' } },
   'plus1_to_wound': { id: 'plus1_to_wound', name: '+1 to Wound', side: 'attacker', output: { woundModifier: 1 } },
-  'lethal_hits_granted': { id: 'lethal_hits_granted', name: 'Lethal Hits (granted)', side: 'attacker', output: { critHitOn: 6 } },
+  'lethal_hits_granted': { id: 'lethal_hits_granted', name: 'Lethal Hits (granted)', side: 'attacker', output: { grantLethalHits: true } },
   'sustained_hits_1_granted': { id: 'sustained_hits_1_granted', name: 'Sustained Hits 1 (granted)', side: 'attacker', output: { critHitOn: 6 } },
   'ignores_cover_granted': { id: 'ignores_cover_granted', name: 'Ignores Cover (granted)', side: 'attacker', output: { ignoresCover: true } },
   // Epic Challenge (15.03): the CHARACTER's melee weapons gain [PRECISION] for the phase.
   'precision_melee': { id: 'precision_melee', name: 'Epic Challenge ([PRECISION] melee)', side: 'attacker', appliesTo: melee, output: { grantPrecision: true } },
+  // Execution Order (Purgation Force): [PRECISION] on all the unit's weapons. Approximation:
+  // the "only against the chosen CHARACTER unit" rider is the player's/AI's aim, not enforced.
+  'precision_granted': { id: 'precision_granted', name: '[PRECISION] (granted)', side: 'attacker', output: { grantPrecision: true } },
+  // Stun Grenades (Purgation Force): applied to the ENEMY unit — its attacks take -1 to hit
+  // until the effect expires. (The battle-shock test half is rolled by the owner, not automated.)
+  'stunned': { id: 'stunned', name: 'Stunned (-1 to hit)', side: 'attacker', output: { hitModifier: -1 } },
   // Counteroffensive (15.12) grants Fights First — read by phases.hasFightsFirst, not the
   // attack pipeline; registered so the effect applicator can list/apply it.
   'fights_first_granted': { id: 'fights_first_granted', name: 'Fights First (granted)', side: 'attacker', output: {} },
@@ -126,6 +133,7 @@ export function gatherAttackModifiers(
   fnp?: number;
   invulnFloor?: number;
   grantPrecision: boolean;
+  grantLethalHits: boolean;
 } {
   const acc = {
     hitModifier: 0,
@@ -141,6 +149,7 @@ export function gatherAttackModifiers(
     fnp: undefined as number | undefined,
     invulnFloor: undefined as number | undefined,
     grantPrecision: false,
+    grantLethalHits: false,
   };
 
   const apply = (id: string, expectedSide: 'attacker' | 'defender') => {
@@ -162,6 +171,7 @@ export function gatherAttackModifiers(
     if (out.fnp != null) acc.fnp = Math.min(acc.fnp ?? 7, out.fnp);
     if (out.invulnFloor != null) acc.invulnFloor = Math.min(acc.invulnFloor ?? 7, out.invulnFloor);
     if (out.grantPrecision) acc.grantPrecision = true;
+    if (out.grantLethalHits) acc.grantLethalHits = true;
   };
 
   for (const id of attackerEffects) apply(id, 'attacker');

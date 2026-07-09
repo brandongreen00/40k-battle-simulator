@@ -4,7 +4,7 @@
 import type { Datasheet, Enhancement, Layout, Roster } from '../core/types';
 import type { DataIndex } from '../core/army';
 import { deployAbilityFromKeywords, type DeployAbility } from '../core/deployment';
-import { CORE_STRATAGEMS, parseTurn, type Stratagem } from '../core/stratagems';
+import { CORE_STRATAGEMS, DETACHMENT_STRAT_EFFECTS, parseTurn, type Stratagem } from '../core/stratagems';
 import datasheetsJson from '../../data/game/datasheets.json';
 import enhancementsJson from '../../data/game/enhancements.json';
 import abilitiesJson from '../../data/game/abilities.json';
@@ -57,6 +57,9 @@ const detachmentStratagems: Stratagem[] = stratRows.map((s) => ({
   faction: s.faction_id,
   type: s.type,
   text: (s.description ?? '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
+  ...(DETACHMENT_STRAT_EFFECTS[s.name.toUpperCase()]
+    ? { effectId: DETACHMENT_STRAT_EFFECTS[s.name.toUpperCase()]! }
+    : {}),
 }));
 
 /** Core stratagems + every detachment stratagem from the data. */

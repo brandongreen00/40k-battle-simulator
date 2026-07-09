@@ -157,11 +157,8 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
 
   // On phones the two side panels become tabs under the board ("Units & map" / "Game").
   // Auto-follow the flow: roll-off & battle → Game; deployment placement & sandbox → Units.
+  // (flowKey is derived below once the deployment bookkeeping exists; the effect lives with it.)
   const [mTab, setMTab] = useState<'tools' | 'game'>('tools');
-  const flowKey = inSetup ? (state.setup?.attacker ? 'deploy' : 'rolloff') : inMatch ? 'battle' : 'sandbox';
-  useEffect(() => {
-    setMTab(flowKey === 'rolloff' || flowKey === 'battle' ? 'game' : 'tools');
-  }, [flowKey]);
 
   // Group the layouts by deployment for the map picker (8 terrain layouts per deployment).
   const layoutGroups = useMemo(() => {
@@ -264,7 +261,16 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
     const actor = aiMayAct(whoActs(cur, aiDeps), { player: seats.player.enabled, ai: seats.ai.enabled });
     if (!actor) return false;
     const action = actor === 'shared' ? sharedAction(cur) : aiAction(cur, actor, seats[actor].profile, aiDeps);
-    if (!action || action.intents.length === 0) return false;
+    if (!action || action.intents.length === 0) {
+      // Mirror the headless runner: an empty battle-phase action would stall auto-play forever
+      // (no dispatch → no state change → the effect never re-fires), so advance the phase.
+      if (cur.stage === 'battle' && !cur.ended) {
+        dispatch({ type: 'AdvancePhase' });
+        setAiNote(`${actor}: nothing to do — phase advanced`);
+        return true;
+      }
+      return false;
+    }
     for (let i = 0; i < action.intents.length; i++) {
       const item = action.intents[i]!;
       if (item.skipIf?.(stateRef.current)) continue;
@@ -355,6 +361,24 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
     ai: entriesFor('ai').filter((e) => !isPlaced(e.key)).length,
   };
   const sideToPlace = inSetup && state.setup?.attacker ? effectiveSide(state.setup, remaining) : owner;
+  // Placement is finished once neither side has entries left — the next decisions (leader
+  // attaches, Warrant, first-turn roll, scout moves) all live in the Deployment/Game panel.
+  const deployDone = inSetup && !!state.setup?.attacker && remaining.player + remaining.ai === 0;
+
+  // Auto-follow the mobile tab: placement happens on the Units tab; everything else (roll-off,
+  // post-placement setup steps, the battle itself) is driven from the Game panel.
+  const flowKey = inSetup
+    ? !state.setup?.attacker
+      ? 'rolloff'
+      : state.setup?.step !== 'deploy' || deployDone
+        ? 'setupflow'
+        : 'deploy'
+    : inMatch
+      ? 'battle'
+      : 'sandbox';
+  useEffect(() => {
+    setMTab(flowKey === 'deploy' || flowKey === 'sandbox' ? 'tools' : 'game');
+  }, [flowKey]);
 
   if (!layout) return <div className="app-shell">No layout found in data/layouts.</div>;
 
@@ -646,10 +670,12 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
         {/* Units to place */}
         {inSetup && state.setup?.attacker ? (
           <section>
-            <h2>Deploy · <span style={{ color: OWNER_COLOR[sideToPlace].fill }}>{sideToPlace}</span></h2>
-            {aiSeats[sideToPlace].enabled && (
+            <h2>{deployDone ? 'Deployment complete' : <>Deploy · <span style={{ color: OWNER_COLOR[sideToPlace].fill }}>{sideToPlace}</span></>}</h2>
+            {deployDone ? (
+              <p className="hint">✓ Every unit is placed or in Reserves — continue in the game panel (attach Leaders, roll for first turn).</p>
+            ) : aiSeats[sideToPlace].enabled ? (
               <p className="hint">🤖 The computer controls this side and deploys by itself{aiAuto ? '' : ' — auto-play is off, use Step in the Players bar'}. Switch the seat to Human there to place these units yourself.</p>
-            )}
+            ) : null}
             <ul className="unit-list">
               {entriesFor(sideToPlace).map((e) => {
                 const placed = isPlaced(e.key);

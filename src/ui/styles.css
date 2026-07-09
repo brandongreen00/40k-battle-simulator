@@ -1204,23 +1204,44 @@ body {
     font-weight: 700;
   }
 
-  /* ── Measuring board: board pinned on top, one panel below (tab-switched) ── */
+  /* ── Measuring board: tabs + board pinned on top, one panel below (tab-switched) ── */
   .layout {
     flex-direction: column;
     min-height: 0;
   }
-  .layout .board-main {
+  /* The tab bar is part of the sticky stack (above the board) — scrolling a long panel must
+     never take the Units/Game switch off screen. --mtabsh keeps the board's sticky offset in
+     sync with the bar's real height (40px buttons + 8px×2 padding + 1px border). */
+  .layout .m-tabs {
     order: 1;
     position: sticky;
     top: var(--navh);
+    z-index: 6;
+    --mtabsh: 57px;
+  }
+  .layout .board-main {
+    order: 2;
+    position: sticky;
+    top: calc(var(--navh) + 57px);
     z-index: 5;
     background: var(--bg);
     padding: 8px;
     overflow: visible;
     border-bottom: 1px solid var(--line);
   }
-  .layout .m-tabs {
-    order: 2;
+  /* The 11e Event Companion maps are PORTRAIT (44"×60"): unconstrained, a vertical board fills
+     the whole phone screen and the sticky pin buries every panel underneath it. Cap the board's
+     height so the tabs + panels always keep real estate; pinch-zoom covers the detail work. */
+  .layout .board-main svg {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 40vh;
+    margin: 0 auto;
+  }
+  .layout .board-wrap {
+    max-width: 100%;
   }
   .layout .sidebar,
   .layout .gamerail {

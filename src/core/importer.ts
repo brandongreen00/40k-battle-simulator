@@ -24,6 +24,8 @@ import type { Loadout } from './wargear';
 export interface ImportResult {
   list: ArmyList;
   warnings: string[];
+  /** The Force Disposition named in an 11e app export ("Force Dispositions: Purge the Foe"). */
+  disposition?: string;
 }
 
 export interface ImportDeps {
@@ -66,6 +68,9 @@ function parseBullet(raw: string): Bullet | undefined {
   const depth = indent + (GLYPH_RANK[glyph] ?? 2);
 
   if (/^warlord$/i.test(body)) return { depth, text: 'Warlord', isWarlord: true };
+  // 11e app exports annotate attached units ("• Attached as: Leader (Character)") — metadata,
+  // not wargear. The importer derives attachments from the datasheets instead.
+  if (/^attached as:/i.test(body)) return undefined;
   const enh = body.match(/^enhancements?:\s*(.+)$/i);
   if (enh) return { depth, text: body, isWarlord: false, enhancement: enh[1]!.trim() };
 
@@ -138,11 +143,15 @@ export function parseArmyText(text: string, deps: ImportDeps): ImportResult {
 
   let faction = 'AM';
   let battleSize: BattleSize = 'Incursion';
+  let disposition: string | undefined;
   const leftover: string[] = [];
   for (const line of preamble) {
     const f = factionFromText(line);
     const bs = line.match(/\b(combat patrol|incursion|strike force)\b/i);
-    if (f) faction = f;
+    // 11e app exports carry the chosen Force Disposition ("Force Dispositions: Purge the Foe").
+    const disp = line.match(/^force dispositions?:\s*(.+)$/i);
+    if (disp) disposition = disp[1]!.trim();
+    else if (f) faction = f;
     else if (bs) battleSize = BATTLE_SIZE_BY_NAME[bs[1]!.toLowerCase()] ?? battleSize;
     else leftover.push(line);
   }
@@ -196,19 +205,35 @@ export function parseArmyText(text: string, deps: ImportDeps): ImportResult {
     else warnings.push(`Enhancement "${enhName}" not found in the catalog — left unset.`);
   }
 
-  return { list, warnings };
+  return { list, warnings, ...(disposition ? { disposition } : {}) };
 }
 
 // ── helpers ───────────────────────────────────────────────────────────────────────
+/** Canonical form for detachment matching: the 11e app writes "Ordo Hereticus, Purgation Force
+ *  (3 Detachment Points)" where the data name is "Ordo Hereticus Purgation Force" — strip the DP
+ *  suffix and punctuation before comparing. */
+function normalizeDetachment(s: string): string {
+  return s
+    .replace(/\(\s*\d+\s*detachment points?\s*\)/i, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
 function pickDetachment(candidates: string[], deps: ImportDeps): string {
-  const detachNames = new Set(
-    deps.enhancements.filter((e) => e.detachment).map((e) => e.detachment.toLowerCase()),
-  );
-  // Prefer a candidate that matches a known detachment; else the longest non-faction line.
-  const known = candidates.find((c) => detachNames.has(c.toLowerCase()));
-  if (known) return deps.enhancements.find((e) => e.detachment.toLowerCase() === known.toLowerCase())!.detachment;
+  const byNorm = new Map<string, string>();
+  for (const e of deps.enhancements) {
+    if (e.detachment) byNorm.set(normalizeDetachment(e.detachment), e.detachment);
+  }
+  // Prefer a candidate that matches a known detachment (punctuation/DP-suffix-insensitive);
+  // else the longest non-faction line, with the DP suffix stripped.
+  for (const c of candidates) {
+    const known = byNorm.get(normalizeDetachment(c));
+    if (known) return known;
+  }
   const nonFaction = candidates.filter((c) => !factionFromText(c));
-  return nonFaction.sort((a, b) => b.length - a.length)[0] ?? '';
+  const raw = nonFaction.sort((a, b) => b.length - a.length)[0] ?? '';
+  return raw.replace(/\s*\(\s*\d+\s*detachment points?\s*\)/i, '').trim();
 }
 
 interface BuiltUnit {

@@ -1,0 +1,127 @@
+{
+  "name": "Inquisitors",
+  "faction": "AoI",
+  "detachment": "Ordo Hereticus Purgation Force",
+  "points": 985,
+  "units": [
+    {
+      "datasheetId": "000002090",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Dirgesinger": 1,
+        "Power fist": 1,
+        "Psychic Tempest": 1
+      }
+    },
+    {
+      "datasheetId": "000002685",
+      "modelCount": 11,
+      "wargearCounts": {
+        "Arbites combat shotgun": 8,
+        "Arbites shotpistol": 10,
+        "Close combat weapon": 10,
+        "Arbites Medi-kit": 1,
+        "Arbites grenade launcher": 1,
+        "Excruciator maul": 1,
+        "Heavy stubber": 1,
+        "Soulguilt Scanner": 1,
+        "Mechanical bite": 1
+      }
+    },
+    {
+      "datasheetId": "000000876",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Bolt pistol": 1,
+        "Glovodan Psyber‐eagle": 1,
+        "Nemesis daemon hammer": 1,
+        "Psychic Blast": 1
+      }
+    },
+    {
+      "datasheetId": "000003813",
+      "modelCount": 5,
+      "wargearCounts": {
+        "Nemesis force weapon": 5,
+        "Storm bolter": 3,
+        "Narthecium": 1,
+        "Psycannon": 1
+      }
+    },
+    {
+      "datasheetId": "000000877",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Bolt pistol": 1,
+        "Force weapon": 1,
+        "Psychic Gifts": 1,
+        "Psychic Shock Wave": 1
+      },
+      "enhancementId": "000009130003"
+    },
+    {
+      "datasheetId": "000003812",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Zealot’s vindictor": 1
+      },
+      "enhancementId": "000009130002"
+    },
+    {
+      "datasheetId": "000002767",
+      "modelCount": 12,
+      "wargearCounts": {
+        "Agent firearm": 10,
+        "Agent melee weapon": 12,
+        "Eviscerator": 2,
+        "Mystic stave": 2,
+        "Plasma pistol": 2,
+        "Heavy bolter": 2
+      }
+    },
+    {
+      "datasheetId": "000004214",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Butcher blade": 1,
+        "Garralisk’s claws and teeth": 1,
+        "Jindarii tox‑cycler": 1,
+        "Stubcarbine": 1
+      }
+    },
+    {
+      "datasheetId": "000003820",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Armoured tracks": 1,
+        "Heavy bolter": 2,
+        "Heavy stubber": 1,
+        "Hunter-killer missile": 1,
+        "Lasgun array": 1
+      }
+    },
+    {
+      "datasheetId": "000002684",
+      "modelCount": 11,
+      "wargearCounts": {
+        "Arbites shotpistol": 10,
+        "Shock maul": 10,
+        "Mechanical bite": 1
+      }
+    },
+    {
+      "datasheetId": "000002684",
+      "modelCount": 11,
+      "wargearCounts": {
+        "Arbites shotpistol": 10,
+        "Shock maul": 10,
+        "Mechanical bite": 1
+      }
+    }
+  ],
+  "recommended": {
+    "disposition": "purge_the_foe",
+    "profile": "attrition"
+  },
+  "note": "Imported from the 40k-app text export inquisitors.txt via pnpm import:roster."
+}

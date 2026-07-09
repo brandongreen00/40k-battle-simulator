@@ -15,6 +15,8 @@ import { basename, join } from 'node:path';
 import type { Datasheet, Enhancement } from '../../src/core/types';
 import { listPoints, toRoster, validate, type DataIndex } from '../../src/core/army';
 import { parseArmyText } from '../../src/core/importer';
+import { DISPOSITIONS } from '../../src/core/missions11';
+import { profileForDisposition } from '../../src/core/ai/profile';
 import { repoRoot } from '../sim/data';
 
 /**
@@ -78,7 +80,7 @@ function main(): void {
   let failed = false;
   for (const file of files) {
     const text = readFileSync(file, 'utf-8');
-    const { list, warnings } = parseArmyText(normalizeExport(text), { datasheets, enhancements });
+    const { list, warnings, disposition } = parseArmyText(normalizeExport(text), { datasheets, enhancements });
     for (const w of warnings) console.warn(`  ⚠ ${w}`);
 
     const errors = validate(list, ix).filter((v) => v.severity === 'error');
@@ -90,8 +92,13 @@ function main(): void {
       continue;
     }
 
+    // An 11e export names its Force Disposition — carry it as the roster's recommended pick.
+    const dispId = disposition
+      ? DISPOSITIONS.find((d) => d.name.toLowerCase() === disposition.toLowerCase())?.id
+      : undefined;
     const roster = {
       ...toRoster(list, ix),
+      ...(dispId ? { recommended: { disposition: dispId, profile: profileForDisposition(dispId) } } : {}),
       note: `Imported from the 40k-app text export ${basename(file)} via pnpm import:roster.`,
     };
     const fileName = `${outName ?? slug(list.name)}.json`;
