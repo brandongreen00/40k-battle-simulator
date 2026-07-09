@@ -27,27 +27,37 @@ export interface TransportCapacity {
  * "This model has a transport capacity of 12 Astra Militarum Infantry models. Each Ogryn model
  *  takes up the space of 3 models. It cannot transport Artillery models."
  */
+/** Canonical word form for capacity-keyword matching: lowercase with a plural 's' stripped, so
+ *  the cards' singular phrases ("INQUISITORIAL AGENT models") match the datasheets' plural
+ *  keywords ("Inquisitorial Agents") and vice versa. Applied to BOTH sides of every comparison. */
+const canonWord = (w: string): string => {
+  const lw = w.toLowerCase();
+  return lw.length > 3 && lw.endsWith('s') && !lw.endsWith('ss') ? lw.slice(0, -1) : lw;
+};
+const canonPhrase = (p: string): string => p.trim().split(/\s+/).map(canonWord).join(' ');
+
+/** Alternatives in capacity text are separated by "or", "and" or commas
+ *  ("INQUISITOR INFANTRY and INQUISITORIAL AGENT", "Ogryn or Artillery"). */
+const splitAlternatives = (s: string): string[] =>
+  s.split(/\s+(?:or|and)\s+|\s*,\s*/i).map(canonPhrase).filter(Boolean);
+
 export function parseTransportCapacity(text?: string): TransportCapacity | null {
   if (!text) return null;
   const m = /transport capacity of (\d+)\s+(.+?)\s+models?/i.exec(text);
   if (!m) return null;
   const capacity = parseInt(m[1]!, 10);
-  const allowed = m[2]!
-    .split(/\s+or\s+/i)
-    .map((phrase) => phrase.trim().toLowerCase())
-    .filter(Boolean)
-    .map((phrase) => phrase.split(/\s+/));
+  const allowed = splitAlternatives(m[2]!).map((phrase) => phrase.split(/\s+/));
   const bulky: { match: string; space: number }[] = [];
   const bulkyRe = /Each (.+?) takes up the space of (\d+)/gi;
   for (let b = bulkyRe.exec(text); b; b = bulkyRe.exec(text)) {
     const space = parseInt(b[2]!, 10);
     for (const subject of b[1]!.split(/\s+model(?:s)?\s+and\s+/i)) {
-      bulky.push({ match: subject.replace(/\s+models?$/i, '').trim().toLowerCase(), space });
+      bulky.push({ match: canonPhrase(subject.replace(/\s+models?$/i, '')), space });
     }
   }
   const excluded: string[] = [];
   const ex = /cannot transport (.+?) models/i.exec(text);
-  if (ex) excluded.push(ex[1]!.trim().toLowerCase());
+  if (ex) excluded.push(...splitAlternatives(ex[1]!));
   return { capacity, allowed, excluded, bulky };
 }
 
@@ -85,7 +95,7 @@ function phraseMatches(tokens: string[], keywords: Set<string>): boolean {
 }
 
 const keywordSet = (ds: Datasheet): Set<string> =>
-  new Set([...ds.keywords.map((k) => k.toLowerCase()), ds.name.toLowerCase()]);
+  new Set([...ds.keywords.map((k) => canonPhrase(k)), canonPhrase(ds.name)]);
 
 /** May models of this datasheet embark at all under the capacity's keyword rules? */
 export function datasheetMayRide(ds: Datasheet, cap: TransportCapacity): boolean {

@@ -873,6 +873,14 @@ button.remove {
 .reserve-btn:hover {
   border-color: var(--accent);
 }
+/* "⇥ board <transport>" — labelled so it's discoverable, capped so long names don't blow the row */
+.embark-btn {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+}
 
 /* ── Movement phase ──────────────────────────────────────────────────── */
 .phase-block {

@@ -178,7 +178,7 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
                 <strong style={{ color: OWNER_COLOR[effectiveSide(setup, remaining)].fill }}>{effectiveSide(setup, remaining)}</strong>
                 {' '}· remaining — player {remaining.player}, ai {remaining.ai}
               </p>
-              <p className="hint">Pick a unit on the left, drop it inside your zone (Infiltrators may deploy in no-man's-land). Use “Reserves” for Deep Strike.</p>
+              <p className="hint">Pick a unit on the left, drop it inside your zone (Infiltrators may deploy in no-man's-land). Use “Reserves” for Deep Strike. To start a unit embarked, deploy its TRANSPORT first — a “⇥ board …” button then appears next to each unit that fits.</p>
             </>
           )}
 

@@ -89,6 +89,35 @@ describe('transport capacity parsing', () => {
     expect(firingDeckX(ctx.datasheets.get('rhino')!)).toBe(2);
     expect(firingDeckX(ctx.datasheets.get('squad')!)).toBe(0);
   });
+  // The Inquisitorial Chimera's real card text: "and" separates rider alternatives, and the
+  // singular phrases must match the datasheets' plural keywords ("INQUISITORIAL AGENT" models
+  // vs the "Inquisitorial Agents" keyword). Regression for the owner's Inquisitors list.
+  it('parses "and" alternatives with singular/plural tolerance (Inquisitorial Chimera)', () => {
+    const cap = parseTransportCapacity(
+      'This model has a transport capacity of 13 INQUISITOR INFANTRy and INQUISITORIAl AGENT models. It cannot transport TERMINATOR models.',
+    )!;
+    expect(cap.capacity).toBe(13);
+    expect(cap.allowed).toEqual([['inquisitor', 'infantry'], ['inquisitorial', 'agent']]);
+    expect(cap.excluded).toEqual(['terminator']);
+    const agents = ds('agents', { keywords: ['Agents of the Imperium', 'Infantry', 'Inquisitorial Agents', 'Retinue'] });
+    const inquisitor = ds('inquisitor', { keywords: ['Agents of the Imperium', 'Inquisitor', 'Character', 'Infantry'] });
+    const gkTerminators = ds('gk', { keywords: ['Agents of the Imperium', 'Infantry', 'Terminator', 'Psyker'] });
+    const arbites = ds('arbites', { keywords: ['Agents of the Imperium', 'Adeptus Arbites', 'Infantry', 'Retinue'] });
+    expect(datasheetMayRide(agents, cap)).toBe(true);
+    expect(datasheetMayRide(inquisitor, cap)).toBe(true);
+    expect(datasheetMayRide(gkTerminators, cap)).toBe(false); // excluded
+    expect(datasheetMayRide(arbites, cap)).toBe(false); // not on the card
+  });
+  it('splits "or" exclusion lists (Arvus Lighter: cannot transport Ogryn or Artillery)', () => {
+    const cap = parseTransportCapacity(
+      'This model has a transport capacity of 12 Astra Militarum Infantry models. It cannot transport Ogryn or Artillery models.',
+    )!;
+    expect(cap.excluded).toEqual(['ogryn', 'artillery']);
+    const ogryn = ds('ogryn', { keywords: ['Astra Militarum', 'Infantry', 'Ogryn'] });
+    expect(datasheetMayRide(ogryn, cap)).toBe(false);
+    expect(datasheetMayRide(ctx.datasheets.get('artillery')!, cap)).toBe(false);
+    expect(datasheetMayRide(ctx.datasheets.get('squad')!, cap)).toBe(true);
+  });
 });
 
 describe('embark & capacity', () => {

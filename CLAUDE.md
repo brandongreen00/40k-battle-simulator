@@ -330,6 +330,28 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-07-09b] — "How do I put my agents in the Chimera?" — transport-capacity parser fixes +
+  a discoverable embark button.** All gates green: `pnpm typecheck`, `pnpm test` (**427 tests**,
+  +2 capacity regressions), `pnpm build`; a 7/7 Playwright drive of the real app deploys the
+  Inquisitorial Chimera, boards the Agents via the new button, and sees the passenger badge.
+  - **Nobody could ride the Inquisitorial Chimera** (so the deploy-embark button never appeared
+    for the owner's list). Two `parseTransportCapacity` bugs: (1) rider alternatives were only
+    split on "or", but the card reads "13 INQUISITOR INFANTRY **and** INQUISITORIAL AGENT
+    models"; (2) the card's singular phrases didn't match plural datasheet keywords
+    ("INQUISITORIAL AGENT" vs the "Inquisitorial Agents" keyword). Fixes in `transport.ts`:
+    alternatives split on or/and/commas, and a canonical word form (plural 's' stripped, applied
+    to BOTH sides of every comparison) used for allowed/excluded/bulky matching.
+  - **Exclusion lists with "or" were silently dead** for every transport ("cannot transport
+    Ogryn or Artillery models" was stored as one unmatchable string — Ogryns could ride the
+    Arvus Lighter). Same splitter now applies; regression-tested.
+  - **Discoverability**: the deploy-list embark button is now labelled "⇥ board <transport>"
+    (`.embark-btn`, ellipsis-capped) instead of a bare ⇥ icon, and the DeploymentPanel hint
+    explains the flow (deploy the TRANSPORT first, the button then appears on units that fit).
+  - **Flow note (documented simplification):** the tabletop declares embarked units at Declare
+    Battle Formations before anything is placed; the app's equivalent is order-dependent —
+    deploy the transport, then board units from the deploy list. Same net effect (units start
+    the battle embarked).
+
 - **[2026-07-09] — Inquisitors import + Purgation Force bindings, and the MOBILE game-start fix
   ("I tried starting a game and it didn't feel good").** All gates green: `pnpm typecheck`,
   `pnpm test` (**425 tests**), `pnpm build`; desktop Playwright suite still 10/10; a NEW

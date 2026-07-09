@@ -720,7 +720,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
                           const busName = getDatasheet(bus.datasheetId)?.name ?? bus.id;
                           return (
                             <button
-                              className="reserve-btn"
+                              className="reserve-btn embark-btn"
                               title={`Start the battle embarked within ${busName}`}
                               onClick={() =>
                                 dispatch({
@@ -732,7 +732,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
                                 })
                               }
                             >
-                              ⇥
+                              ⇥ board {busName}
                             </button>
                           );
                         })()}
