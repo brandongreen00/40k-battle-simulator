@@ -36,9 +36,9 @@ describe('movement math', () => {
     expect(chargeSucceeds(7, 7)).toBe(true); // need 6", rolled 7
     expect(chargeSucceeds(10, 6)).toBe(false); // need 9", rolled 6
   });
-  it('deep strike must be 9" from all enemies', () => {
-    expect(deepStrikeLegal([9, 12, 20])).toBe(true);
-    expect(deepStrikeLegal([8.9, 12])).toBe(false);
+  it('11e ingress must be more than 8" from all enemies', () => {
+    expect(deepStrikeLegal([8.1, 12, 20])).toBe(true);
+    expect(deepStrikeLegal([8, 12])).toBe(false); // exactly 8" is NOT more than 8"
   });
   it('charge rolls 2D6 deterministically from a seed', () => {
     expect(rollCharge(makeRNG(5)).distance).toBe(rollCharge(makeRNG(5)).distance);

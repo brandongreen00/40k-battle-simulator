@@ -26,6 +26,7 @@ import {
   enhancementsForDetachment,
   getDatasheet,
 } from '../../data/loaders';
+import { checkDetachmentPoints, detachmentPoints } from '../../core/detachments';
 import { Catalog } from './Catalog';
 import { ListUnitCard } from './ListUnitCard';
 import { ImportPanel } from './ImportPanel';
@@ -133,12 +134,22 @@ export function ListBuilder({ onOpenInBoard }: Props) {
           </select>
         </label>
         <label className="field">
-          <span>Detachment</span>
+          <span>
+            Detachment
+            {list.detachment && (() => {
+              const dp = checkDetachmentPoints(list.detachment, list.faction, BATTLE_SIZES[list.battleSize].points);
+              return (
+                <span className="muted" title="Detachment Points (11e): 2 DP budget at 1000 pts, 3 DP at 2000. A lone detachment over budget is legal per GW's stated intent.">
+                  {' '}· {dp.cost}/{dp.budget.dp} DP{dp.overBudgetLone ? ' (lone-detachment allowance)' : ''}
+                </span>
+              );
+            })()}
+          </span>
           <select value={list.detachment} onChange={(e) => setDetachment(e.target.value)}>
             <option value="">— select —</option>
             {detachmentsForFaction(list.faction).map((d) => (
               <option key={d} value={d}>
-                {d}
+                {d} ({detachmentPoints(d, list.faction)} DP)
               </option>
             ))}
           </select>

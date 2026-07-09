@@ -1,0 +1,767 @@
+[
+ {
+  "id": "ec2026-take-and-hold_vs_take-and-hold-a",
+  "page": 9,
+  "layout": "A",
+  "orientation": "vertical",
+  "dispositions": [
+   "TAKE AND HOLD",
+   "TAKE AND HOLD"
+  ],
+  "missions": [
+   "BATTLEFIELD DOMINANCE",
+   "BATTLEFIELD DOMINANCE"
+  ],
+  "areas": 16,
+  "features": 20,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-take-and-hold_vs_take-and-hold-b",
+  "page": 10,
+  "layout": "B",
+  "orientation": "vertical",
+  "dispositions": [
+   "TAKE AND HOLD",
+   "TAKE AND HOLD"
+  ],
+  "missions": [
+   "BATTLEFIELD DOMINANCE",
+   "BATTLEFIELD DOMINANCE"
+  ],
+  "areas": 16,
+  "features": 20,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-take-and-hold_vs_take-and-hold-c",
+  "page": 11,
+  "layout": "C",
+  "orientation": "vertical",
+  "dispositions": [
+   "TAKE AND HOLD",
+   "TAKE AND HOLD"
+  ],
+  "missions": [
+   "BATTLEFIELD DOMINANCE",
+   "BATTLEFIELD DOMINANCE"
+  ],
+  "areas": 16,
+  "features": 20,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-take-and-hold_vs_purge-the-foe-a",
+  "page": 12,
+  "layout": "A",
+  "orientation": "vertical",
+  "dispositions": [
+   "TAKE AND HOLD",
+   "PURGE THE FOE"
+  ],
+  "missions": [
+   "IMMOVABLE OBJECT",
+   "UNSTOPPABLE FORCE"
+  ],
+  "areas": 16,
+  "features": 20,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-take-and-hold_vs_purge-the-foe-b",
+  "page": 13,
+  "layout": "B",
+  "orientation": "vertical",
+  "dispositions": [
+   "TAKE AND HOLD",
+   "PURGE THE FOE"
+  ],
+  "missions": [
+   "IMMOVABLE OBJECT",
+   "UNSTOPPABLE FORCE"
+  ],
+  "areas": 16,
+  "features": 20,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-take-and-hold_vs_purge-the-foe-c",
+  "page": 14,
+  "layout": "C",
+  "orientation": "vertical",
+  "dispositions": [
+   "TAKE AND HOLD",
+   "PURGE THE FOE"
+  ],
+  "missions": [
+   "IMMOVABLE OBJECT",
+   "UNSTOPPABLE FORCE"
+  ],
+  "areas": 16,
+  "features": 20,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-take-and-hold_vs_disruption-a",
+  "page": 15,
+  "layout": "A",
+  "orientation": "vertical",
+  "dispositions": [
+   "TAKE AND HOLD",
+   "DISRUPTION"
+  ],
+  "missions": [
+   "DETERMINED ACQUISITION",
+   "DEATH TRAP"
+  ],
+  "areas": 16,
+  "features": 20,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-take-and-hold_vs_disruption-b",
+  "page": 16,
+  "layout": "B",
+  "orientation": "vertical",
+  "dispositions": [
+   "TAKE AND HOLD",
+   "DISRUPTION"
+  ],
+  "missions": [
+   "DETERMINED ACQUISITION",
+   "DEATH TRAP"
+  ],
+  "areas": 16,
+  "features": 22,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-take-and-hold_vs_disruption-c",
+  "page": 17,
+  "layout": "C",
+  "orientation": "vertical",
+  "dispositions": [
+   "TAKE AND HOLD",
+   "DISRUPTION"
+  ],
+  "missions": [
+   "DETERMINED ACQUISITION",
+   "DEATH TRAP"
+  ],
+  "areas": 16,
+  "features": 22,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-take-and-hold_vs_reconnaissance-a",
+  "page": 18,
+  "layout": "A",
+  "orientation": "vertical",
+  "dispositions": [
+   "TAKE AND HOLD",
+   "RECONNAISSANCE"
+  ],
+  "missions": [
+   "PURGE AND SECURE",
+   "RECONNAISSANCE SWEEP"
+  ],
+  "areas": 16,
+  "features": 22,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-take-and-hold_vs_reconnaissance-b",
+  "page": 19,
+  "layout": "B",
+  "orientation": "vertical",
+  "dispositions": [
+   "TAKE AND HOLD",
+   "RECONNAISSANCE"
+  ],
+  "missions": [
+   "PURGE AND SECURE",
+   "RECONNAISSANCE SWEEP"
+  ],
+  "areas": 16,
+  "features": 20,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-take-and-hold_vs_reconnaissance-c",
+  "page": 20,
+  "layout": "C",
+  "orientation": "vertical",
+  "dispositions": [
+   "TAKE AND HOLD",
+   "RECONNAISSANCE"
+  ],
+  "missions": [
+   "PURGE AND SECURE",
+   "RECONNAISSANCE SWEEP"
+  ],
+  "areas": 16,
+  "features": 20,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-take-and-hold_vs_priority-assets-a",
+  "page": 21,
+  "layout": "A",
+  "orientation": "vertical",
+  "dispositions": [
+   "TAKE AND HOLD",
+   "PRIORITY ASSETS"
+  ],
+  "missions": [
+   "INESCAPABLE DOMINION",
+   "SECURE ASSET"
+  ],
+  "areas": 16,
+  "features": 22,
+  "objectives": 6
+ },
+ {
+  "id": "ec2026-take-and-hold_vs_priority-assets-b",
+  "page": 22,
+  "layout": "B",
+  "orientation": "vertical",
+  "dispositions": [
+   "TAKE AND HOLD",
+   "PRIORITY ASSETS"
+  ],
+  "missions": [
+   "INESCAPABLE DOMINION",
+   "SECURE ASSET"
+  ],
+  "areas": 16,
+  "features": 24,
+  "objectives": 6
+ },
+ {
+  "id": "ec2026-take-and-hold_vs_priority-assets-c",
+  "page": 23,
+  "layout": "C",
+  "orientation": "vertical",
+  "dispositions": [
+   "TAKE AND HOLD",
+   "PRIORITY ASSETS"
+  ],
+  "missions": [
+   "INESCAPABLE DOMINION",
+   "SECURE ASSET"
+  ],
+  "areas": 16,
+  "features": 21,
+  "objectives": 6
+ },
+ {
+  "id": "ec2026-purge-the-foe_vs_purge-the-foe-a",
+  "page": 24,
+  "layout": "A",
+  "orientation": "vertical",
+  "dispositions": [
+   "PURGE THE FOE",
+   "PURGE THE FOE"
+  ],
+  "missions": [
+   "MEATGRINDER",
+   "MEATGRINDER"
+  ],
+  "areas": 16,
+  "features": 21,
+  "objectives": 6
+ },
+ {
+  "id": "ec2026-purge-the-foe_vs_purge-the-foe-b",
+  "page": 25,
+  "layout": "B",
+  "orientation": "vertical",
+  "dispositions": [
+   "PURGE THE FOE",
+   "PURGE THE FOE"
+  ],
+  "missions": [
+   "MEATGRINDER",
+   "MEATGRINDER"
+  ],
+  "areas": 16,
+  "features": 23,
+  "objectives": 6
+ },
+ {
+  "id": "ec2026-purge-the-foe_vs_purge-the-foe-c",
+  "page": 26,
+  "layout": "C",
+  "orientation": "vertical",
+  "dispositions": [
+   "PURGE THE FOE",
+   "PURGE THE FOE"
+  ],
+  "missions": [
+   "MEATGRINDER",
+   "MEATGRINDER"
+  ],
+  "areas": 16,
+  "features": 22,
+  "objectives": 6
+ },
+ {
+  "id": "ec2026-purge-the-foe_vs_disruption-a",
+  "page": 27,
+  "layout": "A",
+  "orientation": "vertical",
+  "dispositions": [
+   "PURGE THE FOE",
+   "DISRUPTION"
+  ],
+  "missions": [
+   "PUNISHMENT",
+   "DELAYING ACTION"
+  ],
+  "areas": 16,
+  "features": 21,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-purge-the-foe_vs_disruption-b",
+  "page": 28,
+  "layout": "B",
+  "orientation": "vertical",
+  "dispositions": [
+   "PURGE THE FOE",
+   "DISRUPTION"
+  ],
+  "missions": [
+   "PUNISHMENT",
+   "DELAYING ACTION"
+  ],
+  "areas": 16,
+  "features": 20,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-purge-the-foe_vs_disruption-c",
+  "page": 29,
+  "layout": "C",
+  "orientation": "vertical",
+  "dispositions": [
+   "PURGE THE FOE",
+   "DISRUPTION"
+  ],
+  "missions": [
+   "PUNISHMENT",
+   "DELAYING ACTION"
+  ],
+  "areas": 16,
+  "features": 20,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-purge-the-foe_vs_reconnaissance-a",
+  "page": 30,
+  "layout": "A",
+  "orientation": "vertical",
+  "dispositions": [
+   "PURGE THE FOE",
+   "RECONNAISSANCE"
+  ],
+  "missions": [
+   "CONSECRATE",
+   "TRIANGULATION"
+  ],
+  "areas": 16,
+  "features": 20,
+  "objectives": 6
+ },
+ {
+  "id": "ec2026-purge-the-foe_vs_reconnaissance-b",
+  "page": 31,
+  "layout": "B",
+  "orientation": "vertical",
+  "dispositions": [
+   "PURGE THE FOE",
+   "RECONNAISSANCE"
+  ],
+  "missions": [
+   "CONSECRATE",
+   "TRIANGULATION"
+  ],
+  "areas": 16,
+  "features": 21,
+  "objectives": 6
+ },
+ {
+  "id": "ec2026-purge-the-foe_vs_reconnaissance-c",
+  "page": 32,
+  "layout": "C",
+  "orientation": "vertical",
+  "dispositions": [
+   "PURGE THE FOE",
+   "RECONNAISSANCE"
+  ],
+  "missions": [
+   "CONSECRATE",
+   "TRIANGULATION"
+  ],
+  "areas": 16,
+  "features": 20,
+  "objectives": 6
+ },
+ {
+  "id": "ec2026-purge-the-foe_vs_priority-assets-a",
+  "page": 33,
+  "layout": "A",
+  "orientation": "vertical",
+  "dispositions": [
+   "PURGE THE FOE",
+   "PRIORITY ASSETS"
+  ],
+  "missions": [
+   "DESTROYER\u2019S WRATH",
+   "VITAL LINK"
+  ],
+  "areas": 16,
+  "features": 22,
+  "objectives": 6
+ },
+ {
+  "id": "ec2026-purge-the-foe_vs_priority-assets-b",
+  "page": 34,
+  "layout": "B",
+  "orientation": "vertical",
+  "dispositions": [
+   "PURGE THE FOE",
+   "PRIORITY ASSETS"
+  ],
+  "missions": [
+   "DESTROYER\u2019S WRATH",
+   "VITAL LINK"
+  ],
+  "areas": 16,
+  "features": 23,
+  "objectives": 6
+ },
+ {
+  "id": "ec2026-purge-the-foe_vs_priority-assets-c",
+  "page": 35,
+  "layout": "C",
+  "orientation": "vertical",
+  "dispositions": [
+   "PURGE THE FOE",
+   "PRIORITY ASSETS"
+  ],
+  "missions": [
+   "DESTROYER\u2019S WRATH",
+   "VITAL LINK"
+  ],
+  "areas": 16,
+  "features": 24,
+  "objectives": 6
+ },
+ {
+  "id": "ec2026-disruption_vs_disruption-a",
+  "page": 36,
+  "layout": "A",
+  "orientation": "vertical",
+  "dispositions": [
+   "DISRUPTION",
+   "DISRUPTION"
+  ],
+  "missions": [
+   "OUTMANOEUVRE",
+   "OUTMANOEUVRE"
+  ],
+  "areas": 16,
+  "features": 21,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-disruption_vs_disruption-b",
+  "page": 37,
+  "layout": "B",
+  "orientation": "vertical",
+  "dispositions": [
+   "DISRUPTION",
+   "DISRUPTION"
+  ],
+  "missions": [
+   "OUTMANOEUVRE",
+   "OUTMANOEUVRE"
+  ],
+  "areas": 16,
+  "features": 17,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-disruption_vs_disruption-c",
+  "page": 38,
+  "layout": "C",
+  "orientation": "vertical",
+  "dispositions": [
+   "DISRUPTION",
+   "DISRUPTION"
+  ],
+  "missions": [
+   "OUTMANOEUVRE",
+   "OUTMANOEUVRE"
+  ],
+  "areas": 16,
+  "features": 20,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-disruption_vs_reconnaissance-a",
+  "page": 39,
+  "layout": "A",
+  "orientation": "vertical",
+  "dispositions": [
+   "DISRUPTION",
+   "RECONNAISSANCE"
+  ],
+  "missions": [
+   "SMOKE AND MIRRORS",
+   "SURVEIL THE FOE"
+  ],
+  "areas": 16,
+  "features": 23,
+  "objectives": 6
+ },
+ {
+  "id": "ec2026-disruption_vs_reconnaissance-b",
+  "page": 40,
+  "layout": "B",
+  "orientation": "vertical",
+  "dispositions": [
+   "DISRUPTION",
+   "RECONNAISSANCE"
+  ],
+  "missions": [
+   "SMOKE AND MIRRORS",
+   "SURVEIL THE FOE"
+  ],
+  "areas": 16,
+  "features": 20,
+  "objectives": 6
+ },
+ {
+  "id": "ec2026-disruption_vs_reconnaissance-c",
+  "page": 41,
+  "layout": "C",
+  "orientation": "vertical",
+  "dispositions": [
+   "DISRUPTION",
+   "RECONNAISSANCE"
+  ],
+  "missions": [
+   "SMOKE AND MIRRORS",
+   "SURVEIL THE FOE"
+  ],
+  "areas": 16,
+  "features": 22,
+  "objectives": 6
+ },
+ {
+  "id": "ec2026-disruption_vs_priority-assets-a",
+  "page": 42,
+  "layout": "A",
+  "orientation": "vertical",
+  "dispositions": [
+   "DISRUPTION",
+   "PRIORITY ASSETS"
+  ],
+  "missions": [
+   "LOCATE AND DENY",
+   "EXTRACT RELIC"
+  ],
+  "areas": 16,
+  "features": 25,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-disruption_vs_priority-assets-b",
+  "page": 43,
+  "layout": "B",
+  "orientation": "vertical",
+  "dispositions": [
+   "DISRUPTION",
+   "PRIORITY ASSETS"
+  ],
+  "missions": [
+   "LOCATE AND DENY",
+   "EXTRACT RELIC"
+  ],
+  "areas": 16,
+  "features": 21,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-disruption_vs_priority-assets-c",
+  "page": 44,
+  "layout": "C",
+  "orientation": "vertical",
+  "dispositions": [
+   "DISRUPTION",
+   "PRIORITY ASSETS"
+  ],
+  "missions": [
+   "LOCATE AND DENY",
+   "EXTRACT RELIC"
+  ],
+  "areas": 16,
+  "features": 22,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-reconnaissance_vs_reconnaissance-a",
+  "page": 45,
+  "layout": "A",
+  "orientation": "vertical",
+  "dispositions": [
+   "RECONNAISSANCE",
+   "RECONNAISSANCE"
+  ],
+  "missions": [
+   "GATHER INTEL",
+   "GATHER INTEL"
+  ],
+  "areas": 16,
+  "features": 20,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-reconnaissance_vs_reconnaissance-b",
+  "page": 46,
+  "layout": "B",
+  "orientation": "vertical",
+  "dispositions": [
+   "RECONNAISSANCE",
+   "RECONNAISSANCE"
+  ],
+  "missions": [
+   "GATHER INTEL",
+   "GATHER INTEL"
+  ],
+  "areas": 16,
+  "features": 21,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-reconnaissance_vs_reconnaissance-c",
+  "page": 47,
+  "layout": "C",
+  "orientation": "vertical",
+  "dispositions": [
+   "RECONNAISSANCE",
+   "RECONNAISSANCE"
+  ],
+  "missions": [
+   "GATHER INTEL",
+   "GATHER INTEL"
+  ],
+  "areas": 16,
+  "features": 17,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-reconnaissance_vs_priority-assets-a",
+  "page": 48,
+  "layout": "A",
+  "orientation": "vertical",
+  "dispositions": [
+   "RECONNAISSANCE",
+   "PRIORITY ASSETS"
+  ],
+  "missions": [
+   "SEARCH AND SCOUR",
+   "VANGUARD OPERATION"
+  ],
+  "areas": 16,
+  "features": 20,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-reconnaissance_vs_priority-assets-b",
+  "page": 49,
+  "layout": "B",
+  "orientation": "vertical",
+  "dispositions": [
+   "RECONNAISSANCE",
+   "PRIORITY ASSETS"
+  ],
+  "missions": [
+   "SEARCH AND SCOUR",
+   "VANGUARD OPERATION"
+  ],
+  "areas": 16,
+  "features": 20,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-reconnaissance_vs_priority-assets-c",
+  "page": 50,
+  "layout": "C",
+  "orientation": "vertical",
+  "dispositions": [
+   "RECONNAISSANCE",
+   "PRIORITY ASSETS"
+  ],
+  "missions": [
+   "SEARCH AND SCOUR",
+   "VANGUARD OPERATION"
+  ],
+  "areas": 16,
+  "features": 18,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-priority-assets_vs_priority-assets-a",
+  "page": 51,
+  "layout": "A",
+  "orientation": "vertical",
+  "dispositions": [
+   "PRIORITY ASSETS",
+   "PRIORITY ASSETS"
+  ],
+  "missions": [
+   "SABOTAGE",
+   "SABOTAGE"
+  ],
+  "areas": 16,
+  "features": 21,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-priority-assets_vs_priority-assets-b",
+  "page": 52,
+  "layout": "B",
+  "orientation": "vertical",
+  "dispositions": [
+   "PRIORITY ASSETS",
+   "PRIORITY ASSETS"
+  ],
+  "missions": [
+   "SABOTAGE",
+   "SABOTAGE"
+  ],
+  "areas": 16,
+  "features": 21,
+  "objectives": 5
+ },
+ {
+  "id": "ec2026-priority-assets_vs_priority-assets-c",
+  "page": 53,
+  "layout": "C",
+  "orientation": "vertical",
+  "dispositions": [
+   "PRIORITY ASSETS",
+   "PRIORITY ASSETS"
+  ],
+  "missions": [
+   "SABOTAGE",
+   "SABOTAGE"
+  ],
+  "areas": 16,
+  "features": 20,
+  "objectives": 5
+ }
+]

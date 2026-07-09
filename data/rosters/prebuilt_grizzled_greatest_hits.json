@@ -1,0 +1,89 @@
+{
+  "name": "Grizzled Greatest Hits (2k)",
+  "faction": "AM",
+  "detachment": "Grizzled Company",
+  "points": 1995,
+  "units": [
+    {
+      "datasheetId": "000002607",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000003892",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000002617",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000000723",
+      "modelCount": 6
+    },
+    {
+      "datasheetId": "000002615",
+      "modelCount": 10
+    },
+    {
+      "datasheetId": "000002615",
+      "modelCount": 10
+    },
+    {
+      "datasheetId": "000000695",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000002485",
+      "modelCount": 6
+    },
+    {
+      "datasheetId": "000000719",
+      "modelCount": 5
+    },
+    {
+      "datasheetId": "000000719",
+      "modelCount": 5
+    },
+    {
+      "datasheetId": "000002746",
+      "modelCount": 5
+    },
+    {
+      "datasheetId": "000002746",
+      "modelCount": 5
+    },
+    {
+      "datasheetId": "000000690",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000000694",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000002612",
+      "modelCount": 10
+    },
+    {
+      "datasheetId": "000002609",
+      "modelCount": 5
+    },
+    {
+      "datasheetId": "000000716",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000001394",
+      "modelCount": 1
+    },
+    {
+      "datasheetId": "000001396",
+      "modelCount": 1
+    }
+  ],
+  "note": "Prebuilt AI sparring list — a legal 1000pt Incursion army generated from the converted data by tools/rosters/build-prebuilt.ts (edit tools/rosters/prebuilt.ts and re-run pnpm build:rosters). Not one of the three owned lists.",
+  "recommended": {
+    "disposition": "priority_assets",
+    "profile": "operative"
+  }
+}

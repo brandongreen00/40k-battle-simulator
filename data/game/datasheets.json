@@ -723,7 +723,8 @@
           "1 multi-laser"
         ]
       }
-    ]
+    ],
+    "transport": "This model has a transport capacity of 12 Astra Militarum Infantry models. Each Heavy Weapons Team model and Veteran Heavy Weapons Team model takes up the space of 2 models. Each Ogryn model takes up the space of 3 models. It cannot transport Artillery models."
   },
   {
     "id": "000000764",
@@ -1551,7 +1552,8 @@
         "text": "None",
         "choices": []
       }
-    ]
+    ],
+    "transport": "This model has a transport capacity of 12 Astra Militarum Infantry models. Each Heavy Weapons Team model and Veteran Heavy Weapons Team model takes up the space of 2 models. It cannot transport Ogryn or Artillery models."
   },
   {
     "id": "000000728",
@@ -2265,7 +2267,8 @@
           "2 lascannons and 2 twin heavy flamers"
         ]
       }
-    ]
+    ],
+    "transport": "This model has a transport capacity of 26 Astra Militarum Infantry models. Each Ogryn model takes up the space of 3 models. It cannot transport Artillery models."
   },
   {
     "id": "000000704",
@@ -5003,7 +5006,8 @@
         "text": "This model can be equipped with 1 hunter-killer missile.",
         "choices": []
       }
-    ]
+    ],
+    "transport": "This model has a transport capacity of 6 Astra Militarum Infantry models. Each Heavy Weapons Team model and Veteran Heavy Weapons Team model takes up the space of 2 models. It cannot transport Ogryn or Artillery models."
   },
   {
     "id": "000004220",
@@ -5099,7 +5103,8 @@
         "text": "None.",
         "choices": []
       }
-    ]
+    ],
+    "transport": "This model has a transport capacity of 12 Astra Militarum Infantry models. Each Ogryn model takes up the space of 3 models. It cannot transport Artillery models."
   },
   {
     "id": "000000692",
@@ -5298,7 +5303,8 @@
     ],
     "wargearNotes": [
       "* This weapon cannot be replaced."
-    ]
+    ],
+    "transport": "This model has a transport capacity of 12 Astra Militarum Infantry models. Each Ogryn model takes up the space of 3 models. It cannot transport Artillery models."
   },
   {
     "id": "000000740",
@@ -6199,7 +6205,8 @@
           "1 infernum halo-launcher"
         ]
       }
-    ]
+    ],
+    "transport": "This model has a transport capacity of 12 DEATHwATCH INFANTRy models."
   },
   {
     "id": "000000766",
@@ -6316,7 +6323,8 @@
           "1 storm bolter"
         ]
       }
-    ]
+    ],
+    "transport": "This model has a transport capacity of 35 Astra Militarum Infantry models. Each Heavy Weapons Team model and Veteran Heavy Weapons Team model takes up the space of 2 models. Each Ogryn model takes up the space of 3 models. It cannot transport Artillery models."
   },
   {
     "id": "000000873",
@@ -8730,7 +8738,8 @@
           "2 lascannons and 2 twin heavy flamers"
         ]
       }
-    ]
+    ],
+    "transport": "This model has a transport capacity of 26 Astra Militarum Infantry models. Each Ogryn model takes up the space of 3 models. It cannot transport Artillery models."
   },
   {
     "id": "000000743",
@@ -10341,7 +10350,8 @@
         "text": "This model can be equipped with 1 hunter-killer missile.",
         "choices": []
       }
-    ]
+    ],
+    "transport": "This model has a transport capacity of 30 Astra Militarum Infantry models. Each Heavy Weapons Team model and Veteran Heavy Weapons Team model takes up the space of 2 models. Each Ogryn model takes up the space of 3 models. It cannot transport Artillery models."
   },
   {
     "id": "000003813",
@@ -12273,7 +12283,8 @@
         "text": "This model can be equipped with 1 hunter-killer missile.",
         "choices": []
       }
-    ]
+    ],
+    "transport": "This model has a transport capacity of 12 AGENTS OF THE IMpERIUM Infantry models. It cannot transport TERMINATOR or OFFICIO ASSASSINORUM models."
   },
   {
     "id": "000003826",
@@ -14389,7 +14400,8 @@
     ],
     "wargearNotes": [
       "This weapon cannot be replaced."
-    ]
+    ],
+    "transport": "This model has a transport capacity of 13 INQUISITOR INFANTRy and INQUISITORIAl AGENT models. It cannot transport TERMINATOR models."
   },
   {
     "id": "000002763",
@@ -25283,7 +25295,8 @@
         "text": "This model can be equipped with 1 hunter-killer missile.",
         "choices": []
       }
-    ]
+    ],
+    "transport": "This model has a transport capacity of 6 ORDO HERETICUS INFANTRy models.At the start of the Declare Battle Formations step, you can select one SISTERS OF BATTlE SQUAD from your army. If you do, that unit is split into two units, each containing as equal a number of models as possible (when splitting a unit in this way, make a note of which models form each of the two new units). One of these units must start the battle embarked within this TRANSPORT; the other can start the battle embarked within another TRANSPORT, or it can be deployed as a separate unit."
   },
   {
     "id": "000003818",
@@ -26208,7 +26221,8 @@
           "1 storm bolter"
         ]
       }
-    ]
+    ],
+    "transport": "This model has a transport capacity of 12 Astra Militarum Infantry models. Each Heavy Weapons Team model and Veteran Heavy Weapons Team model takes up the space of 2 models. Each Ogryn model takes up the space of 3 models. It cannot transport Artillery models."
   },
   {
     "id": "000000763",
@@ -26566,7 +26580,8 @@
           "2 lascannons and 2 twin heavy flamers"
         ]
       }
-    ]
+    ],
+    "transport": "This model has a transport capacity of 40 Astra Militarum Infantry models. Each Ogryn model takes up the space of 3 models. It cannot transport Artillery models."
   },
   {
     "id": "000000709",
@@ -27428,7 +27443,8 @@
         "text": "This model can be equipped with 1 storm bolter.",
         "choices": []
       }
-    ]
+    ],
+    "transport": "This model has a transport capacity of 12 Astra Militarum Infantry models. Each Ogryn model takes up the space of 3 models. It cannot transport Artillery models."
   },
   {
     "id": "000000721",
@@ -27608,7 +27624,8 @@
         "text": "This model can be equipped with 1 storm bolter.",
         "choices": []
       }
-    ]
+    ],
+    "transport": "This model has a transport capacity of 12 Militarum Tempestus Infantry or Astra Militarum Infantry Character models."
   },
   {
     "id": "000001396",
@@ -28976,7 +28993,8 @@
         "text": "This model can be equipped with 2 heavy bolters.",
         "choices": []
       }
-    ]
+    ],
+    "transport": "This model has a transport capacity of 12 Astra Militarum Infantry models. Each Ogryn model takes up the space of 3 models. It cannot transport Artillery models."
   },
   {
     "id": "000001237",
@@ -29096,7 +29114,8 @@
         "text": "This model’s 2 hellstrike missiles can be replaced with 2 multiple rocket pods.",
         "choices": []
       }
-    ]
+    ],
+    "transport": "This model has a transport capacity of 1 Tauros model or 2 Astra Militarum Walker models."
   },
   {
     "id": "000000783",

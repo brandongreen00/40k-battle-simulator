@@ -40,6 +40,7 @@ export interface EffectOutput {
   critWoundOn?: number;
   ignoresCover?: boolean;
   extraAttacks?: number; // +N to the Attacks characteristic, per firing model (e.g. First Rank Fire!)
+  grantPrecision?: boolean; // the bearer's weapons gain [PRECISION] (Epic Challenge)
   // Defensive (the bearer is being attacked)
   toBeHitModifier?: number; // e.g. Stealth -1 (subtracts from the attacker's hit roll)
   damageReduction?: number; // e.g. -1 Damage
@@ -84,6 +85,11 @@ export const EFFECT_REGISTRY: Record<string, Effect> = {
   'lethal_hits_granted': { id: 'lethal_hits_granted', name: 'Lethal Hits (granted)', side: 'attacker', output: { critHitOn: 6 } },
   'sustained_hits_1_granted': { id: 'sustained_hits_1_granted', name: 'Sustained Hits 1 (granted)', side: 'attacker', output: { critHitOn: 6 } },
   'ignores_cover_granted': { id: 'ignores_cover_granted', name: 'Ignores Cover (granted)', side: 'attacker', output: { ignoresCover: true } },
+  // Epic Challenge (15.03): the CHARACTER's melee weapons gain [PRECISION] for the phase.
+  'precision_melee': { id: 'precision_melee', name: 'Epic Challenge ([PRECISION] melee)', side: 'attacker', appliesTo: melee, output: { grantPrecision: true } },
+  // Counteroffensive (15.12) grants Fights First — read by phases.hasFightsFirst, not the
+  // attack pipeline; registered so the effect applicator can list/apply it.
+  'fights_first_granted': { id: 'fights_first_granted', name: 'Fights First (granted)', side: 'attacker', output: {} },
 
   // ── Defensive building blocks (stratagems, unit specials) ─────────────────────
   'minus1_damage': { id: 'minus1_damage', name: '-1 Damage', side: 'defender', output: { damageReduction: 1 } },
@@ -119,6 +125,7 @@ export function gatherAttackModifiers(
   saveBonus: number;
   fnp?: number;
   invulnFloor?: number;
+  grantPrecision: boolean;
 } {
   const acc = {
     hitModifier: 0,
@@ -133,6 +140,7 @@ export function gatherAttackModifiers(
     saveBonus: 0,
     fnp: undefined as number | undefined,
     invulnFloor: undefined as number | undefined,
+    grantPrecision: false,
   };
 
   const apply = (id: string, expectedSide: 'attacker' | 'defender') => {
@@ -153,6 +161,7 @@ export function gatherAttackModifiers(
     if (out.saveBonus) acc.saveBonus = Math.max(acc.saveBonus, out.saveBonus);
     if (out.fnp != null) acc.fnp = Math.min(acc.fnp ?? 7, out.fnp);
     if (out.invulnFloor != null) acc.invulnFloor = Math.min(acc.invulnFloor ?? 7, out.invulnFloor);
+    if (out.grantPrecision) acc.grantPrecision = true;
   };
 
   for (const id of attackerEffects) apply(id, 'attacker');

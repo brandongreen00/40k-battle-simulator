@@ -4,6 +4,7 @@ import type { Intent } from '../core/state';
 import { canAttach, isCharacter } from '../core/leaders';
 import { unitHasWarrant, unitScoutDistance } from '../core/abilities';
 import { pendingScoutUnits, scoutTurn, unitCoherency } from '../core/phases';
+import { SECONDARY_CARDS, secondaryCard } from '../core/secondaries';
 import { unitOverlaps } from '../core/collision';
 import { gapBetweenBases } from '../core/geometry';
 import { RollOffDice } from './Dice';
@@ -174,6 +175,50 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
             {' '}· remaining — player {remaining.player}, ai {remaining.ai}
           </p>
           <p className="hint">Pick a unit on the left, drop it inside your zone (Infiltrators may deploy in no-man's-land). Use “Reserves” for Deep Strike.</p>
+
+          {/* Secondary Missions choice (secret, pre-battle): Tactical (draw) or two Fixed cards. */}
+          {state.secondaries && (
+            <div className="dep-leaders">
+              <h4>Secondary missions — Tactical or Fixed</h4>
+              {(['player', 'ai'] as const).map((side) => {
+                const sec = state.secondaries![side];
+                if (sec.mode) {
+                  return (
+                    <p className="muted" key={side}>
+                      <span style={{ color: OWNER_COLOR[side].fill }}>{side}</span>:{' '}
+                      {sec.mode === 'fixed'
+                        ? `FIXED — ${(sec.fixed ?? []).map((c) => secondaryCard(c.id)?.name ?? c.id).join(' + ')}`
+                        : 'Tactical (draw 2 per Command phase)'}
+                    </p>
+                  );
+                }
+                const fixedCards = SECONDARY_CARDS.filter((c) => c.fixed);
+                return (
+                  <div className="field" key={side}>
+                    <span style={{ color: OWNER_COLOR[side].fill }}>{side}</span>
+                    <button onClick={() => dispatch({ type: 'ChooseSecondaryMode', side })}>Tactical (draw)</button>
+                    <select
+                      value=""
+                      onChange={(e) => {
+                        const [a, b] = e.target.value.split('|');
+                        if (a && b) dispatch({ type: 'ChooseSecondaryMode', side, fixedCardIds: [a, b] });
+                      }}
+                    >
+                      <option value="">Fixed: pick a pair…</option>
+                      {fixedCards.flatMap((a, i) =>
+                        fixedCards.slice(i + 1).map((b) => (
+                          <option key={`${a.id}|${b.id}`} value={`${a.id}|${b.id}`}>
+                            {a.name} + {b.name}
+                          </option>
+                        )),
+                      )}
+                    </select>
+                  </div>
+                );
+              })}
+              <p className="hint">Unchosen sides default to Tactical when the battle begins.</p>
+            </div>
+          )}
 
           {/* Pre-deployment Leader pairings: the pair deploys as one unit, and grants like the
               Rogue Trader's Backroom Deals (Infiltrators) apply at set-up time. */}

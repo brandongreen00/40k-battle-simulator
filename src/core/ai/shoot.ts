@@ -6,16 +6,67 @@
 // ShootUnit is legal by construction. When nothing useful is left to fire, the phase advances.
 
 import type { GameState, Side } from '../types';
-import { eligibleToShoot, validUnitShootingTargets, isOnBoard } from '../phases';
-import { objectiveControl } from '../engine';
+import { eligibleToShoot, engagedEnemies, validUnitShootingTargets, isOnBoard } from '../phases';
+import { objectiveControl, planUnitShooting } from '../engine';
+import { gapBetweenBases } from '../geometry';
+import { pointLosBlocked } from '../visibility';
+import { weaponEV } from './evaluate';
 import { secondaryKillBonus } from '../secondaries';
+import { bestMissionAction } from './missionplay';
 import { shootingEV, unitThreat, unitValue } from './evaluate';
 import { unitRolePlan } from './roles';
 import type { AiAction, AiDeps } from './types';
 import type { AiProfile } from './profile';
 
+/** Explosives (15.05): a legal, worthwhile grenade throw this phase, or null. Mirrors the
+ *  reducer's legality exactly so the emitted intent cannot bounce. */
+function explosivesPlay(state: GameState, side: Side, deps: AiDeps): AiAction | null {
+  const { ctx } = deps;
+  if (state.cp[side] < 1) return null;
+  if (state.stratUsed?.[`${side}:core:explosives`] === `${state.round}:${state.activePlayer}:${state.phase}`) return null;
+  for (const u of state.units) {
+    if (u.owner !== side || !isOnBoard(u)) continue;
+    const ds = ctx.datasheets.get(u.datasheetId);
+    if (!ds || !ds.keywords.some((k) => /^(explosives|grenades)$/i.test(k))) continue;
+    if (u.status.advanced || !eligibleToShoot(u, state, ctx).eligible) continue;
+    if (engagedEnemies(u, state, ctx).length > 0) continue;
+    for (const t of state.units) {
+      if (t.owner === side || !isOnBoard(t)) continue;
+      if (engagedEnemies(t, state, ctx).length > 0) continue;
+      if (unitValue(t, ctx) < 70) continue; // ~3 mortal wounds should hit something that matters
+      const tDs = ctx.datasheets.get(t.datasheetId);
+      if (!tDs) continue;
+      const tPts = t.models.filter((m) => m.alive).map((m) => m.pos);
+      const thrower = u.models.some(
+        (m) =>
+          m.alive &&
+          tPts.some(
+            (p) => gapBetweenBases(m.pos, ds.baseShape, p, tDs.baseShape) <= 8 && !pointLosBlocked(m.pos, p, state.layout),
+          ),
+      );
+      if (!thrower) continue;
+      const unitId = u.id;
+      const targetId = t.id;
+      return {
+        intents: [
+          {
+            intent: { type: 'ThrowExplosives', unitId, targetUnitId: targetId },
+            skipIf: (s) =>
+              s.cp[side] < 1 || !s.units.find((x) => x.id === targetId)?.models.some((m) => m.alive),
+          },
+        ],
+        note: `${side} throws Explosives: ${ds.name} → ${tDs.name}`,
+      };
+    }
+  }
+  return null;
+}
+
 export function aiShootingAction(state: GameState, side: Side, profile: AiProfile, deps: AiDeps): AiAction {
   const { ctx } = deps;
+  // A worthwhile grenade throw is a free action beside the phase's shooting activations.
+  const grenades = explosivesPlay(state, side, deps);
+  if (grenades) return grenades;
   const shooters = state.units.filter(
     (u) => u.owner === side && isOnBoard(u) && eligibleToShoot(u, state, ctx).eligible,
   );
@@ -65,10 +116,58 @@ export function aiShootingAction(state: GameState, side: Side, profile: AiProfil
     };
   }
 
+  // Objective Actions (11e): a unit sitting on a mission objective with little worth shooting
+  // should perform its mission's action instead — VP is the win condition. Keep the current
+  // best shooter free; convert action VP to the shooting-EV scale (~12 points of expected
+  // damage per VP, scaled by the profile's actionPriority knob).
+  const exclude = new Set<string>();
+  if (best) exclude.add(best.shooter);
+  const action = bestMissionAction(state, side, deps, exclude);
+  if (action) {
+    const actionScore = action.vp * 12 * (profile.actionPriority ?? 1);
+    const shooterBestEv = (unitId: string): number => {
+      const u = state.units.find((x) => x.id === unitId);
+      if (!u || !eligibleToShoot(u, state, ctx).eligible) return 0;
+      let ev = 0;
+      for (const t of validUnitShootingTargets(u, state, ctx)) ev = Math.max(ev, shootingEV(state, u, t, ctx));
+      return ev;
+    };
+    if (actionScore > shooterBestEv(action.params.unitId)) {
+      return { intents: [{ intent: { type: 'StartAction', ...action.params } }], note: action.note };
+    }
+  }
+
   if (best) {
+    // Per-weapon target splitting (04.02): weapons that do clearly better work elsewhere are
+    // reassigned (the anti-tank gun leaves the infantry volley). Only meaningfully better
+    // alternatives split — the main target keeps the unit's focus.
+    const shooter = state.units.find((u) => u.id === best!.shooter)!;
+    const mainTarget = state.units.find((u) => u.id === best!.target)!;
+    const targets = validUnitShootingTargets(shooter, state, ctx);
+    const splitTargets: Record<string, string> = {};
+    if (targets.length > 1) {
+      const { fire } = planUnitShooting(state, shooter, ctx);
+      for (const w of fire) {
+        const evMain = weaponEV(state, shooter, w, mainTarget, ctx);
+        let alt: { id: string; ev: number } | null = null;
+        for (const t of targets) {
+          if (t.id === best.target) continue;
+          const ev = weaponEV(state, shooter, w, t, ctx) * secondaryKillBonus(state, side, t, ctx);
+          if (!alt || ev > alt.ev) alt = { id: t.id, ev };
+        }
+        if (alt && alt.ev > evMain * 1.3 + 5) splitTargets[`${w.sourceDsId}|${w.weapon.name}`] = alt.id;
+      }
+    }
     return {
-      intents: [{ intent: { type: 'ShootUnit', attackerUnitId: best.shooter, targetUnitId: best.target } }],
-      note: `${side} shoots: ${best.names} (EV ${best.score.toFixed(0)})`,
+      intents: [
+        {
+          intent: {
+            type: 'ShootUnit', attackerUnitId: best.shooter, targetUnitId: best.target,
+            ...(Object.keys(splitTargets).length ? { splitTargets } : {}),
+          },
+        },
+      ],
+      note: `${side} shoots: ${best.names}${Object.keys(splitTargets).length ? ` (+${Object.keys(splitTargets).length} weapon(s) split)` : ''} (EV ${best.score.toFixed(0)})`,
     };
   }
   return { intents: [{ intent: { type: 'AdvancePhase' } }], note: `${side} ends the Shooting phase` };

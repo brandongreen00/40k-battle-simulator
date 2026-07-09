@@ -27,7 +27,7 @@ const outDir = join(root, 'data/rosters');
 mkdirSync(outDir, { recursive: true });
 
 let failed = false;
-for (const { fileName, list } of PREBUILT) {
+for (const { fileName, list, recommended } of PREBUILT) {
   const violations = validate(list, ix).filter((v) => v.severity === 'error');
   const points = listPoints(list, ix);
   if (violations.length > 0) {
@@ -36,7 +36,7 @@ for (const { fileName, list } of PREBUILT) {
     for (const v of violations) console.error(`    ${v.message}`);
     continue;
   }
-  const roster = { ...toRoster(list, ix), note: PREBUILT_NOTE };
+  const roster = { ...toRoster(list, ix), note: PREBUILT_NOTE, ...(recommended ? { recommended } : {}) };
   const path = join(outDir, `${fileName}.json`);
   writeFileSync(path, JSON.stringify(roster, null, 2) + '\n');
   console.log(`✓ ${list.name}: ${points} pts, ${list.units.length} units → data/rosters/${fileName}.json`);

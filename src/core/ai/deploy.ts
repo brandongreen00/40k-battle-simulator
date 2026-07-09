@@ -14,6 +14,7 @@ import { formationPositions } from '../formation';
 import { canAttach, isCharacter } from '../leaders';
 import { pointInPolygon, distancePointToPolygon, dist } from '../geometry';
 import { hasBackroomDeals, hasLoneOperative } from '../abilities';
+import { canEmbark, embarkedUnits, isAircraft } from '../transport';
 import { modelValue } from './evaluate';
 import { classifyDatasheet, rolePlan } from './roles';
 import type { AiAction, AiDeps, AiIntent } from './types';
@@ -275,6 +276,9 @@ export function desiredFormations(state: GameState, side: Side, deps: AiDeps): A
 /** Should this entry start in Reserves? Deep Strikers do (profile-gated), Characters don't
  *  (they want to merge with a bodyguard on the board), and never more than half the army. */
 function wantsReserves(state: GameState, side: Side, entry: DeployEntry, ability: DeployAbility, profile: AiProfile, deps: AiDeps): boolean {
+  // AIRCRAFT must start in Strategic Reserves (23.01) — the reducer enforces it, so this is
+  // not profile-gated.
+  if (isAircraft(entry.ds)) return true;
   if (!profile.useReserves) return false;
   // Lone Operative characters that ALSO have Deep Strike (the Callidus has Infiltrators too, so
   // her classified ability is 'infiltrators') survive by arriving from Reserves on round 2 —
@@ -295,6 +299,44 @@ function wantsReserves(state: GameState, side: Side, entry: DeployEntry, ability
  *  reducer computes the Infiltrators grant before anything is placed), then place the next
  *  entry — a paired Bodyguard brings its Leader down with it, merged. Null when nothing is left. */
 export function aiDeployAction(state: GameState, side: Side, profile: AiProfile, deps: AiDeps): AiAction | null {
+  // Pre-battle Secondary Missions choice (secret): Fixed when the enemy roster offers reliable
+  // kill targets for the FIXED cards, otherwise Tactical (draw). Decided once, before any drop.
+  if (state.secondaries && !state.secondaries[side].mode) {
+    const enemy = deps.rosters[otherSide(side)];
+    let bigModels = 0; // W10+ models (Bring It Down FIXED: 4VP each)
+    let characters = 0; // CHARACTER units (Assassination FIXED: 3VP+1)
+    let hordes = 0; // Starting Strength 13+ units (A Grievous Blow FIXED: 4VP each)
+    for (const u of enemy?.units ?? []) {
+      const ds = deps.ctx.datasheets.get(u.datasheetId);
+      if (!ds) continue;
+      if ((ds.models[0]?.W ?? 0) >= 10) bigModels += u.modelCount;
+      if (ds.keywords.some((k) => k.toLowerCase() === 'character')) characters++;
+      if (u.modelCount >= 13) hordes++;
+    }
+    const scores: [string, number][] = [
+      ['bring_it_down', Math.min(bigModels, 5) * 4],
+      ['assassination', Math.min(characters, 5) * 3.5],
+      ['a_grievous_blow', Math.min(hordes, 5) * 4],
+      ['engage_all_fronts', 9], // ~2VP/turn baseline for a board-playing army
+    ];
+    scores.sort((a, b) => b[1] - a[1]);
+    const [first, second] = [scores[0]!, scores[1]!];
+    const fixedWorth = first[1] + second[1];
+    const intent: AiIntent = {
+      intent:
+        fixedWorth >= 26
+          ? { type: 'ChooseSecondaryMode', side, fixedCardIds: [first[0], second[0]] as [string, string] }
+          : { type: 'ChooseSecondaryMode', side },
+    };
+    return {
+      intents: [intent],
+      note:
+        fixedWorth >= 26
+          ? `${side} picks FIXED missions (${first[0]} + ${second[0]})`
+          : `${side} will draw Tactical Missions`,
+    };
+  }
+
   // Declare Battle Formations before the side's first drop.
   const formations = desiredFormations(state, side, deps);
   if (formations.length > 0) {
@@ -393,6 +435,28 @@ export function aiDeployAction(state: GameState, side: Side, profile: AiProfile,
       intents: [...attaches, { intent: { type: 'PlaceInReserves', ...common } }],
       note: `${side} holds ${entry.ds.name} in Reserves (Deep Strike)`,
     };
+  }
+  // Start embarked (18.01): an unpaired INFANTRY unit rides an already-deployed, still-empty
+  // friendly transport it fits in — it deploys safe and disembarks near the action from round 2.
+  if (!pair && !isCharacter(entry.ds) && entry.ds.keywords.some((k) => k.toLowerCase() === 'infantry')) {
+    const bus = state.units.find((t) => {
+      if (t.owner !== side || t.inReserves || !t.models.some((m) => m.alive)) return false;
+      if (embarkedUnits(state, t.id).length > 0) return false; // one passenger unit per transport (policy)
+      const probe: import('../types').UnitInstance = {
+        id: entry.key, owner: side, datasheetId: entry.ds.id,
+        models: Array.from({ length: entry.unit.modelCount }, (_, i) => ({
+          id: `${entry.key}:m${i}`, unitId: entry.key, pos: { x: 0, y: 0 }, wounds: 1, alive: true,
+        })),
+        startingModels: entry.unit.modelCount, status: {},
+      };
+      return canEmbark(state, probe, t, deps.ctx).ok;
+    });
+    if (bus) {
+      return {
+        intents: [...attaches, { intent: { type: 'DeployUnit', ...common, anchor: { x: 0, y: 0 }, intoTransportId: bus.id } }],
+        note: `${side} deploys ${entry.ds.name} embarked within ${deps.ctx.datasheets.get(bus.datasheetId)?.name ?? bus.id}`,
+      };
+    }
   }
   // A paired unit where BOTH halves Deep Strike may start in Reserves together.
   if (pair && leaderCommon && ability === 'deep_strike' && profile.useReserves) {

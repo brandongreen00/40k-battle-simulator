@@ -10,7 +10,7 @@ import { createInitialState, reduce, type Intent } from '../state';
 import { makeRNG } from '../rng';
 import type { EngineContext } from '../engine';
 import { aiAction, sharedAction, whoActs } from './controller';
-import { aiReactionToShooting } from './react';
+import { aiReactionToFight, aiReactionToPhaseEnd, aiReactionToShooting } from './react';
 import { resolveProfile, type AiProfile } from './profile';
 import type { AiDeps } from './types';
 import type { Datasheet } from '../types';
@@ -27,6 +27,8 @@ export interface MatchConfig {
   layout: Layout;
   rosters: Record<Side, Roster>;
   profiles: Record<Side, string | AiProfile>;
+  /** 11e Force Dispositions per side (defaults to Take and Hold for both). */
+  dispositions?: Record<Side, import('../missions11').DispositionId>;
   seed: number;
   /** Hard safety budget; a finished 5-round game uses a few hundred intents. */
   maxIntents?: number;
@@ -84,7 +86,7 @@ export function runMatch(cfg: MatchConfig, data: MatchData): MatchResult {
   };
   const maxIntents = cfg.maxIntents ?? 5000;
 
-  let state = reduce(createInitialState(cfg.layout), { type: 'NewBattle' }, rng, data.ctx);
+  let state = reduce(createInitialState(cfg.layout), { type: 'NewBattle', dispositions: cfg.dispositions }, rng, data.ctx);
   let intentCount = 1;
   let forcedAdvances = 0;
   const snapshots: TurnSnapshot[] = [];
@@ -103,8 +105,31 @@ export function runMatch(cfg: MatchConfig, data: MatchData): MatchResult {
         }
       }
     }
+    // End-of-phase reactive window: Fire Overwatch (end of Movement) / Heroic Intervention (end
+    // of Charge) resolve just before the active player's AdvancePhase.
+    if (intent.type === 'AdvancePhase' && state.stage === 'battle' && (state.phase === 'Movement' || state.phase === 'Charge')) {
+      const defender: Side = state.activePlayer === 'player' ? 'ai' : 'player';
+      const reactions = aiReactionToPhaseEnd(state, defender, profiles[defender], deps);
+      for (const r of reactions) {
+        if (r.skipIf?.(state)) continue;
+        state = reduce(state, r.intent, rng, data.ctx);
+        intentCount++;
+      }
+    }
     state = reduce(state, intent, rng, data.ctx);
     intentCount++;
+    // Counteroffensive window: just AFTER an enemy unit resolves its Fight attacks.
+    if (intent.type === 'FightUnit') {
+      const attacker = state.units.find((u) => u.id === intent.attackerUnitId);
+      if (attacker) {
+        const defender: Side = attacker.owner === 'player' ? 'ai' : 'player';
+        for (const r of aiReactionToFight(state, defender, profiles[defender], deps)) {
+          if (r.skipIf?.(state)) continue;
+          state = reduce(state, r.intent, rng, data.ctx);
+          intentCount++;
+        }
+      }
+    }
     cfg.observe?.(state);
   };
 

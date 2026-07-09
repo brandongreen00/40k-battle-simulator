@@ -166,9 +166,9 @@ describe('charge declarations and Command Re-roll', () => {
   });
 
   it('Command Re-roll: 1 CP re-rolls a failed charge, once per phase per side', () => {
-    // Charger 7" centre-to-centre from the target → needs ~5.02". Find a seed where the first
-    // 2D6 falls short and the re-roll makes it.
-    const needed = 5.02;
+    // Charger 7" centre-to-centre from the target → needs ~4.02" under the 11e 2" Engagement
+    // Range. Find a seed where the first 2D6 falls short and the re-roll makes it.
+    const needed = 4.02;
     let seed = -1;
     for (let k = 1; k < 500; k++) {
       const r = makeRNG(k);

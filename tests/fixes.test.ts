@@ -75,7 +75,7 @@ describe('match-mode guards', () => {
     expect(s.activePlayer).toBe('ai');
     expect(s.commandRun).toBe(false);
     s = reduce(s, { type: 'RunCommandPhase' }, makeRNG(1), ctx);
-    expect(s.cp.ai).toBe(1);
+    expect(s.cp.ai).toBe(2); // 11e: both players gain 1 CP in EACH Command phase
   });
 
   it('the sandbox keeps the free Run Command (tests/dice-calculator behaviour)', () => {

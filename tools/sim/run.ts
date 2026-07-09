@@ -5,6 +5,8 @@
 //   pnpm sim -- --rosterA "Cadian Bulwark" --rosterB "Deathwatch Vigil" --seed 1000
 //   pnpm sim -- --a my-weights.json                   # tuned profile from disk (the training loop)
 //   pnpm sim -- --tournament --games 6                # round-robin: every roster pair, both ways
+//   pnpm sim -- --dispA priority_assets --dispB purge_the_foe   # 11e Force Dispositions
+//                                                      (picks a recommended layout + tuned profiles)
 //   pnpm sim -- --list                                # show available rosters / layouts / profiles
 //
 // A/B are SEATS in a pairing, not board sides: seats alternate the player/ai board side each game
@@ -16,7 +18,8 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Roster, Side } from '../../src/core/types';
 import { runMatch, type MatchResult } from '../../src/core/ai/match';
-import { AI_PROFILES, type AiProfile } from '../../src/core/ai/profile';
+import { AI_PROFILES, profileForDisposition, type AiProfile } from '../../src/core/ai/profile';
+import type { DispositionId } from '../../src/core/missions11';
 import { loadLayouts, loadMatchData, loadRosters, repoRoot } from './data';
 
 // ── tiny argv parser ──────────────────────────────────────────────────────────
@@ -71,10 +74,21 @@ function resolveRosterArg(v: string | undefined): Roster | undefined {
 
 const games = parseInt(args.get('games') ?? '10', 10);
 const baseSeed = parseInt(args.get('seed') ?? `${Date.now() % 100000}`, 10);
-const layoutId = args.get('layout') ?? 'ca2025-hammer-and-anvil-1';
-const layout = layouts.find((l) => l.id === layoutId) ?? layouts[0]!;
-const profileA = resolveProfileArg(args.get('a'));
-const profileB = resolveProfileArg(args.get('b'));
+// 11e Force Dispositions per seat. When set, the default layout becomes the pairing's Layout A
+// and each seat defaults to the profile tuned for its disposition.
+const dispA = (args.get('dispA') ?? args.get('dispositions')?.split(',')[0]) as DispositionId | undefined;
+const dispB = (args.get('dispB') ?? args.get('dispositions')?.split(',')[1]) as DispositionId | undefined;
+const dispositions = dispA && dispB ? { a: dispA, b: dispB } : undefined;
+const recommended = dispositions
+  ? layouts.filter((l) => {
+      const d = l.pairing?.dispositions;
+      return !!d && ((d[0] === dispA && d[1] === dispB) || (d[0] === dispB && d[1] === dispA));
+    })
+  : [];
+const layoutId = args.get('layout') ?? (recommended[0]?.id ?? 'ca2025-hammer-and-anvil-1');
+const layout = layouts.find((l) => l.id === layoutId) ?? recommended[0] ?? layouts[0]!;
+const profileA = resolveProfileArg(args.get('a') ?? (dispA ? profileForDisposition(dispA) : undefined));
+const profileB = resolveProfileArg(args.get('b') ?? (dispB ? profileForDisposition(dispB) : undefined));
 const outDir = join(repoRoot, args.get('out') ?? 'out/sim');
 mkdirSync(outDir, { recursive: true });
 
@@ -100,6 +114,9 @@ function play(
       layout,
       rosters: { [seatA]: rosterA, [seatB]: rosterB } as Record<Side, Roster>,
       profiles: { [seatA]: profileA, [seatB]: profileB } as Record<Side, AiProfile>,
+      ...(dispositions
+        ? { dispositions: { [seatA]: dispositions.a, [seatB]: dispositions.b } as Record<Side, DispositionId> }
+        : {}),
       seed,
     },
     data,

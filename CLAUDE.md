@@ -330,6 +330,176 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-07-08] — COMBAT UX (incoming fire + defender allocation + shot tracers) and the
+  remaining edge-case sweep.** The owner asked for (a) the outstanding edge cases and (b) visible
+  shooting — an animation between shooter and target, and the ability to choose who soaks the
+  damage (e.g. 4++ shield-bearers first). All gates green: `pnpm typecheck`, `pnpm test`
+  (**423 tests**, +3 suites: allocation/reactions + extended gamepanel), `pnpm build`; sims still
+  end with ZERO rejected intents; a Playwright drive of the REAL app passed **10/10 checks**
+  (deployment → battle → incoming-fire pause → allocation → resolve → tracer → auto-play resumes,
+  zero console errors).
+
+  **Incoming fire (the headline).** When an AI seat's `ShootUnit` targets a HUMAN-owned unit, the
+  volley is HELD before the dice roll: auto-play pauses and a pulsing "🎯 Incoming fire!" panel
+  shows the attacker, the full fire plan, defensive-stratagem buttons (Go to Ground/Smokescreen,
+  1 CP), and the casualty-allocation choice. The board draws targeting rings + the firing line
+  while held. Allocation is a persistent per-unit preference (`UnitInstance.allocation`, new
+  `SetAllocation` intent — survives turn resets): 'shields_first' (default — defensive-wargear
+  bearers soak, their invuln takes the brunt) or 'bodies_first' (preserve the bearers).
+  `casualtyOrder` honours it; the 11e allocation groups follow. Race guarded: advancing the phase
+  past a held volley auto-resolves it FIRST in its own phase (synchronous `incomingRef`).
+  **Shot tracers.** Every ShootUnit / FireOverwatch / ThrowExplosives dispatch pushes an animated
+  SVG tracer (streak racing the firing line, muzzle flash, expanding impact ring; overwatch amber,
+  explosives orange) that self-expires — AI fire is now visible at a glance.
+  **Edge cases closed:** passenger badges (🧍N on loaded transports, tooltip lists the embarked
+  units); per-weapon split-target selects in the Shooting panel (wired to ShootUnit.splitTargets,
+  jsdom-tested); AI now plays **Rapid Ingress** (saves reserves that would die to 20.03 at the end
+  of the opponent's round-3 Movement), **Counteroffensive** (new `aiReactionToFight` window after
+  an enemy FightUnit — pays 2 CP when an un-fought enemy would wreck our engaged unit and our
+  swing matters; threshold = half reactThreshold), **Epic Challenge** (character vs a squad hiding
+  a character); Firing-Deck transports keep passengers until round 3 unless within 9" of an
+  objective (the Stormlord shoots its deck). Also: favicon added (killed the 404 console error).
+  **Deliberately NOT done (unchanged simplifications):** the strict whole-phase
+  pile-in/consolidate step timing (per-activation stays, documented); multi-detachment armies
+  (the 11e 1-DP detachments aren't in the 10e data, so there is nothing to combine yet); surge
+  ability bindings (no owned-faction ability grants surge in the current data).
+  **Known nits:** the incoming-fire pause covers AI `ShootUnit` (the common case); AI Fire
+  Overwatch volleys resolve inside the dispatch reactive window and are NOT paused (the tracer +
+  log still show them); the dice log's 40-line window can scroll the allocation line out of view
+  after a fat volley.
+
+- **[2026-07-04] — 11e GAPS CLOSED. The owner asked to "research and implement the gaps" from the
+  11e overhaul — all nine documented gaps are now implemented (or researched and ruled out), in
+  seven commits.** All gates green: `pnpm typecheck`, `pnpm test` (**416 tests**, +63 across 7 new
+  suites: fight11/charge11/transport11/stratplays/fixedSecondaries/surgeSplit/detachments),
+  `pnpm build`; AI-vs-AI sims across 1k+2k, 11e-mission and legacy maps all end naturally with
+  ZERO rejected intents, with every new mechanic verified FIRING in the logs.
+
+  **1 · Fight-phase fidelity (12.02–12.08):** eligibility includes engaged-at-Fight-step-start
+  (stamped on phase entry) and charged-this-turn; unengaged eligible units make **overrun fights**
+  (pile-in reaches 5", must end engaged); **consolidation modes** with the mandatory priority —
+  Ongoing / Engaging (must end engaged; newly-engaged un-fought enemies become eligible: **chain
+  fights**, via live eligibility) / Objective (end within control range) / else no move. Timing
+  note: pile-in/consolidate resolve per-activation (documented simplification of the whole-phase
+  steps). **2 · Roll-first charges (11.02/11.04):** the 2D6 comes FIRST; targets are then selected
+  only if within 12" AND the rolled distance (needed roll = full gap, not gap−ER; the AI's charge
+  odds updated); unselected intended targets are non-targets.
+  **3 · Transports (18) + Firing Deck (24.14) + Aircraft (23):** capacity parsed from the
+  Wahapedia `transport` column (patched into datasheets.json; converter re-captures on ingest);
+  start embarked at Declare Battle Formations; EmbarkUnit ≤3" after a move; DisembarkUnit by mode
+  priority (Rapid 3"/no charge · Tactical 3"+the unit may then move · Combat 6"+hazard+shock);
+  emergency disembark on destruction (6", hazard/model, unplaceable = lost); Firing Deck X adds
+  the best X embarked weapons to the transport's plan; aircraft are reserves-only, ingress-only,
+  return to reserves at the end of the opponent's turn, only FLY charges/fights them. The AI
+  deploys a passenger per empty transport and disembarks tactically from round 2 (the Corvus
+  Blackstar in Deathwatch Vigil now cycles legally — it had silently wedged AI deployment).
+  **4 · Core Stratagem bindings (15.03–15.12):** Fire Overwatch (snap shooting at the end of the
+  opponent's Movement — new end-of-phase reactive window in runner+UI), Heroic Intervention
+  (Leap to Defend / Into the Fray with the roll capped at 6), Crushing Impact, Explosives,
+  Counteroffensive (Fights First + `fightNext` ordering), Insane Bravery (auto-pass, once per
+  battle, consumed in runCommandPhase), Rapid Ingress, Epic Challenge ([PRECISION] via the new
+  grantPrecision effect). All CP-gated + a once-per-phase tracker (15.01). AI plays Overwatch,
+  Heroic Intervention, Crushing Impact (every M/V charge), Explosives and Insane Bravery;
+  normal reserves arrivals are now correctly own-Movement-phase-only.
+  **5 · Fixed Secondary Missions:** pre-battle secret ChooseSecondaryMode (UI picker + AI
+  heuristic vs the enemy roster); the four FIXED-capable cards score their per-instance FIXED
+  blocks every turn at 20VP/card inside the 45/15 caps; kill ledger gained per-model W10+/W4+
+  character counts. **6 · Surge moves (21.02):** engine primitive + intent (no 10e-data ability
+  triggers it yet). **7 · Per-weapon target splitting (04.02):** ShootUnit.splitTargets; the AI
+  reassigns weapons whose EV is clearly better elsewhere (~29% of sim volleys split).
+  **8 · Detachment Points:** curated DP table (AM 1–3 DP, all Agents 3 DP) + official budgets
+  (1k = 2 DP + 2 enh, 2k = 3 DP + 4) in core/detachments.ts, list-builder DP display, 11e
+  enhancement caps, lone-detachment over-budget = warning per GW stated intent — sources and
+  confidence in **docs/11e_detachment_points.md**. **9 · Twist cards:** researched and ruled OUT
+  of scope (6 retail-only cards, text unpublished, excluded from Event/tournament play).
+  Wahapedia re-checked 2026-07-04: still no 11e data (stale 10e mirror).
+
+  **Remaining honest gaps:** the strict whole-phase pile-in/consolidate step timing; embarked
+  units are invisible on the board (no passenger badge on the transport token); surge has no
+  ability bindings; multi-detachment armies not modelled (one detachment per list); UI per-weapon
+  split targeting (engine+AI only — the panel still fires the volley at one target); AI doesn't
+  play Rapid Ingress/Counteroffensive/Epic Challenge (human-only via the new Stratagem plays
+  block); Firing Deck rarely triggers under the AI's round-2-disembark policy.
+
+- **[2026-07-03] — 11TH EDITION. The owner asked for a full 11e overhaul: core rules from the new
+  Core Rules PDF, the Event Companion maps (disposition-restricted to 3 per pairing), an AI that
+  plays for VP, and community-informed 1000/2000pt teams. All four delivered.** All gates green:
+  `pnpm typecheck`, `pnpm test` (**353 tests**, new missions11/visibility11 suites + updated
+  legacy suites), `pnpm build`; full AI-vs-AI 11e games (1k and 2k, symmetric and asymmetric
+  missions) end naturally with zero rejected intents. Reference docs written this session:
+  `docs/11e_core_rules_notes.md` (rules extraction + 10e→11e gap analysis),
+  `docs/11e_missions.md` (the complete Chapter Approved deck: 5 dispositions, 25 primaries,
+  18 secondaries, caps, actions — researched card-by-card), `docs/11e_teams.md`,
+  `tools/layouts11/README.md`.
+
+  **1 · Core rules (`src/core/`, from the 88-page PDF read cover to cover):** engagement range
+  2"; coherency = 2" neighbour + 9" spread with End-of-Turn removal of stragglers; battle-shock
+  at-or-below half with recovery rolls (state persists between turns; OC '-'); both players gain
+  1 CP each Command phase; the 11e **allocation-group save system** (batch save rolls resolved
+  lowest-first against the current group, CHARACTER groups last, [PRECISION] promotion, InSv on
+  the unmodified roll); **Benefit of Cover worsens the attacker's BS** (uncapped characteristic
+  change, not a save bonus); [DEVASTATING WOUNDS] → D mortal wounds capped at one model per crit;
+  hazard rolls fail on 1-2 ([HAZARDOUS] hurts the bearer); [CLEAVE]/[CLOSE-QUARTERS]/[PSYCHIC]/
+  [BLAST X] parsing; attached units defend with bodyguard Toughness; shooting types (assault
+  after Advance with [ASSAULT] only, close-quarters at -1 for engaged M/V, 11e indirect 6+/4+
+  table, snap shooting); shooting at engaged targets only vs M/V at -1 (AI target filter
+  mirrors it); charges reach 2" ER and grant Fights First; ingress moves (reserves wholly within
+  6" of an edge, Deep Strike anywhere, both >8" from enemies, enemy DZ locked before round 3,
+  round-3 forfeit); Infiltrators/Scouts >8"; Desperate Escape hazard rolls; the 11e core
+  stratagem set; Battle Ready +10VP each.
+  **Terrain (13):** `visibility.ts` implements Obscuring (areas block LoS across), Solid (dense
+  features block within), **Hidden** (I/B/S in dense areas that held fire are invisible beyond
+  15" — `lastShotOnTurn`/`turnCounter` bookkeeping) and area-based cover, dispatching on layout
+  age so the 10e maps keep the legacy model (and Pariah-style primary scoring as fallback).
+
+  **2 · Maps:** `tools/layouts11/extract_event_companion.py` vector-extracts all **45 Event
+  Companion layouts** (15 disposition pairings × A/B/C) from the PDF: page calibration via the
+  battlefield image (~7.7445 pt/in), CMYK-classified paths (zones incl. bezier-flattened arc
+  cutouts, the 16 grey terrain-area footprints per layout with organic outlines), pdfium image
+  matrices for **rotated** terrain features (green=dense/gold=light tint classification +
+  composite-photo recovery), typed objectives (owned homes/central/expansion bound to their
+  terrain areas — the area IS the objective in 11e), single/separate area markers (merged into
+  `groupId`s by the loader), territory dividers, header parsing for the pairing. Validated:
+  16 areas on every page (matches the companion's footprint table), pages 9/10/24 verified
+  against renders, p9's 18 features audited crop-by-crop. The board picker restricts a new
+  battle to the pairing's three recommended maps (the owner's requirement); TerrainLayer
+  renders areas/features/typed objectives/divider/operation markers.
+
+  **3 · Missions:** `missions11.ts` + `missionflow.ts` implement the researched Chapter
+  Approved deck: disposition pairing matrix → per-player primary missions (both players can be
+  scoring different things), all 25 primaries' scoring blocks (turn-end / command-end with the
+  round-5 rider / either-turn / end-of-battle) under the 45VP + 15VP/round caps; **Objective
+  Actions** (Core Rules 16 + the 11 card reverses + Cleanse/Plunder) with full eligibility and
+  end-of-turn completion; card preambles auto-resolved (Punishment condemns, Consecrate,
+  Locate and Deny's 5 markers, Surveil's marker removal). `secondaries.ts` is now the 11e
+  18-card deck (When-Drawn redraws/picks, draw 2 per Command phase with no hand limit,
+  discard-for-1CP, 45/15 caps). UI: disposition pickers, Primary Missions panel, Objective
+  Actions panel, marker rendering.
+
+  **4 · AI + teams:** `ai/missionplay.ts` makes the AI play its mission — mission-aware move
+  scoring (enemy home for Outmanoeuvre/Vital Link, centrals, quarters, forward areas) and
+  action selection traded off against shooting EV. Three disposition-tuned profiles join the
+  pool (**objective_rusher / attrition / operative**, `profileForDisposition`); `pnpm sim`
+  takes `--dispA/--dispB` (auto layout + profiles). Five community-anchored prebuilts (see
+  `docs/11e_teams.md`): Solar Spearpoint (2k), Grizzled Greatest Hits (2k), Idavoll Vigil (2k),
+  Bridgehead Pattern (1k), Vigil Strike (1k), each with a `recommended` disposition/profile on
+  the roster JSON.
+
+  **Decisions / caveats:** datasheets + points are still the 10e Wahapedia export — Wahapedia
+  has NO 11e data yet (verified: `wh40k11ed` is a stale 10e mirror; re-run `pnpm ingest` when it
+  lands). [PISTOL]≡[CLOSE-QUARTERS] per the rules, so 10e keywords work. Charge targets are
+  declared before the roll (the 11e roll-first order noted as a simplification). Player choices
+  on mission cards (condemned picks, Beacon/Tempting Target, Locate-and-Deny markers) are
+  auto-resolved by deterministic heuristics, logged. Mission card text sourced from the GDM
+  fan transcription (flagged in docs/11e_missions.md §8).
+
+  **Not implemented (honest gaps for next session):** overrun fights + engaging-consolidation
+  fight chaining; transports/disembark modes and aircraft (still out of engine scope); the 11e
+  Detachment Points system (multi-detachment armies); Fixed secondary missions mode (the four
+  FIXED cards carry the flag, no picker yet); Fire Overwatch/Heroic Intervention/Explosives/
+  Crushing Impact stratagem engine bindings (text-only; snap shooting IS in the engine);
+  surge moves; Twist cards (not in Event missions); per-model weapon→target splitting.
+
 - **[2026-06-12] — Owner bug report: "when I deploy, the AI doesn't deploy after that" — investigated +
   guarded.** The engine/controller alternation is NOT broken: headless repros (both seatings, prebuilt
   AND the owner's Bane/Rogue-Trader lists) and a full human-vs-AI deployment driven through the real UI

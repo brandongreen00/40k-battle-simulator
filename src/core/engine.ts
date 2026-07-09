@@ -13,8 +13,8 @@ import { parseKeywords } from './keywords';
 import { parseDice } from './dice';
 import { checkCoherency } from './coherency';
 import { anyOverlap, clampDeltaAvoidingOverlap, occupiedBases, unitBases, type OccupiedBase } from './collision';
-import { resolveAttacks, woundThreshold, effectiveSave, type AttackProfile, type DefenderProfile, type CombatSituation } from './combat';
-import { losBlocked, unitCanSee, unitHasCover } from './los';
+import { resolveAttacks, woundThreshold, effectiveSave, hazardRoll, type AttackProfile, type DefenderProfile, type CombatSituation } from './combat';
+import { isHidden, pointLosBlocked, unitCanSeeIn, unitCoverIn, DEFAULT_DETECTION_RANGE } from './visibility';
 import { controlOfObjective, scorePrimary, type OcModel } from './objectives';
 import { battleShockTest } from './battleshock';
 import { rollCharge } from './movement';
@@ -22,6 +22,8 @@ import { gatherAttackModifiers, type AttackContext } from './effects';
 import { hasLoneOperative, ignoresLoneOperative, innateEffectIds } from './abilities';
 import { defensiveProfileForItem } from './wargear';
 import { ocBonusFromOrders, ldBonusFromOrders } from './orders';
+import { canFly, embarkedUnits, firingDeckX, isAircraft } from './transport';
+import { formationPositions } from './formation';
 
 /** Injected lookup the engine needs to read unit stats. Not imported — passed in (rule #1/#2). */
 export interface EngineContext {
@@ -36,6 +38,12 @@ export interface AttackParams {
   weaponSourceDsId?: string;
   /** Override the number of firing models (defaults to the models that carry the weapon). */
   attackerCount?: number;
+  /** Snap shooting (15.09, Fire Overwatch): only unmodified 6s hit, no re-rolls. */
+  snapShooting?: boolean;
+  /** Fire a weapon the unit does not itself carry — Firing Deck (24.14): the transport counts as
+   *  equipped with an embarked model's weapon. Bypasses the carrier lookup; positions/LoS come
+   *  from the transport's own models. Requires `attackerCount`. */
+  weaponOverride?: WeaponProfile;
 }
 
 export interface AttackOutcome {
@@ -45,7 +53,7 @@ export interface AttackOutcome {
   rejected?: string; // reason the attack could not be made (out of range, no LoS later, etc.)
 }
 
-const ENGAGEMENT_RANGE = 1; // inches
+const ENGAGEMENT_RANGE = 2; // inches (11e, 03.04)
 
 function attackProfileForWeapon(w: WeaponProfile): AttackProfile {
   return { name: w.name, attacks: w.attacks, skill: w.skill, S: w.S, AP: w.AP, D: w.D, keywords: parseKeywords(w.keywords) };
@@ -141,16 +149,34 @@ function effectsOf(unit: UnitInstance, ctx?: EngineContext): string[] {
 
 function defenderProfileFor(unit: UnitInstance, ctx: EngineContext, ordered?: ModelInstance[]): DefenderProfile {
   const primary = ctx.datasheets.get(unit.datasheetId)!;
-  const pm = primary.models[0]!; // the unit's main profile (used for the wound roll's Toughness)
+  const pm = primary.models[0]!; // the unit's main profile
+  // 19.02 (11e): attacks against an attached unit use the highest BODYGUARD Toughness while any
+  // bodyguard models remain; only the leaders' T when they alone survive.
+  const bodyguardAlive = unit.models.some(
+    (m) => m.alive && (m.datasheetId ?? unit.datasheetId) === unit.datasheetId,
+  );
+  let T = pm.T;
+  if (!bodyguardAlive) {
+    for (const m of unit.models) {
+      if (!m.alive) continue;
+      const mds = modelDatasheet(m, unit, ctx);
+      if (mds?.models[0]) T = Math.max(T, mds.models[0].T);
+    }
+  }
   return {
-    T: pm.T,
+    T,
     save: pm.Sv,
     invuln: pm.invuln,
     keywords: primary.keywords,
     models: (ordered ?? unit.models.filter((x) => x.alive))
       .map((x) => {
         // Per-model profile: a merged Leader model uses its own datasheet's W / Sv / invuln.
-        const base = (modelDatasheet(x, unit, ctx) ?? primary).models[0]!;
+        const mds = modelDatasheet(x, unit, ctx) ?? primary;
+        const base = mds.models[0]!;
+        // Merged CHARACTER models form their own allocation groups, damaged last (05.03).
+        const character =
+          (x.datasheetId != null && x.datasheetId !== unit.datasheetId &&
+            mds.keywords.some((k) => k.toLowerCase() === 'character')) || undefined;
         let invuln = base.invuln;
         let save: number | undefined = base.Sv !== pm.Sv ? base.Sv : undefined;
         for (const item of x.wargear ?? []) {
@@ -159,28 +185,39 @@ function defenderProfileFor(unit: UnitInstance, ctx: EngineContext, ordered?: Mo
           if (def.invuln != null) invuln = Math.min(invuln ?? 7, def.invuln);
           if (def.saveBonus != null) save = Math.max(2, (save ?? base.Sv) - def.saveBonus);
         }
-        return { maxW: base.W, wounds: x.wounds, ...(invuln != null ? { invuln } : {}), ...(save != null ? { save } : {}) };
+        return {
+          maxW: base.W,
+          wounds: x.wounds,
+          ...(invuln != null ? { invuln } : {}),
+          ...(save != null ? { save } : {}),
+          ...(character ? { character } : {}),
+        };
       }),
   };
 }
 
 /**
- * The order casualties are allocated in (10e: the owner removes models, normally keeping the unit
- * coherent and pulling from the back). Defensive-wargear bearers still soak first (they carry the
- * best save — the existing allocate→save behaviour); within each pool, models furthest from the
- * attacker die first, skipping any model whose removal would split the survivors apart.
+ * The order casualties are allocated in (the owner removes models, normally keeping the unit
+ * coherent and pulling from the back). The unit's `allocation` preference decides who soaks:
+ *  • 'shields_first' (default): defensive-wargear bearers first — they carry the best save
+ *    (the classic "my 4++ shield-bearers take the brunt" play);
+ *  • 'bodies_first': regular models first, preserving the wargear bearers for a later volley.
+ * Within each pool, models furthest from the attacker die first, skipping any model whose
+ * removal would split the survivors apart.
  */
 function casualtyOrder(target: UnitInstance, ctx: EngineContext, attackerCentroid: Vec2): ModelInstance[] {
   const shape = ctx.datasheets.get(target.datasheetId)?.baseShape ?? { kind: 'circle' as const, radius: 0.63 };
   const hasDefensiveGear = (m: ModelInstance) =>
     (m.wargear ?? []).some((item) => defensiveProfileForItem(item));
   const dist = (m: ModelInstance) => Math.hypot(m.pos.x - attackerCentroid.x, m.pos.y - attackerCentroid.y);
+  const preferGear = target.allocation !== 'bodies_first';
 
   const remaining = target.models.filter((m) => m.alive);
   const order: ModelInstance[] = [];
   while (remaining.length > 0) {
-    // Candidates: defensive-gear bearers while any remain, then the rest; furthest first.
-    const pool = remaining.some(hasDefensiveGear) ? remaining.filter(hasDefensiveGear) : remaining;
+    // Candidates: the preferred pool while any of it remains, then the rest; furthest first.
+    const preferred = remaining.filter((m) => hasDefensiveGear(m) === preferGear);
+    const pool = preferred.length > 0 ? preferred : remaining;
     const sorted = [...pool].sort((a, b) => dist(b) - dist(a));
     const pick =
       sorted.find((m) => {
@@ -232,26 +269,32 @@ export function resolveAttack(
   if (!aDs || !tDs) return { state, summary: '', rejected: 'datasheet not found' };
 
   // Find the weapon across the unit's datasheets (primary + merged Leaders) and count only the
-  // models that actually carry it as firing it.
+  // models that actually carry it as firing it. A Firing Deck weaponOverride (24.14) is a
+  // passenger's weapon the transport counts as being equipped with.
   const candidates = unitWeapons(attacker, ctx).filter((w) => w.weapon.name === params.weaponName);
-  const found = params.weaponSourceDsId
-    ? candidates.find((w) => w.sourceDsId === params.weaponSourceDsId)
-    : candidates[0];
+  const found = params.weaponOverride
+    ? { weapon: params.weaponOverride, sourceDsId: attacker.datasheetId }
+    : params.weaponSourceDsId
+      ? candidates.find((w) => w.sourceDsId === params.weaponSourceDsId)
+      : candidates[0];
   if (!found) return { state, summary: '', rejected: 'weapon not found' };
   const weaponDef = found.weapon;
   const profile = attackProfileForWeapon(weaponDef);
   const isMelee = weaponDef.type === 'melee';
 
-  // Phase legality (real matches only — the sandbox stays a free dice calculator).
-  // NOTE: a future Overwatch implementation will need its own carve-out here.
+  // Phase legality (real matches only — the sandbox stays a free dice calculator). Snap shooting
+  // (Fire Overwatch, 15.09) resolves ranged attacks in the opponent's Movement phase.
   if (state.mode === 'match' && state.stage === 'battle') {
     const requiredPhase = isMelee ? 'Fight' : 'Shooting';
-    if (state.phase !== requiredPhase) {
+    const overwatchOk = !isMelee && params.snapShooting && state.phase === 'Movement';
+    if (state.phase !== requiredPhase && !overwatchOk) {
       return { state, summary: '', rejected: `${isMelee ? 'melee' : 'ranged'} attacks only in the ${requiredPhase} phase (now ${state.phase})` };
     }
   }
 
-  const carriers = weaponCarrierCount(attacker, weaponDef, found.sourceDsId);
+  const carriers = params.weaponOverride
+    ? (params.attackerCount ?? 1)
+    : weaponCarrierCount(attacker, weaponDef, found.sourceDsId);
   if (carriers == null) return { state, summary: '', rejected: `no models in the unit carry ${weaponDef.name}` };
   let aliveAttackers = carriers;
   const aliveTargets = target.models.filter((m) => m.alive).length;
@@ -263,6 +306,10 @@ export function resolveAttack(
   // Legality + situational flags from real positions.
   if (isMelee) {
     if (gap > ENGAGEMENT_RANGE) return { state, summary: '', rejected: 'not in engagement range' };
+    // 23.04: only FLYING models can make melee attacks that target AIRCRAFT, and AIRCRAFT can
+    // only make melee attacks that target FLYING units.
+    if (isAircraft(tDs) && !canFly(aDs)) return { state, summary: '', rejected: 'only FLYING models can fight AIRCRAFT' };
+    if (isAircraft(aDs) && !canFly(tDs)) return { state, summary: '', rejected: 'AIRCRAFT can only fight FLYING units' };
   } else {
     const range = weaponDef.range ?? 0;
     if (gap > range) return { state, summary: '', rejected: `out of range (${gap.toFixed(1)}" > ${range}")` };
@@ -278,24 +325,47 @@ export function resolveAttack(
     }
   }
 
-  // Line of sight + cover from terrain (Phase 2). Indirect Fire may target unseen units.
+  // Line of sight + cover from terrain. Indirect Fire may target unseen units (10.07).
   const aPts = attacker.models.filter((m) => m.alive).map((m) => m.pos);
   const tPts = target.models.filter((m) => m.alive).map((m) => m.pos);
-  const terrain = state.layout.terrain;
   let hitPenalty = 0;
   let forceCover = false;
-  // Big Guns Never Tire: ranged attacks made while within Engagement Range of an enemy take -1 to
-  // hit (Pistols are exempt). Only Monsters/Vehicles/Pistols may shoot while engaged at all —
-  // that eligibility is enforced by phases.ts / resolveUnitShooting.
-  if (!isMelee && !kw.pistol && enemiesInEngagement(state, attacker, ctx).length > 0) {
-    hitPenalty -= 1;
+  let indirect = false;
+  let indirectSpotted = false;
+  // Close-quarters shooting (10.06): a MONSTER/VEHICLE shooting while engaged takes -1 to hit,
+  // except with [CLOSE-QUARTERS] weapons targeting a unit it is engaged with. Other engaged
+  // shooters may only fire [CLOSE-QUARTERS] weapons — enforced by phases.ts/resolveUnitShooting.
+  const attackerEngagedWith = !isMelee ? enemiesInEngagement(state, attacker, ctx) : [];
+  if (!isMelee && attackerEngagedWith.length > 0) {
+    const cqAtEngaged = kw.pistol && attackerEngagedWith.some((e) => e.id === target.id);
+    if (!cqAtEngaged) hitPenalty -= 1;
+  }
+  // Shooting at an engaged target (17.03): only MONSTER/VEHICLE units can be targeted while
+  // engaged (by units not themselves engaged with them), at -1 to hit; [BLAST] never can.
+  if (!isMelee && attackerEngagedWith.every((e) => e.id !== target.id)) {
+    const targetEngaged = enemiesInEngagement(state, target, ctx).length > 0;
+    if (targetEngaged) {
+      const tMV = tDs.keywords.some((k) => /^(monster|vehicle)$/i.test(k));
+      if (!tMV) return { state, summary: '', rejected: 'target is engaged (only engaged MONSTERS/VEHICLES can be shot)' };
+      if (kw.blast) return { state, summary: '', rejected: '[BLAST] weapons cannot target engaged units' };
+      hitPenalty -= 1;
+    }
   }
   if (!isMelee) {
-    const visible = unitCanSee(aPts, tPts, terrain);
+    const visible = unitCanSeeIn(aPts, target, state, ctx);
     if (!visible) {
       if (!kw.indirectFire) return { state, summary: '', rejected: 'no line of sight' };
-      hitPenalty -= 1; // Indirect Fire: -1 to hit and the target gets cover
+      // Indirect shooting (10.07): unmod 1-5 fails (1-3 if stationary + target visible to a
+      // friendly unit), no hit re-rolls, target has the Benefit of Cover.
+      indirect = true;
       forceCover = true;
+      if (attacker.status.remainedStationary) {
+        indirectSpotted = state.units.some((u) => {
+          if (u.owner !== attacker.owner || u.id === attacker.id || u.inReserves) return false;
+          const spotters = u.models.filter((m) => m.alive).map((m) => m.pos);
+          return spotters.length > 0 && unitCanSeeIn(spotters, target, state, ctx);
+        });
+      }
     } else if (!kw.indirectFire) {
       // Per-model visibility (10e: a model can only shoot a target it can see). Only the bearers
       // that themselves have line of sight fire — a squad mostly hidden behind a tall ruin no
@@ -303,7 +373,14 @@ export function resolveAttack(
       const bearers = attacker.models.filter(
         (m) => m.alive && (m.datasheetId ?? attacker.datasheetId) === found.sourceDsId,
       );
-      const seeing = bearers.filter((m) => tPts.some((t) => !losBlocked(m.pos, t, terrain))).length;
+      const hidden = isHidden(target, state, ctx);
+      const seeing = bearers.filter((m) =>
+        tPts.some(
+          (t) =>
+            !(hidden && Math.hypot(m.pos.x - t.x, m.pos.y - t.y) > DEFAULT_DETECTION_RANGE) &&
+            !pointLosBlocked(m.pos, t, state.layout),
+        ),
+      ).length;
       if (seeing === 0) return { state, summary: '', rejected: 'no line of sight' };
       if (seeing < aliveAttackers) {
         aliveAttackers = seeing;
@@ -324,7 +401,20 @@ export function resolveAttack(
   };
   const mods = gatherAttackModifiers(abilityCtx, effectsOf(attacker, ctx), effectsOf(target, ctx));
 
-  const cover = (forceCover || (!isMelee && unitHasCover(aPts, tPts, terrain))) && !mods.ignoresCover;
+  const cover = (forceCover || (!isMelee && unitCoverIn(aPts, target, state, ctx))) && !mods.ignoresCover;
+  // Epic Challenge (15.03) grants [PRECISION] to the bearer's melee weapons for the phase.
+  if (mods.grantPrecision && !kw.precision) profile.keywords = { ...profile.keywords, precision: true };
+  // [PRECISION] (24.28): with a visible CHARACTER in the target unit, the attacker may promote
+  // that CHARACTER's allocation group to current. The AI/engine always does when it can.
+  const precisionActive =
+    (kw.precision || mods.grantPrecision) &&
+    target.models.some(
+      (m) =>
+        m.alive &&
+        m.datasheetId != null &&
+        m.datasheetId !== target.datasheetId &&
+        (ctx.datasheets.get(m.datasheetId)?.keywords ?? []).some((k) => k.toLowerCase() === 'character'),
+    );
   const situation: CombatSituation = {
     attackerCount: params.attackerCount ?? aliveAttackers,
     hitModifier: hitPenalty + mods.hitModifier,
@@ -335,6 +425,10 @@ export function resolveAttack(
     charged: attacker.status.charged,
     stationary: attacker.status.remainedStationary,
     cover,
+    indirect,
+    indirectSpotted,
+    snapShooting: params.snapShooting,
+    precisionActive,
     targetModelCount: aliveTargets,
     critHitOn: mods.critHitOn,
     critWoundOn: mods.critWoundOn,
@@ -358,6 +452,39 @@ export function resolveAttack(
   }
   const result = resolveAttacks(profile, defender, situation, rng);
 
+  // [HAZARDOUS] (24.15): after resolving, one hazard roll per hazardous weapon selected — this
+  // call resolves one weapon, so one roll. Fails on 1-2: 1 mortal wound (3 if all M/V).
+  let hazardLog: string[] = [];
+  let attackerModels = attacker.models;
+  if (kw.hazardous) {
+    const aMV = aDs.keywords.some((k) => /^(monster|vehicle)$/i.test(k));
+    const { roll, mortals } = hazardRoll(rng, aMV);
+    if (mortals > 0) {
+      attackerModels = [...attacker.models];
+      let left = mortals;
+      // Mortal-wound allocation (06.02): wounded non-CHARACTERs, then non-CHARACTERs, then chars.
+      while (left > 0) {
+        const alive = attackerModels.filter((m) => m.alive);
+        if (alive.length === 0) break;
+        const isChar = (m: ModelInstance) =>
+          m.datasheetId != null && m.datasheetId !== attacker.datasheetId;
+        const mds = (m: ModelInstance) => modelDatasheet(m, attacker, ctx) ?? aDs;
+        const pick =
+          alive.find((m) => !isChar(m) && m.wounds < mds(m).models[0]!.W) ??
+          alive.find((m) => !isChar(m)) ??
+          alive.find((m) => m.wounds < mds(m).models[0]!.W) ??
+          alive[0]!;
+        const k = attackerModels.indexOf(pick);
+        const wounds = pick.wounds - 1;
+        attackerModels[k] = { ...pick, wounds, alive: wounds > 0 };
+        left--;
+      }
+      hazardLog = [`  Hazardous: rolled ${roll} — ${mortals} mortal wound(s) to ${aDs.name}`];
+    } else {
+      hazardLog = [`  Hazardous: rolled ${roll} — safe`];
+    }
+  }
+
   // Map the updated wound state back onto the target's models (result order == allocation order).
   const updatedById = new Map<string, { wounds: number }>();
   result.defenderModels.forEach((dm, k) => {
@@ -374,7 +501,15 @@ export function resolveAttack(
   const newUnits = state.units.map((u) => {
     if (u.id === target.id) return { ...u, models: newTargetModels };
     if (u.id === attacker.id) {
-      return { ...u, status: { ...u.status, [isMelee ? 'hasFought' : 'hasShot']: true } };
+      return {
+        ...u,
+        models: attackerModels,
+        status: {
+          ...u.status,
+          [isMelee ? 'hasFought' : 'hasShot']: true,
+          ...(!isMelee ? { lastShotOnTurn: state.turnCounter ?? 0 } : {}),
+        },
+      };
     }
     return u;
   });
@@ -386,7 +521,7 @@ export function resolveAttack(
     `${result.damageDealt} damage, ${result.modelsSlain} slain`;
 
   return {
-    state: { ...state, units: newUnits, log: [...state.log, summary, ...result.log.map((l) => `  ${l.step}: ${l.detail}`)] },
+    state: { ...state, units: newUnits, log: [...state.log, summary, ...result.log.map((l) => `  ${l.step}: ${l.detail}`), ...hazardLog] },
     summary,
   };
 }
@@ -406,9 +541,27 @@ function enemiesInEngagement(state: GameState, unit: UnitInstance, ctx: EngineCo
 
 export interface FirePlan {
   /** The weapon profiles that will actually fire, with how many models carry each. */
-  fire: { weapon: WeaponProfile; sourceDsId: string; carriers: number }[];
+  fire: {
+    weapon: WeaponProfile;
+    sourceDsId: string;
+    carriers: number;
+    /** Firing Deck (24.14): the weapon belongs to a model embarked in this unit. */
+    viaFiringDeck?: boolean;
+    /** The embarked unit contributing the Firing Deck weapon. */
+    passengerUnitId?: string;
+  }[];
   /** Human-readable rule notes (Pistols held, profile collapses, engagement restriction). */
   notes: string[];
+}
+
+/** Average of a dice expression ("2", "D6", "2D6+1") — a deterministic weapon-rank helper. */
+function diceAverage(expr: string): number {
+  const m = /^(\d*)D(\d+)([+-]\d+)?$/i.exec(expr.trim());
+  if (!m) return parseFloat(expr) || 1;
+  const n = m[1] ? parseInt(m[1], 10) : 1;
+  const faces = parseInt(m[2]!, 10);
+  const mod = m[3] ? parseInt(m[3]!, 10) : 0;
+  return n * ((faces + 1) / 2) + mod;
 }
 
 /**
@@ -448,16 +601,54 @@ export function planUnitShooting(state: GameState, attacker: UnitInstance, ctx: 
   }
   const pistols = ranged.filter(isPistol);
   const others = ranged.filter((w) => !isPistol(w));
+  let fire: FirePlan['fire'];
   if (others.length && pistols.length) {
     notes.push('Pistols held — a model fires either its Pistol or all its other weapons');
-    return { fire: others, notes };
+    fire = others;
+  } else {
+    fire = ranged;
   }
-  return { fire: ranged, notes };
+
+  // Firing Deck X (24.14): when this TRANSPORT shoots, up to X embarked models (whose units have
+  // not shot) each contribute one ranged weapon. The best weapons are picked deterministically.
+  const deckX = firingDeckX(aDs);
+  if (deckX > 0 && !engaged) {
+    const passengers = embarkedUnits(state, attacker.id).filter((p) => !p.status.hasShot);
+    const cands: { weapon: WeaponProfile; sourceDsId: string; carriers: number; unitId: string; rank: number }[] = [];
+    for (const p of passengers) {
+      const seen = new Set<string>();
+      for (const w of availableUnitWeapons(p, ctx)) {
+        if (w.weapon.type !== 'ranged') continue;
+        if (/one shot/i.test(w.weapon.keywords.join(' '))) continue;
+        const key = `${w.sourceDsId}|${weaponItemName(w.weapon.name)}`;
+        if (seen.has(key)) continue; // one profile per weapon
+        seen.add(key);
+        const rank = diceAverage(w.weapon.attacks) * (w.weapon.S + diceAverage(w.weapon.D)) + (w.weapon.range ?? 0) / 24;
+        cands.push({ weapon: w.weapon, sourceDsId: w.sourceDsId, carriers: w.carriers, unitId: p.id, rank });
+      }
+    }
+    cands.sort((a, b) => b.rank - a.rank || a.weapon.name.localeCompare(b.weapon.name));
+    let slots = deckX;
+    for (const c of cands) {
+      if (slots <= 0) break;
+      const n = Math.min(c.carriers, slots);
+      slots -= n;
+      fire = [...fire, { weapon: c.weapon, sourceDsId: c.sourceDsId, carriers: n, viaFiringDeck: true, passengerUnitId: c.unitId }];
+      notes.push(`Firing Deck: ${n}× ${c.weapon.name} fired by embarked passengers`);
+    }
+  }
+  return { fire, notes };
 }
 
 export interface UnitShootParams {
   attackerUnitId: string;
   targetUnitId: string;
+  /** Fire Overwatch (15.08): resolve in the opponent's Movement phase with snap shooting —
+   *  only unmodified 6s hit, target within 24". CP/once-per-phase gating is the reducer's. */
+  overwatch?: boolean;
+  /** Per-weapon target split (04.02: targets are selected per weapon): weapon key
+   *  `${sourceDsId}|${weaponName}` → target unit id. Unlisted weapons fire at `targetUnitId`. */
+  splitTargets?: Record<string, string>;
 }
 
 /**
@@ -478,11 +669,29 @@ export function resolveUnitShooting(
   const tDs = ctx.datasheets.get(target.datasheetId);
   if (!aDs || !tDs) return { state, summary: '', rejected: 'datasheet not found' };
 
-  if (state.mode === 'match' && state.stage === 'battle' && state.phase !== 'Shooting') {
-    return { state, summary: '', rejected: `shooting only in the Shooting phase (now ${state.phase})` };
-  }
-  if (state.mode === 'match' && attacker.status.hasShot) {
-    return { state, summary: '', rejected: 'this unit has already shot this turn' };
+  if (params.overwatch) {
+    // Fire Overwatch (15.08): end of the opponent's Movement phase; an unengaged non-TITANIC
+    // unit snap-shoots one visible enemy within 24". CP/once-per-phase are the reducer's job.
+    if (state.mode === 'match' && state.stage === 'battle') {
+      if (state.phase !== 'Movement') return { state, summary: '', rejected: `Fire Overwatch only in the Movement phase (now ${state.phase})` };
+      if (attacker.owner === state.activePlayer) return { state, summary: '', rejected: 'Fire Overwatch fires in the OPPONENT\'s Movement phase' };
+    }
+    if (aDs.keywords.some((k) => k.toLowerCase() === 'titanic')) {
+      return { state, summary: '', rejected: 'TITANIC units cannot Fire Overwatch' };
+    }
+    if (enemiesInEngagement(state, attacker, ctx).length > 0) {
+      return { state, summary: '', rejected: 'an engaged unit cannot Fire Overwatch' };
+    }
+    if (closestGap(attacker, aDs.baseShape, target, tDs.baseShape) > 24) {
+      return { state, summary: '', rejected: 'Fire Overwatch targets must be within 24"' };
+    }
+  } else {
+    if (state.mode === 'match' && state.stage === 'battle' && state.phase !== 'Shooting') {
+      return { state, summary: '', rejected: `shooting only in the Shooting phase (now ${state.phase})` };
+    }
+    if (state.mode === 'match' && attacker.status.hasShot) {
+      return { state, summary: '', rejected: 'this unit has already shot this turn' };
+    }
   }
 
   // While engaged, ranged attacks (Pistols / Big Guns Never Tire) may only target a unit the
@@ -506,15 +715,31 @@ export function resolveUnitShooting(
   };
   let firedCount = 0;
   const skipped: string[] = [];
+  const deckUnits = new Set<string>();
   for (const w of fire) {
-    const tNow = cur.units.find((u) => u.id === target.id);
+    // Targets are selected per weapon (04.02): a split assignment overrides the main target.
+    const tId = params.splitTargets?.[`${w.sourceDsId}|${w.weapon.name}`] ?? target.id;
+    const tNow = cur.units.find((u) => u.id === tId);
     if (!tNow || !tNow.models.some((m) => m.alive)) {
-      cur = { ...cur, log: [...cur.log, '  target destroyed — remaining weapons not fired'] };
-      break;
+      skipped.push(`  ${w.weapon.name} not fired: its target is already destroyed`);
+      continue;
+    }
+    // While engaged, ranged attacks may only target a unit within Engagement Range — applies to
+    // every split target, not just the main one.
+    if (engagedUnits.length > 0 && !engagedUnits.some((e) => e.id === tId)) {
+      skipped.push(`  ${w.weapon.name} not fired: split target is not within Engagement Range`);
+      continue;
     }
     const out = resolveAttack(
       cur,
-      { attackerUnitId: attacker.id, targetUnitId: target.id, weaponName: w.weapon.name, weaponSourceDsId: w.sourceDsId },
+      {
+        attackerUnitId: attacker.id, targetUnitId: tId, weaponName: w.weapon.name,
+        weaponSourceDsId: w.sourceDsId,
+        // Firing Deck (24.14): the transport counts as equipped with the passenger's weapon.
+        ...(w.viaFiringDeck ? { weaponOverride: w.weapon, attackerCount: w.carriers } : {}),
+        // Fire Overwatch (15.09): every attack is snap shooting — only unmodified 6s hit.
+        ...(params.overwatch ? { snapShooting: true } : {}),
+      },
       ctx,
       rng,
     );
@@ -523,6 +748,7 @@ export function resolveUnitShooting(
       continue;
     }
     firedCount++;
+    if (w.viaFiringDeck && w.passengerUnitId) deckUnits.add(w.passengerUnitId);
     cur = out.state;
   }
   if (skipped.length) cur = { ...cur, log: [...cur.log, ...skipped] };
@@ -530,7 +756,22 @@ export function resolveUnitShooting(
     return { state, summary: '', rejected: `no weapon could fire (${skipped[0]?.trim() ?? 'nothing in range / line of sight'})` };
   }
 
-  const units = cur.units.map((u) => (u.id === attacker.id ? { ...u, status: { ...u.status, hasShot: true } } : u));
+  // Overwatch happens in the opponent's turn: the unit's own-turn shooting is untouched (its
+  // hasShot resets at its own turn start anyway), but it HAS made ranged attacks (Hidden, 13.09).
+  const units = cur.units.map((u) =>
+    u.id === attacker.id
+      ? {
+          ...u,
+          status: {
+            ...u.status,
+            ...(params.overwatch ? {} : { hasShot: true }),
+            lastShotOnTurn: cur.turnCounter ?? 0,
+          },
+        }
+      : deckUnits.has(u.id)
+        ? { ...u, status: { ...u.status, hasShot: true } } // Firing Deck: contributors may not shoot again
+        : u,
+  );
   const aliveAfter = units.find((u) => u.id === target.id)?.models.filter((m) => m.alive).length ?? 0;
   const summary = `${aDs.name} shooting at ${tDs.name}: ${firedCount} weapon(s) fired, ${aliveBefore - aliveAfter} model(s) slain`;
   return { state: { ...cur, units, log: [...cur.log, summary] }, summary };
@@ -545,7 +786,7 @@ function meleeProfileRank(w: WeaponProfile, def: { T: number; save: number; invu
   const attacks = Math.max(0, a.count * ((a.sides + 1) / 2) + a.flat);
   const pHit = kw.torrent ? 1 : Math.max(1 / 6, Math.min(5 / 6, (7 - w.skill) / 6));
   const pWound = Math.max(1 / 6, Math.min(5 / 6, (7 - woundThreshold(w.S, def.T)) / 6));
-  const sv = effectiveSave(def.save, w.AP, def.invuln, false);
+  const sv = effectiveSave(def.save, w.AP, def.invuln);
   const pFail = sv > 6 ? 1 : 1 - (7 - Math.max(2, sv)) / 6;
   const d = parseDice(w.D);
   const dmg = Math.max(1, d.count * ((d.sides + 1) / 2) + d.flat);
@@ -698,7 +939,9 @@ export function resolveUnitFight(
   const units = cur.units.map((u) => (u.id === attacker.id ? { ...u, status: { ...u.status, hasFought: true } } : u));
   const aliveAfter = units.find((u) => u.id === target.id)?.models.filter((m) => m.alive).length ?? 0;
   const summary = `${aDs.name} fighting ${tDs.name}: ${swungCount} weapon(s), ${aliveBefore - aliveAfter} model(s) slain`;
-  return { state: { ...cur, units, log: [...cur.log, summary] }, summary };
+  // Counteroffensive's "must be selected next" is satisfied once the unit fights.
+  const fightNext = cur.fightNext === attacker.id ? undefined : cur.fightNext;
+  return { state: { ...cur, units, fightNext, log: [...cur.log, summary] }, summary };
 }
 
 // ── Objective control & scoring (Phase 2) ──────────────────────────────────────
@@ -741,13 +984,15 @@ export function objectiveControl(state: GameState, ctx: EngineContext) {
  */
 export function runCommandPhase(state: GameState, ctx: EngineContext, rng: RNG): GameState {
   const side = state.activePlayer;
+  const other: import('./types').Side = side === 'player' ? 'ai' : 'player';
   const log: string[] = [`— ${side} Command phase (round ${state.round}) —`];
 
-  // 1. Command points: +1 at the start of each player's Command phase.
-  const cp = { ...state.cp, [side]: state.cp[side] + 1 };
-  log.push(`${side} gains 1 CP (now ${cp[side]})`);
+  // 1. Gain Core CP (08.02, 11e): BOTH players gain 1 CP in each Command phase.
+  const cp = { player: state.cp.player + 1, ai: state.cp.ai + 1 };
+  log.push(`both players gain 1 CP (${side}: ${cp[side]}, ${other}: ${cp[other]})`);
 
-  // 2. Battle-shock tests for the active player's below-half units.
+  // 2. Battle-shock (08.03, 11e): the active player rolls for each of their units that is at or
+  // below half-strength OR already battle-shocked; a successful roll clears the state.
   const reports: import('./types').BattleShockReport[] = [];
   const units = state.units.map((u) => {
     if (u.owner !== side) return u;
@@ -758,7 +1003,23 @@ export function runCommandPhase(state: GameState, ctx: EngineContext, rng: RNG):
     const ld = ds.models[0]!.Ld - ldBonusFromOrders(u); // +Ld = a lower target number (easier test)
     const woundsFraction =
       u.startingModels === 1 ? u.models[0]!.wounds / Math.max(1, ds.models[0]!.W) : undefined;
-    const test = battleShockTest(alive, u.startingModels, ld, rng, woundsFraction);
+    // Insane Bravery (15.04): a pre-paid battle-shock roll is automatically successful. The
+    // effect is applied via UseStratagem/InsaneBravery before Run Command; consumed here.
+    if (u.status.activeEffects?.includes('insane_bravery')) {
+      const wouldTest = alive <= u.startingModels / 2 || u.status.battleShocked;
+      if (wouldTest) {
+        log.push(`${ds.name} Battle-shock: automatically passed (Insane Bravery)`);
+        return {
+          ...u,
+          status: {
+            ...u.status,
+            battleShocked: false,
+            activeEffects: u.status.activeEffects.filter((e) => e !== 'insane_bravery'),
+          },
+        };
+      }
+    }
+    const test = battleShockTest(alive, u.startingModels, ld, rng, woundsFraction, u.status.battleShocked);
     if (test.required) {
       reports.push({ unitId: u.id, unitName: ds.name, roll: [test.roll[0]!, test.roll[1]!], total: test.total, ld, passed: test.passed });
       log.push(
@@ -768,10 +1029,12 @@ export function runCommandPhase(state: GameState, ctx: EngineContext, rng: RNG):
     return { ...u, status: { ...u.status, battleShocked: test.required && !test.passed } };
   });
 
-  // 3. Primary scoring for objectives the active player controls (from battle round 2+).
+  // Primary VP: 11e mission games score via missions11.ts (Command-end + turn-end windows).
+  // Legacy layouts (no mission state) keep the old Pariah-style hold-objectives scoring so the
+  // 10e maps stay playable.
   const stateForScore = { ...state, units };
   let score = state.score;
-  if (state.round >= 2) {
+  if (!state.missions && state.round >= 2) {
     const { controlled } = objectiveControl(stateForScore, ctx);
     const gained = scorePrimary(controlled[side], state.score[side]);
     if (gained > 0) {
@@ -792,6 +1055,10 @@ export interface ChargeParams {
   /** Spend 1 CP on the Core Stratagem "Command Re-roll" if the charge roll fails (match mode;
    *  once per phase per side — the engine enforces both and re-rolls the full 2D6). */
   commandReroll?: boolean;
+  /** Heroic Intervention (15.11): resolve this charge at the end of the OPPONENT's Charge phase.
+   *  'leap_to_defend' (1 CP): only enemy units that charged this turn may be targets.
+   *  'into_the_fray' (2 CP): any enemy within 6", but the charge roll is capped at 6. */
+  heroic?: 'leap_to_defend' | 'into_the_fray';
 }
 
 /** Rigid copy of a unit translated by `v` (alive models only). */
@@ -859,9 +1126,13 @@ function findChargeMove(
 }
 
 /**
- * Resolve a charge (2D6) against one or more targets. Succeeds only when a single coherent move of
- * up to the rolled distance reaches Engagement Range of every target without ending within
- * Engagement Range of a non-target enemy. On success, moves the charger and marks it charged.
+ * Resolve a charge with 11e sequencing (11.02/11.04): the 2D6 charge roll is made FIRST, and
+ * targets are selected AFTER the roll — each selected target must be within 12" AND within the
+ * rolled distance. `targetUnitIds` carries the player's INTENDED targets; after the roll the
+ * engine selects the best subset it can actually engage (dropping the furthest intended targets
+ * first), exactly as a player choosing targets post-roll would. Any intended target NOT selected
+ * counts as a non-target (the move cannot end engaged with it). On success, moves the charger,
+ * marks it charged, and grants Fights First (via the charged flag).
  */
 export function resolveCharge(
   state: GameState,
@@ -879,64 +1150,133 @@ export function resolveCharge(
     const summary = `Charge rejected: only in the Charge phase (now ${state.phase})`;
     return { state: { ...state, log: [...state.log, summary] }, success: false, summary };
   }
-  // 10e: a unit is selected to declare a charge once per phase — no re-rolling a failed charge.
-  if (state.mode === 'match' && charger.status.chargeAttempted) {
+  // A unit is selected to declare a charge once per phase — no re-rolling a failed charge.
+  // (Heroic Intervention is a stratagem play in the OPPONENT's phase; the once-per-phase
+  // stratagem tracker gates it instead.)
+  if (state.mode === 'match' && charger.status.chargeAttempted && !params.heroic) {
     const summary = 'Charge rejected: this unit already declared a charge this phase';
     return { state: { ...state, log: [...state.log, summary] }, success: false, summary };
+  }
+
+  // Heroic Intervention (15.11) eligibility + CP (match mode).
+  let heroicCp = 0;
+  const stratKey = `${charger.owner}:core:heroic_intervention`;
+  const phaseKeyNow = `${state.round}:${state.activePlayer}:${state.phase}`;
+  if (params.heroic && state.mode === 'match') {
+    const reject = (why: string) => {
+      const summary = `Heroic Intervention rejected: ${why}`;
+      return { state: { ...state, log: [...state.log, summary] }, success: false, summary };
+    };
+    if (charger.owner === state.activePlayer) return reject("used at the end of the OPPONENT's Charge phase");
+    const kws = cDs.keywords.map((k) => k.toLowerCase());
+    if (kws.includes('vehicle') && !kws.includes('character') && !kws.includes('walker')) {
+      return reject('a VEHICLE unit must be a CHARACTER or WALKER');
+    }
+    const engagedNow = state.units.some(
+      (u) => u.owner !== charger.owner && !u.inReserves && u.models.some((m) => m.alive) &&
+        closestGap(charger, cDs.baseShape, u, ctx.datasheets.get(u.datasheetId)?.baseShape ?? cDs.baseShape) <= ENGAGEMENT_RANGE,
+    );
+    if (engagedNow) return reject('the unit must be unengaged');
+    heroicCp = params.heroic === 'into_the_fray' ? 2 : 1;
+    if (state.cp[charger.owner] < heroicCp) return reject(`needs ${heroicCp} CP`);
+    if (state.stratUsed?.[stratKey] === phaseKeyNow) return reject('already used this phase');
   }
 
   const targetIds = params.targetUnitIds ?? (params.targetUnitId ? [params.targetUnitId] : []);
   const targets = targetIds
     .map((id) => state.units.find((u) => u.id === id))
     .filter((u): u is UnitInstance => !!u && u.models.some((m) => m.alive))
+    // Leap to Defend: only enemy units that made a charge move this turn can be targets.
+    .filter((u) => params.heroic !== 'leap_to_defend' || u.status.charged)
     .map((u) => ({ unit: u, shape: ctx.datasheets.get(u.datasheetId)?.baseShape ?? cDs.baseShape }));
   if (targets.length === 0) return { state, success: false, summary: 'no valid target' };
 
-  // Declaration legality: every target must be within 12".
+  // Intent legality: every INTENDED target must be within 12" (11.04 — targets beyond 12" can
+  // never be selected, so declaring one is an illegal intent, not a failed charge). Into the
+  // Fray narrows the selection to enemies within 6".
+  const maxDeclare = params.heroic === 'into_the_fray' ? 6 : 12;
   for (const t of targets) {
-    if (closestGap(charger, cDs.baseShape, t.unit, t.shape) > 12) {
-      const summary = `Charge illegal: ${ctx.datasheets.get(t.unit.datasheetId)?.name ?? t.unit.id} is over 12" away`;
+    if (closestGap(charger, cDs.baseShape, t.unit, t.shape) > maxDeclare) {
+      const summary = `Charge illegal: ${ctx.datasheets.get(t.unit.datasheetId)?.name ?? t.unit.id} is over ${maxDeclare}" away`;
       return { state: { ...state, log: [...state.log, summary] }, success: false, summary };
     }
   }
 
-  // Non-target enemies on the board (the charge may not end within Engagement Range of these).
-  const targetSet = new Set(targets.map((t) => t.unit.id));
-  const nonTargets = state.units
-    .filter((u) => u.owner !== charger.owner && !u.inReserves && !targetSet.has(u.id) && u.models.some((m) => m.alive))
-    .map((u) => ({ unit: u, shape: ctx.datasheets.get(u.datasheetId)?.baseShape ?? cDs.baseShape }));
+  // Enemies that end up unselected are non-targets: the move may not end within Engagement Range
+  // of them. (Computed per-attempt below, since target selection follows the roll.)
+  const enemyShape = (u: UnitInstance) => ctx.datasheets.get(u.datasheetId)?.baseShape ?? cDs.baseShape;
+  const otherEnemies = state.units
+    .filter((u) => u.owner !== charger.owner && !u.inReserves && u.models.some((m) => m.alive))
+    .map((u) => ({ unit: u, shape: enemyShape(u) }));
+
+  const occupied = occupiedBases(state, ctx, [charger.id]);
+  // 11.04: select targets AFTER the roll — intended targets within the rolled distance, best
+  // engageable subset first (drop the furthest intended target when the full set has no path).
+  const attempt = (dist: number): { move: Vec2; selected: typeof targets } | null => {
+    const selectable = targets
+      .filter((t) => closestGap(charger, cDs.baseShape, t.unit, t.shape) <= dist)
+      .sort(
+        (a, b) =>
+          closestGap(charger, cDs.baseShape, a.unit, a.shape) -
+          closestGap(charger, cDs.baseShape, b.unit, b.shape),
+      );
+    for (let n = selectable.length; n >= 1; n--) {
+      const selected = selectable.slice(0, n);
+      const selectedIds = new Set(selected.map((t) => t.unit.id));
+      const nonTargets = otherEnemies.filter((e) => !selectedIds.has(e.unit.id));
+      const move = findChargeMove(charger, cDs.baseShape, selected, nonTargets, dist, occupied, (u) => unitBases(u, ctx));
+      if (move) return { move, selected };
+    }
+    return null;
+  };
 
   let { distance, rolls } = rollCharge(rng);
-  const occupied = occupiedBases(state, ctx, [charger.id]);
-  let move = findChargeMove(charger, cDs.baseShape, targets, nonTargets, distance, occupied, (u) => unitBases(u, ctx));
+  // Into the Fray: a charge roll greater than 6 becomes 6.
+  if (params.heroic === 'into_the_fray' && distance > 6) distance = 6;
+  let result = attempt(distance);
 
   // Core Stratagem "Command Re-roll": on a failed charge the issuer may spend 1 CP to re-roll
   // the full 2D6 (once per phase per side, match mode only).
   let cp = state.cp;
   let rerollUsed = state.rerollUsed;
+  let stratUsed = state.stratUsed;
   const extraLog: string[] = [];
-  if (!move && params.commandReroll && state.mode === 'match') {
+  if (heroicCp > 0) {
+    cp = { ...cp, [charger.owner]: cp[charger.owner] - heroicCp };
+    stratUsed = { ...(stratUsed ?? {}), [stratKey]: phaseKeyNow };
+    extraLog.push(
+      `${charger.owner} spends ${heroicCp} CP on Heroic Intervention (${params.heroic === 'into_the_fray' ? 'Into the Fray' : 'Leap to Defend'})`,
+    );
+  }
+  if (!result && params.commandReroll && state.mode === 'match') {
     const phaseKey = `${state.round}:${state.activePlayer}:${state.phase}`;
     if (cp[charger.owner] >= 1 && rerollUsed?.[charger.owner] !== phaseKey) {
       cp = { ...cp, [charger.owner]: cp[charger.owner] - 1 };
       rerollUsed = { ...(rerollUsed ?? {}), [charger.owner]: phaseKey };
       const first = `${rolls.join('+')}=${distance}"`;
       ({ distance, rolls } = rollCharge(rng));
+      if (params.heroic === 'into_the_fray' && distance > 6) distance = 6;
       extraLog.push(`${charger.owner} spends 1 CP on Command Re-roll: charge 2D6 ${first} re-rolled`);
-      move = findChargeMove(charger, cDs.baseShape, targets, nonTargets, distance, occupied, (u) => unitBases(u, ctx));
+      result = attempt(distance);
     }
   }
 
-  const success = move !== null;
-  const names = targets.map((t) => ctx.datasheets.get(t.unit.datasheetId)?.name ?? t.unit.id).join(' + ');
-  // Tell a short roll apart from a blocked path: the minimum distance that could possibly work
-  // is the furthest target's gap minus Engagement Range.
-  const needed = Math.max(...targets.map((t) => closestGap(charger, cDs.baseShape, t.unit, t.shape))) - ENGAGEMENT_RANGE;
+  const success = result !== null;
+  const move = result?.move ?? null;
+  const engagedTargets = result?.selected ?? targets;
+  const names = engagedTargets.map((t) => ctx.datasheets.get(t.unit.datasheetId)?.name ?? t.unit.id).join(' + ');
+  // Tell a short roll apart from a blocked path. A target is only SELECTABLE when it is within
+  // the rolled distance (11.04), so the minimum roll that could possibly work is the closest
+  // intended target's full gap — not gap minus Engagement Range.
+  const needed = Math.min(...targets.map((t) => closestGap(charger, cDs.baseShape, t.unit, t.shape)));
+  const dropped = success && engagedTargets.length < targets.length
+    ? ` (${targets.length - engagedTargets.length} intended target(s) out of reach and not selected)`
+    : '';
   const reason = success
-    ? 'SUCCESS'
+    ? `SUCCESS${dropped}`
     : distance < needed - 1e-6
       ? `failed — needed ${Math.max(0, needed).toFixed(1)}", rolled ${distance}"`
-      : 'failed — no clear path (cannot reach every target without ending within 1" of another enemy)';
+      : 'failed — no clear path (cannot reach a target without ending within Engagement Range of another enemy)';
   const summary = `${cDs.name} charges ${names}: 2D6=${rolls.join('+')}=${distance}" → ${reason}`;
 
   // The declaration is spent whether or not the roll/path succeeded (match mode; the sandbox
@@ -947,7 +1287,7 @@ export function resolveCharge(
     if (success) return { ...translatedModels(u, move!), status: { ...u.status, ...attempted, charged: true, moved: true } };
     return { ...u, status: { ...u.status, ...attempted } };
   });
-  return { state: { ...state, units, cp, rerollUsed, log: [...state.log, ...extraLog, summary] }, success, summary };
+  return { state: { ...state, units, cp, rerollUsed, stratUsed, log: [...state.log, ...extraLog, summary] }, success, summary };
 }
 
 /**
@@ -998,17 +1338,59 @@ export function closestAxis(a: UnitInstance, b: UnitInstance): Vec2 {
   return { x: dx / len, y: dy / len };
 }
 
-// ── Fight-phase moves: Pile In / Consolidate (3") ──────────────────────────────
+// ── Fight-phase moves: Pile In (12.03) / Consolidate (12.08) ───────────────────
 export interface FightMoveParams {
   unitId: string;
   mode: 'pile_in' | 'consolidate';
 }
 
 /**
- * Pile In (before attacking) and Consolidate (after) — each lets a unit move every model up to 3"
- * toward the closest enemy model. Modelled as a coherency-preserving rigid translate toward the
- * nearest enemy unit, capped at 3" and at base contact (so it never overlaps). A simplification of
- * the per-model rule that keeps the unit legal; faithful enough for engaged combats.
+ * Stamp `engagedAtFightStart` on every on-board unit — called when the Fight phase begins.
+ * 12.04 keeps a unit eligible to fight even if its combat evaporates mid-phase (its enemy is
+ * destroyed by another fight, or emergency-disembarks away); such a unit fights via an
+ * OVERRUN FIGHT (12.06).
+ */
+export function stampFightStepEngagement(state: GameState, ctx: EngineContext): GameState {
+  const alive = state.units.filter((u) => !u.inReserves && u.models.some((m) => m.alive));
+  const engaged = new Set<string>();
+  for (const u of alive) {
+    const uDs = ctx.datasheets.get(u.datasheetId);
+    if (!uDs) continue;
+    for (const e of alive) {
+      if (e.owner === u.owner) continue;
+      const eDs = ctx.datasheets.get(e.datasheetId);
+      if (!eDs) continue;
+      if (closestGap(u, uDs.baseShape, e, eDs.baseShape) <= ENGAGEMENT_RANGE) {
+        engaged.add(u.id);
+        break;
+      }
+    }
+  }
+  return {
+    ...state,
+    units: state.units.map((u) => ({ ...u, status: { ...u.status, engagedAtFightStart: engaged.has(u.id) } })),
+  };
+}
+
+/**
+ * Pile In (12.03) and Consolidation (12.08) moves — up to 3", modelled as a coherency-preserving
+ * rigid translate (per-model movement is approximated; the unit-level constraints are enforced).
+ *
+ * Pile In: targets are the units we're engaged with, otherwise enemy units within 5" (the overrun
+ * fight's extra pile-in). The unit must END engaged, or it does not move.
+ *
+ * Consolidation selects its mode by the 11e mandatory priority:
+ *  • Ongoing (engaged): move toward the closest engaged enemy, staying engaged.
+ *  • Engaging (enemy within 3"): move toward it and END engaged — or don't move at all. Enemy
+ *    units engaged this way that have not fought become eligible to fight (the caller's live
+ *    eligibility check picks them up — "chain fights").
+ *  • Objective (objective within reach): end within control range of it if possible.
+ *  • Otherwise the unit cannot consolidate (11e removed the free 3" toward the nearest enemy).
+ *
+ * Timing note: the Core Rules resolve Pile In (12.02) and Consolidate (12.07) as whole-phase
+ * steps (active player's units all at once, then the opponent's); this engine resolves them
+ * per-activation around each unit's fight, which preserves the same reach and the same chain-fight
+ * consequences under alternating activations. Documented simplification.
  */
 export function resolveFightMove(
   state: GameState,
@@ -1019,6 +1401,7 @@ export function resolveFightMove(
   if (!unit) return { state, summary: 'unit not found' };
   const ds = ctx.datasheets.get(unit.datasheetId);
   if (!ds) return { state, summary: 'datasheet not found' };
+  const verb = params.mode === 'pile_in' ? 'piles in' : 'consolidates';
 
   // Phase legality (real matches only).
   if (state.mode === 'match' && state.stage === 'battle' && state.phase !== 'Fight') {
@@ -1026,35 +1409,298 @@ export function resolveFightMove(
     return { state: { ...state, log: [...state.log, summary] }, summary };
   }
 
-  // Nearest enemy unit by base-to-base gap.
-  let nearest: UnitInstance | undefined;
-  let minGap = Infinity;
+  // Enemy units by base-to-base gap. Non-FLYING units ignore AIRCRAFT when selecting pile-in /
+  // consolidation targets (23.02).
+  const moverFlies = canFly(ds);
+  const enemies: { unit: UnitInstance; gap: number }[] = [];
   for (const e of state.units) {
     if (e.owner === unit.owner || e.inReserves || !e.models.some((m) => m.alive)) continue;
     const eDs = ctx.datasheets.get(e.datasheetId);
     if (!eDs) continue;
-    const g = closestGap(unit, ds.baseShape, e, eDs.baseShape);
-    if (g < minGap) { minGap = g; nearest = e; }
+    if (isAircraft(eDs) && !moverFlies) continue;
+    enemies.push({ unit: e, gap: closestGap(unit, ds.baseShape, e, eDs.baseShape) });
   }
-  if (!nearest) return { state, summary: 'no enemy to move toward' };
+  enemies.sort((a, b) => a.gap - b.gap);
+  const engagedWith = enemies.filter((e) => e.gap <= ENGAGEMENT_RANGE);
 
-  const dir = closestAxis(unit, nearest);
-  let moveDist = Math.min(3, Math.max(0, minGap)); // up to 3", stopping at base contact
+  const noMove = (why: string): { state: GameState; summary: string } => {
+    const summary = `${ds.name} does not ${params.mode === 'pile_in' ? 'pile in' : 'consolidate'} (${why})`;
+    return { state: { ...state, log: [...state.log, summary] }, summary };
+  };
+
+  // Pick the move goal by mode.
+  let goal: { unit: UnitInstance; gap: number } | undefined;
+  let mustEndEngaged = false;
+  let modeNote = '';
+  let objectiveGoal: Vec2 | undefined;
+  if (params.mode === 'pile_in') {
+    // 12.03: targets = engaged enemies; an unengaged unit (overrun fight, 12.06) may pick
+    // enemies within 5". Either way the unit must END engaged.
+    const pool = engagedWith.length ? engagedWith : enemies.filter((e) => e.gap <= 5);
+    if (!pool.length) return noMove('no enemy within pile-in reach');
+    goal = pool[0]!;
+    if (!engagedWith.length) {
+      mustEndEngaged = true;
+      modeNote = ' (overrun)';
+      if (goal.gap - 3 > ENGAGEMENT_RANGE) return noMove('cannot end the pile-in engaged');
+    }
+  } else if (engagedWith.length) {
+    goal = engagedWith[0]!; // Ongoing Consolidation: closer to the closest engaged enemy
+    modeNote = ' (ongoing)';
+  } else if (enemies.length && enemies[0]!.gap <= 3) {
+    goal = enemies[0]!; // Engaging Consolidation: must end engaged
+    mustEndEngaged = true;
+    modeNote = ' (engaging)';
+  } else {
+    // Objective Consolidation: the closest objective the unit could end within range of.
+    const controlR = state.layout.objectiveControlRadiusIn ?? 3;
+    const objPts: Vec2[] = state.layout.objectivePoints?.map((o) => o.pos) ?? state.layout.objectives;
+    let bestObj: { pos: Vec2; d: number } | undefined;
+    for (const o of objPts) {
+      // Distance from the unit's closest model to the marker/area centre.
+      let d = Infinity;
+      for (const m of unit.models) {
+        if (!m.alive) continue;
+        d = Math.min(d, Math.hypot(m.pos.x - o.x, m.pos.y - o.y));
+      }
+      if ((!bestObj || d < bestObj.d) && d > controlR && d - 3 <= controlR + 1) bestObj = { pos: o, d };
+    }
+    if (!bestObj) return noMove('no eligible consolidation mode — stays put');
+    objectiveGoal = bestObj.pos;
+    modeNote = ' (objective)';
+  }
+
+  let dir: Vec2;
+  let moveDist: number;
+  if (goal) {
+    dir = closestAxis(unit, goal.unit);
+    moveDist = Math.min(3, Math.max(0, goal.gap)); // up to 3", stopping at base contact
+  } else {
+    // Toward the objective centre, just far enough to be in range.
+    const controlR = state.layout.objectiveControlRadiusIn ?? 3;
+    const from = aliveCentroid(unit);
+    const dx = objectiveGoal!.x - from.x;
+    const dy = objectiveGoal!.y - from.y;
+    const len = Math.hypot(dx, dy) || 1;
+    dir = { x: dx / len, y: dy / len };
+    let need = Infinity;
+    for (const m of unit.models) {
+      if (!m.alive) continue;
+      need = Math.min(need, Math.hypot(m.pos.x - objectiveGoal!.x, m.pos.y - objectiveGoal!.y) - controlR);
+    }
+    moveDist = Math.min(3, Math.max(0, need + 0.1));
+  }
+
   // Never end on top of another model's base (a friendly unit can sit between us and the enemy).
   const occupied = occupiedBases(state, ctx, [unit.id]);
   const clamped = clampDeltaAvoidingOverlap(
     unitBases(unit, ctx), occupied, { x: dir.x * moveDist, y: dir.y * moveDist },
   );
   moveDist = Math.hypot(clamped.x, clamped.y);
+
+  // "Must end engaged" modes: if the clamped move still leaves us out of Engagement Range, the
+  // move cannot be made at all (12.03 / 12.08 Engaging).
+  if (mustEndEngaged && goal) {
+    const endGap = goal.gap - moveDist; // rigid translate along the closest axis
+    if (endGap > ENGAGEMENT_RANGE + 1e-6) return noMove('cannot end the move engaged');
+  }
+
   if (moveDist <= 1e-6) {
-    return { state: { ...state, log: [...state.log, `${ds.name} ${params.mode === 'pile_in' ? 'piles in' : 'consolidates'} (already in base contact)`] }, summary: 'no move' };
+    return { state: { ...state, log: [...state.log, `${ds.name} ${verb}${modeNote} (already in position)`] }, summary: 'no move' };
   }
   const units = state.units.map((u) =>
     u.id === unit.id
       ? { ...u, models: u.models.map((m) => (m.alive ? { ...m, pos: { x: m.pos.x + clamped.x, y: m.pos.y + clamped.y } } : m)) }
       : u,
   );
-  const verb = params.mode === 'pile_in' ? 'piles in' : 'consolidates';
-  const summary = `${ds.name} ${verb} ${moveDist.toFixed(1)}" toward the enemy`;
+  const summary = `${ds.name} ${verb}${modeNote} ${moveDist.toFixed(1)}" ${goal ? 'toward the enemy' : 'toward the objective'}`;
+  return { state: { ...state, units, log: [...state.log, summary] }, summary };
+}
+
+// ── Transports: emergency disembark (18.05) ─────────────────────────────────────
+/**
+ * When a TRANSPORT is destroyed, each unit embarked within it makes an emergency disembark move:
+ * set up wholly within 6" of the wreck (as close as possible), one hazard roll per model, the
+ * unit is battle-shocked and cannot charge this turn. Models that cannot be set up (no legal
+ * spot) are destroyed — if NO legal spot exists at all, the whole unit is lost.
+ * Called by the reducer after any intent that can destroy units.
+ */
+export function resolveEmergencyDisembarks(state: GameState, ctx: EngineContext, rng: RNG): GameState {
+  let cur = state;
+  for (const u of state.units) {
+    if (!u.embarkedIn || !u.models.some((m) => m.alive)) continue;
+    const transport = cur.units.find((t) => t.id === u.embarkedIn);
+    if (transport && transport.models.some((m) => m.alive)) continue; // transport still alive
+    cur = emergencyDisembark(cur, u.id, ctx, rng);
+  }
+  return cur;
+}
+
+function emergencyDisembark(state: GameState, unitId: string, ctx: EngineContext, rng: RNG): GameState {
+  const unit = state.units.find((u) => u.id === unitId);
+  if (!unit) return state;
+  const ds = ctx.datasheets.get(unit.datasheetId);
+  const name = ds?.name ?? unitId;
+  const shape = ds?.baseShape ?? { kind: 'circle' as const, radius: 0.63 };
+  const transport = state.units.find((t) => t.id === unit.embarkedIn);
+  const hull = (transport?.models ?? []).map((m) => ({
+    pos: m.pos,
+    shape: ctx.datasheets.get(transport!.datasheetId)?.baseShape ?? shape,
+  }));
+  const origin = hull.length
+    ? { x: hull.reduce((s, h) => s + h.pos.x, 0) / hull.length, y: hull.reduce((s, h) => s + h.pos.y, 0) / hull.length }
+    : { x: state.layout.boardWidth / 2, y: state.layout.boardHeight / 2 };
+
+  const enemies: { pos: Vec2; shape: BaseShape }[] = [];
+  for (const e of state.units) {
+    if (e.owner === unit.owner || e.inReserves) continue;
+    const eShape = ctx.datasheets.get(e.datasheetId)?.baseShape ?? shape;
+    for (const m of e.models) if (m.alive) enemies.push({ pos: m.pos, shape: eShape });
+  }
+  const occupied = occupiedBases(state, ctx, [unit.id, unit.embarkedIn ?? '']);
+  const rMax = Math.max(shape.kind === 'circle' ? shape.radius ?? 0.5 : Math.max(shape.rx ?? 0.5, shape.ry ?? 0.5), 0.3);
+
+  const legalAnchor = (): Vec2 | null => {
+    for (let r = 1; r <= 5; r += 1) {
+      for (let a = 0; a < 16; a++) {
+        const ang = (a * Math.PI) / 8;
+        const anchor = { x: origin.x + r * Math.cos(ang), y: origin.y + r * Math.sin(ang) };
+        const positions = formationPositions({
+          anchor, count: unit.models.length, baseShape: shape, formation: 'block', rotation: 0,
+        });
+        const ok = positions.every((p) => {
+          if (p.x < rMax || p.y < rMax || p.x > state.layout.boardWidth - rMax || p.y > state.layout.boardHeight - rMax) return false;
+          if (hull.length && Math.min(...hull.map((h) => gapBetweenBases(p, shape, h.pos, h.shape))) > 6) return false;
+          if (enemies.some((e) => gapBetweenBases(p, shape, e.pos, e.shape) <= 2)) return false;
+          return true;
+        });
+        if (!ok) continue;
+        if (anyOverlap(positions.map((p) => ({ pos: p, shape })), occupied)) continue;
+        return anchor;
+      }
+    }
+    return null;
+  };
+
+  const anchor = legalAnchor();
+  if (!anchor) {
+    return {
+      ...state,
+      units: state.units.map((u) =>
+        u.id === unitId
+          ? { ...u, embarkedIn: undefined, models: u.models.map((m) => ({ ...m, alive: false, wounds: 0 })) }
+          : u,
+      ),
+      log: [...state.log, `${name} is destroyed — no room to emergency disembark from the wreck`],
+    };
+  }
+
+  const positions = formationPositions({
+    anchor, count: unit.models.length, baseShape: shape, formation: 'block', rotation: 0,
+  });
+  let models = unit.models.map((m, i) => ({ ...m, pos: positions[i] ?? m.pos }));
+  // One hazard roll per model (06.03): 1-2 fails → 1 mortal wound.
+  const aliveCount = models.filter((m) => m.alive).length;
+  let mortals = 0;
+  for (let n = 0; n < aliveCount; n++) if (hazardRoll(rng, false).mortals > 0) mortals++;
+  for (let n = 0; n < mortals; n++) {
+    const k = models.findIndex((m) => m.alive);
+    if (k < 0) break;
+    const w = models[k]!.wounds - 1;
+    models = models.map((m, j) => (j === k ? { ...m, wounds: w, alive: w > 0 } : m));
+  }
+  return {
+    ...state,
+    units: state.units.map((u) =>
+      u.id === unitId
+        ? {
+            ...u,
+            models,
+            inReserves: false,
+            embarkedIn: undefined,
+            status: { ...u.status, setUpThisTurn: true, moved: true, cannotCharge: true, battleShocked: true },
+          }
+        : u,
+    ),
+    log: [
+      ...state.log,
+      `${name} makes an emergency disembark from the destroyed transport` +
+        (mortals > 0 ? ` — hazard: ${mortals} mortal wound(s)` : '') +
+        ' (battle-shocked, cannot charge)',
+    ],
+  };
+}
+
+// ── Surge moves (11e, 21.02) ────────────────────────────────────────────────────
+export interface SurgeMoveParams {
+  unitId: string;
+  /** Maximum distance in inches, as stated by the triggering rule (e.g. D6"). */
+  maxDistance: number;
+}
+
+/**
+ * A surge move (21.02): triggered by an ability, the unit moves up to `maxDistance` toward the
+ * CLOSEST enemy unit (the surge target), ending engaged with it if possible — and never engaged
+ * with any other enemy. Requires: not battle-shocked, unengaged, has not moved this phase.
+ * No datasheet ability in the two supported factions' 10e data grants surge moves yet; this is
+ * the engine primitive future ability bindings (and the sandbox) call.
+ */
+export function resolveSurgeMove(
+  state: GameState,
+  params: SurgeMoveParams,
+  ctx: EngineContext,
+): { state: GameState; summary: string } {
+  const unit = state.units.find((u) => u.id === params.unitId);
+  if (!unit) return { state, summary: 'unit not found' };
+  const ds = ctx.datasheets.get(unit.datasheetId);
+  if (!ds) return { state, summary: 'datasheet not found' };
+  const noMove = (why: string): { state: GameState; summary: string } => {
+    const summary = `${ds.name} cannot surge (${why})`;
+    return { state: { ...state, log: [...state.log, summary] }, summary };
+  };
+  if (unit.status.battleShocked) return noMove('battle-shocked');
+  if (unit.status.moved || unit.status.advanced || unit.status.fellBack) return noMove('already moved this phase');
+
+  // The surge target is the CLOSEST enemy unit (non-FLY units ignore AIRCRAFT, 23.02).
+  const moverFlies = canFly(ds);
+  const enemies: { unit: UnitInstance; shape: BaseShape; gap: number }[] = [];
+  for (const e of state.units) {
+    if (e.owner === unit.owner || e.inReserves || !e.models.some((m) => m.alive)) continue;
+    const eDs = ctx.datasheets.get(e.datasheetId);
+    if (!eDs || (isAircraft(eDs) && !moverFlies)) continue;
+    enemies.push({ unit: e, shape: eDs.baseShape, gap: closestGap(unit, ds.baseShape, e, eDs.baseShape) });
+  }
+  enemies.sort((a, b) => a.gap - b.gap);
+  const surgeTarget = enemies[0];
+  if (!surgeTarget) return noMove('no enemy on the battlefield');
+  if (surgeTarget.gap <= ENGAGEMENT_RANGE) return noMove('already engaged');
+
+  const dir = closestAxis(unit, surgeTarget.unit);
+  const occupied = occupiedBases(state, ctx, [unit.id]);
+  let d = Math.min(params.maxDistance, surgeTarget.gap); // toward contact, never past it
+  // The move may not END engaged with any enemy that is not the surge target.
+  const others = enemies.slice(1);
+  const legalAt = (dist: number): boolean => {
+    const moved = { ...unit, models: unit.models.map((m) => (m.alive ? { ...m, pos: { x: m.pos.x + dir.x * dist, y: m.pos.y + dir.y * dist } } : m)) };
+    return others.every((o) => closestGap(moved, ds.baseShape, o.unit, o.shape) > ENGAGEMENT_RANGE);
+  };
+  while (d > 0.05 && !legalAt(d)) d -= 0.2;
+  if (d <= 0.05) return noMove('cannot avoid engaging a non-target enemy');
+  const clamped = clampDeltaAvoidingOverlap(unitBases(unit, ctx), occupied, { x: dir.x * d, y: dir.y * d });
+  const dist = Math.hypot(clamped.x, clamped.y);
+  if (dist <= 0.05) return noMove('no room to move');
+
+  const units = state.units.map((u) =>
+    u.id === unit.id
+      ? {
+          ...u,
+          models: u.models.map((m) => (m.alive ? { ...m, pos: { x: m.pos.x + clamped.x, y: m.pos.y + clamped.y } } : m)),
+          status: { ...u.status, moved: true }, // cannot move again this phase
+        }
+      : u,
+  );
+  const tName = ctx.datasheets.get(surgeTarget.unit.datasheetId)?.name ?? surgeTarget.unit.id;
+  const engagedNow = surgeTarget.gap - dist <= ENGAGEMENT_RANGE;
+  const summary = `${ds.name} surges ${dist.toFixed(1)}" toward ${tName}${engagedNow ? ' — engaged' : ''}`;
   return { state: { ...state, units, log: [...state.log, summary] }, summary };
 }

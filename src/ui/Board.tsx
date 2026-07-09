@@ -49,9 +49,23 @@ interface Props {
   movement?: MovementUI | null;
   /** Combat targeting (from the game panel): highlight the attacker and its target on the board. */
   targeting?: { attackerUnitId?: string; targetUnitId?: string } | null;
+  /** Transient combat effects (shot tracers + impact flashes) — pushed by the parent when a
+   *  shooting intent resolves, removed on a timer. Coordinates in inches. */
+  fx?: ShotFx[];
+  /** 11e operation markers (mission rules) to draw on the terrain layer. */
+  operationMarkers?: import('../core/types').OperationMarker[];
 }
 
 const FALLBACK_SHAPE: BaseShape = { kind: 'circle', radius: 0.63 };
+
+/** One animated shot: a tracer from `from` to `to` plus an impact flash on the target. */
+export interface ShotFx {
+  id: number;
+  from: Vec2;
+  to: Vec2;
+  /** Tints the tracer (overwatch fire reads differently from normal volleys). */
+  kind: 'shoot' | 'overwatch' | 'explosives';
+}
 
 interface Resolved {
   model: ModelInstance;
@@ -82,6 +96,8 @@ export function Board({
   onPlacementCancel,
   movement,
   targeting,
+  fx,
+  operationMarkers,
 }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -490,7 +506,7 @@ export function Board({
           onPointerLeave={() => setCursor(null)}
         >
           <rect x={0} y={0} width={widthPx} height={heightPx} fill="#1f2430" stroke="#3a4150" strokeWidth={2} />
-          <TerrainLayer layout={layout} />
+          <TerrainLayer layout={layout} markers={operationMarkers} />
 
           {units.map((u) =>
             u.inReserves
@@ -512,6 +528,30 @@ export function Board({
                   );
                 }),
           )}
+
+          {/* Passenger badges: transports carrying embarked units show who is aboard. */}
+          {units.map((u) => {
+            if (u.inReserves) return null;
+            const passengers = units.filter((p) => p.embarkedIn === u.id && p.models.some((m) => m.alive));
+            if (passengers.length === 0) return null;
+            const alive = u.models.filter((m) => m.alive);
+            if (alive.length === 0) return null;
+            const cx = alive.reduce((s, m) => s + m.pos.x, 0) / alive.length;
+            const topY = Math.max(...alive.map((m) => m.pos.y));
+            const shape = index.get(alive[0]!.id)?.shape;
+            const rTop = shape ? (shape.kind === 'circle' ? shape.radius ?? 0.5 : shape.ry ?? 0.5) : 0.5;
+            const count = passengers.reduce((n, p) => n + p.models.filter((m) => m.alive).length, 0);
+            const names = passengers.map((p) => `${datasheetsById.get(p.datasheetId)?.name ?? p.id} (${p.models.filter((m) => m.alive).length})`).join(', ');
+            const bx = pxX(cx);
+            const by = pxY(topY + rTop + 0.7, layout.boardHeight);
+            return (
+              <g key={`pass-${u.id}`} pointerEvents="none">
+                <title>{`Embarked: ${names}`}</title>
+                <rect x={bx - 17} y={by - 9} width={34} height={14} rx={7} fill="rgba(15,20,30,0.85)" stroke={OWNER_COLOR[u.owner].stroke} strokeWidth={1} />
+                <text x={bx} y={by + 2} textAnchor="middle" fontSize={10} fill="#e5e7eb">🧍{count}</text>
+              </g>
+            );
+          })}
 
           {/* Rubber-band selection box (Movement phase) */}
           {selectBox && (
@@ -604,6 +644,26 @@ export function Board({
               </g>
             );
           })()}
+
+          {/* Shot tracers + impact flashes (transient combat FX; CSS animates them out). */}
+          {fx && fx.length > 0 && (
+            <g pointerEvents="none" className="fx-overlay">
+              {fx.map((f) => {
+                const color = f.kind === 'overwatch' ? '#fbbf24' : f.kind === 'explosives' ? '#f97316' : '#f87171';
+                const x1 = pxX(f.from.x);
+                const y1 = pxY(f.from.y, layout.boardHeight);
+                const x2 = pxX(f.to.x);
+                const y2 = pxY(f.to.y, layout.boardHeight);
+                return (
+                  <g key={f.id}>
+                    <line className="fx-tracer" x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth={2.5} strokeLinecap="round" pathLength={1} />
+                    <circle className="fx-impact" cx={x2} cy={y2} r={pxLen(0.9)} fill="none" stroke={color} strokeWidth={3} />
+                    <circle className="fx-muzzle" cx={x1} cy={y1} r={pxLen(0.35)} fill={color} />
+                  </g>
+                );
+              })}
+            </g>
+          )}
 
           {ghost && placement && (
             <g className="ghost" pointerEvents="none">

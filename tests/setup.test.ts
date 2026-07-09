@@ -224,17 +224,17 @@ describe('reserves / deep strike arrival', () => {
     expect(r1.units.find((u) => u.id === 'ds')!.inReserves).toBe(true); // still in reserves
 
     const s2: GameState = { ...s1, round: 2 };
-    const r2 = reduce(s2, { type: 'ArriveFromReserves', unitId: 'ds', anchor: { x: 10, y: 22 } }, rng, ctx);
+    const r2 = reduce(s2, { type: 'ArriveFromReserves', unitId: 'ds', anchor: { x: 10, y: 22 }, ability: 'deep_strike' }, rng, ctx);
     const arrived = r2.units.find((u) => u.id === 'ds')!;
     expect(arrived.inReserves).toBe(false);
     expect(arrived.arrivedRound).toBe(2);
     expect(arrived.status.moved).toBe(true);
   });
 
-  it('rejects a Deep Strike within 9" of an enemy', () => {
+  it('rejects an arrival within 8" of an enemy', () => {
     const s2: GameState = { ...createInitialState(layout), round: 2, units: [reserveUnit(), enemy] };
-    const r = reduce(s2, { type: 'ArriveFromReserves', unitId: 'ds', anchor: { x: 46, y: 22 } }, rng, ctx); // ~4" from enemy
+    const r = reduce(s2, { type: 'ArriveFromReserves', unitId: 'ds', anchor: { x: 46, y: 22 }, ability: 'deep_strike' }, rng, ctx); // ~4" from enemy
     expect(r.units.find((u) => u.id === 'ds')!.inReserves).toBe(true);
-    expect(r.log.some((l) => /Deep Strike rejected/.test(l))).toBe(true);
+    expect(r.log.some((l) => /Reserves arrival rejected/.test(l))).toBe(true);
   });
 });

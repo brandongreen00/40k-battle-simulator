@@ -12,13 +12,15 @@ import type { GameState, Side, UnitInstance, Vec2 } from '../types';
 import type { EngineContext } from '../engine';
 import { aliveModels, isOnBoard, engagedEnemies, pendingScoutUnits, reservesArrivable, unitCentroid, ENGAGEMENT_RANGE } from '../phases';
 import { checkCoherency } from '../coherency';
-import { clampDeltaAvoidingOverlap, occupiedBases, unitBases, unitOverlaps } from '../collision';
+import { anyOverlap, clampDeltaAvoidingOverlap, occupiedBases, unitBases, unitOverlaps } from '../collision';
 import { deepStrikeArrivalLegal, zoneFor } from '../deployment';
 import { formationPositions } from '../formation';
 import { gapBetweenBases, dist, baseRadius } from '../geometry';
 import { objectiveControl } from '../engine';
 import { unitScoutDistance } from '../abilities';
+import { firingDeckX } from '../transport';
 import { secondaryPositionBonus } from '../secondaries';
+import { missionPositionBonus } from './missionplay';
 import { shootingEV, unitThreat, unitValue, unitGap, unitOC, maxWeaponRange, meleeEV } from './evaluate';
 import { homeGarrisonId, unitRolePlan, type RolePlan } from './roles';
 import type { AiAction, AiDeps } from './types';
@@ -118,6 +120,9 @@ function positionScore(
 
   // Active Tactical Missions: standing where a card scores (enemy DZ, outpost/NML markers…).
   score += secondaryPositionBonus(state, unit.owner, at, ctx);
+  // The PRIMARY mission: standing where the side's disposition pays VP (enemy home for
+  // Outmanoeuvre, centrals for Immovable Object, quarters for Reconnaissance Sweep…).
+  score += missionPositionBonus(state, unit.owner, at, ctx) * 1.5 * profile.objective;
 
   // Shooting from the new spot: best target's expected points of damage (role bonus vs CHARACTERs).
   let bestEV = 0;
@@ -254,11 +259,27 @@ export function planMove(
 }
 
 // ── Reserves arrival ──────────────────────────────────────────────────────────
-/** Find a legal Deep Strike anchor near the most useful objective (>9" from every enemy). */
+/** The deployment ability an arriving unit uses — MUST match what the intent passes to the
+ *  reducer, or the AI would validate one rule and the engine another. */
+export function arrivalAbility(unit: UnitInstance, deps: AiDeps): 'standard' | 'deep_strike' {
+  const ds = deps.ctx.datasheets.get(unit.datasheetId);
+  if (!ds) return 'standard';
+  const deep =
+    deps.deployAbility(ds) === 'deep_strike' ||
+    (ds.abilities ?? []).some((a) => a.name.toLowerCase().includes('deep strike'));
+  return deep ? 'deep_strike' : 'standard';
+}
+
+/**
+ * Find a legal ingress anchor near the most useful objective. Deep Strike units may arrive
+ * anywhere more than 8" from enemies (24.09); other strategic reserves must arrive wholly
+ * within 6" of a battlefield edge (20.04) — the AI mirrors the reducer's exact legality.
+ */
 export function findArrivalAnchor(state: GameState, unit: UnitInstance, deps: AiDeps): Vec2 | null {
   const { ctx } = deps;
   const ds = ctx.datasheets.get(unit.datasheetId);
   if (!ds) return null;
+  const deepStrike = arrivalAbility(unit, deps) === 'deep_strike';
   const enemies: { pos: Vec2; shape: typeof ds.baseShape }[] = [];
   for (const e of state.units) {
     if (e.owner === unit.owner || e.inReserves) continue;
@@ -268,20 +289,85 @@ export function findArrivalAnchor(state: GameState, unit: UnitInstance, deps: Ai
   const targets = [...state.layout.objectives, { x: state.layout.boardWidth / 2, y: state.layout.boardHeight / 2 }];
   const occupied = occupiedBases(state, ctx, [unit.id]);
   const r = baseRadius(ds.baseShape);
+  const W = state.layout.boardWidth;
+  const H = state.layout.boardHeight;
+  const legalOpts = { deepStrike, layout: state.layout, side: unit.owner };
   for (const step of [2, 1]) {
     let best: { anchor: Vec2; score: number } | null = null;
-    for (let x = r + step / 2; x <= state.layout.boardWidth - r; x += step) {
-      for (let y = r + step / 2; y <= state.layout.boardHeight - r; y += step) {
+    for (let x = r + step / 2; x <= W - r; x += step) {
+      for (let y = r + step / 2; y <= H - r; y += step) {
+        // Non-Deep-Strike ingress: the whole unit must sit within 6" of an edge — skip the
+        // interior before doing any geometry.
+        if (!deepStrike && Math.min(x, y, W - x, H - y) > 5.5) continue;
         const anchor = { x, y };
         const objDist = Math.min(...targets.map((o) => dist(anchor, o)));
         if (best && objDist >= -best.score) continue; // can't beat the best — skip the geometry
         const positions = formationPositions({ anchor, count: unit.models.length, baseShape: ds.baseShape, formation: 'block', rotation: 0 });
-        if (!deepStrikeArrivalLegal(positions, ds.baseShape, enemies, state.round, occupied).legal) continue;
-        if (positions.some((p) => p.x < r || p.y < r || p.x > state.layout.boardWidth - r || p.y > state.layout.boardHeight - r)) continue;
+        if (!deepStrikeArrivalLegal(positions, ds.baseShape, enemies, state.round, occupied, legalOpts).legal) continue;
+        if (positions.some((p) => p.x < r || p.y < r || p.x > W - r || p.y > H - r)) continue;
         if (!best || -objDist > best.score) best = { anchor, score: -objDist };
       }
     }
     if (best) return best.anchor;
+  }
+  return null;
+}
+
+/**
+ * Find a legal TACTICAL disembark anchor: every model wholly within 3" of the transport, no model
+ * within Engagement Range of an enemy, no stacked bases. Mirrors the reducer's checks exactly, so
+ * an emitted DisembarkUnit intent cannot bounce. Prefers the side of the transport facing the
+ * nearest objective.
+ */
+export function findDisembarkAnchor(
+  state: GameState,
+  unit: UnitInstance,
+  transport: UnitInstance,
+  deps: AiDeps,
+): Vec2 | null {
+  const { ctx } = deps;
+  const ds = ctx.datasheets.get(unit.datasheetId);
+  const tDs = ctx.datasheets.get(transport.datasheetId);
+  if (!ds || !tDs) return null;
+  const tAlive = transport.models.filter((m) => m.alive);
+  if (!tAlive.length) return null;
+  const tc = {
+    x: tAlive.reduce((s, m) => s + m.pos.x, 0) / tAlive.length,
+    y: tAlive.reduce((s, m) => s + m.pos.y, 0) / tAlive.length,
+  };
+  const enemies: { pos: Vec2; shape: typeof ds.baseShape }[] = [];
+  for (const e of state.units) {
+    if (e.owner === unit.owner || e.inReserves) continue;
+    const shape = ctx.datasheets.get(e.datasheetId)?.baseShape ?? ds.baseShape;
+    for (const m of e.models) if (m.alive) enemies.push({ pos: m.pos, shape });
+  }
+  const occupied = occupiedBases(state, ctx, [unit.id]);
+  const r = baseRadius(ds.baseShape);
+  const W = state.layout.boardWidth;
+  const H = state.layout.boardHeight;
+  const targets = state.layout.objectivePoints?.map((o) => o.pos) ?? state.layout.objectives;
+  const toward = targets.length
+    ? targets.reduce((a, b) => (dist(tc, a) <= dist(tc, b) ? a : b))
+    : { x: W / 2, y: H / 2 };
+  const baseAng = Math.atan2(toward.y - tc.y, toward.x - tc.x);
+  const tR = baseRadius(tDs.baseShape);
+  for (const dr of [1.2, 0.6, 1.8]) {
+    for (const off of [0, 30, -30, 60, -60, 90, -90, 120, -120, 150, -150, 180]) {
+      const ang = baseAng + (off * Math.PI) / 180;
+      const anchor = { x: tc.x + (tR + dr) * Math.cos(ang), y: tc.y + (tR + dr) * Math.sin(ang) };
+      const positions = formationPositions({
+        anchor, count: unit.models.length, baseShape: ds.baseShape, formation: 'block', rotation: 0,
+      });
+      const ok = positions.every((p) => {
+        if (p.x < r || p.y < r || p.x > W - r || p.y > H - r) return false;
+        if (Math.min(...tAlive.map((tm) => gapBetweenBases(p, ds.baseShape, tm.pos, tDs.baseShape))) > 3) return false;
+        if (enemies.some((e) => gapBetweenBases(p, ds.baseShape, e.pos, e.shape) <= 2)) return false;
+        return true;
+      });
+      if (!ok) continue;
+      if (anyOverlap(positions.map((p) => ({ pos: p, shape: ds.baseShape })), occupied)) continue;
+      return anchor;
+    }
   }
   return null;
 }
@@ -334,13 +420,64 @@ export function aiMovementAction(state: GameState, side: Side, profile: AiProfil
     return { intents, note: `${side} moves ${name} ${Math.hypot(delta.x, delta.y).toFixed(1)}"` };
   }
 
+  // Transports: disembark passengers from round 2 (a tactical disembark before the transport
+  // moves lets BOTH act this phase). Round 1 they ride toward the fight.
+  if (state.activePlayer === side && state.round >= 2) {
+    for (const u of state.units) {
+      if (u.owner !== side || !u.embarkedIn || !u.models.some((m) => m.alive)) continue;
+      if (u.status.justEmbarked) continue;
+      const transport = state.units.find((t) => t.id === u.embarkedIn);
+      if (!transport || transport.inReserves || !transport.models.some((m) => m.alive)) continue;
+      if (transport.status.advanced || transport.status.fellBack) continue;
+      // A Firing Deck platform keeps its passengers an extra round — they shoot from the deck
+      // (24.14) instead of hopping out. They still disembark early to grab a nearby objective.
+      if (firingDeckX(ctx.datasheets.get(transport.datasheetId)) > 0 && state.round < 3) {
+        const tAlive = transport.models.filter((m) => m.alive);
+        const tc = {
+          x: tAlive.reduce((s, m) => s + m.pos.x, 0) / tAlive.length,
+          y: tAlive.reduce((s, m) => s + m.pos.y, 0) / tAlive.length,
+        };
+        const objs = state.layout.objectivePoints?.map((o) => o.pos) ?? state.layout.objectives;
+        const nearObjective = objs.some((o) => dist(tc, o) <= 9);
+        if (!nearObjective) continue;
+      }
+      const anchor = findDisembarkAnchor(state, u, transport, deps);
+      if (!anchor) continue;
+      const unitId = u.id;
+      return {
+        intents: [
+          {
+            intent: { type: 'DisembarkUnit', unitId, anchor, formation: 'block', rotation: 0 },
+            skipIf: (s) => {
+              const me = s.units.find((x) => x.id === unitId);
+              const t = me?.embarkedIn ? s.units.find((x) => x.id === me.embarkedIn) : undefined;
+              return !me?.embarkedIn || !t || !t.models.some((m) => m.alive);
+            },
+          },
+        ],
+        note: `${side} disembarks ${ctx.datasheets.get(u.datasheetId)?.name ?? u.id}`,
+      };
+    }
+  }
+
   // Reserves: bring everything on as soon as it may arrive (round 2+).
   if (state.activePlayer === side) {
     for (const u of reservesArrivable(state)) {
       const anchor = findArrivalAnchor(state, u, deps);
       if (!anchor) continue; // no legal spot this turn — try again next round
       return {
-        intents: [{ intent: { type: 'ArriveFromReserves', unitId: u.id, anchor, formation: 'block', rotation: 0 } }],
+        intents: [
+          {
+            intent: {
+              type: 'ArriveFromReserves',
+              unitId: u.id,
+              anchor,
+              formation: 'block',
+              rotation: 0,
+              ability: arrivalAbility(u, deps),
+            },
+          },
+        ],
         note: `${side} deep-strikes ${ctx.datasheets.get(u.datasheetId)?.name ?? u.id}`,
       };
     }

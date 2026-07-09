@@ -20,7 +20,7 @@ import { aiShootingAction } from './shoot';
 import { aiChargeAction } from './melee';
 import { aiFightAction, nextFighter } from './melee';
 
-export { aiReactionToShooting } from './react';
+export { aiReactionToFight, aiReactionToPhaseEnd, aiReactionToShooting } from './react';
 export { pickRoster } from './deploy';
 export type { AiAction, AiDeps, AiIntent, Decision } from './types';
 export { AI_PROFILES, resolveProfile, type AiProfile } from './profile';

@@ -36,14 +36,14 @@ export function rollCharge(rng: RNG): { distance: number; rolls: number[] } {
 }
 
 /**
- * Does a charge of `rollTotal` inches let the charger reach Engagement Range (within 1")?
- * Needs to close the base-to-base gap to ≤ 1", i.e. move at least (closestGap − 1) inches.
+ * Does a charge of `rollTotal` inches let the charger reach Engagement Range (within 2", 11e)?
+ * Needs to close the base-to-base gap to ≤ 2", i.e. move at least (closestGap − 2) inches.
  */
-export function chargeSucceeds(closestGap: number, rollTotal: number, engagementRange = 1): boolean {
+export function chargeSucceeds(closestGap: number, rollTotal: number, engagementRange = 2): boolean {
   return rollTotal >= Math.max(0, closestGap - engagementRange);
 }
 
-/** Deep Strike legality: a unit cannot arrive within `minDist` (9") of any enemy model. */
-export function deepStrikeLegal(enemyGaps: number[], minDist = 9): boolean {
-  return enemyGaps.every((g) => g >= minDist);
+/** Ingress/Deep Strike legality (11e, 20.04/24.09): more than `minDist` (8") from all enemies. */
+export function deepStrikeLegal(enemyGaps: number[], minDist = 8): boolean {
+  return enemyGaps.every((g) => g > minDist);
 }

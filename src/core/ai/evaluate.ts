@@ -53,9 +53,10 @@ export function poolStats(
   return { pSuccess: pOk + pReroll * pOk, pCrit: pCrit + pReroll * pCrit };
 }
 
-/** P(a save roll fails) given armour/AP/invuln/cover — mirrors combat.ts effectiveSave + "1 fails". */
-export function pSaveFail(save: number, ap: number, invuln: number | undefined, cover: boolean): number {
-  const sv = effectiveSave(save, ap, invuln, cover);
+/** P(a save roll fails) given armour/AP/invuln — mirrors combat.ts effectiveSave + "1 fails".
+ *  (11e: the Benefit of Cover worsens the attacker's BS instead of boosting the save.) */
+export function pSaveFail(save: number, ap: number, invuln: number | undefined): number {
+  const sv = effectiveSave(save, ap, invuln);
   if (sv > 6) return 1;
   const pSave = (7 - Math.max(2, sv)) / 6;
   return 1 - pSave;
@@ -113,14 +114,16 @@ export function expectedWeaponDamage(
   if (kw.blast) attacksPerModel += Math.floor(def.modelCount / 5);
   const attacks = carriers * attacksPerModel;
 
-  // 2. hits
+  // 2. hits — 11e: the Benefit of Cover worsens the attack's BS by 1 (13.08)
+  const cover = !!sit.cover && !kw.ignoresCover;
   let hitsToWound: number;
   let lethalWounds = 0;
   if (kw.torrent) {
     hitsToWound = attacks;
   } else {
     const hitMod = (sit.hitMod ?? 0) + (kw.heavy && sit.stationary ? 1 : 0);
-    const { pSuccess, pCrit } = poolStats(weapon.skill, hitMod, 6, 'none');
+    const skill = weapon.skill + (cover ? 1 : 0);
+    const { pSuccess, pCrit } = poolStats(skill, hitMod, 6, 'none');
     const sustained = kw.sustainedHits ? pCrit * kw.sustainedHits : 0;
     lethalWounds = kw.lethalHits ? attacks * pCrit : 0;
     hitsToWound = attacks * (pSuccess + sustained) - lethalWounds;
@@ -138,8 +141,7 @@ export function expectedWeaponDamage(
   const saveable = hitsToWound * pW - devastating + lethalWounds;
 
   // 4 + 5. saves & damage
-  const cover = !!sit.cover && !kw.ignoresCover;
-  const pFail = pSaveFail(def.save, weapon.AP, def.invuln, cover);
+  const pFail = pSaveFail(def.save, weapon.AP, def.invuln);
   const woundsThrough = saveable * pFail + devastating;
   let dmgPerWound = meanDice(weapon.D);
   if (kw.melta && sit.halfRange) dmgPerWound += kw.melta;
@@ -278,6 +280,44 @@ export function shootingEV(
   // A volley cannot be worth more than the whole target: per-weapon kill expectations stack, so
   // a 13-gun platform used to value a lone 100pt assassin at several HUNDRED points and feed its
   // entire activation into overkill. Cap at the target's remaining value.
+  return Math.min(ev, unitValue(target, ctx));
+}
+
+/** Expected points of damage from ONE weapon entry of a unit's fire plan into `target` — the
+ *  per-weapon ranking behind target splitting (04.02). Same model as shootingEV. */
+export function weaponEV(
+  state: GameState,
+  attacker: UnitInstance,
+  w: { weapon: import('../types').WeaponProfile; carriers: number },
+  target: UnitInstance,
+  ctx: EngineContext,
+): number {
+  const aDs = ctx.datasheets.get(attacker.datasheetId);
+  const tDs = ctx.datasheets.get(target.datasheetId);
+  const def = defenderSummary(target, ctx);
+  if (!aDs || !tDs || !def) return 0;
+  const aPts = aliveModels(attacker).map((m) => m.pos);
+  const tPts = aliveModels(target).map((m) => m.pos);
+  if (aPts.length === 0 || tPts.length === 0) return 0;
+  let gap = Infinity;
+  for (const a of aPts) for (const t of tPts) gap = Math.min(gap, gapBetweenBases(a, aDs.baseShape, t, tDs.baseShape));
+  if (
+    hasLoneOperative(tDs) && (target.attachedLeaders ?? []).length === 0 && gap > 12 && !ignoresLoneOperative(aDs)
+  ) {
+    return 0;
+  }
+  const range = w.weapon.range ?? 0;
+  if (gap > range) return 0;
+  const kw = parseKeywords(w.weapon.keywords);
+  const visible = unitCanSee(samplePts(aPts), samplePts(tPts), state.layout.terrain);
+  if (!visible && !kw.indirectFire) return 0;
+  const sit: FireSituation = {
+    halfRange: gap <= range / 2,
+    hitMod: !visible && kw.indirectFire ? -1 : 0,
+    cover: !visible && kw.indirectFire ? true : undefined,
+    stationary: attacker.status.remainedStationary,
+  };
+  const ev = expectedWeaponDamage(w.weapon, w.carriers, def, sit).kills * modelValue(tDs);
   return Math.min(ev, unitValue(target, ctx));
 }
 

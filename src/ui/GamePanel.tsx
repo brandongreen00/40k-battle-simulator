@@ -7,10 +7,14 @@ import type { MoveMode } from '../core/movement';
 import { EFFECT_REGISTRY } from '../core/effects';
 import {
   reservesArrivable, unitCoherency, eligibleToShoot, eligibleToCharge, eligibleToFight,
-  validUnitShootingTargets, chargeTargets, engagedEnemies, fightActivationOrder, orderableUnits, type Eligibility,
+  validUnitShootingTargets, chargeTargets, engagedEnemies, fightActivationOrder, orderableUnits,
+  gapBetween, type Eligibility,
 } from '../core/phases';
+import { disembarkMode, embarkOptions } from '../core/transport';
 import { AM_ORDERS, unitIsOfficer } from '../core/orders';
 import { secondaryCard } from '../core/secondaries';
+import { dispositionName, MISSION_NAMES, PRIMARY_CAP, actionsForSide, objectivePoints } from '../core/missions11';
+import { canStartAction, SECONDARY_ACTIONS } from '../core/missionflow';
 import { usableStratagems } from '../core/stratagems';
 import { stratagems } from '../data/loaders';
 import { Die } from './Dice';
@@ -26,6 +30,8 @@ interface Props {
   setSelectedUnitIds?: (ids: string[]) => void;
   /** Begin a Deep Strike arrival placement for a Reserves unit (handled by the board). */
   onBeginArrival?: (unitId: string) => void;
+  /** Begin a disembark placement for an embarked unit (handled by the board). */
+  onBeginDisembark?: (unitId: string) => void;
   /** Each side's army detachment (drives which detachment stratagems are available). */
   detachmentBySide?: Record<Side, string>;
   /** Reports the currently selected attacker/target so the board can highlight them. */
@@ -44,7 +50,7 @@ const MOVE_MODES: { mode: MoveMode; label: string }[] = [
  * scoreboard, attack/charge resolution between on-board units, Order/Stratagem application, and the
  * live dice log. All actions go through the same intent reducer the rest of the app uses.
  */
-export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [], setSelectedUnitIds, onBeginArrival, detachmentBySide, onTargeting }: Props) {
+export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [], setSelectedUnitIds, onBeginArrival, onBeginDisembark, detachmentBySide, onTargeting }: Props) {
   const units = state.units;
   const phase = state.phase;
   const inMatch = state.mode === 'match';
@@ -59,6 +65,8 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
   const [stratSide, setStratSide] = useState<Side>(state.activePlayer);
   const [chargeTargetIds, setChargeTargetIds] = useState<string[]>([]);
   const [chargeReroll, setChargeReroll] = useState(false);
+  // Per-weapon target splits (04.02): weapon key → target unit id; cleared when the volley fires.
+  const [splitSel, setSplitSel] = useState<Record<string, string>>({});
 
   const ctx: EngineContext = useMemo(() => ({ datasheets: datasheetsById }), [datasheetsById]);
   // Only the ACTIVE player's open activations belong to this panel — an opponent's unit left
@@ -222,31 +230,72 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
         ))}
       </div>
 
-      {/* Tactical (Secondary) Missions — drawn in the Command phase, scored at turn end. */}
+      {/* 11e Primary Missions: each side's disposition, mission and primary VP. */}
+      {inMatch && state.missions && (
+        <div className="phase-block">
+          <h3>Primary Missions</h3>
+          {(['player', 'ai'] as const).map((s) => {
+            const ms = state.missions!.perSide[s];
+            return (
+              <div key={s} className="order-officer">
+                <strong style={{ color: OWNER_COLOR[s].fill }}>{s}</strong>{' '}
+                <span>{dispositionName(ms.disposition)} → <strong>{MISSION_NAMES[ms.mission] ?? ms.mission}</strong></span>
+                <span className="muted"> · {ms.primaryVp}/{PRIMARY_CAP} primary VP</span>
+              </div>
+            );
+          })}
+          {(state.missions.markers.length > 0) && (
+            <p className="muted">Operation markers on the field: {state.missions.markers.length}</p>
+          )}
+        </div>
+      )}
+
+      {/* 11e Objective Actions — started in your Shooting phase, complete at end of turn. */}
+      {inMatch && state.missions && state.stage === 'battle' && state.phase === 'Shooting' && (
+        <ActionsBlock state={state} dispatch={dispatch} datasheetsById={datasheetsById} ctx={ctx} />
+      )}
+
+      {/* Tactical / Fixed (Secondary) Missions — drawn or chosen, scored at turn end. */}
       {inMatch && state.secondaries && state.stage === 'battle' && (
         <div className="phase-block">
-          <h3>Tactical Missions</h3>
-          {(['player', 'ai'] as const).map((s) => (
-            <div key={s} className="order-officer">
-              <strong style={{ color: OWNER_COLOR[s].fill }}>{s}</strong>{' '}
-              <span className="muted">{state.secondaries![s].vp}/40 secondary VP · {state.secondaries![s].deck.length} in deck</span>
-              {state.secondaries![s].hand.length === 0 ? (
-                <div className="muted">— no active missions (drawn when the Command phase runs)</div>
-              ) : (
-                state.secondaries![s].hand.map((c) => {
-                  const card = secondaryCard(c.id);
-                  return (
-                    <div key={c.id} className="order-row">
-                      <span title={card?.desc}>{card?.name ?? c.id} <span className="muted">· drawn R{c.drawn}</span></span>
-                      {s === state.activePlayer && (
-                        <button onClick={() => dispatch({ type: 'DiscardSecondary', side: s, cardId: c.id })}>discard</button>
-                      )}
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          ))}
+          <h3>Secondary Missions</h3>
+          {(['player', 'ai'] as const).map((s) => {
+            const sec = state.secondaries![s];
+            return (
+              <div key={s} className="order-officer">
+                <strong style={{ color: OWNER_COLOR[s].fill }}>{s}</strong>{' '}
+                <span className="muted">
+                  {sec.vp}/45 secondary VP · {sec.mode === 'fixed' ? 'FIXED missions' : `${sec.deck.length} in deck`}
+                </span>
+                {sec.mode === 'fixed' ? (
+                  (sec.fixed ?? []).map((c) => {
+                    const card = secondaryCard(c.id);
+                    return (
+                      <div key={c.id} className="order-row">
+                        <span title={card?.desc}>
+                          {card?.name ?? c.id} <span className="muted">· fixed · {sec.fixedVp?.[c.id] ?? 0}/20 VP</span>
+                        </span>
+                      </div>
+                    );
+                  })
+                ) : sec.hand.length === 0 ? (
+                  <div className="muted">— no active missions (drawn when the Command phase runs)</div>
+                ) : (
+                  sec.hand.map((c) => {
+                    const card = secondaryCard(c.id);
+                    return (
+                      <div key={c.id} className="order-row">
+                        <span title={card?.desc}>{card?.name ?? c.id} <span className="muted">· drawn R{c.drawn}</span></span>
+                        {s === state.activePlayer && (
+                          <button onClick={() => dispatch({ type: 'DiscardSecondary', side: s, cardId: c.id })}>discard</button>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -398,6 +447,52 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
               ))}
             </div>
           )}
+
+          {/* Transports (11e, 18): disembark passengers / embark a unit that just moved. */}
+          {(() => {
+            const embarked = units.filter(
+              (u) => u.owner === state.activePlayer && u.embarkedIn && u.models.some((m) => m.alive),
+            );
+            const embarkable = units.filter((u) => {
+              if (u.owner !== state.activePlayer || u.inReserves || !u.models.some((m) => m.alive)) return false;
+              if (!(u.status.moved || u.status.advanced || u.status.fellBack) || u.status.setUpThisTurn) return false;
+              return embarkOptions(state, u, ctx).some((t) => gapBetween(u, t, ctx) <= 3);
+            });
+            if (embarked.length === 0 && embarkable.length === 0) return null;
+            return (
+              <div className="arrivals">
+                <h4>Transports</h4>
+                {embarked.map((u) => {
+                  const bus = units.find((t) => t.id === u.embarkedIn);
+                  const mode = bus ? disembarkMode(u, bus) : null;
+                  return (
+                    <button
+                      key={u.id}
+                      className="arrive"
+                      disabled={!mode}
+                      title={mode ? '' : 'The transport advanced/fell back this phase (or the unit embarked this turn)'}
+                      onClick={() => onBeginDisembark?.(u.id)}
+                    >
+                      ⇤ Disembark {nameOfUnit(u.id)} (from {bus ? nameOfUnit(bus.id) : '?'})
+                    </button>
+                  );
+                })}
+                {embarkable.map((u) =>
+                  embarkOptions(state, u, ctx)
+                    .filter((t) => gapBetween(u, t, ctx) <= 3)
+                    .map((t) => (
+                      <button
+                        key={`${u.id}:${t.id}`}
+                        className="arrive"
+                        onClick={() => dispatch({ type: 'EmbarkUnit', unitId: u.id, transportId: t.id })}
+                      >
+                        ⇥ Embark {nameOfUnit(u.id)} → {nameOfUnit(t.id)}
+                      </button>
+                    )),
+                )}
+              </div>
+            );
+          })()}
           {state.round < 2 && state.units.some((u) => u.inReserves && u.owner === state.activePlayer) && (
             <p className="hint">Reserves arrive from battle round 2.</p>
           )}
@@ -432,7 +527,7 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
       <h3>Resolve combat</h3>
       <label className="field">
         <span>Attacker {combatPhase ? `(${eligibleAttackers.length} eligible)` : ''}</span>
-        <select value={attackerId} onChange={(e) => { setAttackerId(e.target.value); setWeaponSel(''); setTargetId(''); setChargeTargetIds([]); }}>
+        <select value={attackerId} onChange={(e) => { setAttackerId(e.target.value); setWeaponSel(''); setTargetId(''); setChargeTargetIds([]); setSplitSel({}); }}>
           <option value="">{attackerOptions.length === 0 && combatPhase ? '— no eligible units —' : '— pick a unit —'}</option>
           {attackerOptions.map((u) => (
             <option key={u.id} value={u.id}>{nameOf(u.id)} ({u.owner}, ×{aliveOf(u.id)})</option>
@@ -460,17 +555,44 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
       )}
       {phase === 'Shooting' && attacker && firePlan && (
         <div className="fire-plan">
-          <span className="muted">Will fire ({firePlan.fire.length} weapon{firePlan.fire.length === 1 ? '' : 's'}, resolved sequentially):</span>
+          <span className="muted">
+            Will fire ({firePlan.fire.length} weapon{firePlan.fire.length === 1 ? '' : 's'}, resolved sequentially
+            {validTargets.length > 1 ? ' — each weapon may pick its own target' : ''}):
+          </span>
           {firePlan.fire.length === 0 ? (
             <p className="coh-bad">No ranged weapons can fire.</p>
           ) : (
             <ul>
-              {firePlan.fire.map((w) => (
-                <li key={`${w.sourceDsId}|${w.weapon.name}`}>
-                  {w.carriers}× {w.weapon.name} ({w.weapon.range}", A{w.weapon.attacks})
-                  {w.sourceDsId !== attacker.datasheetId ? ` — ${datasheetsById.get(w.sourceDsId)?.name ?? w.sourceDsId}` : ''}
-                </li>
-              ))}
+              {firePlan.fire.map((w) => {
+                const key = `${w.sourceDsId}|${w.weapon.name}`;
+                return (
+                  <li key={key}>
+                    {w.carriers}× {w.weapon.name} ({w.weapon.range}", A{w.weapon.attacks})
+                    {w.sourceDsId !== attacker.datasheetId && !w.viaFiringDeck ? ` — ${datasheetsById.get(w.sourceDsId)?.name ?? w.sourceDsId}` : ''}
+                    {w.viaFiringDeck ? ' — Firing Deck' : ''}
+                    {/* Per-weapon target split (04.02): defaults to the main target below. */}
+                    {validTargets.length > 1 && (
+                      <select
+                        value={splitSel[key] ?? ''}
+                        onChange={(e) =>
+                          setSplitSel((prev) => {
+                            const next = { ...prev };
+                            if (e.target.value) next[key] = e.target.value;
+                            else delete next[key];
+                            return next;
+                          })
+                        }
+                        title="Send this weapon at a different target than the rest of the unit"
+                      >
+                        <option value="">→ main target</option>
+                        {validTargets.map((t) => (
+                          <option key={t.id} value={t.id}>→ {nameOf(t.id)}</option>
+                        ))}
+                      </select>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
           {firePlan.notes.map((n, i) => <p key={i} className="hint">{n}</p>)}
@@ -527,7 +649,16 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
           <button
             className="primary"
             disabled={!attackerId || !targetId || !firePlan || firePlan.fire.length === 0}
-            onClick={() => dispatch({ type: 'ShootUnit', attackerUnitId: attackerId, targetUnitId: targetId })}
+            onClick={() => {
+              const splitTargets = Object.fromEntries(
+                Object.entries(splitSel).filter(([, v]) => v && v !== targetId),
+              );
+              dispatch({
+                type: 'ShootUnit', attackerUnitId: attackerId, targetUnitId: targetId,
+                ...(Object.keys(splitTargets).length ? { splitTargets } : {}),
+              });
+              setSplitSel({});
+            }}
           >
             🔫 Shoot — all weapons
           </button>
@@ -606,7 +737,12 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
         {strats.length === 0 ? (
           <p className="muted">No stratagems usable in the {phase} phase for {stratSide}.</p>
         ) : (
-          strats.map((st) => {
+          strats
+            // Engine-bound Core stratagems resolve through their own controls (the Charge
+            // block's re-roll checkbox and the "Stratagem plays" block below) — hide the
+            // generic spend-CP button so they can't be paid for twice.
+            .filter((st) => !ENGINE_BOUND_STRATS.has(st.id))
+            .map((st) => {
             const afford = state.cp[stratSide] >= st.cp;
             return (
               <button
@@ -625,6 +761,8 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
         )}
       </div>
 
+      <StratagemPlays state={state} dispatch={dispatch} ctx={ctx} nameOfUnit={nameOfUnit} onBeginArrival={onBeginArrival} />
+
       {/* Dice log */}
       <h3>Dice log</h3>
       <div className="dicelog">
@@ -639,5 +777,311 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
         )}
       </div>
     </section>
+  );
+}
+
+/** 11e Objective Actions: pick a unit + action + target; validity comes from missionflow. */
+function ActionsBlock({
+  state,
+  dispatch,
+  datasheetsById,
+  ctx,
+}: {
+  state: GameState;
+  dispatch: (i: Intent) => void;
+  datasheetsById: Map<string, Datasheet>;
+  ctx: EngineContext;
+}) {
+  const side = state.activePlayer;
+  const defs = [
+    ...actionsForSide(state, side),
+    // Cleanse / Plunder become available while the matching Tactical Mission is in hand.
+    ...SECONDARY_ACTIONS.filter((a) => state.secondaries?.[side]?.hand.some((c) => c.id === a.id)),
+  ];
+  const [unitId, setUnitId] = useState('');
+  const [actionId, setActionId] = useState(defs[0]?.id ?? '');
+  const [objectiveIdx, setObjectiveIdx] = useState(0);
+  const [areaId, setAreaId] = useState('');
+  const [targetUnitId, setTargetUnitId] = useState('');
+  if (defs.length === 0) return null;
+  const def = defs.find((d) => d.id === actionId) ?? defs[0]!;
+  const mine = state.units.filter((u) => u.owner === side && !u.inReserves && u.models.some((m) => m.alive));
+  const params = {
+    unitId,
+    actionId: def.id,
+    ...(def.kind === 'objective' ? { objectiveIdx } : {}),
+    ...(def.kind === 'area' ? { areaId } : {}),
+    ...(def.kind === 'enemy' ? { targetUnitId } : {}),
+  };
+  const check = unitId ? canStartAction(state, ctx, params) : { ok: false, reason: 'pick a unit' };
+  const points = objectivePoints(state.layout);
+  return (
+    <div className="phase-block">
+      <h3>Objective Actions</h3>
+      <p className="hint">Starting an action means the unit cannot shoot or charge this turn (16.01).</p>
+      <label className="field">
+        <span>Action</span>
+        <select value={def.id} onChange={(e) => setActionId(e.target.value)}>
+          {defs.map((d) => (
+            <option key={d.id} value={d.id}>{d.name}</option>
+          ))}
+        </select>
+      </label>
+      <label className="field">
+        <span>Unit</span>
+        <select value={unitId} onChange={(e) => setUnitId(e.target.value)}>
+          <option value="">— pick —</option>
+          {mine.map((u) => (
+            <option key={u.id} value={u.id}>{datasheetsById.get(u.datasheetId)?.name ?? u.id}</option>
+          ))}
+        </select>
+      </label>
+      {def.kind === 'objective' && (
+        <label className="field">
+          <span>Objective</span>
+          <select value={objectiveIdx} onChange={(e) => setObjectiveIdx(Number(e.target.value))}>
+            {points.map((o, i) => (
+              <option key={i} value={i}>#{i + 1} {o.kind} ({o.pos.x.toFixed(0)}", {o.pos.y.toFixed(0)}")</option>
+            ))}
+          </select>
+        </label>
+      )}
+      {def.kind === 'area' && (
+        <label className="field">
+          <span>Terrain area</span>
+          <select value={areaId} onChange={(e) => setAreaId(e.target.value)}>
+            <option value="">— pick —</option>
+            {(state.layout.terrainAreas ?? []).map((a) => (
+              <option key={a.id} value={a.id}>{a.id}</option>
+            ))}
+          </select>
+        </label>
+      )}
+      {def.kind === 'enemy' && (
+        <label className="field">
+          <span>Enemy unit</span>
+          <select value={targetUnitId} onChange={(e) => setTargetUnitId(e.target.value)}>
+            <option value="">— pick —</option>
+            {state.units
+              .filter((u) => u.owner !== side && !u.inReserves && u.models.some((m) => m.alive))
+              .map((u) => (
+                <option key={u.id} value={u.id}>{datasheetsById.get(u.datasheetId)?.name ?? u.id}</option>
+              ))}
+          </select>
+        </label>
+      )}
+      <div className="btnrow">
+        <button disabled={!check.ok} onClick={() => dispatch({ type: 'StartAction', ...params })}>
+          Start {def.name}
+        </button>
+        {!check.ok && unitId && <span className="muted">{check.reason}</span>}
+      </div>
+      {(state.activeActions ?? []).length > 0 && (
+        <ul className="dep-attached">
+          {(state.activeActions ?? []).map((a, i) => (
+            <li key={i}>
+              <span style={{ color: OWNER_COLOR[a.side].fill }}>{a.side}</span> ·{' '}
+              {datasheetsById.get(state.units.find((u) => u.id === a.unitId)?.datasheetId ?? '')?.name ?? a.unitId}: {a.actionId}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/** Core stratagems with dedicated engine bindings — hidden from the generic spend-CP list. */
+const ENGINE_BOUND_STRATS = new Set([
+  'core:command_reroll', 'core:fire_overwatch', 'core:heroic_intervention', 'core:crushing_impact',
+  'core:explosives', 'core:rapid_ingress', 'core:counter_offensive', 'core:insane_bravery',
+]);
+
+/**
+ * Phase-aware controls for the engine-bound Core Stratagem plays (15.03–15.12): Insane Bravery
+ * (Command), Fire Overwatch + Rapid Ingress (opponent's Movement), Explosives (your Shooting),
+ * Crushing Impact + Heroic Intervention (Charge), Counteroffensive (opponent's Fight). The
+ * reducer enforces CP, once-per-phase and all the rule gates; these controls only offer plays
+ * that are plausibly legal right now.
+ */
+function StratagemPlays({
+  state, dispatch, ctx, nameOfUnit, onBeginArrival,
+}: {
+  state: GameState;
+  dispatch: (i: Intent) => void;
+  ctx: EngineContext;
+  nameOfUnit: (id: string) => string;
+  onBeginArrival?: (unitId: string, rapidIngress?: boolean) => void;
+}) {
+  const [heroicMode, setHeroicMode] = useState<'leap_to_defend' | 'into_the_fray'>('leap_to_defend');
+  if (state.mode !== 'match' || state.stage !== 'battle') return null;
+  const phase = state.phase;
+  const active = state.activePlayer;
+  const defender: Side = active === 'player' ? 'ai' : 'player';
+  const onBoard = (u: UnitInstance) => !u.inReserves && u.models.some((m) => m.alive);
+  const isMV = (u: UnitInstance) =>
+    !!ctx.datasheets.get(u.datasheetId)?.keywords.some((k) => /^(monster|vehicle)$/i.test(k));
+  const plays: JSX.Element[] = [];
+
+  if (phase === 'Command' && !state.commandRun && !state.insaneBraveryUsed?.[active] && state.cp[active] >= 1) {
+    const candidates = state.units.filter(
+      (u) => u.owner === active && onBoard(u) &&
+        (u.models.filter((m) => m.alive).length <= u.startingModels / 2 || u.status.battleShocked),
+    );
+    if (candidates.length) {
+      plays.push(
+        <div className="btnrow" key="ib">
+          <span className="muted">Insane Bravery (1 CP, once per battle):</span>
+          {candidates.map((u) => (
+            <button key={u.id} onClick={() => dispatch({ type: 'InsaneBravery', unitId: u.id })}>
+              {nameOfUnit(u.id)}
+            </button>
+          ))}
+        </div>,
+      );
+    }
+  }
+
+  if (phase === 'Movement' && state.cp[defender] >= 1) {
+    const shooters = state.units.filter(
+      (u) =>
+        u.owner === defender && onBoard(u) &&
+        !ctx.datasheets.get(u.datasheetId)?.keywords.some((k) => k.toLowerCase() === 'titanic') &&
+        engagedEnemies(u, state, ctx).length === 0,
+    );
+    for (const u of shooters.slice(0, 4)) {
+      const targets = state.units.filter(
+        (e) => e.owner === active && onBoard(e) && gapBetween(u, e, ctx) <= 24,
+      );
+      if (!targets.length) continue;
+      plays.push(
+        <div className="btnrow" key={`ow:${u.id}`}>
+          <span className="muted">Fire Overwatch (1 CP, {defender}): {nameOfUnit(u.id)} →</span>
+          {targets.slice(0, 3).map((t) => (
+            <button key={t.id} onClick={() => dispatch({ type: 'FireOverwatch', unitId: u.id, targetUnitId: t.id })}>
+              {nameOfUnit(t.id)}
+            </button>
+          ))}
+        </div>,
+      );
+    }
+    const reserves = state.units.filter((u) => u.owner === defender && u.inReserves && !u.embarkedIn && u.models.some((m) => m.alive));
+    if (state.round >= 2 && reserves.length && onBeginArrival) {
+      plays.push(
+        <div className="btnrow" key="ri">
+          <span className="muted">Rapid Ingress (1 CP, {defender}):</span>
+          {reserves.map((u) => (
+            <button key={u.id} onClick={() => onBeginArrival(u.id, true)}>
+              ⤓ {nameOfUnit(u.id)}
+            </button>
+          ))}
+        </div>,
+      );
+    }
+  }
+
+  if (phase === 'Shooting' && state.activePlayer === active && state.cp[active] >= 1) {
+    const throwers = state.units.filter(
+      (u) =>
+        u.owner === active && onBoard(u) && !u.status.advanced && !u.status.hasShot &&
+        engagedEnemies(u, state, ctx).length === 0 &&
+        ctx.datasheets.get(u.datasheetId)?.keywords.some((k) => /^(explosives|grenades)$/i.test(k)),
+    );
+    for (const u of throwers.slice(0, 3)) {
+      const targets = state.units.filter(
+        (e) => e.owner !== active && onBoard(e) && engagedEnemies(e, state, ctx).length === 0 && gapBetween(u, e, ctx) <= 8,
+      );
+      if (!targets.length) continue;
+      plays.push(
+        <div className="btnrow" key={`ex:${u.id}`}>
+          <span className="muted">Explosives (1 CP): {nameOfUnit(u.id)} →</span>
+          {targets.slice(0, 3).map((t) => (
+            <button key={t.id} onClick={() => dispatch({ type: 'ThrowExplosives', unitId: u.id, targetUnitId: t.id })}>
+              {nameOfUnit(t.id)}
+            </button>
+          ))}
+        </div>,
+      );
+    }
+  }
+
+  if (phase === 'Charge') {
+    // Crushing Impact — your charged MONSTER/VEHICLE against an engaged enemy.
+    if (state.cp[active] >= 1) {
+      const rammers = state.units.filter((u) => u.owner === active && onBoard(u) && u.status.charged && isMV(u));
+      for (const u of rammers) {
+        const targets = engagedEnemies(u, state, ctx);
+        if (!targets.length) continue;
+        plays.push(
+          <div className="btnrow" key={`ci:${u.id}`}>
+            <span className="muted">Crushing Impact (1 CP): {nameOfUnit(u.id)} →</span>
+            {targets.map((t) => (
+              <button key={t.id} onClick={() => dispatch({ type: 'CrushingImpact', unitId: u.id, targetUnitId: t.id })}>
+                {nameOfUnit(t.id)}
+              </button>
+            ))}
+          </div>,
+        );
+      }
+    }
+    // Heroic Intervention — the defender counter-charges at the end of your Charge phase.
+    if (state.cp[defender] >= 1) {
+      const heroes = state.units.filter(
+        (u) => u.owner === defender && onBoard(u) && engagedEnemies(u, state, ctx).length === 0,
+      );
+      for (const u of heroes) {
+        const kws = ctx.datasheets.get(u.datasheetId)?.keywords.map((k) => k.toLowerCase()) ?? [];
+        if (kws.includes('vehicle') && !kws.includes('character') && !kws.includes('walker')) continue;
+        const range = heroicMode === 'into_the_fray' ? 6 : 12;
+        const targets = state.units.filter(
+          (e) =>
+            e.owner === active && onBoard(e) && gapBetween(u, e, ctx) <= range &&
+            (heroicMode !== 'leap_to_defend' || e.status.charged),
+        );
+        if (!targets.length) continue;
+        plays.push(
+          <div className="btnrow" key={`hi:${u.id}`}>
+            <span className="muted">Heroic Intervention ({defender}): {nameOfUnit(u.id)}</span>
+            <select value={heroicMode} onChange={(e) => setHeroicMode(e.target.value as typeof heroicMode)}>
+              <option value="leap_to_defend">Leap to Defend (1 CP)</option>
+              <option value="into_the_fray">Into the Fray (2 CP, roll capped at 6)</option>
+            </select>
+            {targets.slice(0, 3).map((t) => (
+              <button
+                key={t.id}
+                onClick={() => dispatch({ type: 'Charge', chargerUnitId: u.id, targetUnitIds: [t.id], heroic: heroicMode })}
+              >
+                → {nameOfUnit(t.id)}
+              </button>
+            ))}
+          </div>,
+        );
+      }
+    }
+  }
+
+  if (phase === 'Fight' && state.cp[defender] >= 2 && !state.fightNext) {
+    const candidates = state.units.filter(
+      (u) => u.owner === defender && onBoard(u) && !u.status.hasFought && engagedEnemies(u, state, ctx).length > 0,
+    );
+    if (candidates.length) {
+      plays.push(
+        <div className="btnrow" key="co">
+          <span className="muted">Counteroffensive (2 CP, {defender} fights next):</span>
+          {candidates.slice(0, 4).map((u) => (
+            <button key={u.id} onClick={() => dispatch({ type: 'Counteroffensive', unitId: u.id })}>
+              {nameOfUnit(u.id)}
+            </button>
+          ))}
+        </div>,
+      );
+    }
+  }
+
+  if (plays.length === 0) return null;
+  return (
+    <>
+      <h3>Stratagem plays</h3>
+      {plays}
+    </>
   );
 }

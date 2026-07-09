@@ -21,6 +21,8 @@ export interface AiProfile {
   /** Spend 1 CP on a defensive reaction when an own unit is about to take at least this many
    *  points of expected damage from one enemy shooting activation. */
   reactThreshold: number;
+  /** Weight on starting Objective Actions over shooting (11e mission play). Default 1. */
+  actionPriority?: number;
   /** Legal-move baseline: ignore all scores and pick uniformly at random (for sanity matches). */
   random?: boolean;
 }
@@ -56,6 +58,43 @@ export const AI_PROFILES: Record<string, AiProfile> = {
     standoff: 24,
     reactThreshold: 40,
   },
+  // ── Disposition-tuned players ("prepare different AI players") ────────────────
+  /** Take and Hold / Disruption: floods objectives early and holds them. */
+  objective_rusher: {
+    name: 'objective_rusher',
+    objective: 1.6,
+    damage: 0.8,
+    caution: 0.35,
+    chargeThreshold: 20,
+    useReserves: true,
+    standoff: 12,
+    reactThreshold: 70,
+    actionPriority: 1.0,
+  },
+  /** Purge the Foe: trades aggressively — kills ARE its primary VP. */
+  attrition: {
+    name: 'attrition',
+    objective: 0.9,
+    damage: 1.5,
+    caution: 0.3,
+    chargeThreshold: 14,
+    useReserves: true,
+    standoff: 12,
+    reactThreshold: 80,
+    actionPriority: 0.7,
+  },
+  /** Priority Assets / Reconnaissance: performs actions, screens, avoids bad trades. */
+  operative: {
+    name: 'operative',
+    objective: 1.3,
+    damage: 0.7,
+    caution: 0.8,
+    chargeThreshold: 35,
+    useReserves: true,
+    standoff: 18,
+    reactThreshold: 50,
+    actionPriority: 1.6,
+  },
   random: {
     name: 'random',
     objective: 0,
@@ -68,6 +107,18 @@ export const AI_PROFILES: Record<string, AiProfile> = {
     random: true,
   },
 };
+
+/** The profile that best plays a Force Disposition (the sim's default seat assignment). */
+export function profileForDisposition(disposition: string): string {
+  switch (disposition) {
+    case 'purge_the_foe': return 'attrition';
+    case 'priority_assets':
+    case 'reconnaissance': return 'operative';
+    case 'take_and_hold':
+    case 'disruption': return 'objective_rusher';
+    default: return 'balanced';
+  }
+}
 
 /** Resolve a profile by name (falling back to balanced) or pass a custom weight set through. */
 export function resolveProfile(p: string | AiProfile | undefined): AiProfile {

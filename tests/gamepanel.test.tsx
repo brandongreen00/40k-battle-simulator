@@ -38,10 +38,13 @@ describe('GamePanel — Shooting phase', () => {
     // Phase-aware combat section present, with an eligible attacker count.
     expect(getByText(/Attacker \(\d+ eligible\)/)).toBeTruthy();
 
-    // Stratagems section lists at least one Core stratagem (Grenade / Command Re-roll).
+    // Stratagems section renders. Engine-bound Core stratagems (Command Re-roll, Explosives,
+    // Fire Overwatch…) are NOT in the generic spend-CP list — they resolve through their own
+    // dedicated controls (charge-block checkbox / "Stratagem plays").
     expect(getByText('Stratagems')).toBeTruthy();
     const stratList = container.querySelector('.strat-list')!;
-    expect(within(stratList as HTMLElement).getAllByText(/Re-roll|Grenade|Go to Ground/).length).toBeGreaterThan(0);
+    expect(within(stratList as HTMLElement).queryByText(/Command Re-roll/)).toBeNull();
+    expect(stratList.querySelectorAll('button.strat').length).toBeGreaterThan(0);
   });
 
   it('shows the unit fire plan and the Shoot button once an attacker is picked', () => {
@@ -57,5 +60,36 @@ describe('GamePanel — Shooting phase', () => {
     expect(firePlan).toBeTruthy();
     expect(/lasgun/i.test(firePlan.textContent ?? '')).toBe(true);
     expect(getByText(/Shoot — all weapons/)).toBeTruthy();
+  });
+
+  it('with 2+ valid targets, each weapon gets a split-target select that rides on ShootUnit', () => {
+    const state: GameState = {
+      ...shootingState(),
+      units: [cadians('a', 'player', 20), cadians('b', 'ai', 30), cadians('c', 'ai', 14)],
+    };
+    const sent: unknown[] = [];
+    const { container, getByText } = render(
+      <GamePanel state={state} dispatch={(i) => sent.push(i)} datasheetsById={datasheetsById} />,
+    );
+    const selects = () => [...container.querySelectorAll('select')];
+    const attackerSelect = selects().find((s) => [...s.options].some((o) => o.value === 'a'))!;
+    fireEvent.change(attackerSelect, { target: { value: 'a' } });
+    // Per-weapon split selects appear inside the fire plan (options "→ main target" + targets).
+    const firePlan = container.querySelector('.fire-plan')!;
+    const weaponSelects = [...firePlan.querySelectorAll('select')];
+    expect(weaponSelects.length).toBeGreaterThan(0);
+    // Send the first weapon at target 'c'; main target stays 'b'.
+    fireEvent.change(weaponSelects[0]!, { target: { value: 'c' } });
+    const targetSelect = selects().find(
+      (s) => !firePlan.contains(s) && [...s.options].some((o) => o.value === 'b'),
+    )!;
+    fireEvent.change(targetSelect, { target: { value: 'b' } });
+    fireEvent.click(getByText(/Shoot — all weapons/));
+    const shoot = sent.find((i) => (i as { type: string }).type === 'ShootUnit') as
+      | { targetUnitId: string; splitTargets?: Record<string, string> }
+      | undefined;
+    expect(shoot).toBeDefined();
+    expect(shoot!.targetUnitId).toBe('b');
+    expect(Object.values(shoot!.splitTargets ?? {})).toContain('c');
   });
 });

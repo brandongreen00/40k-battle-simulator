@@ -49,23 +49,23 @@ describe('woundThreshold (10e chart)', () => {
 
 describe('effectiveSave', () => {
   it('worsens with AP', () => {
-    expect(effectiveSave(3, -1, undefined, false)).toBe(4);
-    expect(effectiveSave(3, -2, undefined, false)).toBe(5);
+    expect(effectiveSave(3, -1, undefined)).toBe(4);
+    expect(effectiveSave(3, -2, undefined)).toBe(5);
   });
-  it('improves by 1 with cover', () => {
-    expect(effectiveSave(4, 0, undefined, true)).toBe(3);
+  it('11e: cover no longer modifies the save (it worsens the attacker BS instead)', () => {
+    expect(effectiveSave(4, 0, undefined)).toBe(4);
   });
-  it('cover gives no bonus to a 3+ (or better) save against AP 0', () => {
-    expect(effectiveSave(3, 0, undefined, true)).toBe(3); // 10e: 3+ save + AP0 -> no Benefit of Cover
-    expect(effectiveSave(2, 0, undefined, true)).toBe(2);
-    expect(effectiveSave(4, 0, undefined, true)).toBe(3); // 4+ save still benefits vs AP0
+  it('AP 0 leaves saves unchanged', () => {
+    expect(effectiveSave(3, 0, undefined)).toBe(3);
+    expect(effectiveSave(2, 0, undefined)).toBe(2);
+    expect(effectiveSave(4, 0, undefined)).toBe(4);
   });
-  it('cover applies in full against AP', () => {
-    expect(effectiveSave(3, -1, undefined, true)).toBe(3); // 3+ -> 4+ (AP-1) -> 3+ (cover)
-    expect(effectiveSave(2, -1, undefined, true)).toBe(2); // no artificial 3+ floor
+  it('AP worsens the armour save', () => {
+    expect(effectiveSave(3, -1, undefined)).toBe(4);
+    expect(effectiveSave(2, -1, undefined)).toBe(3);
   });
   it('takes the best of armour and invuln', () => {
-    expect(effectiveSave(2, -3, 4, false)).toBe(4); // armour 5+, invuln 4++ -> 4++
+    expect(effectiveSave(2, -3, 4)).toBe(4); // armour 5+, invuln 4++ -> 4++
   });
 });
 

@@ -9,13 +9,14 @@ import type { Datasheet, GameState, Side, UnitInstance, Vec2 } from './types';
 import type { EngineContext } from './engine';
 import { closestGap, planUnitShooting, unitWeapons } from './engine';
 import { parseKeywords } from './keywords';
-import { unitCanSee } from './los';
+import { isHidden, pointLosBlocked, DEFAULT_DETECTION_RANGE } from './visibility';
 import { canActAfterAdvance, hasFightsFirstAbility, hasLoneOperative, ignoresLoneOperative, unitScoutDistance } from './abilities';
+import { canFly, isAircraft } from './transport';
 import { checkCoherency, type CoherencyResult } from './coherency';
 
 const FALLBACK_SHAPE = { kind: 'circle' as const, radius: 0.63 };
 
-export const ENGAGEMENT_RANGE = 1; // inches
+export const ENGAGEMENT_RANGE = 2; // inches (11e, 03.04)
 export const CHARGE_THREAT = 12; // inches — a unit may declare a charge within 12"
 
 export interface Eligibility {
@@ -76,20 +77,21 @@ export function hasPistol(ds: Datasheet | undefined): boolean {
 export const isMonsterOrVehicle = (ds: Datasheet | undefined): boolean =>
   hasKeyword(ds, 'Monster') || hasKeyword(ds, 'Vehicle');
 
-/** Is `u` eligible to be selected to shoot this phase? (10e shooting eligibility.) */
+/** Is `u` eligible to be selected to shoot this phase? (11e shooting types, 10.04–10.07.) */
 export function eligibleToShoot(u: UnitInstance, state: GameState, ctx: EngineContext): Eligibility {
   if (!isOnBoard(u)) return { eligible: false, reason: 'not on the battlefield' };
   if (u.status.hasShot) return { eligible: false, reason: 'already shot this turn' };
   const ds = dsOf(u, ctx);
-  // Frenzon-style abilities ("eligible to shoot … in a turn in which it Advanced") lift the
-  // Advance restriction entirely; Assault weapons lift it for themselves.
+  // Advance: only ASSAULT SHOOTING is available (10.05) — the unit needs an [ASSAULT] weapon
+  // (Frenzon-style abilities lift the restriction entirely).
   if (u.status.advanced && !hasAssaultWeapon(ds) && !canActAfterAdvance(ds).shoot) {
-    return { eligible: false, reason: 'Advanced this turn (no Assault weapons)' };
+    return { eligible: false, reason: 'made an advance move (no [ASSAULT] weapons)' };
   }
-  if (u.status.fellBack) return { eligible: false, reason: 'Fell Back this turn' };
-  // A unit within Engagement Range can only shoot via Big Guns Never Tire (Monster/Vehicle) or Pistols.
+  if (u.status.fellBack) return { eligible: false, reason: 'fell back this turn' };
+  // Engaged: only CLOSE-QUARTERS SHOOTING is available (10.06) — the unit needs a
+  // [CLOSE-QUARTERS]/[PISTOL] weapon or must be a MONSTER/VEHICLE unit.
   if (engagedEnemies(u, state, ctx).length > 0 && !isMonsterOrVehicle(ds) && !hasPistol(ds)) {
-    return { eligible: false, reason: 'within Engagement Range (no Pistols / not a Monster or Vehicle)' };
+    return { eligible: false, reason: 'engaged (no [CLOSE-QUARTERS] weapons / not a MONSTER or VEHICLE)' };
   }
   return { eligible: true };
 }
@@ -121,12 +123,18 @@ export function validShootingTargets(
   const range = weapon.range ?? 0;
   const kw = parseKeywords(weapon.keywords);
   const out: UnitInstance[] = [];
+  const myEngaged = engagedEnemies(attacker, state, ctx).map((x) => x.id);
   for (const e of enemiesOf(attacker, state)) {
     if (isLeaderProtected(e, state)) continue;
     const eDs = dsOf(e, ctx);
     if (!eDs) continue;
     const gap = gapBetween(attacker, e, ctx);
     if (gap > range) continue;
+    // 17.03 (11e): an ENGAGED enemy unit can only be shot if the shooter is itself engaged with
+    // it (close-quarters shooting), or the target is a MONSTER/VEHICLE ([BLAST] never can).
+    if (!myEngaged.includes(e.id) && engagedEnemies(e, state, ctx).length > 0) {
+      if (!isMonsterOrVehicle(eDs) || kw.blast) continue;
+    }
     // Lone Operative: unless attached, only targetable by ranged attacks within 12"
     // (ignored by a Deadshot attacker, e.g. the Vindicare).
     if (
@@ -137,7 +145,15 @@ export function validShootingTargets(
     ) {
       continue;
     }
-    const visible = kw.indirectFire || unitCanSee(aPts, alivePts(e), state.layout.terrain);
+    const hidden = isHidden(e, state, ctx);
+    const bearerSees = aPts.some((a) =>
+      alivePts(e).some(
+        (t) =>
+          !(hidden && Math.hypot(a.x - t.x, a.y - t.y) > DEFAULT_DETECTION_RANGE) &&
+          !pointLosBlocked(a, t, state.layout),
+      ),
+    );
+    const visible = kw.indirectFire || bearerSees;
     if (visible) out.push(e);
   }
   return out;
@@ -169,9 +185,13 @@ export function validUnitShootingTargets(
 }
 
 // ── Charge ───────────────────────────────────────────────────────────────────
-/** Enemy units within 12" that `u` could declare as charge targets. */
+/** Enemy units within 12" that `u` could declare as charge targets. Only FLYING units can select
+ *  AIRCRAFT as charge targets (23.04). */
 export function chargeTargets(u: UnitInstance, state: GameState, ctx: EngineContext): UnitInstance[] {
-  return enemiesOf(u, state).filter((e) => gapBetween(u, e, ctx) <= CHARGE_THREAT);
+  const flies = canFly(dsOf(u, ctx));
+  return enemiesOf(u, state).filter(
+    (e) => gapBetween(u, e, ctx) <= CHARGE_THREAT && (flies || !isAircraft(dsOf(e, ctx))),
+  );
 }
 
 export function eligibleToCharge(u: UnitInstance, state: GameState, ctx: EngineContext): Eligibility {
@@ -183,6 +203,7 @@ export function eligibleToCharge(u: UnitInstance, state: GameState, ctx: EngineC
   if (u.status.fellBack) return { eligible: false, reason: 'Fell Back this turn' };
   if (u.status.charged) return { eligible: false, reason: 'already charged this turn' };
   if (u.status.chargeAttempted) return { eligible: false, reason: 'already declared a charge this phase' };
+  if (u.status.cannotCharge) return { eligible: false, reason: 'not eligible to charge this turn (disembark/Overwatch)' };
   const ds = dsOf(u, ctx);
   if (hasKeyword(ds, 'Aircraft')) return { eligible: false, reason: 'Aircraft cannot charge' };
   if (engagedEnemies(u, state, ctx).length > 0) {
@@ -195,18 +216,29 @@ export function eligibleToCharge(u: UnitInstance, state: GameState, ctx: EngineC
 }
 
 // ── Fight ────────────────────────────────────────────────────────────────────
+/**
+ * 12.04: a unit is eligible to fight if it is engaged, OR it was engaged at the start of the
+ * Fight step, OR it made a charge move this turn. An unengaged-but-eligible unit fights via an
+ * OVERRUN FIGHT (12.06): one extra pile-in (3") first — so it also needs an enemy within
+ * pile-in-and-engage reach (Engagement Range + 3"), or there is nothing it could fight.
+ */
 export function eligibleToFight(u: UnitInstance, state: GameState, ctx: EngineContext): Eligibility {
   if (!isOnBoard(u)) return { eligible: false, reason: 'not on the battlefield' };
   if (u.status.hasFought) return { eligible: false, reason: 'already fought this turn' };
-  if (engagedEnemies(u, state, ctx).length === 0) {
-    return { eligible: false, reason: 'not within Engagement Range of an enemy' };
+  if (engagedEnemies(u, state, ctx).length > 0) return { eligible: true };
+  if (state.phase === 'Fight' && (u.status.engagedAtFightStart || u.status.charged)) {
+    const reachable = enemiesOf(u, state).some((e) => gapBetween(u, e, ctx) <= ENGAGEMENT_RANGE + 3);
+    if (reachable) return { eligible: true };
+    return { eligible: false, reason: 'no enemy within overrun pile-in reach (5")' };
   }
-  return { eligible: true };
+  return { eligible: false, reason: 'not within Engagement Range of an enemy' };
 }
 
-/** Does this unit have Fights First this turn? (It charged, or has an innate Fights First.) */
+/** Does this unit have Fights First this turn? (It charged, has an innate Fights First, or was
+ *  granted it — Counteroffensive, 15.12.) */
 export function hasFightsFirst(u: UnitInstance, ctx: EngineContext): boolean {
   if (u.status.charged) return true;
+  if (u.status.activeEffects?.includes('fights_first_granted')) return true;
   // The ability list carries resolved names; abilityIds are numeric Wahapedia ids, so the old
   // id-based check could never match (the Callidus' innate Fights First was silently lost).
   return hasFightsFirstAbility(dsOf(u, ctx));
@@ -234,7 +266,13 @@ export function fightActivationOrder(state: GameState, ctx: EngineContext): Unit
 
   const fightsFirst = eligible.filter((u) => hasFightsFirst(u, ctx));
   const rest = eligible.filter((u) => !hasFightsFirst(u, ctx));
-  return [...interleave(fightsFirst), ...interleave(rest)];
+  const order = [...interleave(fightsFirst), ...interleave(rest)];
+  // Counteroffensive (15.12): the paid-for unit MUST be the next one selected to fight.
+  if (state.fightNext) {
+    const i = order.findIndex((u) => u.id === state.fightNext);
+    if (i > 0) return [order[i]!, ...order.slice(0, i), ...order.slice(i + 1)];
+  }
+  return order;
 }
 
 // ── Coherency (for the Movement-phase confirm gate + warning markers) ─────────
@@ -274,10 +312,11 @@ export function orderableUnits(officer: UnitInstance, state: GameState, ctx: Eng
 }
 
 // ── Reserves ─────────────────────────────────────────────────────────────────
-/** Units held in Reserves that are allowed to arrive this Movement phase (battle round 2+). */
+/** Units held in Reserves that are allowed to arrive this Movement phase (battle round 2+).
+ *  Embarked units are aboard a transport, not in Strategic Reserves — they disembark instead. */
 export function reservesArrivable(state: GameState): UnitInstance[] {
   if (state.round < 2) return [];
-  return state.units.filter((u) => u.inReserves && u.owner === state.activePlayer);
+  return state.units.filter((u) => u.inReserves && !u.embarkedIn && u.owner === state.activePlayer);
 }
 
 // ── Scout moves (pre-battle) ─────────────────────────────────────────────────

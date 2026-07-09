@@ -7,6 +7,7 @@
 
 import type { Datasheet, Enhancement, Roster } from './types';
 import { defensiveItemsInText, validateUnitLoadout, type Loadout } from './wargear';
+import { checkDetachmentPoints, dpBudget } from './detachments';
 
 // ── Battle size (points limit + datasheet copy limits) ───────────────────────
 export type BattleSize = 'Combat Patrol' | 'Incursion' | 'Strike Force';
@@ -155,6 +156,16 @@ export function validate(list: ArmyList, ix: DataIndex): Violation[] {
   }
   if (!list.detachment) {
     v.push({ severity: 'error', message: 'No detachment selected — enhancements and stratagems are detachment-scoped.' });
+  } else {
+    // Detachment Points (11e): a lone detachment over the budget is legal by GW's stated
+    // lone-detachment allowance (not yet errata'd) — surface it as a warning, not an error.
+    const dp = checkDetachmentPoints(list.detachment, list.faction, rule.points);
+    if (dp.overBudgetLone) {
+      v.push({
+        severity: 'warning',
+        message: `${list.detachment} costs ${dp.cost} DP — over the ${dp.budget.dp} DP budget at ${rule.points} pts. Legal as a lone detachment (GW stated intent, pending errata).`,
+      });
+    }
   }
 
   let warlords = 0;
@@ -202,8 +213,10 @@ export function validate(list: ArmyList, ix: DataIndex): Violation[] {
     }
   }
 
+  // 11e: the enhancement budget scales with battle size (2 at 1000 pts, 4 at 2000 pts).
   const totalEnh = [...enhUsed.values()].reduce((a, b) => a + b, 0);
-  if (totalEnh > 3) v.push({ severity: 'error', message: `Too many enhancements: ${totalEnh} (max 3 per army).` });
+  const enhMax = dpBudget(rule.points).enhancements;
+  if (totalEnh > enhMax) v.push({ severity: 'error', message: `Too many enhancements: ${totalEnh} (max ${enhMax} at ${rule.points} pts).` });
   for (const [id, c] of enhUsed) {
     if (c > 1) v.push({ severity: 'error', message: `Enhancement "${ix.enhancements.get(id)?.name ?? id}" used ${c} times (max once).` });
   }

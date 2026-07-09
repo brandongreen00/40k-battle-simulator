@@ -39,7 +39,9 @@ export function aiChargeAction(state: GameState, side: Side, profile: AiProfile,
     for (const t of chargeTargets(c, state, ctx)) {
       const names = `${ctx.datasheets.get(c.datasheetId)?.name ?? c.id} → ${ctx.datasheets.get(t.datasheetId)?.name ?? t.id}`;
       options.push({ charger: c.id, target: t.id, names });
-      const need = unitGap(c, t, ctx) - 1; // reach Engagement Range
+      // 11.04 roll-first: a target is only selectable when within the ROLLED distance, so the
+      // needed roll is the full gap (not gap minus Engagement Range).
+      const need = unitGap(c, t, ctx);
       const p = chargeProb(need);
       if (p <= 0) continue;
       const value =
@@ -66,16 +68,33 @@ export function aiChargeAction(state: GameState, side: Side, profile: AiProfile,
   candidates.sort((a, b) => b.score - a.score || a.charger.localeCompare(b.charger) || a.target.localeCompare(b.target));
   for (const cand of candidates) {
     if (!chargePathExists(state, cand.charger, [cand.target], ctx)) continue;
-    return {
-      intents: [
-        {
-          // commandReroll: a declared charge is the AI's best-scored play this phase, so spending
-          // 1 CP to salvage a failed roll outranks holding it (engine enforces once-per-phase).
-          intent: { type: 'Charge', chargerUnitId: cand.charger, targetUnitIds: [cand.target], commandReroll: true },
+    const chargerUnit = state.units.find((u) => u.id === cand.charger)!;
+    const isMV = !!ctx.datasheets.get(chargerUnit.datasheetId)?.keywords.some((k) => /^(monster|vehicle)$/i.test(k));
+    const chargerId = cand.charger;
+    const targetId = cand.target;
+    const intents: AiIntent[] = [
+      {
+        // commandReroll: a declared charge is the AI's best-scored play this phase, so spending
+        // 1 CP to salvage a failed roll outranks holding it (engine enforces once-per-phase).
+        intent: { type: 'Charge', chargerUnitId: chargerId, targetUnitIds: [targetId], commandReroll: true },
+      },
+    ];
+    if (isMV) {
+      // Crushing Impact (15.06): T dice of mortal wounds is nearly always worth 1 CP after a
+      // successful tank/monster charge. The guard mirrors the reducer's full legality.
+      intents.push({
+        intent: { type: 'CrushingImpact', unitId: chargerId, targetUnitId: targetId },
+        skipIf: (s) => {
+          if (s.cp[side] < 1) return true;
+          if (s.stratUsed?.[`${side}:core:crushing_impact`] === `${s.round}:${s.activePlayer}:${s.phase}`) return true;
+          const me = s.units.find((x) => x.id === chargerId);
+          const t = s.units.find((x) => x.id === targetId);
+          if (!me?.status.charged || !t || !t.models.some((m) => m.alive)) return true;
+          return unitGap(me, t, ctx) > 2;
         },
-      ],
-      note: `${side} charges: ${cand.names}`,
-    };
+      });
+    }
+    return { intents, note: `${side} charges: ${cand.names}` };
   }
   return { intents: [{ intent: { type: 'AdvancePhase' } }], note: `${side} ends the Charge phase` };
 }
@@ -95,7 +114,15 @@ export function aiFightAction(state: GameState, side: Side, profile: AiProfile, 
   if (!eligibleToFight(unit, state, ctx).eligible) return null;
 
   const unitId = unit.id;
-  const enemies = engagedEnemies(unit, state, ctx).sort(
+  // Engaged targets — or, for an OVERRUN FIGHT (12.06: eligible but unengaged), enemies within
+  // pile-in-and-engage reach (ER + 3"); the pile-in intent below moves us into Engagement Range.
+  let pool = engagedEnemies(unit, state, ctx);
+  if (pool.length === 0) {
+    pool = state.units.filter(
+      (e) => e.owner !== side && isOnBoard(e) && unitGap(unit, e, ctx) <= 5,
+    );
+  }
+  const enemies = pool.sort(
     (a, b) => meleeEV(unit, b, ctx) - meleeEV(unit, a, ctx) || unitValue(b, ctx) - unitValue(a, ctx) || a.id.localeCompare(b.id),
   );
   const target = profile.random && enemies.length > 1 ? enemies[deps.rng.int(0, enemies.length - 1)]! : enemies[0];
@@ -104,6 +131,22 @@ export function aiFightAction(state: GameState, side: Side, profile: AiProfile, 
   const hasMelee = availableUnitWeapons(unit, ctx).some((w) => w.weapon.type === 'melee');
   if (target && hasMelee) {
     const targetId = target.id;
+    // Epic Challenge (15.03): when our CHARACTER fights a unit that is hiding a CHARACTER inside
+    // a squad, 1 CP of [PRECISION] lets the melee wounds go straight for that character.
+    const isChar = (dsId: string) => ctx.datasheets.get(dsId)?.keywords.some((k) => k.toLowerCase() === 'character');
+    const weAreCharacter = isChar(unit.datasheetId) || (unit.attachedLeaders ?? []).some((l) => isChar(l.datasheetId));
+    const targetHidesCharacter =
+      target.models.filter((m) => m.alive).length > 1 &&
+      target.models.some((m) => m.alive && m.datasheetId && m.datasheetId !== target.datasheetId && isChar(m.datasheetId));
+    const alreadyGranted = state.units.some(
+      (u) => u.owner === side && u.status.activeEffects?.includes('precision_melee'),
+    );
+    if (weAreCharacter && targetHidesCharacter && !alreadyGranted && state.cp[side] >= 2) {
+      intents.push({
+        intent: { type: 'UseStratagem', name: 'Epic Challenge', side, cost: 1, targetUnitId: unitId, effectId: 'precision_melee' },
+        skipIf: (s) => s.cp[side] < 1,
+      });
+    }
     // The target may die to overwatch/abilities, or the pile-in may not reach — stand down silently.
     const cannotHit = (s: GameState): boolean => {
       const me = s.units.find((x) => x.id === unitId);

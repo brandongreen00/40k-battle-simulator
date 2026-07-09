@@ -398,6 +398,7 @@ async function main() {
         ...(wargearNotes.length ? { wargearNotes } : {}),
         ...(canLead.length ? { canLead } : {}),
         ...(canBeLedBy.length ? { canBeLedBy } : {}),
+        ...(stripHtml(r['transport']) ? { transport: stripHtml(r['transport']) } : {}),
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name));
