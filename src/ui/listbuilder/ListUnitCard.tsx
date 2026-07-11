@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Datasheet, Enhancement } from '../../core/types';
 import { isCharacter, isEpicHero, type ArmyList, type ListUnit } from '../../core/army';
-import { unitWargearOptions } from '../../core/wargear';
+import { groupFits, wargearOptionGroups } from '../../core/wargear';
 import { getDatasheet } from '../../data/loaders';
 
 interface Props {
@@ -31,8 +31,9 @@ export function ListUnitCard(props: Props) {
     .filter((u) => u.uid !== unit.uid && (ds.canLead ?? []).includes(u.datasheetId))
     .map((u) => ({ uid: u.uid, name: getDatasheet(u.datasheetId)?.name ?? u.datasheetId }));
 
-  // Real, cap-aware wargear options for this unit's current model count.
-  const wargearOptions = unitWargearOptions(ds, unit.modelCount);
+  // Real, cap-aware wargear options for this unit's current model count. Options that share
+  // items (e.g. the Sisters of Battle Squad's two boltgun swaps) render as one pooled group.
+  const wargearGroups = wargearOptionGroups(ds, unit.modelCount);
 
   // Wahapedia repeats a size tier for allied pricing ("Agents of the Imperium Detachment") —
   // keep the first row per size (the one unitCost reads) so the options are unique and clean.
@@ -129,23 +130,30 @@ export function ListUnitCard(props: Props) {
             </label>
           )}
 
-          {wargearOptions.map((opt) => {
-            const used = opt.choices.reduce((s, c) => s + (unit.loadout?.[c.item] ?? 0), 0);
-            const over = used > opt.max;
+          {wargearGroups.map((group) => {
+            const used = group.choices.reduce((s, c) => s + (unit.loadout?.[c.item] ?? 0), 0);
+            const over = !groupFits(group, unit.loadout ?? {});
+            const texts = Array.from(new Set(group.options.map((o) => o.text)));
             return (
-              <div key={opt.optionIndex} className={`lu-opt${over ? ' lu-opt-over' : ''}`}>
+              <div key={group.options[0]!.optionIndex} className={`lu-opt${over ? ' lu-opt-over' : ''}`}>
                 <div className="lu-opt-text">
-                  {opt.text}
+                  {texts.join(' / ')}
+                  {group.options.length > 1 && (
+                    <span title="This swap is listed more than once on the datasheet — the caps pool, but items only in one of the lists stay capped by that list.">
+                      {' '}(×{group.options.length})
+                    </span>
+                  )}
                   <span className="lu-opt-cap">
-                    {used}/{opt.max} model{opt.max === 1 ? '' : 's'}
+                    {used}/{group.max} model{group.max === 1 ? '' : 's'}
                   </span>
                 </div>
                 <div className="lu-choices">
-                  {opt.choices.map((c) => {
+                  {group.choices.map((c) => {
                     const count = unit.loadout?.[c.item] ?? 0;
-                    // This item's own ceiling: the shared pool minus what the option's *other* items use.
-                    const otherUsed = used - count;
-                    const itemMax = Math.max(0, opt.max - otherUsed);
+                    // One more of this item is only offered if some assignment of every pick to
+                    // an option still fits the caps (items shared across options pool; items in
+                    // a single option stay capped by it).
+                    const canAdd = groupFits(group, { ...unit.loadout, [c.item]: count + 1 });
                     return (
                       <div key={c.item} className="lu-stepper">
                         <button
@@ -160,7 +168,7 @@ export function ListUnitCard(props: Props) {
                         <button
                           type="button"
                           className="lu-step"
-                          disabled={count >= itemMax}
+                          disabled={!canAdd}
                           onClick={() => props.onLoadout(unit.uid, c.item, count + 1)}
                         >
                           +

@@ -190,6 +190,135 @@ export function defensiveItemsInText(text: string): string[] {
     .map((key) => key.replace(/\b\w/g, (c) => c.toUpperCase()));
 }
 
+// ── Option groups (overlapping choice lists) ────────────────────────────────────
+// Some datasheets list the same swap more than once with overlapping choices — the Sisters of
+// Battle Squad has TWO "1 Battle Sister's boltgun can be replaced with…" options, and a meltagun
+// appears in both lists. A loadout only stores item→count (which option each pick came from isn't
+// knowable from the app export), so caps must be checked across the whole group of connected
+// options: 1 meltagun + 1 heavy bolter is legal (one swap each), 2 heavy bolters is not (only the
+// second swap grants one).
+
+export interface WargearOptionGroup {
+  /** The options in this group — they share at least one grantable item, directly or transitively. */
+  options: UnitWargearOption[];
+  /** Union of the group's selectable items (deduped; first spelling wins). */
+  choices: WargearChoice[];
+  /** Total models the group can equip = sum of the option caps. Single items may cap lower. */
+  max: number;
+}
+
+/** Partition a datasheet's wargear options into connected components of shared items. */
+export function wargearOptionGroups(ds: Datasheet, modelCount: number): WargearOptionGroup[] {
+  const groups: UnitWargearOption[][] = [];
+  for (const opt of unitWargearOptions(ds, modelCount)) {
+    const keys = new Set(opt.choices.map((c) => c.item.toLowerCase()));
+    const hits = groups.filter((g) => g.some((o) => o.choices.some((c) => keys.has(c.item.toLowerCase()))));
+    if (hits.length === 0) {
+      groups.push([opt]);
+    } else {
+      // The new option may bridge several existing groups — merge them all into the first.
+      hits[0]!.push(opt);
+      for (const g of hits.slice(1)) {
+        hits[0]!.push(...g);
+        groups.splice(groups.indexOf(g), 1);
+      }
+    }
+  }
+  return groups.map((options) => {
+    const choices: WargearChoice[] = [];
+    const seen = new Set<string>();
+    for (const o of options) {
+      for (const c of o.choices) {
+        const key = c.item.toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          choices.push(c);
+        }
+      }
+    }
+    return { options, choices, max: options.reduce((s, o) => s + o.max, 0) };
+  });
+}
+
+/**
+ * Try to assign every picked item in the group to an option that grants it, without exceeding any
+ * option's cap (bipartite max-flow; the graphs are tiny). Returns null when everything fits, else
+ * the min-cut certificate: the over-taken items together with the combined cap of every option
+ * that could supply them.
+ */
+function groupOverflow(
+  group: WargearOptionGroup,
+  loadout: Loadout,
+): { items: string[]; used: number; cap: number } | null {
+  const items = group.choices
+    .map((c) => ({ item: c.item, count: loadout[c.item] ?? 0 }))
+    .filter((e) => e.count > 0);
+  if (items.length === 0) return null;
+  const offers = items.map((e) =>
+    group.options.flatMap((o, oi) => (o.choices.some((c) => c.item.toLowerCase() === e.item.toLowerCase()) ? [oi] : [])),
+  );
+  const spare = group.options.map((o) => o.max);
+  const assigned: Map<number, number>[] = items.map(() => new Map()); // item → (option → units)
+
+  // Place one unit of item i, rerouting other items' units to make room (Kuhn's augmenting path).
+  const place = (i: number, visited: Set<number>): boolean => {
+    for (const oi of offers[i]!) {
+      if (visited.has(oi)) continue;
+      visited.add(oi);
+      if (spare[oi]! > 0) {
+        spare[oi]!--;
+        assigned[i]!.set(oi, (assigned[i]!.get(oi) ?? 0) + 1);
+        return true;
+      }
+      for (let j = 0; j < items.length; j++) {
+        const aj = assigned[j]!.get(oi) ?? 0;
+        if (j !== i && aj > 0 && place(j, visited)) {
+          assigned[j]!.set(oi, aj - 1);
+          assigned[i]!.set(oi, (assigned[i]!.get(oi) ?? 0) + 1);
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  const leftover = items.map(() => 0);
+  items.forEach((e, i) => {
+    for (let k = 0; k < e.count; k++) if (!place(i, new Set())) leftover[i]!++;
+  });
+  if (leftover.every((l) => l === 0)) return null;
+
+  // Walk the residual graph from the unplaced items (item → its options; option → items assigned
+  // to it). Every reached option is full, so the reached items collectively exceed those options'
+  // caps — the honest "N models take X but only M may" set.
+  const inSet = items.map((_, i) => leftover[i]! > 0);
+  const optSeen = new Set<number>();
+  const queue = items.flatMap((_, i) => (inSet[i] ? [i] : []));
+  while (queue.length > 0) {
+    const i = queue.pop()!;
+    for (const oi of offers[i]!) {
+      if (optSeen.has(oi)) continue;
+      optSeen.add(oi);
+      items.forEach((_, j) => {
+        if (!inSet[j] && (assigned[j]!.get(oi) ?? 0) > 0) {
+          inSet[j] = true;
+          queue.push(j);
+        }
+      });
+    }
+  }
+  return {
+    items: items.filter((_, i) => inSet[i]).map((e) => e.item),
+    used: items.reduce((s, e, i) => s + (inSet[i] ? e.count : 0), 0),
+    cap: [...optSeen].reduce((s, oi) => s + group.options[oi]!.max, 0),
+  };
+}
+
+/** True when the loadout's picks from this group can all be assigned within the option caps. */
+export function groupFits(group: WargearOptionGroup, loadout: Loadout): boolean {
+  return groupOverflow(group, loadout) === null;
+}
+
 // ── Loadout validation ──────────────────────────────────────────────────────────
 export interface LoadoutViolation {
   optionIndex: number;
@@ -197,21 +326,20 @@ export interface LoadoutViolation {
 }
 
 /**
- * Validate a unit's loadout against its option caps. For each option, the number of models that
- * took *any* of its items must not exceed the option's `max`.
+ * Validate a unit's loadout against its option caps. Options that share items are checked as one
+ * group (see `wargearOptionGroups`); a violation reports the specific items that don't fit and
+ * the combined cap of the options that could grant them.
  */
 export function validateUnitLoadout(ds: Datasheet, modelCount: number, loadout: Loadout | undefined): LoadoutViolation[] {
   if (!loadout) return [];
   const violations: LoadoutViolation[] = [];
-  for (const opt of unitWargearOptions(ds, modelCount)) {
-    const used = opt.choices.reduce((sum, c) => sum + (loadout[c.item] ?? 0), 0);
-    if (used > opt.max) {
-      const names = opt.choices.map((c) => c.item).join(' / ');
-      violations.push({
-        optionIndex: opt.optionIndex,
-        message: `${ds.name}: ${used} models take ${names} but only ${opt.max} may (for ${modelCount} models).`,
-      });
-    }
+  for (const group of wargearOptionGroups(ds, modelCount)) {
+    const over = groupOverflow(group, loadout);
+    if (!over) continue;
+    violations.push({
+      optionIndex: group.options[0]!.optionIndex,
+      message: `${ds.name}: ${over.used} models take ${over.items.join(' / ')} but only ${over.cap} may (for ${modelCount} models).`,
+    });
   }
   return violations;
 }
