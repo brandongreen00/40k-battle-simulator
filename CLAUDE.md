@@ -330,6 +330,28 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-07-11] — Wargear validation false positive fixed: overlapping options now share their
+  caps as one pool ("Sisters of Battle Squad: 2 models take … but only 1 may").** The owner's
+  app-legal list (one Battle Sister with a meltagun, another with a heavy bolter) was flagged as
+  an error. Root cause: the datasheet lists the Battle Sister boltgun swap TWICE with overlapping
+  choice lists (meltagun / storm bolter / flamer appear in both), and `validateUnitLoadout`
+  checked each option independently against the TOTAL item counts — so any two picks tripped the
+  second option's 1-model cap, and even 2× meltagun (legal: one from each swap) double-violated.
+  All gates green: `pnpm typecheck`, `pnpm test` (**433 tests**, 8 new incl. a regression test
+  against the real 000003818 datasheet), `pnpm build`.
+  - **`wargear.ts`**: new `wargearOptionGroups` partitions a datasheet's options into connected
+    components of shared items; `groupOverflow` solves the pick→option assignment as a tiny
+    bipartite max-flow (Kuhn's augmenting paths), so meltagun+heavy bolter and 2× meltagun fit,
+    while 2× heavy bolter (only granted by one option) is still flagged. Violation messages now
+    name the min-cut certificate — the specific over-taken items and the combined cap of every
+    option that could grant them — instead of an option's whole choice list.
+  - **`ListUnitCard.tsx`**: renders option GROUPS (a duplicated swap shows once with "(×2)" and
+    the pooled used/max), and the `+` steppers are gated by `groupFits` feasibility, so the UI
+    permits exactly the loadouts validation accepts (heavy bolter still caps at 1 even though
+    the pool is 2).
+  - Loadouts stay a flat item→count map (the app export can't say which option a pick came from);
+    single-option datasheets behave exactly as before by construction.
+
 - **[2026-07-09] — Inquisitors import + Purgation Force bindings, and the MOBILE game-start fix
   ("I tried starting a game and it didn't feel good").** All gates green: `pnpm typecheck`,
   `pnpm test` (**425 tests**), `pnpm build`; desktop Playwright suite still 10/10; a NEW
