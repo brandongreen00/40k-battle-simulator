@@ -278,6 +278,14 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
                 );
               })}
               <p className="hint">Unchosen sides default to Tactical when the battle begins.</p>
+              <details className="fixed-cards-info">
+                <summary>ℹ Fixed-capable card texts</summary>
+                {SECONDARY_CARDS.filter((c) => c.fixed).map((c) => (
+                  <p className="card-desc" key={c.id}>
+                    <strong>{c.name}</strong> — {c.desc}
+                  </p>
+                ))}
+              </details>
             </div>
           )}
 

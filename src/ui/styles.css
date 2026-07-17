@@ -889,6 +889,29 @@ button.remove {
 .embark-select:hover {
   border-color: var(--accent);
 }
+/* Secondary Mission cards: tap the name to expand the card text (no hover on touch) */
+.card-row {
+  border-bottom: 1px dotted var(--line);
+  padding: 2px 0;
+}
+.card-name {
+  background: none;
+  border: none;
+  color: var(--ink);
+  cursor: pointer;
+  padding: 4px 2px;
+  font: inherit;
+  text-align: left;
+}
+.card-name:hover {
+  color: var(--accent);
+}
+.card-desc {
+  margin: 2px 0 6px 14px;
+  font-size: 11.5px;
+  color: #9aa3b2;
+  line-height: 1.45;
+}
 /* Declare Battle Formations enhancement grant picker (Clandestine Operation…) */
 .grant-picker {
   border: 1px solid #6d5a1f;

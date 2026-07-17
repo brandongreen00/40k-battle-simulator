@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Datasheet, GameState, UnitInstance } from '../core/types';
 import type { Intent } from '../core/state';
 import { availableUnitWeapons, planUnitFight, planUnitShooting, type EngineContext } from '../core/engine';
@@ -271,11 +271,12 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
                   (sec.fixed ?? []).map((c) => {
                     const card = secondaryCard(c.id);
                     return (
-                      <div key={c.id} className="order-row">
-                        <span title={card?.desc}>
-                          {card?.name ?? c.id} <span className="muted">· fixed · {sec.fixedVp?.[c.id] ?? 0}/20 VP</span>
-                        </span>
-                      </div>
+                      <SecondaryCardRow
+                        key={c.id}
+                        name={card?.name ?? c.id}
+                        desc={card?.desc}
+                        meta={`fixed · ${sec.fixedVp?.[c.id] ?? 0}/20 VP`}
+                      />
                     );
                   })
                 ) : sec.hand.length === 0 ? (
@@ -284,12 +285,17 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
                   sec.hand.map((c) => {
                     const card = secondaryCard(c.id);
                     return (
-                      <div key={c.id} className="order-row">
-                        <span title={card?.desc}>{card?.name ?? c.id} <span className="muted">· drawn R{c.drawn}</span></span>
-                        {s === state.activePlayer && (
-                          <button onClick={() => dispatch({ type: 'DiscardSecondary', side: s, cardId: c.id })}>discard</button>
-                        )}
-                      </div>
+                      <SecondaryCardRow
+                        key={c.id}
+                        name={card?.name ?? c.id}
+                        desc={card?.desc}
+                        meta={`drawn R${c.drawn}`}
+                        action={
+                          s === state.activePlayer ? (
+                            <button onClick={() => dispatch({ type: 'DiscardSecondary', side: s, cardId: c.id })}>discard</button>
+                          ) : undefined
+                        }
+                      />
                     );
                   })
                 )}
@@ -1083,5 +1089,30 @@ function StratagemPlays({
       <h3>Stratagem plays</h3>
       {plays}
     </>
+  );
+}
+
+/**
+ * One Secondary Mission card row: tap the name to expand the full card text (the old
+ * hover-tooltip was invisible on touch screens).
+ */
+function SecondaryCardRow({ name, desc, meta, action }: {
+  name: string;
+  desc?: string;
+  meta: string;
+  action?: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="card-row">
+      <div className="order-row">
+        <button className="card-name" onClick={() => setOpen((o) => !o)} title={open ? 'hide the card text' : 'show the card text'}>
+          {open ? '▾' : '▸'} {name}
+        </button>
+        <span className="muted">· {meta}</span>
+        {action}
+      </div>
+      {open && <p className="card-desc">{desc ?? 'No card text available.'}</p>}
+    </div>
   );
 }
