@@ -179,6 +179,12 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
                 {' '}· remaining — player {remaining.player}, ai {remaining.ai}
               </p>
               <p className="hint">Pick a unit on the left, drop it inside your zone (Infiltrators may deploy in no-man's-land). Use “Reserves” for Deep Strike.</p>
+              <p className="hint">
+                🚌 <strong>Riding in vehicles:</strong> deploy the transport first, then use the “⇥ Embark…”
+                picker next to an infantry unit to start the battle embarked. An Immolator can also
+                “⇆ Split” a Sisters of Battle Squad — half rides (you choose which wargear, e.g. the
+                meltas), half deploys on foot.
+              </p>
             </>
           )}
 

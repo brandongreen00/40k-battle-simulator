@@ -454,6 +454,24 @@ export interface DeclaredFormation {
   infiltrate?: boolean;
 }
 
+/** One half of a unit split at Declare Battle Formations (e.g. by a Sisters of Battle Immolator):
+ *  its model count and the share of the parent entry's wargear items those models carry. */
+export interface SplitGroup {
+  count: number;
+  wargear?: Record<string, number>;
+}
+
+/** A unit split declared at Declare Battle Formations by a transport's split rule. The roster
+ *  entry `entryKey` becomes two half-units keyed `${entryKey}#a` (which must start the battle
+ *  embarked within `transportUnitId`) and `${entryKey}#b` (deployed like any other unit). */
+export interface DeclaredSplit {
+  side: Side;
+  entryKey: string; // roster entry key of the split unit ("side:index")
+  dsId: string;
+  transportUnitId: string; // the transport whose rule performed the split (carries group A)
+  groups: [SplitGroup, SplitGroup]; // [riders, on-foot]
+}
+
 /** Warrant of Trade (Rogue Trader): after both armies have deployed, redeploy up to D3 IMPERIUM
  *  BATTLELINE units. `remaining` counts down as units are pulled back for redeployment. */
 export interface WarrantState {
@@ -474,6 +492,8 @@ export interface SetupState {
   toDeploy?: Side;
   /** Leader attachments declared before deployment (Declare Battle Formations). */
   formations?: DeclaredFormation[];
+  /** Unit splits declared before deployment (a transport's split rule, e.g. the Immolator). */
+  splits?: DeclaredSplit[];
   /** Warrant of Trade redeploy state per side, once that side has used (or declined) it. */
   warrant?: Partial<Record<Side, WarrantState>>;
   /** Roll-off that set the first turn (for the dice display). */

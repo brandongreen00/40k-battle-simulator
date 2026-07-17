@@ -47,7 +47,13 @@ export function parseTransportCapacity(text?: string): TransportCapacity | null 
   }
   const excluded: string[] = [];
   const ex = /cannot transport (.+?) models/i.exec(text);
-  if (ex) excluded.push(ex[1]!.trim().toLowerCase());
+  if (ex) {
+    // "cannot transport TERMINATOR or OFFICIO ASSASSINORUM models" — each alternative excludes.
+    for (const alt of ex[1]!.split(/\s+or\s+/i)) {
+      const t = alt.trim().toLowerCase();
+      if (t) excluded.push(t);
+    }
+  }
   return { capacity, allowed, excluded, bulky };
 }
 
@@ -90,7 +96,7 @@ const keywordSet = (ds: Datasheet): Set<string> =>
 /** May models of this datasheet embark at all under the capacity's keyword rules? */
 export function datasheetMayRide(ds: Datasheet, cap: TransportCapacity): boolean {
   const kws = keywordSet(ds);
-  if (cap.excluded.some((e) => kws.has(e))) return false;
+  if (cap.excluded.some((e) => phraseMatches(e.split(/\s+/), kws))) return false;
   return cap.allowed.some((alt) => phraseMatches(alt, kws));
 }
 
@@ -161,6 +167,42 @@ export function embarkOptions(state: GameState, unit: UnitInstance, ctx: EngineC
       t.owner === unit.owner &&
       canEmbark(state, unit, t, ctx).ok,
   );
+}
+
+// ── deployment split (Sisters of Battle Immolator) ────────────────────────────
+/**
+ * Some transports carry a Declare Battle Formations split rule in their transport text, e.g. the
+ * Sisters of Battle Immolator: "you can select one SISTERS OF BATTLE SQUAD from your army. If you
+ * do, that unit is split into two units, each containing as equal a number of models as possible
+ * ... One of these units must start the battle embarked within this TRANSPORT; the other can start
+ * the battle embarked within another TRANSPORT, or it can be deployed as a separate unit."
+ */
+export interface TransportSplitRule {
+  /** Lowercased tokens of the selectable unit phrase (e.g. ["sisters","of","battle","squad"]). */
+  selectTokens: string[];
+}
+
+/** Parse a transport datasheet's split clause (null when it has none). */
+export function transportSplitRule(ds: Datasheet | undefined): TransportSplitRule | null {
+  const text = ds?.transport;
+  if (!text || !/split into two units/i.test(text)) return null;
+  const m = /select one (.+?) from your army/i.exec(text);
+  if (!m) return null;
+  const tokens = m[1]!.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  return tokens.length ? { selectTokens: tokens } : null;
+}
+
+/** May this transport's split rule select a unit of `unitDs`? (Matched on keywords + name.) */
+export function splitRuleSelects(rule: TransportSplitRule, unitDs: Datasheet): boolean {
+  return phraseMatches(rule.selectTokens, keywordSet(unitDs));
+}
+
+/** The legal "as equal as possible" riding-group sizes for a unit of `total` models. */
+export function splitRideCounts(total: number): number[] {
+  if (total < 2) return [];
+  const lo = Math.floor(total / 2);
+  const hi = Math.ceil(total / 2);
+  return lo === hi ? [lo] : [hi, lo];
 }
 
 // ── disembark modes (18.04) ───────────────────────────────────────────────────

@@ -7,7 +7,7 @@ import { checkUnitDeployment, deepStrikeArrivalLegal, isEntryPlaced, type Deploy
 import { anyOverlap, occupiedBases, unitOverlaps } from '../core/collision';
 import { unitCoherency, unitCentroid } from '../core/phases';
 import { gapBetweenBases } from '../core/geometry';
-import { canEmbark } from '../core/transport';
+import { canEmbark, remainingCapacity, splitRideCounts, splitRuleSelects, transportSplitRule } from '../core/transport';
 import { planUnitShooting } from '../core/engine';
 import { defensiveProfileForItem } from '../core/wargear';
 import {
@@ -46,6 +46,17 @@ interface DeployEntry {
   key: string;
   unit: RosterUnit;
   ds: Datasheet;
+  /** Set when this entry is one half of a declared transport split ('a' rides, 'b' walks). */
+  half?: 'a' | 'b';
+}
+
+/** Draft of a transport split being edited (before DeclareSplit is dispatched). */
+interface SplitDraft {
+  entryKey: string;
+  transportId: string;
+  rideCount: number;
+  /** Wargear items riding in the transport (the rest stays with the on-foot half). */
+  ride: Record<string, number>;
 }
 
 // Seeded RNG for reproducibility (the seam is what matters; dice roll-offs use it).
@@ -207,6 +218,9 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
     }
   };
   const [placing, setPlacing] = useState<Placing | null>(null);
+  // Open transport-split editor (the Immolator's Declare Battle Formations rule): which entry is
+  // being split, the chosen transport, the riding-half size, and the wargear riding with it.
+  const [splitting, setSplitting] = useState<SplitDraft | null>(null);
   const [selectedUnitIds, setSelectedUnitIds] = useState<string[]>([]);
   // Attacker/target picked in the game panel — highlighted on the board (rings + firing line).
   const [targeting, setTargeting] = useState<{ attackerUnitId?: string; targetUnitId?: string }>({});
@@ -337,6 +351,15 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
     if (placing?.entryKey && aiSeats[placing.side].enabled) setPlacing(null);
   }, [placing, aiSeats]);
 
+  // Drop an open split editor when the game leaves the deployment step (or the seat flips to AI).
+  useEffect(() => {
+    if (!splitting) return;
+    const side = splitting.entryKey.split(':')[0] as Side;
+    if (state.stage !== 'setup' || state.setup?.step !== 'deploy' || aiSeats[side]?.enabled) {
+      setSplitting(null);
+    }
+  }, [splitting, state.stage, state.setup?.step, aiSeats]);
+
   // A held incoming volley only makes sense mid-match; drop it if the game resets — and resolve
   // it automatically if the defender's seat flips to AI (no human left to choose).
   useEffect(() => {
@@ -346,13 +369,25 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
     if (!target || aiSeats[target.owner].enabled) resolveIncoming();
   }, [incoming, state.mode, aiSeats, resolveIncoming, state.units]);
 
-  // Deployment entries per side, and which are already on the board / in reserves.
+  // Deployment entries per side, and which are already on the board / in reserves. An entry split
+  // by a transport's Declare Battle Formations rule (Immolator) expands into its two half-units.
   const entriesFor = (side: Side): DeployEntry[] => {
     const r = rosterFor(side);
     if (!r) return [];
+    const splits = state.setup?.splits ?? [];
     return r.units
       .map((unit, i) => ({ key: `${side}:${i}`, unit, ds: getDatasheet(unit.datasheetId)! }))
-      .filter((e) => e.ds);
+      .filter((e) => e.ds)
+      .flatMap((e): DeployEntry[] => {
+        const s = splits.find((x) => x.entryKey === e.key && x.side === side);
+        if (!s) return [e];
+        return (['a', 'b'] as const).map((half, gi) => ({
+          key: `${e.key}#${half}`,
+          unit: { ...e.unit, modelCount: s.groups[gi]!.count, wargearCounts: s.groups[gi]!.wargear },
+          ds: e.ds,
+          half,
+        }));
+      });
   };
   // A merged Leader's unit instance is removed, but its entry stays placed (no double-deploy).
   const isPlaced = (key: string) => isEntryPlaced(state, key);
@@ -480,6 +515,45 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
       unit: { datasheetId: ds.id, modelCount: u.models.length },
       ds, formation: 'block', rotation: 0, side: u.owner, disembarkUnitId: unitId, ability: 'standard',
     });
+  }
+
+  /** Deployed friendly transports `entry` could legally start the battle embarked within. */
+  function embarkBusesFor(entry: DeployEntry, side: Side) {
+    if (!entry.ds.keywords.some((k) => k.toLowerCase() === 'infantry')) return [];
+    const probe = {
+      id: entry.key, owner: side, datasheetId: entry.ds.id,
+      models: Array.from({ length: entry.unit.modelCount }, (_, mi) => ({
+        id: `${entry.key}:m${mi}`, unitId: entry.key, pos: { x: 0, y: 0 }, wounds: 1, alive: true,
+      })),
+      startingModels: entry.unit.modelCount, status: {},
+    };
+    return state.units.filter(
+      (t) =>
+        t.owner === side && !t.inReserves && t.models.some((m) => m.alive) &&
+        canEmbark(state, probe, t, { datasheets: datasheetsById }).ok,
+    );
+  }
+
+  /** Deployed friendly transports whose Declare Battle Formations split rule can select `entry`
+   *  (e.g. a Sisters of Battle Immolator selecting a Sisters of Battle Squad). */
+  function splitTransportsFor(entry: DeployEntry, side: Side) {
+    return state.units.filter((t) => {
+      if (t.owner !== side || t.inReserves || !t.models.some((m) => m.alive)) return false;
+      const rule = transportSplitRule(getDatasheet(t.datasheetId));
+      return !!rule && splitRuleSelects(rule, entry.ds);
+    });
+  }
+
+  /** Open the split editor with sensible defaults: biggest legal riding half, wargear split evenly
+   *  (bump the steppers to load e.g. both meltas into the transport). */
+  function beginSplit(entry: DeployEntry, transportId: string) {
+    const rideCount = splitRideCounts(entry.unit.modelCount)[0] ?? 1;
+    const ride: Record<string, number> = {};
+    for (const [item, n] of Object.entries(entry.unit.wargearCounts ?? {})) {
+      const share = Math.floor((n * rideCount) / entry.unit.modelCount);
+      if (share > 0) ride[item] = share;
+    }
+    setSplitting({ entryKey: entry.key, transportId, rideCount, ride });
   }
 
   function placeReserves(entry: DeployEntry, side: Side) {
@@ -684,10 +758,32 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
                 // A paired Leader deploys with its unit, not alone.
                 const paired = isPairedLeader(state, e.key);
                 const pair = formationForBodyguard(state, e.key);
+                const inst = state.units.find((u) => u.id === e.key);
+                const busOf = inst?.embarkedIn ? state.units.find((t) => t.id === inst.embarkedIn) : undefined;
+                const busOfName = busOf ? getDatasheet(busOf.datasheetId)?.name ?? busOf.id : null;
+                const buses = pair ? [] : embarkBusesFor(e, sideToPlace);
+                const splitBuses = pair || e.half || e.unit.modelCount < 2 ? [] : splitTransportsFor(e, sideToPlace);
                 return (
                   <li key={e.key} className={placed ? 'placed' : ''}>
                     {placed ? (
-                      <span className="spawn done">{reserve ? 'Reserves' : '✓'}</span>
+                      <>
+                        <span className="spawn done">{busOfName ? `⇥ ${busOfName}` : reserve ? 'Reserves' : '✓'}</span>
+                        {busOfName && state.setup?.step === 'deploy' && !aiSeats[sideToPlace].enabled && (
+                          e.half === 'a' ? (
+                            <button
+                              className="reserve-btn"
+                              title="Undo the split (both halves return to the deployment pool)"
+                              onClick={() => dispatch({ type: 'ClearSplit', entryKey: e.key.replace(/#a$/, '') })}
+                            >↩</button>
+                          ) : (
+                            <button
+                              className="reserve-btn"
+                              title="Undo — return this unit to the deployment pool"
+                              onClick={() => dispatch({ type: 'UndeployUnit', unitId: e.key })}
+                            >↩</button>
+                          )
+                        )}
+                      </>
                     ) : paired ? (
                       <span className="spawn done" title="Declared as a Leader — deploys merged with its unit">⚑ with unit</span>
                     ) : aiSeats[sideToPlace].enabled ? (
@@ -700,46 +796,63 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
                           {active ? 'Placing…' : '+ Deploy'}
                         </button>
                         <button className="reserve-btn" title="Place in Reserves (Deep Strike, arrives round 2+)" onClick={() => placeReserves(e, sideToPlace)}>⤓</button>
-                        {(() => {
-                          // Start embarked (18.01): offer the first deployed friendly transport
-                          // this unit legally fits in.
-                          if (pair || !e.ds.keywords.some((k) => k.toLowerCase() === 'infantry')) return null;
-                          const probe = {
-                            id: e.key, owner: sideToPlace, datasheetId: e.ds.id,
-                            models: Array.from({ length: e.unit.modelCount }, (_, mi) => ({
-                              id: `${e.key}:m${mi}`, unitId: e.key, pos: { x: 0, y: 0 }, wounds: 1, alive: true,
-                            })),
-                            startingModels: e.unit.modelCount, status: {},
-                          };
-                          const bus = state.units.find(
-                            (t) =>
-                              t.owner === sideToPlace && !t.inReserves && t.models.some((m) => m.alive) &&
-                              canEmbark(state, probe, t, { datasheets: datasheetsById }).ok,
-                          );
-                          if (!bus) return null;
-                          const busName = getDatasheet(bus.datasheetId)?.name ?? bus.id;
-                          return (
-                            <button
-                              className="reserve-btn"
-                              title={`Start the battle embarked within ${busName}`}
-                              onClick={() =>
-                                dispatch({
-                                  type: 'DeployUnit', unitId: e.key, owner: sideToPlace, datasheetId: e.ds.id,
-                                  baseShape: e.ds.baseShape, modelCount: e.unit.modelCount,
-                                  wounds: e.ds.models[0]?.W ?? 1, anchor: { x: 0, y: 0 },
-                                  intoTransportId: bus.id,
-                                  ...(e.unit.wargearCounts ? { wargear: e.unit.wargearCounts } : {}),
-                                })
-                              }
-                            >
-                              ⇥
-                            </button>
-                          );
-                        })()}
+                        {buses.length > 0 && (
+                          // Start the battle embarked (18.01) — pick which deployed transport.
+                          <select
+                            className="embark-select"
+                            value=""
+                            title="Start the battle embarked within a deployed transport"
+                            onChange={(ev) => {
+                              const bus = buses.find((t) => t.id === ev.target.value);
+                              if (!bus) return;
+                              dispatch({
+                                type: 'DeployUnit', unitId: e.key, owner: sideToPlace, datasheetId: e.ds.id,
+                                baseShape: e.ds.baseShape, modelCount: e.unit.modelCount,
+                                wounds: e.ds.models[0]?.W ?? 1, anchor: { x: 0, y: 0 },
+                                intoTransportId: bus.id,
+                                ...(e.unit.wargearCounts ? { wargear: e.unit.wargearCounts } : {}),
+                              });
+                            }}
+                          >
+                            <option value="">⇥ Embark…</option>
+                            {buses.map((t) => (
+                              <option key={t.id} value={t.id}>
+                                {getDatasheet(t.datasheetId)?.name ?? t.id} · {remainingCapacity(state, t, { datasheets: datasheetsById })} seats
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                        {splitBuses.length > 0 && (
+                          <button
+                            className={`reserve-btn${splitting?.entryKey === e.key ? ' seg-on' : ''}`}
+                            title="Split this unit in two: half starts embarked, half deploys on foot (Immolator rule)"
+                            onClick={() => (splitting?.entryKey === e.key ? setSplitting(null) : beginSplit(e, splitBuses[0]!.id))}
+                          >⇆ Split</button>
+                        )}
                       </>
                     )}
-                    <span className="unit-name">{e.ds.name}{pair ? ' ⚑' : ''}</span>
+                    <span className="unit-name">{e.ds.name}{pair ? ' ⚑' : ''}{e.half === 'a' ? ' · riders' : e.half === 'b' ? ' · on foot' : ''}</span>
                     <span className="unit-meta">×{e.unit.modelCount}{deployAbilityForDatasheet(e.ds) !== 'standard' ? ` · ${deployAbilityForDatasheet(e.ds) === 'infiltrators' ? 'Infiltrators' : 'Deep Strike'}` : ''}{pair?.infiltrate ? ' · Infiltrators (granted)' : ''}</span>
+                    {splitting?.entryKey === e.key && !placed && (
+                      <SplitEditor
+                        state={state}
+                        entry={e}
+                        transports={splitBuses}
+                        splitting={splitting}
+                        setSplitting={setSplitting}
+                        onConfirm={() => {
+                          dispatch({
+                            type: 'DeclareSplit', side: sideToPlace, entryKey: e.key,
+                            datasheetId: e.ds.id, baseShape: e.ds.baseShape,
+                            modelCount: e.unit.modelCount, wounds: e.ds.models[0]?.W ?? 1,
+                            transportUnitId: splitting.transportId, rideCount: splitting.rideCount,
+                            rideWargear: splitting.ride,
+                            ...(e.unit.wargearCounts ? { totalWargear: e.unit.wargearCounts } : {}),
+                          });
+                          setSplitting(null);
+                        }}
+                      />
+                    )}
                   </li>
                 );
               })}
@@ -789,7 +902,13 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
                   {!inSetup && !inMatch && <button className="remove" onClick={() => dispatch({ type: 'RemoveUnit', unitId: u.id })}>×</button>}
                   <span className="dot" style={{ background: OWNER_COLOR[u.owner].fill }} />
                   <span className="unit-name">{ds?.name ?? u.datasheetId}{u.attachedLeaders?.length ? ' ⚑' : ''}</span>
-                  <span className="unit-meta">{u.inReserves ? 'reserves' : `×${u.models.filter((m) => m.alive).length}`}</span>
+                  <span className="unit-meta">
+                    {u.embarkedIn
+                      ? `⇥ ${getDatasheet(state.units.find((t) => t.id === u.embarkedIn)?.datasheetId ?? '')?.name ?? 'transport'}`
+                      : u.inReserves
+                        ? 'reserves'
+                        : `×${u.models.filter((m) => m.alive).length}`}
+                  </span>
                 </li>
               );
             })}
@@ -878,6 +997,85 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
           />
         )}
       </aside>
+    </div>
+  );
+}
+
+/**
+ * Inline editor for a transport split (Immolator rule): pick the transport, the riding-half size
+ * (10 → 5+5), and exactly which wargear rides — e.g. both meltas into the Immolator to threaten
+ * tanks — via per-item steppers. Confirm embarks the riding half immediately.
+ */
+function SplitEditor({
+  state, entry, transports, splitting, setSplitting, onConfirm,
+}: {
+  state: GameState;
+  entry: DeployEntry;
+  transports: GameState['units'];
+  splitting: SplitDraft;
+  setSplitting: (d: SplitDraft | null) => void;
+  onConfirm: () => void;
+}) {
+  const total = entry.unit.modelCount;
+  const rideChoices = splitRideCounts(total);
+  const footCount = total - splitting.rideCount;
+  const items = Object.entries(entry.unit.wargearCounts ?? {});
+  const bus = transports.find((t) => t.id === splitting.transportId) ?? transports[0];
+  const seats = bus ? remainingCapacity(state, bus, { datasheets: datasheetsById }) : 0;
+  const fits = !!bus && splitting.rideCount <= seats;
+  const setRide = (item: string, n: number) => {
+    const max = entry.unit.wargearCounts?.[item] ?? 0;
+    const next = { ...splitting.ride, [item]: Math.max(0, Math.min(max, n)) };
+    if (next[item] === 0) delete next[item];
+    setSplitting({ ...splitting, ride: next });
+  };
+  return (
+    <div className="split-editor">
+      <p className="hint">
+        ⇆ Split {entry.ds.name}: <strong>{splitting.rideCount} ride</strong> · {footCount} on foot.
+        Set which wargear rides (e.g. meltas into the transport).
+      </p>
+      {transports.length > 1 && (
+        <label className="field">
+          <span>Transport</span>
+          <select value={splitting.transportId} onChange={(e) => setSplitting({ ...splitting, transportId: e.target.value })}>
+            {transports.map((t) => (
+              <option key={t.id} value={t.id}>
+                {datasheetsById.get(t.datasheetId)?.name ?? t.id} · {remainingCapacity(state, t, { datasheets: datasheetsById })} seats
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {rideChoices.length > 1 && (
+        <div className="seg">
+          {rideChoices.map((n) => (
+            <button key={n} className={splitting.rideCount === n ? 'seg-on' : ''} onClick={() => setSplitting({ ...splitting, rideCount: n })}>
+              {n} ride
+            </button>
+          ))}
+        </div>
+      )}
+      {items.length > 0 && (
+        <div className="split-gear">
+          {items.map(([item, n]) => {
+            const riding = splitting.ride[item] ?? 0;
+            return (
+              <div className="split-gear-row" key={item}>
+                <span className="unit-name">{item}</span>
+                <button onClick={() => setRide(item, riding - 1)} disabled={riding <= 0}>−</button>
+                <span className="unit-meta">{riding}/{n} ride</span>
+                <button onClick={() => setRide(item, riding + 1)} disabled={riding >= n}>+</button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {!fits && <p className="warn">⚠ {bus ? `only ${seats} seats free` : 'no transport available'}</p>}
+      <div className="btnrow">
+        <button className="primary" disabled={!fits} onClick={onConfirm}>✓ Split &amp; embark {splitting.rideCount}</button>
+        <button onClick={() => setSplitting(null)}>Cancel</button>
+      </div>
     </div>
   );
 }

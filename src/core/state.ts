@@ -10,7 +10,7 @@
 // Stage 1 only needs to spawn units, move models, and clear the board. No combat, LoS, scoring,
 // or AI — those are later stages.
 
-import type { BaseShape, Datasheet, DeclaredFormation, GameState, Layout, ModelInstance, Side, UnitInstance, Vec2 } from './types';
+import type { BaseShape, Datasheet, DeclaredFormation, GameState, Layout, ModelInstance, Side, SplitGroup, UnitInstance, Vec2 } from './types';
 import type { RNG } from './rng';
 import { clamp, clampToRange, gapBetweenBases } from './geometry';
 import { formationPositions, type Formation } from './formation';
@@ -19,7 +19,7 @@ import { rollOff, otherSide } from './setup';
 import { checkUnitDeployment, deepStrikeArrivalLegal, deployAbilityFromKeywords, whollyInOwnZone, type DeployAbility } from './deployment';
 import { checkCoherency } from './coherency';
 import { anyOverlap, occupiedBases, unitOverlaps } from './collision';
-import { canEmbark, disembarkMode, isAircraft } from './transport';
+import { canEmbark, disembarkMode, isAircraft, splitRideCounts, splitRuleSelects, transportSplitRule } from './transport';
 import { hazardRoll } from './combat';
 import { eligibleToShoot } from './phases';
 import { pointLosBlocked } from './visibility';
@@ -179,6 +179,29 @@ export type Intent =
     }
   /** Undo a declared (not yet deployed) Leader pairing. */
   | { type: 'ClearFormation'; leaderKey: string }
+  /** Declare Battle Formations split (e.g. Sisters of Battle Immolator): split a roster entry into
+   *  two half-units. The riding half (`${entryKey}#a`, `rideCount` models, carrying `rideWargear`)
+   *  immediately starts the battle embarked within `transportUnitId`; the other half becomes a
+   *  normal deployable entry (`${entryKey}#b`). Counts as the side's placement for alternation. */
+  | {
+      type: 'DeclareSplit';
+      side: Side;
+      entryKey: string;
+      datasheetId: string;
+      baseShape: BaseShape;
+      modelCount: number;
+      wounds: number;
+      transportUnitId: string;
+      rideCount: number;
+      rideWargear?: Record<string, number>;
+      totalWargear?: Record<string, number>;
+    }
+  /** Undo a declared split: removes BOTH half-units (wherever they are) and the split record, so
+   *  the original entry re-enters the deployment flow. Setup only. */
+  | { type: 'ClearSplit'; entryKey: string }
+  /** Undo a start-the-battle-embarked deployment: the unit instance is removed and its roster
+   *  entry re-enters the deployment flow. Setup only; not for split halves (use ClearSplit). */
+  | { type: 'UndeployUnit'; unitId: string }
   /** Warrant of Trade: roll the D3 and start redeploying up to that many IMPERIUM BATTLELINE units. */
   | { type: 'UseWarrant'; side: Side }
   /** Decline (or finish early with) the Warrant of Trade redeploy. */
@@ -929,6 +952,111 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         ...state,
         setup: { ...state.setup, formations: state.setup.formations.filter((x) => x.leaderKey !== intent.leaderKey) },
         log: [...state.log, 'Leader pairing cleared'],
+      };
+    }
+
+    case 'DeclareSplit': {
+      const reject = (why: string): GameState => ({ ...state, log: [...state.log, `Split rejected: ${why}`] });
+      if (state.stage !== 'setup' || state.setup?.step !== 'deploy') return reject('declare splits during deployment');
+      if (!ctx) return reject('no datasheet context supplied');
+      if (state.setup.splits?.some((s) => s.entryKey === intent.entryKey)) return reject('that unit is already split');
+      if (isUnitPlaced(state, intent.entryKey)) return reject('that unit is already deployed');
+      if ((state.setup.formations ?? []).some((f) => f.leaderKey === intent.entryKey || f.bodyguardKey === intent.entryKey)) {
+        return reject('that unit is in a declared Leader pairing');
+      }
+      const transport = state.units.find((u) => u.id === intent.transportUnitId);
+      if (!transport || transport.owner !== intent.side || transport.inReserves || !transport.models.some((m) => m.alive)) {
+        return reject('the transport must be deployed on the battlefield first');
+      }
+      const tDs = ctx.datasheets.get(transport.datasheetId);
+      const uDs = ctx.datasheets.get(intent.datasheetId);
+      const rule = transportSplitRule(tDs);
+      if (!tDs || !rule) return reject(`${tDs?.name ?? transport.id} has no Declare Battle Formations split rule`);
+      if (!uDs || !splitRuleSelects(rule, uDs)) {
+        return reject(`${tDs.name} cannot select ${uDs?.name ?? intent.datasheetId} (rule: ${rule.selectTokens.join(' ').toUpperCase()})`);
+      }
+      if (!splitRideCounts(intent.modelCount).includes(intent.rideCount)) {
+        return reject(`the two units must be as equal as possible (${intent.modelCount} models → ${splitRideCounts(intent.modelCount).join(' or ')} may ride)`);
+      }
+      // Partition the wargear: the riding half takes `rideWargear`, the rest walks.
+      const total = intent.totalWargear ?? {};
+      const rideWargear: Record<string, number> = {};
+      const footWargear: Record<string, number> = { ...total };
+      for (const [item, n] of Object.entries(intent.rideWargear ?? {})) {
+        if (n <= 0) continue;
+        if (n > (total[item] ?? 0)) return reject(`the unit only has ${total[item] ?? 0}× ${item}`);
+        rideWargear[item] = n;
+        const left = (footWargear[item] ?? 0) - n;
+        if (left > 0) footWargear[item] = left;
+        else delete footWargear[item];
+      }
+      // Build the riding half embarked within the transport (capacity/keyword checked).
+      const rideId = `${intent.entryKey}#a`;
+      const rideModels = layoutModels(
+        { unitId: rideId, baseShape: intent.baseShape, modelCount: intent.rideCount, wounds: intent.wounds, anchor: { x: 0, y: 0 }, wargear: rideWargear },
+        state.layout,
+      );
+      const rider: UnitInstance = {
+        id: rideId, owner: intent.side, datasheetId: intent.datasheetId,
+        models: rideModels, startingModels: rideModels.length, status: {},
+        inReserves: true, embarkedIn: transport.id,
+        ...(Object.keys(rideWargear).length ? { wargearCounts: rideWargear } : {}),
+      };
+      const check = canEmbark(state, rider, transport, ctx);
+      if (!check.ok) return reject(check.reason!);
+      const footCount = intent.modelCount - intent.rideCount;
+      const split = {
+        side: intent.side,
+        entryKey: intent.entryKey,
+        dsId: intent.datasheetId,
+        transportUnitId: transport.id,
+        groups: [
+          { count: intent.rideCount, ...(Object.keys(rideWargear).length ? { wargear: rideWargear } : {}) },
+          { count: footCount, ...(Object.keys(footWargear).length ? { wargear: footWargear } : {}) },
+        ] as [SplitGroup, SplitGroup],
+      };
+      const setup = { ...state.setup, splits: [...(state.setup.splits ?? []), split], toDeploy: otherSide(intent.side) };
+      return {
+        ...state,
+        units: [...state.units, rider],
+        setup,
+        log: [
+          ...state.log,
+          `${intent.side} splits ${uDs.name}: ${intent.rideCount} models start embarked within ${tDs.name}` +
+            `${Object.keys(rideWargear).length ? ` (carrying ${Object.entries(rideWargear).map(([k, v]) => `${v}× ${k}`).join(', ')})` : ''}` +
+            `; ${footCount} deploy separately`,
+        ],
+      };
+    }
+
+    case 'ClearSplit': {
+      if (state.stage !== 'setup' || state.setup?.step !== 'deploy') {
+        return { ...state, log: [...state.log, 'Split kept: the battle is under way'] };
+      }
+      const split = state.setup.splits?.find((s) => s.entryKey === intent.entryKey);
+      if (!split) return state;
+      const halfIds = [`${intent.entryKey}#a`, `${intent.entryKey}#b`];
+      return {
+        ...state,
+        units: state.units.filter((u) => !halfIds.includes(u.id)),
+        setup: { ...state.setup, splits: state.setup.splits!.filter((s) => s.entryKey !== intent.entryKey) },
+        log: [...state.log, 'Split cleared — the unit re-enters the deployment flow whole'],
+      };
+    }
+
+    case 'UndeployUnit': {
+      const reject = (why: string): GameState => ({ ...state, log: [...state.log, `Undo rejected: ${why}`] });
+      if (state.stage !== 'setup' || state.setup?.step !== 'deploy') return reject('only during deployment');
+      const unit = state.units.find((u) => u.id === intent.unitId);
+      if (!unit) return reject('unit not found');
+      if (!unit.embarkedIn) return reject('only a start-embarked deployment can be undone here');
+      if (state.setup.splits?.some((s) => intent.unitId.startsWith(`${s.entryKey}#`))) {
+        return reject('that unit is half of a declared split — clear the split instead');
+      }
+      return {
+        ...state,
+        units: state.units.filter((u) => u.id !== unit.id),
+        log: [...state.log, `${ctx?.datasheets.get(unit.datasheetId)?.name ?? unit.id} disembarks back into the deployment pool`],
       };
     }
 
