@@ -123,9 +123,13 @@ export function checkUnitDeployment(
 /**
  * Has a deployment-list entry been placed (or reserved)? Checks live unit ids AND merged Leaders —
  * an attached Leader's unit instance is removed by the merge, but its entry stays "placed" so it
- * cannot be deployed a second time.
+ * cannot be deployed a second time. An entry split by a transport's Declare Battle Formations
+ * rule (setup.splits) counts as placed only once BOTH half-units (`#a`/`#b`) are down — the AI's
+ * deployment alternation and the UI both rely on this staying in sync.
  */
 export function isEntryPlaced(state: GameState, entryKey: string): boolean {
+  const split = state.setup?.splits?.find((s) => s.entryKey === entryKey);
+  if (split) return isEntryPlaced(state, `${entryKey}#a`) && isEntryPlaced(state, `${entryKey}#b`);
   return state.units.some(
     (u) => u.id === entryKey || (u.attachedLeaders ?? []).some((l) => l.unitId === entryKey),
   );

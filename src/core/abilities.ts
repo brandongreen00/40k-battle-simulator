@@ -7,6 +7,7 @@
 
 import type { Datasheet, UnitInstance } from './types';
 import type { EngineContext } from './engine';
+import { enhancementScoutDistance } from './enhancements';
 
 /** All ability names on a datasheet (empty when the data has no resolved ability list). */
 export function abilityNames(ds: Datasheet | undefined): string[] {
@@ -41,16 +42,21 @@ export function scoutDistance(ds: Datasheet | undefined): number | null {
 /**
  * The Scout move a unit may make: every model must have Scouts (10e), so a merged Leader without
  * it removes the unit's Scout move. Uses the smallest X across the contributing datasheets.
+ * An enhancement can grant the unit Scouts outright (Survival Gear / Eager Advance — see
+ * core/enhancements.ts), independent of the datasheets.
  */
 export function unitScoutDistance(unit: UnitInstance, ctx: EngineContext): number | null {
+  const granted = enhancementScoutDistance(unit, ctx);
   const dsIds = [...new Set([unit.datasheetId, ...(unit.attachedLeaders ?? []).map((l) => l.datasheetId)])];
   let min = Infinity;
   for (const id of dsIds) {
     const d = scoutDistance(ctx.datasheets.get(id));
-    if (d == null) return null;
+    if (d == null) return granted;
     min = Math.min(min, d);
   }
-  return Number.isFinite(min) ? min : null;
+  const innate = Number.isFinite(min) ? min : null;
+  if (granted != null) return Math.max(granted, innate ?? 0);
+  return innate;
 }
 
 // ── Targeting / eligibility specials ─────────────────────────────────────────

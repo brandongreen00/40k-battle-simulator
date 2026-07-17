@@ -125,6 +125,7 @@ textarea,
 .unit-list li {
   display: flex;
   align-items: center;
+  flex-wrap: wrap; /* lets the inline split editor drop to its own full-width row */
   gap: 8px;
   font-size: 12.5px;
   padding: 4px 0;
@@ -872,6 +873,101 @@ button.remove {
 }
 .reserve-btn:hover {
   border-color: var(--accent);
+}
+/* Deployment "start embarked" transport picker (⇥ Embark…) */
+.embark-select {
+  background: #2b313d;
+  border: 1px solid var(--line);
+  color: #cbb26b;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 2px 4px;
+  margin-left: 2px;
+  max-width: 110px;
+  font-size: 12px;
+}
+.embark-select:hover {
+  border-color: var(--accent);
+}
+/* Secondary Mission cards: tap the name to expand the card text (no hover on touch) */
+.card-row {
+  border-bottom: 1px dotted var(--line);
+  padding: 2px 0;
+}
+.card-name {
+  background: none;
+  border: none;
+  color: var(--ink);
+  cursor: pointer;
+  padding: 4px 2px;
+  font: inherit;
+  text-align: left;
+}
+.card-name:hover {
+  color: var(--accent);
+}
+.card-desc {
+  margin: 2px 0 6px 14px;
+  font-size: 11.5px;
+  color: #9aa3b2;
+  line-height: 1.45;
+}
+/* Declare Battle Formations enhancement grant picker (Clandestine Operation…) */
+.grant-picker {
+  border: 1px solid #6d5a1f;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #1d1a10;
+}
+.grant-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  cursor: pointer;
+}
+.grant-row input {
+  width: 16px;
+  height: 16px;
+}
+/* Inline transport-split editor (Immolator: half rides, half walks) */
+.split-editor {
+  flex-basis: 100%;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #171b22;
+  padding: 8px 10px;
+  margin-top: 6px;
+}
+.split-gear {
+  margin: 6px 0;
+}
+.split-gear-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+.split-gear-row .unit-name {
+  flex: 1;
+  min-width: 0;
+}
+.split-gear-row button {
+  background: #2b313d;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  border-radius: 4px;
+  cursor: pointer;
+  min-width: 28px;
+  padding: 2px 6px;
+}
+.split-gear-row button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.split-gear-row .unit-meta {
+  white-space: nowrap;
 }
 
 /* ── Movement phase ──────────────────────────────────────────────────── */

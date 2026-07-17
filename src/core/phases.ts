@@ -12,6 +12,7 @@ import { parseKeywords } from './keywords';
 import { isHidden, pointLosBlocked, DEFAULT_DETECTION_RANGE } from './visibility';
 import { canActAfterAdvance, hasFightsFirstAbility, hasLoneOperative, ignoresLoneOperative, unitScoutDistance } from './abilities';
 import { canFly, isAircraft } from './transport';
+import { allowsRound1DeepStrike, orderRangeFor, ordersReachTitanicSquadron } from './enhancements';
 import { checkCoherency, type CoherencyResult } from './coherency';
 
 const FALLBACK_SHAPE = { kind: 'circle' as const, radius: 0.63 };
@@ -300,23 +301,35 @@ const VOICE_OF_COMMAND_RANGE = 6; // inches
  * not Battle-shocked. An ATTACHED Officer may order its own (merged) unit — the merged unit
  * carries the Bodyguard's REGIMENT keyword; a standalone Officer fails the REGIMENT check, so
  * "self" never lets a lone Officer order himself. (The order set lives in core/orders.ts.)
+ * Enhancements: Laud Hailer stretches the range to 12"; Battalion Commander's Orders also reach
+ * ASTRA MILITARUM TITANIC and SQUADRON units.
  */
 export function orderableUnits(officer: UnitInstance, state: GameState, ctx: EngineContext): UnitInstance[] {
+  const range = orderRangeFor(officer, VOICE_OF_COMMAND_RANGE);
+  const titanicSquadron = ordersReachTitanicSquadron(officer);
   return state.units.filter((u) => {
     if (u.owner !== officer.owner || !isOnBoard(u)) return false;
     if (u.status.battleShocked) return false;
     const ds = dsOf(u, ctx);
-    if (!ds?.keywords.some((k) => k.toLowerCase() === 'regiment')) return false;
-    return u.id === officer.id || gapBetween(officer, u, ctx) <= VOICE_OF_COMMAND_RANGE;
+    const kws = (ds?.keywords ?? []).map((k) => k.toLowerCase());
+    const qualifies =
+      kws.includes('regiment') ||
+      (titanicSquadron && kws.includes('astra militarum') && (kws.includes('titanic') || kws.includes('squadron')));
+    if (!qualifies) return false;
+    return u.id === officer.id || gapBetween(officer, u, ctx) <= range;
   });
 }
 
 // ── Reserves ─────────────────────────────────────────────────────────────────
-/** Units held in Reserves that are allowed to arrive this Movement phase (battle round 2+).
- *  Embarked units are aboard a transport, not in Strategic Reserves — they disembark instead. */
+/** Units held in Reserves that are allowed to arrive this Movement phase (battle round 2+ —
+ *  a Priority-drop Beacon bearer may Deep Strike from round 1). Embarked units are aboard a
+ *  transport, not in Strategic Reserves — they disembark instead. */
 export function reservesArrivable(state: GameState): UnitInstance[] {
-  if (state.round < 2) return [];
-  return state.units.filter((u) => u.inReserves && !u.embarkedIn && u.owner === state.activePlayer);
+  return state.units.filter(
+    (u) =>
+      u.inReserves && !u.embarkedIn && u.owner === state.activePlayer &&
+      (state.round >= 2 || allowsRound1DeepStrike(u)),
+  );
 }
 
 // ── Scout moves (pre-battle) ─────────────────────────────────────────────────

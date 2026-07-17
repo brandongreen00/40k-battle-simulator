@@ -268,6 +268,12 @@ export interface UnitInstance {
   /** Full wargear item→count map from the roster (e.g. {"Meltagun": 1, "Navis shotgun": 7}).
    *  Drives how many models fire a given weapon. Absent for units spawned without loadout data. */
   wargearCounts?: Record<string, number>;
+  /** The roster entry's Enhancement (Wahapedia id) — drives in-game effects (core/enhancements.ts). */
+  enhancementId?: string;
+  /** Deploy ability granted at Declare Battle Formations (Clandestine Operation / Combat
+   *  Landers). Stamped at unit creation — setup state is cleared when the battle begins, so
+   *  reserve arrivals read this instead of setup.grants. */
+  deployGrant?: 'infiltrators' | 'deep_strike';
   /** Defender's casualty-allocation preference (persists; set by the owner):
    *  'shields_first' (default) — defensive-wargear bearers (4++ shields…) soak wounds first;
    *  'bodies_first' — regular models die first, preserving the wargear bearers for later. */
@@ -292,6 +298,8 @@ export interface UnitInstance {
     wounds: number;
     /** The Leader's own wargear counts, preserved through the merge (restored on detach). */
     wargearCounts?: Record<string, number>;
+    /** The Leader's Enhancement, preserved through the merge (its effects cover the led unit). */
+    enhancementId?: string;
   }[];
 }
 
@@ -454,6 +462,24 @@ export interface DeclaredFormation {
   infiltrate?: boolean;
 }
 
+/** One half of a unit split at Declare Battle Formations (e.g. by a Sisters of Battle Immolator):
+ *  its model count and the share of the parent entry's wargear items those models carry. */
+export interface SplitGroup {
+  count: number;
+  wargear?: Record<string, number>;
+}
+
+/** A unit split declared at Declare Battle Formations by a transport's split rule. The roster
+ *  entry `entryKey` becomes two half-units keyed `${entryKey}#a` (which must start the battle
+ *  embarked within `transportUnitId`) and `${entryKey}#b` (deployed like any other unit). */
+export interface DeclaredSplit {
+  side: Side;
+  entryKey: string; // roster entry key of the split unit ("side:index")
+  dsId: string;
+  transportUnitId: string; // the transport whose rule performed the split (carries group A)
+  groups: [SplitGroup, SplitGroup]; // [riders, on-foot]
+}
+
 /** Warrant of Trade (Rogue Trader): after both armies have deployed, redeploy up to D3 IMPERIUM
  *  BATTLELINE units. `remaining` counts down as units are pulled back for redeployment. */
 export interface WarrantState {
@@ -474,8 +500,17 @@ export interface SetupState {
   toDeploy?: Side;
   /** Leader attachments declared before deployment (Declare Battle Formations). */
   formations?: DeclaredFormation[];
+  /** Unit splits declared before deployment (a transport's split rule, e.g. the Immolator). */
+  splits?: DeclaredSplit[];
   /** Warrant of Trade redeploy state per side, once that side has used (or declined) it. */
   warrant?: Partial<Record<Side, WarrantState>>;
+  /** Army-wide Declare Battle Formations enhancement picks (Clandestine Operation's Infiltrators,
+   *  Combat Landers' Deep Strike): which roster entries were granted the ability. A record with
+   *  empty entryKeys marks the decision as resolved-without-picks. */
+  grants?: { side: Side; enhancementId: string; label: string; grant: 'infiltrators' | 'deep_strike'; entryKeys: string[] }[];
+  /** Post-deployment enhancement redeploys (Liber Heresius etc.), Warrant-of-Trade mould:
+   *  present once used/declined; `remaining` counts down as units are pulled back. */
+  redeploy?: Partial<Record<Side, { enhancementId: string; label: string; remaining: number }>>;
   /** Roll-off that set the first turn (for the dice display). */
   firstTurnRoll?: RollOff;
   firstTurn?: Side;

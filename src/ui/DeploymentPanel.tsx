@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { Datasheet, GameState, Roster, RosterUnit, Side } from '../core/types';
 import type { Intent } from '../core/state';
 import { canAttach, isCharacter } from '../core/leaders';
+import { PREBATTLE_GRANTS, REDEPLOY_RULES, grantSelects, redeployRuleSelects } from '../core/enhancements';
 import { unitHasWarrant, unitScoutDistance } from '../core/abilities';
 import { pendingScoutUnits, scoutTurn, unitCoherency } from '../core/phases';
 import { SECONDARY_CARDS, secondaryCard } from '../core/secondaries';
@@ -79,6 +80,31 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
     return out;
   }, [state.units, datasheetsById]);
 
+  // ── Declare Battle Formations enhancement grants (Clandestine Operation, Combat Landers) ──
+  // A side's roster carries the enhancement; the grant must be declared (or skipped) before the
+  // chosen units are placed. One record per (side, enhancement) marks it resolved.
+  const pendingGrants = useMemo(() => {
+    const out: { side: Side; enhancementId: string }[] = [];
+    for (const side of ['player', 'ai'] as const) {
+      const seen = new Set<string>();
+      for (const e of entries[side]) {
+        const id = e.unit.enhancementId;
+        if (!id || !PREBATTLE_GRANTS[id] || seen.has(id)) continue;
+        seen.add(id);
+        if (!(state.setup?.grants ?? []).some((g) => g.side === side && g.enhancementId === id)) {
+          out.push({ side, enhancementId: id });
+        }
+      }
+    }
+    return out;
+  }, [entries, state.setup?.grants]);
+
+  // ── Enhancement redeploys (Liber Heresius etc.) — Warrant-of-Trade mould ──
+  const redeployBySide = (['player', 'ai'] as const).map((side) => {
+    const entry = entries[side].find((e) => e.unit.enhancementId && REDEPLOY_RULES[e.unit.enhancementId]);
+    return entry ? { side, enhancementId: entry.unit.enhancementId!, rule: REDEPLOY_RULES[entry.unit.enhancementId!]! } : null;
+  }).filter((x): x is NonNullable<typeof x> => x !== null);
+
   // ── Warrant of Trade (after both armies have deployed) ──
   const deploymentComplete = setup.attacker != null && remaining.player + remaining.ai === 0;
   const warrantSides = (['player', 'ai'] as const).filter((s) =>
@@ -87,6 +113,11 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
   const warrantOpen = warrantSides.some((s) => {
     const w = setup.warrant?.[s];
     return (!w && deploymentComplete) || (w?.remaining ?? 0) > 0;
+  });
+  const grantOpen = pendingGrants.length > 0;
+  const redeployOpen = redeployBySide.some(({ side }) => {
+    const r = setup.redeploy?.[side];
+    return (!r && deploymentComplete) || (r?.remaining ?? 0) > 0;
   });
   const battlelineOf = (side: Side) =>
     state.units.filter((u) => {
@@ -179,9 +210,33 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
                 {' '}· remaining — player {remaining.player}, ai {remaining.ai}
               </p>
               <p className="hint">Pick a unit on the left, drop it inside your zone (Infiltrators may deploy in no-man's-land). Use “Reserves” for Deep Strike.</p>
+              <p className="hint">
+                🚌 <strong>Riding in vehicles:</strong> deploy the transport first, then use the “⇥ Embark…”
+                picker next to an infantry unit to start the battle embarked. An Immolator can also
+                “⇆ Split” a Sisters of Battle Squad — half rides (you choose which wargear, e.g. the
+                meltas), half deploys on foot.
+              </p>
             </>
           )}
 
+          {/* Declare Battle Formations enhancement grants: Clandestine Operation (Infiltrators ×3),
+              Combat Landers (Deep Strike ×3). Resolve BEFORE placing the units you want to pick. */}
+          {pendingGrants.map(({ side, enhancementId }) => (
+            <GrantPicker
+              key={`${side}:${enhancementId}`}
+              side={side}
+              enhancementId={enhancementId}
+              entries={entries[side]}
+              isPlaced={isPlaced}
+              dispatch={dispatch}
+            />
+          ))}
+          {(state.setup?.grants ?? []).filter((g) => g.entryKeys.length > 0).map((g) => (
+            <p className="muted" key={`${g.side}:${g.enhancementId}`}>
+              ✨ <span style={{ color: OWNER_COLOR[g.side].fill }}>{g.side}</span> · {g.label}:{' '}
+              {g.entryKeys.length} unit(s) gain {g.grant === 'infiltrators' ? 'Infiltrators' : 'Deep Strike'}
+            </p>
+          ))}
           {/* Secondary Missions choice (secret, pre-battle): Tactical (draw) or two Fixed cards. */}
           {state.secondaries && (
             <div className="dep-leaders">
@@ -223,6 +278,14 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
                 );
               })}
               <p className="hint">Unchosen sides default to Tactical when the battle begins.</p>
+              <details className="fixed-cards-info">
+                <summary>ℹ Fixed-capable card texts</summary>
+                {SECONDARY_CARDS.filter((c) => c.fixed).map((c) => (
+                  <p className="card-desc" key={c.id}>
+                    <strong>{c.name}</strong> — {c.desc}
+                  </p>
+                ))}
+              </details>
             </div>
           )}
 
@@ -301,6 +364,49 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
             </ul>
           )}
 
+          {/* Enhancement redeploys (Liber Heresius, Guerrilla Honours…): after both armies have
+              deployed, pull qualifying units back into the deployment flow. */}
+          {deploymentComplete &&
+            redeployBySide.map(({ side, enhancementId, rule }) => {
+              const r = setup.redeploy?.[side];
+              if (!r) {
+                return (
+                  <div className="dep-leaders" key={`red:${side}`}>
+                    <h4>{rule.label} · <span style={{ color: OWNER_COLOR[side].fill }}>{side}</span></h4>
+                    <p className="hint">Redeploy up to {rule.count} qualifying unit(s) (board or Reserves).</p>
+                    <div className="btnrow">
+                      <button onClick={() => dispatch({ type: 'UseEnhancementRedeploy', side, enhancementId })}>↩ Redeploy units</button>
+                      <button onClick={() => dispatch({ type: 'DeclineEnhancementRedeploy', side, enhancementId })}>Skip</button>
+                    </div>
+                  </div>
+                );
+              }
+              if (r.remaining <= 0) return null;
+              const eligible = state.units.filter(
+                (u) => u.owner === side && !u.embarkedIn && u.models.some((m) => m.alive) &&
+                  redeployRuleSelects(rule, datasheetsById.get(u.datasheetId)),
+              );
+              return (
+                <div className="dep-leaders" key={`red:${side}`}>
+                  <h4>{rule.label} · <span style={{ color: OWNER_COLOR[side].fill }}>{side}</span> — {r.remaining} redeploy(s) left</h4>
+                  {eligible.length === 0 ? (
+                    <p className="muted">No qualifying units left to pull back.</p>
+                  ) : (
+                    eligible.map((u) => (
+                      <div className="btnrow" key={u.id}>
+                        <button onClick={() => dispatch({ type: 'EnhancementRedeploy', unitId: u.id })}>
+                          ↩ Redeploy {dsName(u.datasheetId)}{u.inReserves ? ' (reserves)' : ''}
+                        </button>
+                      </div>
+                    ))
+                  )}
+                  <div className="btnrow">
+                    <button onClick={() => dispatch({ type: 'DeclineEnhancementRedeploy', side, enhancementId })}>Done</button>
+                  </div>
+                </div>
+              );
+            })}
+
           {/* Warrant of Trade: after both armies have deployed, redeploy up to D3 IMPERIUM
               BATTLELINE units (they re-enter the deployment flow — board or Reserves). */}
           {deploymentComplete &&
@@ -342,13 +448,17 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
 
           <div className="btnrow">
             <button
-              disabled={state.units.length === 0 || remaining.player + remaining.ai > 0 || warrantOpen}
+              disabled={state.units.length === 0 || remaining.player + remaining.ai > 0 || warrantOpen || grantOpen || redeployOpen}
               title={
                 remaining.player + remaining.ai > 0
                   ? `Still to deploy — player ${remaining.player}, ai ${remaining.ai} (use Reserves ⤓ for units arriving later)`
-                  : warrantOpen
-                    ? 'Resolve the Warrant of Trade redeploy first (use it or skip it)'
-                    : ''
+                  : grantOpen
+                    ? 'Resolve the Declare Battle Formations enhancement pick first (confirm or skip it)'
+                    : warrantOpen
+                      ? 'Resolve the Warrant of Trade redeploy first (use it or skip it)'
+                      : redeployOpen
+                        ? 'Resolve the enhancement redeploy first (use it or skip it)'
+                        : ''
               }
               onClick={() => dispatch({ type: 'RollFirstTurn' })}
             >
@@ -437,6 +547,76 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
         </div>
       )}
     </section>
+  );
+}
+
+/**
+ * Declare Battle Formations enhancement pick (Clandestine Operation: up to 3 AGENTS OF THE
+ * IMPERIUM INFANTRY units gain Infiltrators; Combat Landers: up to 3 VOIDFARERS gain Deep
+ * Strike). Checkbox the units, confirm — or skip. Only unplaced units can be picked, so resolve
+ * this before deploying them.
+ */
+function GrantPicker({
+  side, enhancementId, entries, isPlaced, dispatch,
+}: {
+  side: Side;
+  enhancementId: string;
+  entries: PanelEntry[];
+  isPlaced: (key: string) => boolean;
+  dispatch: (i: Intent) => void;
+}) {
+  const rule = PREBATTLE_GRANTS[enhancementId]!;
+  const [picked, setPicked] = useState<string[]>([]);
+  const eligible = entries.filter((e) => grantSelects(rule, e.ds) && !isPlaced(e.key));
+  // A picked unit can be deployed out from under the picker — drop stale keys or Confirm would
+  // dispatch an intent the reducer rejects wholesale (with log-only feedback).
+  const validPicked = picked.filter((k) => eligible.some((e) => e.key === k));
+  const toggle = (key: string) =>
+    setPicked((p) => (p.includes(key) ? p.filter((k) => k !== key) : validPicked.length < rule.count ? [...validPicked, key] : p));
+  const abilityName = rule.grant === 'infiltrators' ? 'Infiltrators' : 'Deep Strike';
+  return (
+    <div className="dep-leaders grant-picker">
+      <h4>
+        ✨ {rule.label} · <span style={{ color: OWNER_COLOR[side].fill }}>{side}</span>
+      </h4>
+      <p className="hint">
+        Select up to {Math.min(rule.count, Math.max(eligible.length, 1))} unit(s) to gain {abilityName}
+        {rule.grant === 'infiltrators' ? ' (deploy anywhere more than 9" from the enemy — e.g. Subductors blocking a flank)' : ''}.
+      </p>
+      {eligible.length === 0 ? (
+        <p className="muted">No eligible undeployed units (the grant only applies before a unit is placed).</p>
+      ) : (
+        eligible.map((e) => (
+          <label className="grant-row" key={e.key}>
+            <input type="checkbox" checked={validPicked.includes(e.key)} onChange={() => toggle(e.key)} />
+            <span className="unit-name">{e.ds.name}</span>
+            <span className="unit-meta">×{e.unit.modelCount}</span>
+          </label>
+        ))
+      )}
+      <div className="btnrow">
+        <button
+          className="primary"
+          disabled={validPicked.length === 0}
+          onClick={() =>
+            dispatch({
+              type: 'DeclareEnhancementGrant', side, enhancementId,
+              entries: validPicked
+                .map((key) => {
+                  const e = entries.find((x) => x.key === key);
+                  return e ? { entryKey: key, datasheetId: e.ds.id } : null;
+                })
+                .filter((x): x is { entryKey: string; datasheetId: string } => x !== null),
+            })
+          }
+        >
+          ✓ Grant {abilityName} to {validPicked.length} unit(s)
+        </button>
+        <button onClick={() => dispatch({ type: 'DeclareEnhancementGrant', side, enhancementId, entries: [] })}>
+          Skip
+        </button>
+      </div>
+    </div>
   );
 }
 

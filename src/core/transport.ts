@@ -8,6 +8,7 @@
 
 import type { Datasheet, GameState, UnitInstance } from './types';
 import type { EngineContext } from './engine';
+import { canDisembarkAfterAdvance } from './enhancements';
 
 // ── capacity parsing ──────────────────────────────────────────────────────────
 export interface TransportCapacity {
@@ -47,7 +48,13 @@ export function parseTransportCapacity(text?: string): TransportCapacity | null 
   }
   const excluded: string[] = [];
   const ex = /cannot transport (.+?) models/i.exec(text);
-  if (ex) excluded.push(ex[1]!.trim().toLowerCase());
+  if (ex) {
+    // "cannot transport TERMINATOR or OFFICIO ASSASSINORUM models" — each alternative excludes.
+    for (const alt of ex[1]!.split(/\s+or\s+/i)) {
+      const t = alt.trim().toLowerCase();
+      if (t) excluded.push(t);
+    }
+  }
   return { capacity, allowed, excluded, bulky };
 }
 
@@ -90,7 +97,7 @@ const keywordSet = (ds: Datasheet): Set<string> =>
 /** May models of this datasheet embark at all under the capacity's keyword rules? */
 export function datasheetMayRide(ds: Datasheet, cap: TransportCapacity): boolean {
   const kws = keywordSet(ds);
-  if (cap.excluded.some((e) => kws.has(e))) return false;
+  if (cap.excluded.some((e) => phraseMatches(e.split(/\s+/), kws))) return false;
   return cap.allowed.some((alt) => phraseMatches(alt, kws));
 }
 
@@ -152,6 +159,23 @@ export function canEmbark(
   return { ok: true };
 }
 
+/** A placeholder unit for "could this roster entry start embarked?" capacity checks — shared by
+ *  the deployment UI and the AI so their embark offers can never disagree. */
+export function deploymentProbeUnit(
+  key: string,
+  owner: UnitInstance['owner'],
+  datasheetId: string,
+  modelCount: number,
+): UnitInstance {
+  return {
+    id: key, owner, datasheetId,
+    models: Array.from({ length: modelCount }, (_, i) => ({
+      id: `${key}:m${i}`, unitId: key, pos: { x: 0, y: 0 }, wounds: 1, alive: true,
+    })),
+    startingModels: modelCount, status: {},
+  };
+}
+
 /** Friendly transports `unit` could legally embark within (capacity + keywords only). */
 export function embarkOptions(state: GameState, unit: UnitInstance, ctx: EngineContext): UnitInstance[] {
   return state.units.filter(
@@ -161,6 +185,42 @@ export function embarkOptions(state: GameState, unit: UnitInstance, ctx: EngineC
       t.owner === unit.owner &&
       canEmbark(state, unit, t, ctx).ok,
   );
+}
+
+// ── deployment split (Sisters of Battle Immolator) ────────────────────────────
+/**
+ * Some transports carry a Declare Battle Formations split rule in their transport text, e.g. the
+ * Sisters of Battle Immolator: "you can select one SISTERS OF BATTLE SQUAD from your army. If you
+ * do, that unit is split into two units, each containing as equal a number of models as possible
+ * ... One of these units must start the battle embarked within this TRANSPORT; the other can start
+ * the battle embarked within another TRANSPORT, or it can be deployed as a separate unit."
+ */
+export interface TransportSplitRule {
+  /** Lowercased tokens of the selectable unit phrase (e.g. ["sisters","of","battle","squad"]). */
+  selectTokens: string[];
+}
+
+/** Parse a transport datasheet's split clause (null when it has none). */
+export function transportSplitRule(ds: Datasheet | undefined): TransportSplitRule | null {
+  const text = ds?.transport;
+  if (!text || !/split into two units/i.test(text)) return null;
+  const m = /select one (.+?) from your army/i.exec(text);
+  if (!m) return null;
+  const tokens = m[1]!.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  return tokens.length ? { selectTokens: tokens } : null;
+}
+
+/** May this transport's split rule select a unit of `unitDs`? (Matched on keywords + name.) */
+export function splitRuleSelects(rule: TransportSplitRule, unitDs: Datasheet): boolean {
+  return phraseMatches(rule.selectTokens, keywordSet(unitDs));
+}
+
+/** The legal "as equal as possible" riding-group sizes for a unit of `total` models. */
+export function splitRideCounts(total: number): number[] {
+  if (total < 2) return [];
+  const lo = Math.floor(total / 2);
+  const hi = Math.ceil(total / 2);
+  return lo === hi ? [lo] : [hi, lo];
 }
 
 // ── disembark modes (18.04) ───────────────────────────────────────────────────
@@ -178,7 +238,10 @@ export function disembarkMode(
 ): DisembarkMode | 'tactical_or_combat' | null {
   if (unit.status.justEmbarked) return null;
   const t = transport.status;
-  if (t.advanced || t.fellBack) return null;
+  // Vanguard Honours: the bearer's unit may disembark after the transport Advanced (counts as a
+  // Normal move, cannot charge — resolved as a Rapid disembark).
+  if (t.advanced) return canDisembarkAfterAdvance(unit) ? 'rapid' : null;
+  if (t.fellBack) return null;
   // `moved` covers both a normal move and an ingress arrival (ArriveFromReserves sets it).
   if (t.moved) return 'rapid';
   return 'tactical_or_combat';

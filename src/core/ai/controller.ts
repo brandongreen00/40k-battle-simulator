@@ -11,9 +11,12 @@ import type { GameState, Side } from '../types';
 import { otherSide } from '../setup';
 import { scoutTurn } from '../phases';
 import { unitHasWarrant } from '../abilities';
+import { PREBATTLE_GRANTS, REDEPLOY_RULES, grantSelects } from '../enhancements';
+import { isCharacter } from '../leaders';
 import type { AiAction, AiDeps, Decision } from './types';
 import { resolveProfile, type AiProfile } from './profile';
-import { aiDeployAction, deployTurn, pendingLeaderAttaches } from './deploy';
+import { aiDeployAction, deployTurn, pendingLeaderAttaches, rosterEntries } from './deploy';
+import { isEntryPlaced } from '../deployment';
 import { aiCommandAction } from './command';
 import { aiMovementAction, aiScoutAction } from './move';
 import { aiShootingAction } from './shoot';
@@ -37,16 +40,54 @@ export function warrantPending(state: GameState, deps: AiDeps): Side | null {
   return null;
 }
 
+/** The side (Defender first) with an unresolved Declare Battle Formations enhancement grant
+ *  (Clandestine Operation / Combat Landers) — resolved BEFORE units are placed. */
+export function enhancementGrantPending(state: GameState, deps: AiDeps): { side: Side; enhancementId: string } | null {
+  if (state.stage !== 'setup' || state.setup?.step !== 'deploy') return null;
+  const order: Side[] = state.setup?.defender ? [state.setup.defender, otherSide(state.setup.defender)] : ['player', 'ai'];
+  for (const s of order) {
+    for (const u of deps.rosters[s]?.units ?? []) {
+      const enh = u.enhancementId;
+      if (!enh || !PREBATTLE_GRANTS[enh]) continue;
+      if (!(state.setup?.grants ?? []).some((g) => g.side === s && g.enhancementId === enh)) {
+        return { side: s, enhancementId: enh };
+      }
+    }
+  }
+  return null;
+}
+
+/** The side (Defender first) with an enhancement redeploy (Liber Heresius etc.) outstanding —
+ *  offered once both armies have deployed, like the Warrant of Trade. */
+export function enhancementRedeployPending(state: GameState, deps: AiDeps): { side: Side; enhancementId: string } | null {
+  if (state.stage !== 'setup' || state.setup?.step !== 'deploy') return null;
+  const order: Side[] = state.setup?.defender ? [state.setup.defender, otherSide(state.setup.defender)] : ['player', 'ai'];
+  for (const s of order) {
+    const r = state.setup?.redeploy?.[s];
+    if (r && r.remaining > 0) return { side: s, enhancementId: r.enhancementId };
+    if (!r) {
+      for (const u of deps.rosters[s]?.units ?? []) {
+        if (u.enhancementId && REDEPLOY_RULES[u.enhancementId]) return { side: s, enhancementId: u.enhancementId };
+      }
+    }
+  }
+  return null;
+}
+
 /** Whose decision the game is waiting on right now. */
 export function whoActs(state: GameState, deps: AiDeps): Decision {
   if (state.stage === 'setup') {
     const step = state.setup?.step ?? 'roll_roles';
     if (step === 'roll_roles') return { actor: 'shared', reason: 'roll off for Attacker/Defender' };
     if (step === 'deploy') {
+      // Declare Battle Formations enhancement grants (Clandestine Operation…) resolve BEFORE
+      // placement — the picked units deploy with the granted ability.
+      const grant = enhancementGrantPending(state, deps);
+      if (grant) return { actor: grant.side, reason: `${grant.side} resolves a pre-battle enhancement (Declare Battle Formations)` };
       const side = deployTurn(state, deps);
       if (side) return { actor: side, reason: `${side} places a unit` };
       // Everything placed — give either side a chance to finish Leader attaches, then resolve
-      // Warrant of Trade redeploys, then roll on.
+      // Warrant of Trade / enhancement redeploys, then roll on.
       for (const s of ['player', 'ai'] as const) {
         if (pendingLeaderAttaches(state, s, deps.ctx).length > 0) {
           return { actor: s, reason: `${s} attaches Leaders` };
@@ -54,6 +95,8 @@ export function whoActs(state: GameState, deps: AiDeps): Decision {
       }
       const warrant = warrantPending(state, deps);
       if (warrant) return { actor: warrant, reason: `${warrant} resolves Warrant of Trade` };
+      const red = enhancementRedeployPending(state, deps);
+      if (red) return { actor: red.side, reason: `${red.side} resolves an enhancement redeploy` };
       return { actor: 'shared', reason: 'roll off for the first turn' };
     }
     if (step === 'scouts') {
@@ -104,6 +147,26 @@ export function aiAction(state: GameState, side: Side, profileIn: string | AiPro
       return aiScoutAction(state, side, profile, deps);
     }
     if (step !== 'deploy') return null; // roll-offs are shared actions
+    // Declare Battle Formations enhancement grants: use Infiltrators grants (Clandestine
+    // Operation) on the best qualifying units; decline Deep Strike grants (the reserves policy
+    // already covers Deep Strike wants).
+    const grant = enhancementGrantPending(state, deps);
+    if (grant && grant.side === side) {
+      const rule = PREBATTLE_GRANTS[grant.enhancementId]!;
+      const entries =
+        rule.grant === 'infiltrators'
+          ? rosterEntries(deps.rosters[side], side, deps.ctx)
+              .filter((e) => !isEntryPlaced(state, e.key) && !isCharacter(e.ds) && grantSelects(rule, e.ds))
+              .slice(0, rule.count)
+              .map((e) => ({ entryKey: e.key, datasheetId: e.ds.id }))
+          : [];
+      return {
+        intents: [{ intent: { type: 'DeclareEnhancementGrant', side, enhancementId: grant.enhancementId, entries } }],
+        note: entries.length
+          ? `${side} grants ${rule.label} (${rule.grant}) to ${entries.length} unit(s)`
+          : `${side} declines the ${rule.label} grant`,
+      };
+    }
     const turn = deployTurn(state, deps);
     if (turn === side) return aiDeployAction(state, side, profile, deps);
     if (turn === null) {
@@ -113,6 +176,14 @@ export function aiAction(state: GameState, side: Side, profileIn: string | AiPro
       // redeploy policy is a future profile knob).
       if (warrantPending(state, deps) === side) {
         return { intents: [{ intent: { type: 'DeclineWarrant', side } }], note: `${side} declines the Warrant of Trade redeploy` };
+      }
+      // Enhancement redeploys (Liber Heresius…): same heuristic — keep the deployment.
+      const red = enhancementRedeployPending(state, deps);
+      if (red && red.side === side) {
+        return {
+          intents: [{ intent: { type: 'DeclineEnhancementRedeploy', side, enhancementId: red.enhancementId } }],
+          note: `${side} declines the enhancement redeploy`,
+        };
       }
     }
     return null;

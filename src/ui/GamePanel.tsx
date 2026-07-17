@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Datasheet, GameState, UnitInstance } from '../core/types';
 import type { Intent } from '../core/state';
 import { availableUnitWeapons, planUnitFight, planUnitShooting, type EngineContext } from '../core/engine';
@@ -11,7 +11,7 @@ import {
   gapBetween, type Eligibility,
 } from '../core/phases';
 import { disembarkMode, embarkOptions } from '../core/transport';
-import { AM_ORDERS, unitIsOfficer } from '../core/orders';
+import { ordersAvailableTo, unitIsOfficer } from '../core/orders';
 import { secondaryCard } from '../core/secondaries';
 import { dispositionName, MISSION_NAMES, PRIMARY_CAP, actionsForSide, objectivePoints } from '../core/missions11';
 import { canStartAction, SECONDARY_ACTIONS } from '../core/missionflow';
@@ -271,11 +271,12 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
                   (sec.fixed ?? []).map((c) => {
                     const card = secondaryCard(c.id);
                     return (
-                      <div key={c.id} className="order-row">
-                        <span title={card?.desc}>
-                          {card?.name ?? c.id} <span className="muted">· fixed · {sec.fixedVp?.[c.id] ?? 0}/20 VP</span>
-                        </span>
-                      </div>
+                      <SecondaryCardRow
+                        key={c.id}
+                        name={card?.name ?? c.id}
+                        desc={card?.desc}
+                        meta={`fixed · ${sec.fixedVp?.[c.id] ?? 0}/20 VP`}
+                      />
                     );
                   })
                 ) : sec.hand.length === 0 ? (
@@ -284,12 +285,17 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
                   sec.hand.map((c) => {
                     const card = secondaryCard(c.id);
                     return (
-                      <div key={c.id} className="order-row">
-                        <span title={card?.desc}>{card?.name ?? c.id} <span className="muted">· drawn R{c.drawn}</span></span>
-                        {s === state.activePlayer && (
-                          <button onClick={() => dispatch({ type: 'DiscardSecondary', side: s, cardId: c.id })}>discard</button>
-                        )}
-                      </div>
+                      <SecondaryCardRow
+                        key={c.id}
+                        name={card?.name ?? c.id}
+                        desc={card?.desc}
+                        meta={`drawn R${c.drawn}`}
+                        action={
+                          s === state.activePlayer ? (
+                            <button onClick={() => dispatch({ type: 'DiscardSecondary', side: s, cardId: c.id })}>discard</button>
+                          ) : undefined
+                        }
+                      />
                     );
                   })
                 )}
@@ -309,7 +315,7 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
               <div key={off.id} className="order-officer">
                 <strong>{nameOf(off.id)}</strong>
                 {targets.length === 0 ? (
-                  <span className="muted"> — no REGIMENT units within 6"</span>
+                  <span className="muted"> — no orderable units in range</span>
                 ) : (
                   targets.map((t) => (
                     <div key={t.id} className="order-row">
@@ -319,7 +325,7 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
                         onChange={(e) => { if (e.target.value) issueOrder(t.id, e.target.value); }}
                       >
                         <option value="">— issue order —</option>
-                        {AM_ORDERS.map((o) => <option key={o.id} value={o.effectId} title={o.desc}>{o.name} — {o.desc}</option>)}
+                        {ordersAvailableTo(off).map((o) => <option key={o.id} value={o.effectId} title={o.desc}>{o.name} — {o.desc}</option>)}
                       </select>
                     </div>
                   ))
@@ -1083,5 +1089,30 @@ function StratagemPlays({
       <h3>Stratagem plays</h3>
       {plays}
     </>
+  );
+}
+
+/**
+ * One Secondary Mission card row: tap the name to expand the full card text (the old
+ * hover-tooltip was invisible on touch screens).
+ */
+function SecondaryCardRow({ name, desc, meta, action }: {
+  name: string;
+  desc?: string;
+  meta: string;
+  action?: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="card-row">
+      <div className="order-row">
+        <button className="card-name" onClick={() => setOpen((o) => !o)} title={open ? 'hide the card text' : 'show the card text'}>
+          {open ? '▾' : '▸'} {name}
+        </button>
+        <span className="muted">· {meta}</span>
+        {action}
+      </div>
+      {open && <p className="card-desc">{desc ?? 'No card text available.'}</p>}
+    </div>
   );
 }

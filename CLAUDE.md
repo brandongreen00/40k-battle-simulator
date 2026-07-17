@@ -330,6 +330,68 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-07-17] — Transport deployment done PROPERLY (owner: "I see no way to do this"), the
+  Immolator split rule, and ENHANCEMENTS NOW WORK IN-GAME (owner: "check that all of my
+  enhancements are working… you've said this is implemented and it isn't").** All gates green:
+  `pnpm typecheck`, `pnpm test` (**456 tests**, +23 across `transportSplit`/`enhancements`),
+  `pnpm build`; AI-vs-AI sims (Rogue Trader's Army w/ Clandestine vs Inquisitors w/ Liber
+  Heresius + Ignis Judicium) end naturally with ZERO rejected intents and the new mechanics
+  firing in the logs; a Playwright walkthrough of the REAL app drives the whole flow as a user.
+  - **Deployment-phase embark was real but undiscoverable** — a bare `⇥` glyph with a hover-only
+    tooltip that appeared only when a fitting transport was ALREADY deployed and silently picked
+    the FIRST one. It is now a labelled **“⇥ Embark…” select** listing every deployed friendly
+    transport with its free seats, plus a deployment-panel hint ("deploy the transport first"),
+    embarked-in-what labels in the deploy + On-board lists, and an **↩ undo** (new `UndeployUnit`
+    intent, setup-only). `parseTransportCapacity` bug fixed: "cannot transport TERMINATOR **or**
+    OFFICIO ASSASSINORUM" excluded nobody (unsplit alternatives).
+  - **The Immolator's Declare Battle Formations split** (its transport text: select one SISTERS
+    OF BATTLE SQUAD → split into two units, one must start embarked): `DeclareSplit`/`ClearSplit`
+    intents + `transportSplitRule` parsing. The **⇆ Split** editor lets the owner pick exactly
+    which wargear rides (per-item steppers — both meltas into the Immolator to threaten tanks);
+    the halves become `key#a` (riders, embarked at declare time) and `key#b` (deploys anywhere,
+    Reserves, or ⇥ another transport — per the rule). `isEntryPlaced` counts a split entry
+    placed only when BOTH halves are down, keeping `deployTurn`/whoActs/Finish in sync (the
+    deadlock class from 06-12 — regression-tested).
+  - **Enhancements had ZERO in-game effect** (list-builder validation only — the owner was right).
+    Units now carry `enhancementId` (incl. through the Leader merge/detach); new
+    **`core/enhancements.ts`** binds all 64 (full status table in **docs/enhancements.md**:
+    ~30 bound, ~7 partial, rest text-only with reasons). Highlights: **Clandestine Operation**
+    (the owner's KEY pick — army-wide picker at Declare Battle Formations, up to 3 AoI INFANTRY
+    gain Infiltrators; whoActs gates deployment until resolved; the AI declares it on its best
+    qualifying units), **Ignis Judicium** (bearer-scoped weapon grants: only weapons fired from
+    the bearer's datasheet gain [DEVASTATING WOUNDS]+[MELTA 1]+[PRECISION] — new per-weapon
+    grant seam in resolveAttack), **Liber Heresius** (Warrant-style redeploy-3 UI + intents),
+    Fire-Overwatch immunity (Shroud Projector/Flash Grenades, reducer + AI filter), new
+    `apImprove`/`grantCover` effect outputs (Target Weak Spot Order, Smoke Grenades),
+    enhancement-unlocked Orders (Aquilan Eye/Spec Ops Veteran), Scouts grants, Priority-drop
+    round-1 Deep Strike, Vanguard Honours/Assault Hatches disembark riders, Digital Weapons
+    fight-time mortals, Regimental Banner OC/Death Mask shock floor/Formidable Resolve Ld+W.
+  - **Secondary Missions are tappable** — the hover-only tooltip was invisible on the owner's
+    phone; card names now expand the full rule text on tap (GamePanel), and the Fixed-pair
+    picker gained an "ℹ Fixed-capable card texts" details block.
+  - **Adversarial review round (owner: "loop and review your changes adversarially"):** 5
+    parallel reviewer agents over the full diff surfaced 8 real defects, all fixed + regression-
+    tested: Combat Landers' Deep Strike died at BeginBattle (setup cleared — the grant is now
+    STAMPED on the unit as `deployGrant`); an AI seat taking over a side with a declared split
+    would re-deploy the whole unit forever (remainingEntries now expands splits); the pending-
+    grant gate held only the AI back while the human could deploy without alternation (manual
+    placement now pauses too); an enhancement redeploy could pull a LOADED transport and strand
+    its passengers off-board permanently (rejected); Priority-drop round-1 arrivals were a red
+    dead-end in the UI ghost; the ↩ undo on a split's on-foot half was always rejected; ClearSplit
+    orphaned Leader pairings declared onto a half; DeclareSplit accepted impossible wargear
+    partitions (items now need bearers in BOTH halves — UI steppers enforce the same bounds);
+    Battalion Commander was dead in AI play (canReceiveOrders re-check dropped TITANIC/SQUADRON);
+    Digital Weapons mortals now respect the target's Feel No Pain. Final verification: a
+    25-check Playwright walkthrough of the real app (saved Sisters+2×Immolator list → Clandestine
+    picker gating → deploy → split w/ melta steppers → undo → re-split → ⇥ embark the on-foot
+    half in the second Immolator → infiltrating Subductors → battle → tappable secondary card →
+    ⇤ Disembark in Movement) passes with zero console errors.
+  - **Handoff / honest gaps:** per-model FNP (Blackweave suppressed when merged), damage
+    re-rolls (Titan Killer), multi-target Orders, enemy-side auras, CP-discount enhancements —
+    all listed with reasons in docs/enhancements.md. The AI declines Deep-Strike grants and
+    redeploys (policy knobs); its EV model doesn't price enhancement weapon grants. Strict
+    [PRECISION] allocation for Digital Weapons simplified to the normal mortal-wound order.
+
 - **[2026-07-11] — Wargear validation false positive fixed: overlapping options now share their
   caps as one pool ("Sisters of Battle Squad: 2 models take … but only 1 may").** The owner's
   app-legal list (one Battle Sister with a meltagun, another with a heavy bolter) was flagged as
