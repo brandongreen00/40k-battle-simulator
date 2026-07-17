@@ -5,7 +5,7 @@
 // Primary scoring — its dice change who can receive Orders), then the buffs + AdvancePhase.
 
 import type { GameState, Side, UnitInstance } from '../types';
-import { unitIsOfficer, canReceiveOrders, AM_ORDERS } from '../orders';
+import { unitIsOfficer, AM_ORDERS } from '../orders';
 import { extraOrderCount } from '../enhancements';
 import { orderableUnits, isOnBoard, engagedEnemies } from '../phases';
 import { objectiveControl, availableUnitWeapons } from '../engine';
@@ -78,8 +78,11 @@ export function aiCommandAction(state: GameState, side: Side, profile: AiProfile
     if (!unitIsOfficer(officer, ctx)) continue;
     const ordersPerOfficer = baseOrdersPerOfficer + extraOrderCount(officer);
     let issued = 0;
+    // orderableUnits already applies the keyword + battle-shock eligibility (incl. Battalion
+    // Commander's TITANIC/SQUADRON reach — a canReceiveOrders re-check would wrongly demand
+    // REGIMENT and silently drop those targets).
     const targets = orderableUnits(officer, state, ctx)
-      .filter((t) => !ordered.has(t.id) && canReceiveOrders(ctx.datasheets.get(t.datasheetId), t))
+      .filter((t) => !ordered.has(t.id))
       .sort((a, b) => unitValue(b, ctx) - unitValue(a, ctx) || a.id.localeCompare(b.id));
     for (const t of targets) {
       if (issued >= ordersPerOfficer) break;

@@ -23,7 +23,7 @@ as **bound** below. Ids refer to `data/game/enhancements.json`.)*
 |---|---|---|
 | Clandestine Operation | ✅ | See above. |
 | Combat Landers | ✅ | Same picker: up to 3 VOIDFARERS units gain Deep Strike (place them in Reserves; arrivals validate as Deep Strike). |
-| Digital Weapons | 🟡 | When the bearer's unit is selected to fight: 3D6, each 4+ = 1 mortal wound to the fight target. ([PRECISION]-style allocation simplified to the normal mortal-wound order.) |
+| Digital Weapons | 🟡 | When the bearer's unit is selected to fight: 3D6, each 4+ = 1 mortal wound to the fight target; the target's Feel No Pain applies. ([PRECISION]-style allocation simplified to the normal mortal-wound order.) |
 | Fleetmaster | 📖 | Once-per-round 0 CP stratagem plays — the CP-discount bookkeeping isn't modelled. |
 
 ## Ordo Hereticus Purgation Force
@@ -161,4 +161,6 @@ as **bound** below. Ids refer to `data/game/enhancements.json`.)*
 - `SetupState.grants` / `SetupState.redeploy` carry the Declare-Battle-Formations picks and
   post-deployment redeploys; `whoActs`/`aiAction` resolve them for AI seats.
 - Known honest gaps: per-model FNP (Blackweave when merged), damage re-rolls (Titan Killer),
-  multi-target Orders, enemy-side auras, CP discounts, sticky objectives.
+  multi-target Orders, enemy-side auras, CP discounts, sticky objectives. The AI's shooting/melee
+  EV model does not price in enhancement weapon grants (it slightly under-values an Ignis
+  Judicium bearer's guns when ranking targets — play is legal, just not optimal).

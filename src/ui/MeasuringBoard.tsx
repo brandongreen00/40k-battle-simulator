@@ -7,8 +7,8 @@ import { checkUnitDeployment, deepStrikeArrivalLegal, isEntryPlaced, type Deploy
 import { anyOverlap, occupiedBases, unitOverlaps } from '../core/collision';
 import { unitCoherency, unitCentroid } from '../core/phases';
 import { gapBetweenBases } from '../core/geometry';
-import { canEmbark, remainingCapacity, splitRideCounts, splitRuleSelects, transportSplitRule } from '../core/transport';
-import { grantedDeployAbility } from '../core/enhancements';
+import { canEmbark, deploymentProbeUnit, remainingCapacity, splitRideCounts, splitRuleSelects, transportSplitRule } from '../core/transport';
+import { PREBATTLE_GRANTS, allowsRound1DeepStrike, grantedDeployAbility } from '../core/enhancements';
 import { planUnitShooting } from '../core/engine';
 import { defensiveProfileForItem } from '../core/wargear';
 import {
@@ -400,6 +400,18 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
   // Placement is finished once neither side has entries left — the next decisions (leader
   // attaches, Warrant, first-turn roll, scout moves) all live in the Deployment/Game panel.
   const deployDone = inSetup && !!state.setup?.attacker && remaining.player + remaining.ai === 0;
+  // Declare Battle Formations enhancement grants (Clandestine Operation…) resolve BEFORE any
+  // unit is placed: whoActs already holds the AI back, so manual placement must pause too or the
+  // human deploys their whole army with zero alternation while the AI politely waits.
+  const grantPending =
+    inSetup && state.setup?.step === 'deploy' &&
+    (['player', 'ai'] as const).some((side) =>
+      entriesFor(side).some((e) => {
+        const id = e.unit.enhancementId;
+        if (!id || !PREBATTLE_GRANTS[id]) return false;
+        return !(state.setup?.grants ?? []).some((g) => g.side === side && g.enhancementId === id);
+      }),
+    );
 
   // Auto-follow the mobile tab: placement happens on the Units tab; everything else (roll-off,
   // post-placement setup steps, the battle itself) is driven from the Game panel.
@@ -527,13 +539,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
   /** Deployed friendly transports `entry` could legally start the battle embarked within. */
   function embarkBusesFor(entry: DeployEntry, side: Side) {
     if (!entry.ds.keywords.some((k) => k.toLowerCase() === 'infantry')) return [];
-    const probe = {
-      id: entry.key, owner: side, datasheetId: entry.ds.id,
-      models: Array.from({ length: entry.unit.modelCount }, (_, mi) => ({
-        id: `${entry.key}:m${mi}`, unitId: entry.key, pos: { x: 0, y: 0 }, wounds: 1, alive: true,
-      })),
-      startingModels: entry.unit.modelCount, status: {},
-    };
+    const probe = deploymentProbeUnit(entry.key, side, entry.ds.id, entry.unit.modelCount);
     return state.units.filter(
       (t) =>
         t.owner === side && !t.inReserves && t.models.some((m) => m.alive) &&
@@ -610,7 +616,18 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
               },
             }
           : placing.arriveUnitId
-          ? { legal: (positions: Vec2[]) => deepStrikeArrivalLegal(positions, placing.ds.baseShape, enemyModels(placing.side), state.round, occupiedBases(state, { datasheets: datasheetsById }, placing.arriveUnitId ? [placing.arriveUnitId] : [])).legal }
+          ? {
+              legal: (positions: Vec2[]) => {
+                // Priority-drop Beacon: the bearer may Deep Strike from round 1 — the ghost must
+                // agree with the reducer's round bump or round-1 arrivals are a red dead-end.
+                const arriving = state.units.find((u) => u.id === placing.arriveUnitId);
+                const effRound = arriving && allowsRound1DeepStrike(arriving) ? Math.max(state.round, 2) : state.round;
+                return deepStrikeArrivalLegal(
+                  positions, placing.ds.baseShape, enemyModels(placing.side), effRound,
+                  occupiedBases(state, { datasheets: datasheetsById }, placing.arriveUnitId ? [placing.arriveUnitId] : []),
+                ).legal;
+              },
+            }
           : placing.entryKey
           ? { legal: (positions: Vec2[]) => checkUnitDeployment(positions, placing.ds.baseShape, layout, placing.side, placing.ability, enemyModels(placing.side), occupiedBases(state, { datasheets: datasheetsById })).legal }
           : {}),
@@ -757,6 +774,8 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
               <p className="hint">✓ Every unit is placed or in Reserves — continue in the game panel (attach Leaders, roll for first turn).</p>
             ) : aiSeats[sideToPlace].enabled ? (
               <p className="hint">🤖 The computer controls this side and deploys by itself{aiAuto ? '' : ' — auto-play is off, use Step in the Players bar'}. Switch the seat to Human there to place these units yourself.</p>
+            ) : grantPending ? (
+              <p className="hint">✨ A Declare Battle Formations enhancement pick (e.g. Clandestine Operation) is waiting in the game panel — confirm or skip it, then deployment continues.</p>
             ) : null}
             <ul className="unit-list">
               {entriesFor(sideToPlace).map((e) => {
@@ -769,8 +788,11 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
                 const inst = state.units.find((u) => u.id === e.key);
                 const busOf = inst?.embarkedIn ? state.units.find((t) => t.id === inst.embarkedIn) : undefined;
                 const busOfName = busOf ? getDatasheet(busOf.datasheetId)?.name ?? busOf.id : null;
-                const buses = pair ? [] : embarkBusesFor(e, sideToPlace);
-                const splitBuses = pair || e.half || e.unit.modelCount < 2 ? [] : splitTransportsFor(e, sideToPlace);
+                // Transport options only matter for an actionable (unplaced, human-controlled) row —
+                // skip the capacity scans for everything else.
+                const actionable = !placed && !paired && !aiSeats[sideToPlace].enabled && !grantPending;
+                const buses = !actionable || pair ? [] : embarkBusesFor(e, sideToPlace);
+                const splitBuses = !actionable || pair || e.half || e.unit.modelCount < 2 ? [] : splitTransportsFor(e, sideToPlace);
                 return (
                   <li key={e.key} className={placed ? 'placed' : ''}>
                     {placed ? (
@@ -798,6 +820,10 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
                       // An AI-controlled side deploys itself: a picked-up ghost would silently pause
                       // auto-play (aiCanAct gates on !placing), so don't offer manual placement here.
                       <span className="spawn done" title="The AI deploys this unit (switch the seat to Human in the Players bar to place it yourself)">🤖</span>
+                    ) : grantPending ? (
+                      // Deployment pauses until every Declare Battle Formations enhancement pick is
+                      // resolved (the AI is held back by the same gate — alternation stays fair).
+                      <span className="spawn done" title="Resolve the ✨ enhancement pick in the deployment panel first">✨…</span>
                     ) : (
                       <>
                         <button className={`spawn${active ? ' seg-on' : ''}`} onClick={() => (active ? setPlacing(null) : beginDeploy(e, sideToPlace))}>
@@ -1037,9 +1063,16 @@ function SplitEditor({
   const bus = transports.find((t) => t.id === splitting.transportId) ?? transports[0];
   const seats = bus ? remainingCapacity(state, bus, { datasheets: datasheetsById }) : 0;
   const fits = !!bus && splitting.rideCount <= seats;
+  // Every item needs bearers in its half: at most `rideCount` riders can carry it, and whatever
+  // stays on foot needs at most `footCount` bearers (mirrors the reducer's validation).
+  const boundsFor = (count: number) => ({
+    min: Math.max(0, count - footCount),
+    max: Math.min(count, splitting.rideCount),
+  });
   const setRide = (item: string, n: number) => {
-    const max = entry.unit.wargearCounts?.[item] ?? 0;
-    const next = { ...splitting.ride, [item]: Math.max(0, Math.min(max, n)) };
+    const count = entry.unit.wargearCounts?.[item] ?? 0;
+    const { min, max } = boundsFor(count);
+    const next = { ...splitting.ride, [item]: Math.max(min, Math.min(max, n)) };
     if (next[item] === 0) delete next[item];
     setSplitting({ ...splitting, ride: next });
   };
@@ -1074,12 +1107,13 @@ function SplitEditor({
         <div className="split-gear">
           {items.map(([item, n]) => {
             const riding = splitting.ride[item] ?? 0;
+            const { min, max } = boundsFor(n);
             return (
               <div className="split-gear-row" key={item}>
                 <span className="unit-name">{item}</span>
-                <button onClick={() => setRide(item, riding - 1)} disabled={riding <= 0}>−</button>
+                <button onClick={() => setRide(item, riding - 1)} disabled={riding <= min}>−</button>
                 <span className="unit-meta">{riding}/{n} ride</span>
-                <button onClick={() => setRide(item, riding + 1)} disabled={riding >= n}>+</button>
+                <button onClick={() => setRide(item, riding + 1)} disabled={riding >= max}>+</button>
               </div>
             );
           })}

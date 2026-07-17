@@ -369,11 +369,28 @@ ability-system design that these stages depend on.
   - **Secondary Missions are tappable** — the hover-only tooltip was invisible on the owner's
     phone; card names now expand the full rule text on tap (GamePanel), and the Fixed-pair
     picker gained an "ℹ Fixed-capable card texts" details block.
+  - **Adversarial review round (owner: "loop and review your changes adversarially"):** 5
+    parallel reviewer agents over the full diff surfaced 8 real defects, all fixed + regression-
+    tested: Combat Landers' Deep Strike died at BeginBattle (setup cleared — the grant is now
+    STAMPED on the unit as `deployGrant`); an AI seat taking over a side with a declared split
+    would re-deploy the whole unit forever (remainingEntries now expands splits); the pending-
+    grant gate held only the AI back while the human could deploy without alternation (manual
+    placement now pauses too); an enhancement redeploy could pull a LOADED transport and strand
+    its passengers off-board permanently (rejected); Priority-drop round-1 arrivals were a red
+    dead-end in the UI ghost; the ↩ undo on a split's on-foot half was always rejected; ClearSplit
+    orphaned Leader pairings declared onto a half; DeclareSplit accepted impossible wargear
+    partitions (items now need bearers in BOTH halves — UI steppers enforce the same bounds);
+    Battalion Commander was dead in AI play (canReceiveOrders re-check dropped TITANIC/SQUADRON);
+    Digital Weapons mortals now respect the target's Feel No Pain. Final verification: a
+    25-check Playwright walkthrough of the real app (saved Sisters+2×Immolator list → Clandestine
+    picker gating → deploy → split w/ melta steppers → undo → re-split → ⇥ embark the on-foot
+    half in the second Immolator → infiltrating Subductors → battle → tappable secondary card →
+    ⇤ Disembark in Movement) passes with zero console errors.
   - **Handoff / honest gaps:** per-model FNP (Blackweave suppressed when merged), damage
     re-rolls (Titan Killer), multi-target Orders, enemy-side auras, CP-discount enhancements —
     all listed with reasons in docs/enhancements.md. The AI declines Deep-Strike grants and
-    redeploys (policy knobs). Strict [PRECISION] allocation for Digital Weapons simplified to
-    the normal mortal-wound order.
+    redeploys (policy knobs); its EV model doesn't price enhancement weapon grants. Strict
+    [PRECISION] allocation for Digital Weapons simplified to the normal mortal-wound order.
 
 - **[2026-07-11] — Wargear validation false positive fixed: overlapping options now share their
   caps as one pool ("Sisters of Battle Squad: 2 models take … but only 1 may").** The owner's

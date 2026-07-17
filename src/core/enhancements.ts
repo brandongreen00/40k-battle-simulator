@@ -267,18 +267,26 @@ export const PREBATTLE_GRANTS: Record<string, PrebattleGrant> = {
   },
 };
 
+/** keyword-alternatives matcher shared by grant and redeploy unit filters. */
+function keywordAltsMatch(require: string[][], ds: Datasheet): boolean {
+  const kws = new Set(ds.keywords.map((k) => k.toLowerCase()));
+  return require.some((alt) => alt.every((k) => kws.has(k)));
+}
+
 /** Does a datasheet qualify for a pre-battle grant's unit filter? */
 export function grantSelects(grant: PrebattleGrant, ds: Datasheet): boolean {
-  const kws = new Set(ds.keywords.map((k) => k.toLowerCase()));
-  const name = ds.name.toLowerCase();
-  if (grant.excludeNames?.includes(name)) return false;
-  return grant.require.some((alt) => alt.every((k) => kws.has(k)));
+  if (grant.excludeNames?.includes(ds.name.toLowerCase())) return false;
+  return keywordAltsMatch(grant.require, ds);
 }
+
+/** A transport-split half (`key#a`/`key#b`) inherits its parent entry's grant. */
+const baseEntryKey = (key: string): string => key.replace(/#[ab]$/, '');
 
 /** The deploy ability granted to a deployment entry key by a declared pre-battle grant. */
 export function grantedDeployAbility(state: GameState, entryKey: string): 'infiltrators' | 'deep_strike' | null {
+  const want = baseEntryKey(entryKey);
   for (const g of state.setup?.grants ?? []) {
-    if (g.entryKeys.includes(entryKey)) return g.grant;
+    if (g.entryKeys.some((k) => baseEntryKey(k) === want)) return g.grant;
   }
   return null;
 }
@@ -299,9 +307,7 @@ export const REDEPLOY_RULES: Record<string, RedeployRule> = {
 };
 
 export function redeployRuleSelects(rule: RedeployRule, ds: Datasheet | undefined): boolean {
-  if (!ds) return false;
-  const kws = new Set(ds.keywords.map((k) => k.toLowerCase()));
-  return rule.require.some((alt) => alt.every((k) => kws.has(k)));
+  return !!ds && keywordAltsMatch(rule.require, ds);
 }
 
 // ── small carve-outs read by the engine/reducer ──────────────────────────────

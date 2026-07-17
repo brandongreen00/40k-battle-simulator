@@ -315,7 +315,7 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
               <div key={off.id} className="order-officer">
                 <strong>{nameOf(off.id)}</strong>
                 {targets.length === 0 ? (
-                  <span className="muted"> — no REGIMENT units within 6"</span>
+                  <span className="muted"> — no orderable units in range</span>
                 ) : (
                   targets.map((t) => (
                     <div key={t.id} className="order-row">

@@ -237,6 +237,45 @@ describe('Clandestine Operation (Declare Battle Formations grant)', () => {
   });
 });
 
+describe('Combat Landers-style Deep Strike grants survive into the battle', () => {
+  it('the grant is stamped on the unit and honoured by ArriveFromReserves after BeginBattle clears setup', () => {
+    const s = run(createInitialState(layout), [
+      { type: 'NewBattle' },
+      { type: 'SetAttacker', side: 'ai' },
+      {
+        // Lathimon's Flock grants Infiltrators; use a deep_strike-granting record directly.
+        type: 'DeclareEnhancementGrant', side: 'player', enhancementId: ENH.COMBAT_LANDERS,
+        entries: [],
+      },
+    ]);
+    // Manually emulate a declared deep-strike grant on entry player:0 (Combat Landers requires
+    // VOIDFARERS — our test datasheets aren't; write the record the reducer would store).
+    const granted: GameState = {
+      ...s,
+      setup: {
+        ...s.setup!,
+        grants: [{ side: 'player', enhancementId: ENH.COMBAT_LANDERS, label: 'Combat Landers', grant: 'deep_strike', entryKeys: ['player:0'] }],
+      },
+    };
+    const reserved = run(granted, [
+      {
+        type: 'PlaceInReserves', unitId: 'player:0', owner: 'player', datasheetId: 'subductors',
+        baseShape: circle, modelCount: 5, wounds: 3,
+      },
+    ]);
+    expect(reserved.units.find((u) => u.id === 'player:0')!.deployGrant).toBe('deep_strike');
+    const battle = run(reserved, [{ type: 'BeginBattle' }]);
+    expect(battle.setup).toBeUndefined();
+    // Round 2, the unit's own Movement phase: a mid-board arrival (nowhere near an edge) is only
+    // legal with Deep Strike — the stamped grant must carry it.
+    const round2: GameState = { ...battle, round: 2, phase: 'Movement', activePlayer: 'player' };
+    const arrived = reduce(round2, { type: 'ArriveFromReserves', unitId: 'player:0', anchor: { x: 30, y: 22 } }, rng, ctx);
+    const unit = arrived.units.find((u) => u.id === 'player:0')!;
+    expect(unit.inReserves).toBeFalsy();
+    expect(arrived.log.at(-1)).toMatch(/arrives from Reserves/);
+  });
+});
+
 describe('enhancement redeploys (Liber Heresius)', () => {
   it('pulls qualifying deployed units back into the pool, counts down, declines', () => {
     const s = run(createInitialState(layout), [

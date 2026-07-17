@@ -159,6 +159,23 @@ export function canEmbark(
   return { ok: true };
 }
 
+/** A placeholder unit for "could this roster entry start embarked?" capacity checks — shared by
+ *  the deployment UI and the AI so their embark offers can never disagree. */
+export function deploymentProbeUnit(
+  key: string,
+  owner: UnitInstance['owner'],
+  datasheetId: string,
+  modelCount: number,
+): UnitInstance {
+  return {
+    id: key, owner, datasheetId,
+    models: Array.from({ length: modelCount }, (_, i) => ({
+      id: `${key}:m${i}`, unitId: key, pos: { x: 0, y: 0 }, wounds: 1, alive: true,
+    })),
+    startingModels: modelCount, status: {},
+  };
+}
+
 /** Friendly transports `unit` could legally embark within (capacity + keywords only). */
 export function embarkOptions(state: GameState, unit: UnitInstance, ctx: EngineContext): UnitInstance[] {
   return state.units.filter(

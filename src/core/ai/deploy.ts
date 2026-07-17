@@ -15,7 +15,7 @@ import { formationPositions } from '../formation';
 import { canAttach, isCharacter } from '../leaders';
 import { pointInPolygon, distancePointToPolygon, dist } from '../geometry';
 import { hasBackroomDeals, hasLoneOperative } from '../abilities';
-import { canEmbark, embarkedUnits, isAircraft } from '../transport';
+import { canEmbark, deploymentProbeUnit, embarkedUnits, isAircraft } from '../transport';
 import { modelValue } from './evaluate';
 import { classifyDatasheet, rolePlan } from './roles';
 import type { AiAction, AiDeps, AiIntent } from './types';
@@ -37,9 +37,24 @@ export function rosterEntries(roster: Roster | undefined, side: Side, ctx: Engin
     .filter((e) => !!e.ds);
 }
 
-/** Entries of `side` not yet on the board or in Reserves. */
+/** Entries of `side` not yet on the board or in Reserves. An entry split by a transport's
+ *  Declare Battle Formations rule (a human decision — the AI never splits) expands into its two
+ *  half-units, exactly like the UI: without this, an AI seat taking over a side with a declared
+ *  split would re-deploy the WHOLE unit under the parent key, duplicating the embarked riders
+ *  and never completing (the parent key can never register as placed). */
 export function remainingEntries(state: GameState, side: Side, deps: AiDeps): DeployEntry[] {
-  return rosterEntries(deps.rosters[side], side, deps.ctx).filter((e) => !isEntryPlaced(state, e.key));
+  const splits = state.setup?.splits ?? [];
+  return rosterEntries(deps.rosters[side], side, deps.ctx)
+    .flatMap((e): DeployEntry[] => {
+      const s = splits.find((x) => x.entryKey === e.key && x.side === side);
+      if (!s) return [e];
+      return (['a', 'b'] as const).map((half, gi) => ({
+        ...e,
+        key: `${e.key}#${half}`,
+        unit: { ...e.unit, modelCount: s.groups[gi]!.count, wargearCounts: s.groups[gi]!.wargear },
+      }));
+    })
+    .filter((e) => !isEntryPlaced(state, e.key));
 }
 
 /** The side whose turn it is to place next (mirrors the UI's effectiveSide): `toDeploy` unless
@@ -449,13 +464,7 @@ export function aiDeployAction(state: GameState, side: Side, profile: AiProfile,
     const bus = state.units.find((t) => {
       if (t.owner !== side || t.inReserves || !t.models.some((m) => m.alive)) return false;
       if (embarkedUnits(state, t.id).length > 0) return false; // one passenger unit per transport (policy)
-      const probe: import('../types').UnitInstance = {
-        id: entry.key, owner: side, datasheetId: entry.ds.id,
-        models: Array.from({ length: entry.unit.modelCount }, (_, i) => ({
-          id: `${entry.key}:m${i}`, unitId: entry.key, pos: { x: 0, y: 0 }, wounds: 1, alive: true,
-        })),
-        startingModels: entry.unit.modelCount, status: {},
-      };
+      const probe = deploymentProbeUnit(entry.key, side, entry.ds.id, entry.unit.modelCount);
       return canEmbark(state, probe, t, deps.ctx).ok;
     });
     if (bus) {

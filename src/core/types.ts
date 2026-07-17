@@ -270,6 +270,10 @@ export interface UnitInstance {
   wargearCounts?: Record<string, number>;
   /** The roster entry's Enhancement (Wahapedia id) — drives in-game effects (core/enhancements.ts). */
   enhancementId?: string;
+  /** Deploy ability granted at Declare Battle Formations (Clandestine Operation / Combat
+   *  Landers). Stamped at unit creation — setup state is cleared when the battle begins, so
+   *  reserve arrivals read this instead of setup.grants. */
+  deployGrant?: 'infiltrators' | 'deep_strike';
   /** Defender's casualty-allocation preference (persists; set by the owner):
    *  'shields_first' (default) — defensive-wargear bearers (4++ shields…) soak wounds first;
    *  'bodies_first' — regular models die first, preserving the wargear bearers for later. */

@@ -157,7 +157,7 @@ export function aiAction(state: GameState, side: Side, profileIn: string | AiPro
         rule.grant === 'infiltrators'
           ? rosterEntries(deps.rosters[side], side, deps.ctx)
               .filter((e) => !isEntryPlaced(state, e.key) && !isCharacter(e.ds) && grantSelects(rule, e.ds))
-              .slice(0, Math.min(rule.count, 3))
+              .slice(0, rule.count)
               .map((e) => ({ entryKey: e.key, datasheetId: e.ds.id }))
           : [];
       return {

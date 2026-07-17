@@ -960,17 +960,35 @@ export function resolveUnitFight(
   // Digital Weapons (Imperialis Fleet enhancement): when the bearer is selected to fight, roll
   // 3D6 — each 4+ inflicts 1 mortal wound on an engaged enemy (allocated like [PRECISION]; here
   // the fight target takes them via the normal mortal-wound order — noted simplification).
+  // Feel No Pain applies to mortal wounds (05.05) — honour the target's innate/active FNP.
   if (hasDigitalWeapons(attacker)) {
     const rolls = [rng.d6(), rng.d6(), rng.d6()];
-    const mortals = rolls.filter((r) => r >= 4).length;
+    let mortals = rolls.filter((r) => r >= 4).length;
+    let fnpNote = '';
+    const fnpIds = effectsOf(target, ctx, state)
+      .map((id) => /^fnp_(\d)$/.exec(id)?.[1])
+      .filter((n): n is string => !!n)
+      .map((n) => parseInt(n, 10));
+    const fnp = fnpIds.length ? Math.min(...fnpIds) : undefined;
+    if (fnp && mortals > 0) {
+      const fnpRolls: number[] = [];
+      let taken = 0;
+      for (let i = 0; i < mortals; i++) {
+        const r = rng.d6();
+        fnpRolls.push(r);
+        if (r < fnp) taken++;
+      }
+      fnpNote = ` · FNP ${fnp}+ [${fnpRolls.join(' ')}] negates ${mortals - taken}`;
+      mortals = taken;
+    }
     if (mortals > 0) {
       cur = {
         ...cur,
         units: cur.units.map((u) => (u.id === target.id ? applyMortalsTo(u, mortals, ctx) : u)),
-        log: [...cur.log, `  Digital Weapons: 3D6 [${rolls.join(' ')}] → ${mortals} mortal wound(s) to ${tDs.name}`],
+        log: [...cur.log, `  Digital Weapons: 3D6 [${rolls.join(' ')}] → ${mortals} mortal wound(s) to ${tDs.name}${fnpNote}`],
       };
     } else {
-      cur = { ...cur, log: [...cur.log, `  Digital Weapons: 3D6 [${rolls.join(' ')}] — no effect`] };
+      cur = { ...cur, log: [...cur.log, `  Digital Weapons: 3D6 [${rolls.join(' ')}] — no effect${fnpNote}`] };
     }
   }
   let swungCount = 0;

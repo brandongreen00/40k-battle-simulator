@@ -10,7 +10,10 @@ import {
   datasheetMayRide, parseTransportCapacity, splitRideCounts, splitRuleSelects, transportSplitRule,
 } from '../src/core/transport';
 import { isEntryPlaced } from '../src/core/deployment';
-import type { BaseShape, Datasheet, GameState, Layout } from '../src/core/types';
+import { ENH } from '../src/core/enhancements';
+import { remainingEntries } from '../src/core/ai/deploy';
+import type { AiDeps } from '../src/core/ai/types';
+import type { BaseShape, Datasheet, GameState, Layout, Roster } from '../src/core/types';
 
 const circle: BaseShape = { kind: 'circle', radius: 0.5 };
 const bigBase: BaseShape = { kind: 'oval', rx: 2.4, ry: 1.5 };
@@ -96,7 +99,9 @@ function deployedImmolator(): GameState {
 const declareSplit = (over: Record<string, unknown> = {}): Intent => ({
   type: 'DeclareSplit', side: 'player', entryKey: 'player:1', datasheetId: 'sisters',
   baseShape: circle, modelCount: 10, wounds: 1, transportUnitId: 'player:0',
-  rideCount: 5, rideWargear: { Meltagun: 2 }, totalWargear: SISTERS_GEAR,
+  // The riders take both meltas + 3 boltguns (5 bearers for 5 models); the foot half keeps the
+  // heavy bolter + 4 boltguns — every item has enough bearers in its half.
+  rideCount: 5, rideWargear: { Meltagun: 2, Boltgun: 3 }, totalWargear: SISTERS_GEAR,
   ...over,
 } as Intent);
 
@@ -136,10 +141,10 @@ describe('DeclareSplit (Immolator: half rides, half walks)', () => {
     expect(riders.embarkedIn).toBe('player:0');
     expect(riders.inReserves).toBe(true);
     expect(riders.models).toHaveLength(5);
-    expect(riders.wargearCounts).toEqual({ Meltagun: 2 });
+    expect(riders.wargearCounts).toEqual({ Meltagun: 2, Boltgun: 3 });
     const split = s.setup!.splits![0]!;
-    expect(split.groups[0]).toEqual({ count: 5, wargear: { Meltagun: 2 } });
-    expect(split.groups[1]).toEqual({ count: 5, wargear: { 'Heavy bolter': 1, Boltgun: 7 } });
+    expect(split.groups[0]).toEqual({ count: 5, wargear: { Meltagun: 2, Boltgun: 3 } });
+    expect(split.groups[1]).toEqual({ count: 5, wargear: { 'Heavy bolter': 1, Boltgun: 4 } });
     // The declaration consumed the player's placement slot.
     expect(s.setup!.toDeploy).toBe('ai');
     // The parent entry is not "placed" until the on-foot half is down too.
@@ -166,6 +171,16 @@ describe('DeclareSplit (Immolator: half rides, half walks)', () => {
     const once = run(base, [declareSplit()]);
     const twice = run(once, [declareSplit()]);
     expect(twice.log.at(-1)).toMatch(/Split rejected: .*already split/);
+  });
+
+  it('every wargear item needs enough bearers in its half', () => {
+    const base = deployedImmolator();
+    // 6 boltguns cannot ride with only 5 models riding.
+    const bad1 = run(base, [declareSplit({ rideWargear: { Boltgun: 6 } })]);
+    expect(bad1.log.at(-1)).toMatch(/Split rejected: only 5 models ride/);
+    // Leaving all 7 boltguns with the 5 on-foot models is just as impossible.
+    const bad2 = run(base, [declareSplit({ rideWargear: { Meltagun: 2 } })]);
+    expect(bad2.log.at(-1)).toMatch(/Split rejected: .*7× Boltgun.*only 5 models on foot/);
   });
 
   it('rejects riding wargear the unit does not have, and a transport still in Reserves', () => {
@@ -199,6 +214,37 @@ describe('DeclareSplit (Immolator: half rides, half walks)', () => {
   });
 });
 
+describe('splits and the rest of the system', () => {
+  it('AI deployment sees the split halves, not the parent entry (no duplicate deploys)', () => {
+    const s = run(deployedImmolator(), [declareSplit()]);
+    const roster: Roster = {
+      name: 't', faction: 'AoI', detachment: 'Imperialis Fleet', points: 200,
+      units: [
+        { datasheetId: 'immolator', modelCount: 1 },
+        { datasheetId: 'sisters', modelCount: 10, wargearCounts: SISTERS_GEAR },
+      ],
+    };
+    const deps: AiDeps = {
+      ctx, rosters: { player: roster }, detachments: {}, deployAbility: () => 'standard',
+      stratagems: [], rng: makeRNG(1),
+    };
+    const rem = remainingEntries(s, 'player', deps);
+    expect(rem.map((e) => e.key)).toEqual(['player:1#b']); // riders are placed; parent key gone
+    expect(rem[0]!.unit.modelCount).toBe(5);
+    expect(rem[0]!.unit.wargearCounts).toEqual({ 'Heavy bolter': 1, Boltgun: 4 });
+  });
+
+  it('an enhancement redeploy refuses to pull a transport carrying embarked units', () => {
+    const s = run(deployedImmolator(), [
+      declareSplit(),
+      { type: 'UseEnhancementRedeploy', side: 'player', enhancementId: ENH.LIBER_HERESIUS },
+      { type: 'EnhancementRedeploy', unitId: 'player:0' },
+    ]);
+    expect(s.units.find((u) => u.id === 'player:0')).toBeDefined(); // still on the board
+    expect(s.log.at(-1)).toMatch(/carrying embarked units/);
+  });
+});
+
 describe('UndeployUnit (undo a start-embarked deployment)', () => {
   it('returns an embarked unit to the deployment pool during setup', () => {
     const s = run(deployedImmolator(), [
@@ -214,7 +260,7 @@ describe('UndeployUnit (undo a start-embarked deployment)', () => {
     expect(isEntryPlaced(undone, 'player:4')).toBe(false);
   });
 
-  it('refuses split halves (ClearSplit instead) and on-board units', () => {
+  it('refuses the riding half (ClearSplit instead) and on-board units', () => {
     const s = run(deployedImmolator(), [declareSplit()]);
     const kept = run(s, [{ type: 'UndeployUnit', unitId: 'player:1#a' }]);
     expect(kept.units.find((u) => u.id === 'player:1#a')).toBeDefined();
@@ -223,5 +269,39 @@ describe('UndeployUnit (undo a start-embarked deployment)', () => {
     const kept2 = run(s, [{ type: 'UndeployUnit', unitId: 'player:0' }]);
     expect(kept2.units.find((u) => u.id === 'player:0')).toBeDefined();
     expect(kept2.log.at(-1)).toMatch(/Undo rejected: only a start-embarked/);
+  });
+
+  it('the on-foot half embarked in a SECOND transport can undo its embark', () => {
+    // Rule: "the other can start the battle embarked within another TRANSPORT".
+    const s = run(deployedImmolator(), [
+      declareSplit(),
+      {
+        type: 'DeployUnit', unitId: 'player:9', owner: 'player', datasheetId: 'immolator',
+        baseShape: bigBase, modelCount: 1, wounds: 11, anchor: { x: 6, y: 34 },
+      },
+      {
+        type: 'DeployUnit', unitId: 'player:1#b', owner: 'player', datasheetId: 'sisters',
+        baseShape: circle, modelCount: 5, wounds: 1, anchor: { x: 0, y: 0 },
+        intoTransportId: 'player:9',
+      },
+    ]);
+    expect(s.units.find((u) => u.id === 'player:1#b')!.embarkedIn).toBe('player:9');
+    const undone = run(s, [{ type: 'UndeployUnit', unitId: 'player:1#b' }]);
+    expect(undone.units.find((u) => u.id === 'player:1#b')).toBeUndefined();
+    // The split itself survives — only the #b embark was undone.
+    expect(undone.setup!.splits).toHaveLength(1);
+  });
+
+  it('ClearSplit also clears a Leader pairing declared onto a half', () => {
+    const s = run(deployedImmolator(), [declareSplit()]);
+    const withFormation = {
+      ...s,
+      setup: {
+        ...s.setup!,
+        formations: [{ side: 'player' as const, leaderKey: 'player:7', leaderDsId: 'x', bodyguardKey: 'player:1#b', bodyguardDsId: 'sisters' }],
+      },
+    };
+    const cleared = run(withFormation, [{ type: 'ClearSplit', entryKey: 'player:1' }]);
+    expect(cleared.setup!.formations).toHaveLength(0);
   });
 });

@@ -16,7 +16,7 @@ import { clamp, clampToRange, gapBetweenBases } from './geometry';
 import { formationPositions, type Formation } from './formation';
 import { defensiveProfileForItem } from './wargear';
 import { rollOff, otherSide } from './setup';
-import { checkUnitDeployment, deepStrikeArrivalLegal, deployAbilityFromKeywords, whollyInOwnZone, type DeployAbility } from './deployment';
+import { checkUnitDeployment, deepStrikeArrivalLegal, deployAbilityFromKeywords, isEntryPlaced, whollyInOwnZone, type DeployAbility } from './deployment';
 import { checkCoherency } from './coherency';
 import { anyOverlap, occupiedBases, unitOverlaps } from './collision';
 import { canEmbark, disembarkMode, isAircraft, splitRideCounts, splitRuleSelects, transportSplitRule } from './transport';
@@ -807,11 +807,13 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         { ...intent, wounds: intent.wounds + enhancementWoundBonus(intent.enhancementId, intent.modelCount) },
         state.layout,
       );
+      const grantAb = grantedDeployAbility(state, intent.unitId);
       const unit: UnitInstance = {
         id: intent.unitId, owner: intent.owner, datasheetId: intent.datasheetId,
         models, startingModels: models.length, status: {},
         ...(intent.wargear ? { wargearCounts: intent.wargear } : {}),
         ...(intent.enhancementId ? { enhancementId: intent.enhancementId } : {}),
+        ...(grantAb ? { deployGrant: grantAb } : {}),
       };
       const setup = state.setup ? { ...state.setup, toDeploy: otherSide(intent.owner) } : state.setup;
       return { ...state, units: [...state.units, unit], setup, log: [...state.log, `${intent.owner} deploys a unit (${models.length} models)`] };
@@ -823,11 +825,15 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         { ...intent, wounds: intent.wounds + enhancementWoundBonus(intent.enhancementId, intent.modelCount), anchor: { x: 0, y: 0 } },
         state.layout,
       );
+      // The Declare Battle Formations grant (Combat Landers' Deep Strike) must survive into the
+      // battle stage (BeginBattle clears setup) — stamp it on the unit.
+      const grantAb = grantedDeployAbility(state, intent.unitId);
       const unit: UnitInstance = {
         id: intent.unitId, owner: intent.owner, datasheetId: intent.datasheetId,
         models, startingModels: models.length, status: {}, inReserves: true,
         ...(intent.wargear ? { wargearCounts: intent.wargear } : {}),
         ...(intent.enhancementId ? { enhancementId: intent.enhancementId } : {}),
+        ...(grantAb ? { deployGrant: grantAb } : {}),
       };
       const setup = state.setup ? { ...state.setup, toDeploy: otherSide(intent.owner) } : state.setup;
       return { ...state, units: [...state.units, unit], setup, log: [...state.log, `${intent.owner} places a unit in Reserves`] };
@@ -1028,13 +1034,25 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       const total = intent.totalWargear ?? {};
       const rideWargear: Record<string, number> = {};
       const footWargear: Record<string, number> = { ...total };
+      const footCountCheck = intent.modelCount - intent.rideCount;
       for (const [item, n] of Object.entries(intent.rideWargear ?? {})) {
         if (n <= 0) continue;
         if (n > (total[item] ?? 0)) return reject(`the unit only has ${total[item] ?? 0}× ${item}`);
+        // An item can't have more bearers in a half than that half has models.
+        if (n > intent.rideCount) return reject(`only ${intent.rideCount} models ride — they cannot carry ${n}× ${item}`);
+        if ((total[item] ?? 0) - n > footCountCheck) {
+          return reject(`${(total[item] ?? 0) - n}× ${item} would be left with only ${footCountCheck} models on foot`);
+        }
         rideWargear[item] = n;
         const left = (footWargear[item] ?? 0) - n;
         if (left > 0) footWargear[item] = left;
         else delete footWargear[item];
+      }
+      // Items not mentioned in rideWargear stay whole with the on-foot half — they too need bearers.
+      for (const [item, n] of Object.entries(footWargear)) {
+        if (n > footCountCheck && !(item in rideWargear)) {
+          return reject(`${n}× ${item} would be left with only ${footCountCheck} models on foot — allocate some to the riders`);
+        }
       }
       // Build the riding half embarked within the transport (capacity/keyword checked).
       const rideId = `${intent.entryKey}#a`;
@@ -1085,7 +1103,14 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       return {
         ...state,
         units: state.units.filter((u) => !halfIds.includes(u.id)),
-        setup: { ...state.setup, splits: state.setup.splits!.filter((s) => s.entryKey !== intent.entryKey) },
+        setup: {
+          ...state.setup,
+          splits: state.setup.splits!.filter((s) => s.entryKey !== intent.entryKey),
+          // A Leader pairing declared onto a half-unit would dangle once the halves vanish.
+          formations: (state.setup.formations ?? []).filter(
+            (f) => !halfIds.includes(f.bodyguardKey) && !halfIds.includes(f.leaderKey),
+          ),
+        },
         log: [...state.log, 'Split cleared — the unit re-enters the deployment flow whole'],
       };
     }
@@ -1096,8 +1121,10 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       const unit = state.units.find((u) => u.id === intent.unitId);
       if (!unit) return reject('unit not found');
       if (!unit.embarkedIn) return reject('only a start-embarked deployment can be undone here');
-      if (state.setup.splits?.some((s) => intent.unitId.startsWith(`${s.entryKey}#`))) {
-        return reject('that unit is half of a declared split — clear the split instead');
+      // The RIDING half of a split (#a) must stay embarked in its transport — undo the whole
+      // split instead. The on-foot half (#b) that chose to embark elsewhere may freely undo.
+      if (state.setup.splits?.some((s) => intent.unitId === `${s.entryKey}#a`)) {
+        return reject('that unit is the riding half of a declared split — clear the split instead');
       }
       return {
         ...state,
@@ -1195,6 +1222,10 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       const ds = ctx?.datasheets.get(unit.datasheetId);
       if (!rule || !redeployRuleSelects(rule, ds)) {
         return { ...state, log: [...state.log, `Redeploy rejected: ${ds?.name ?? unit.id} does not qualify for ${red.label}`] };
+      }
+      // A transport with start-embarked passengers would strand them (dangling embarkedIn).
+      if (state.units.some((u) => u.embarkedIn === unit.id)) {
+        return { ...state, log: [...state.log, `Redeploy rejected: ${ds?.name ?? unit.id} is carrying embarked units — undo their embark first`] };
       }
       // Pull the unit (and any merged Leader) off the board — its roster entries become
       // undeployed again and re-enter the normal deployment flow (board or Reserves).
@@ -1508,9 +1539,9 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       // fallback for direct reducer calls.
       const ds = ctx?.datasheets.get(unit.datasheetId);
       // Deep Strike can come from the datasheet, the bearer's enhancement (Beacon Angelis), or an
-      // army-wide Declare Battle Formations grant (Combat Landers — keyed by the entry id).
-      const granted =
-        enhancementDeployGrant(unit) === 'deep_strike' || grantedDeployAbility(state, unit.id) === 'deep_strike';
+      // army-wide Declare Battle Formations grant (Combat Landers — stamped on the unit at
+      // placement, because BeginBattle clears setup.grants).
+      const granted = enhancementDeployGrant(unit) === 'deep_strike' || unit.deployGrant === 'deep_strike';
       const ability =
         intent.ability ??
         (granted
@@ -1981,10 +2012,11 @@ function layoutForAttacker(layout: Layout, attacker: Side): Layout {
 }
 
 /** Is a deployment-entry id on the board / in Reserves (directly or as a merged Leader)? */
+/** Split-aware "is this deployment entry placed?" — delegates to the canonical helper so the
+ *  reducer's guards (DeclareFormation / DeclareSplit / DeclareEnhancementGrant) agree with the
+ *  UI and the AI about split entries. */
 function isUnitPlaced(state: GameState, entryKey: string): boolean {
-  return state.units.some(
-    (u) => u.id === entryKey || (u.attachedLeaders ?? []).some((l) => l.unitId === entryKey),
-  );
+  return isEntryPlaced(state, entryKey);
 }
 
 /**

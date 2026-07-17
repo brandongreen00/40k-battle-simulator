@@ -568,8 +568,11 @@ function GrantPicker({
   const rule = PREBATTLE_GRANTS[enhancementId]!;
   const [picked, setPicked] = useState<string[]>([]);
   const eligible = entries.filter((e) => grantSelects(rule, e.ds) && !isPlaced(e.key));
+  // A picked unit can be deployed out from under the picker — drop stale keys or Confirm would
+  // dispatch an intent the reducer rejects wholesale (with log-only feedback).
+  const validPicked = picked.filter((k) => eligible.some((e) => e.key === k));
   const toggle = (key: string) =>
-    setPicked((p) => (p.includes(key) ? p.filter((k) => k !== key) : p.length < rule.count ? [...p, key] : p));
+    setPicked((p) => (p.includes(key) ? p.filter((k) => k !== key) : validPicked.length < rule.count ? [...validPicked, key] : p));
   const abilityName = rule.grant === 'infiltrators' ? 'Infiltrators' : 'Deep Strike';
   return (
     <div className="dep-leaders grant-picker">
@@ -585,7 +588,7 @@ function GrantPicker({
       ) : (
         eligible.map((e) => (
           <label className="grant-row" key={e.key}>
-            <input type="checkbox" checked={picked.includes(e.key)} onChange={() => toggle(e.key)} />
+            <input type="checkbox" checked={validPicked.includes(e.key)} onChange={() => toggle(e.key)} />
             <span className="unit-name">{e.ds.name}</span>
             <span className="unit-meta">×{e.unit.modelCount}</span>
           </label>
@@ -594,11 +597,11 @@ function GrantPicker({
       <div className="btnrow">
         <button
           className="primary"
-          disabled={picked.length === 0}
+          disabled={validPicked.length === 0}
           onClick={() =>
             dispatch({
               type: 'DeclareEnhancementGrant', side, enhancementId,
-              entries: picked
+              entries: validPicked
                 .map((key) => {
                   const e = entries.find((x) => x.key === key);
                   return e ? { entryKey: key, datasheetId: e.ds.id } : null;
@@ -607,7 +610,7 @@ function GrantPicker({
             })
           }
         >
-          ✓ Grant {abilityName} to {picked.length} unit(s)
+          ✓ Grant {abilityName} to {validPicked.length} unit(s)
         </button>
         <button onClick={() => dispatch({ type: 'DeclareEnhancementGrant', side, enhancementId, entries: [] })}>
           Skip
