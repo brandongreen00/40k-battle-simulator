@@ -42,12 +42,14 @@ export interface EffectOutput {
   extraAttacks?: number; // +N to the Attacks characteristic, per firing model (e.g. First Rank Fire!)
   grantPrecision?: boolean; // the bearer's weapons gain [PRECISION] (Epic Challenge)
   grantLethalHits?: boolean; // the bearer's weapons gain [LETHAL HITS] (Dispense Justice)
+  apImprove?: number; // improve the attack's AP by N (Target Weak Spot: AP -1 → -2)
   // Defensive (the bearer is being attacked)
   toBeHitModifier?: number; // e.g. Stealth -1 (subtracts from the attacker's hit roll)
   damageReduction?: number; // e.g. -1 Damage
   fnp?: number; // Feel No Pain value
   invulnFloor?: number; // grant/raise an invuln (e.g. a 4++ from a Displacer Field)
   saveBonus?: number; // +N to the Save characteristic, capped at 3+ (e.g. Take Cover!)
+  grantCover?: boolean; // the bearer has the Benefit of Cover (Smoke Grenades enhancement)
 }
 
 export interface Effect {
@@ -98,6 +100,32 @@ export const EFFECT_REGISTRY: Record<string, Effect> = {
   // attack pipeline; registered so the effect applicator can list/apply it.
   'fights_first_granted': { id: 'fights_first_granted', name: 'Fights First (granted)', side: 'attacker', output: {} },
 
+  // ── Enhancement-driven building blocks ───────────────────────────────────────
+  // Witch Hunter (Purgation Force): while the bearer leads, re-roll Hit rolls vs PSYKER units.
+  'enh:witch_hunter': {
+    id: 'enh:witch_hunter', name: 'Witch Hunter (re-roll hits vs PSYKER)', side: 'attacker',
+    appliesTo: (c) => c.targetKeywords.includes('PSYKER'), output: { rerollHits: 'fail' },
+  },
+  // Drill Commander (Combined Arms): ranged crits on unmodified 5+ while Remained Stationary
+  // (the stationary gate lives in enhancements.enhancementEffectIds).
+  'enh:crit5_ranged': { id: 'enh:crit5_ranged', name: 'Drill Commander (crit 5+)', side: 'attacker', appliesTo: ranged, output: { critHitOn: 5 } },
+  // Aquilan Eye (Grizzled Company) — Target Weak Spot (Order): AP +1 within 12".
+  'order:target_weak_spot': {
+    id: 'order:target_weak_spot', name: 'Target Weak Spot (Order)', side: 'attacker',
+    appliesTo: (c) => c.weaponType === 'ranged' && c.gap <= 12, output: { apImprove: 1 },
+  },
+  // Spec Ops Veteran (Grizzled Company) — Move to the Shadows (Order): Stealth vs ranged attacks.
+  'order:move_to_shadows': {
+    id: 'order:move_to_shadows', name: 'Move to the Shadows (Order)', side: 'defender',
+    appliesTo: ranged, output: { toBeHitModifier: -1 },
+  },
+  // Smoke Grenades (Mechanised Assault): Benefit of Cover + Stealth near a friendly TRANSPORT
+  // (the proximity gate lives in enhancements.enhancementEffectIds).
+  'enh:smoke_cover': {
+    id: 'enh:smoke_cover', name: 'Smoke Grenades (cover + stealth)', side: 'defender',
+    appliesTo: ranged, output: { toBeHitModifier: -1, grantCover: true },
+  },
+
   // ── Defensive building blocks (stratagems, unit specials) ─────────────────────
   'minus1_damage': { id: 'minus1_damage', name: '-1 Damage', side: 'defender', output: { damageReduction: 1 } },
   'fnp_4': { id: 'fnp_4', name: 'Feel No Pain 4+', side: 'defender', output: { fnp: 4 } },
@@ -134,6 +162,8 @@ export function gatherAttackModifiers(
   invulnFloor?: number;
   grantPrecision: boolean;
   grantLethalHits: boolean;
+  apImprove: number;
+  grantCover: boolean;
 } {
   const acc = {
     hitModifier: 0,
@@ -150,6 +180,8 @@ export function gatherAttackModifiers(
     invulnFloor: undefined as number | undefined,
     grantPrecision: false,
     grantLethalHits: false,
+    apImprove: 0,
+    grantCover: false,
   };
 
   const apply = (id: string, expectedSide: 'attacker' | 'defender') => {
@@ -172,6 +204,8 @@ export function gatherAttackModifiers(
     if (out.invulnFloor != null) acc.invulnFloor = Math.min(acc.invulnFloor ?? 7, out.invulnFloor);
     if (out.grantPrecision) acc.grantPrecision = true;
     if (out.grantLethalHits) acc.grantLethalHits = true;
+    if (out.apImprove) acc.apImprove += out.apImprove;
+    if (out.grantCover) acc.grantCover = true;
   };
 
   for (const id of attackerEffects) apply(id, 'attacker');

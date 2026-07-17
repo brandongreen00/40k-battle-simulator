@@ -10,6 +10,7 @@
 
 import type { GameState, Side } from '../types';
 import { engagedEnemies, gapBetween, isOnBoard } from '../phases';
+import { blocksOverwatch } from '../enhancements';
 import { chargePathExists } from '../engine';
 import { meleeEV, shootingEV, unitValue } from './evaluate';
 import { unitRolePlan } from './roles';
@@ -110,6 +111,7 @@ export function aiReactionToPhaseEnd(
         if (engagedEnemies(u, state, ctx).length > 0) continue;
         for (const e of state.units) {
           if (e.owner === defendingSide || !isOnBoard(e)) continue;
+          if (blocksOverwatch(e)) continue; // Shroud Projector / Flash Grenades
           if (gapBetween(u, e, ctx) > 24) continue;
           const ev = shootingEV(state, u, e, ctx) * 0.28;
           if (!best || ev > best.ev) best = { unitId: u.id, targetId: e.id, ev };

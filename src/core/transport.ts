@@ -8,6 +8,7 @@
 
 import type { Datasheet, GameState, UnitInstance } from './types';
 import type { EngineContext } from './engine';
+import { canDisembarkAfterAdvance } from './enhancements';
 
 // ── capacity parsing ──────────────────────────────────────────────────────────
 export interface TransportCapacity {
@@ -220,7 +221,10 @@ export function disembarkMode(
 ): DisembarkMode | 'tactical_or_combat' | null {
   if (unit.status.justEmbarked) return null;
   const t = transport.status;
-  if (t.advanced || t.fellBack) return null;
+  // Vanguard Honours: the bearer's unit may disembark after the transport Advanced (counts as a
+  // Normal move, cannot charge — resolved as a Rapid disembark).
+  if (t.advanced) return canDisembarkAfterAdvance(unit) ? 'rapid' : null;
+  if (t.fellBack) return null;
   // `moved` covers both a normal move and an ingress arrival (ArriveFromReserves sets it).
   if (t.moved) return 'rapid';
   return 'tactical_or_combat';

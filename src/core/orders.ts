@@ -8,6 +8,7 @@
 // unit's `activeEffects`, which the combat pipeline (effects.ts) and the helpers below read.
 
 import type { Datasheet, UnitInstance } from './types';
+import { extraOrderIdsFor, grantsOfficer } from './enhancements';
 
 export interface OrderDef {
   id: string;
@@ -27,7 +28,19 @@ export const AM_ORDERS: OrderDef[] = [
   { id: 'duty', name: 'Duty and Honour!', effectId: 'order:duty_and_honour', desc: '+1 Leadership and +1 Objective Control' },
 ];
 
-const ORDER_EFFECT_IDS = new Set(AM_ORDERS.map((o) => o.effectId));
+/** Enhancement-unlocked Orders (offered only when the issuing officer carries the enhancement). */
+export const ENHANCEMENT_ORDERS: OrderDef[] = [
+  { id: 'target_weak_spot', name: 'Target Weak Spot (Aquilan Eye)', effectId: 'order:target_weak_spot', desc: '+1 AP against targets within 12"' },
+  { id: 'move_to_shadows', name: 'Move to the Shadows (Spec Ops Veteran)', effectId: 'order:move_to_shadows', desc: 'Stealth against ranged attacks' },
+];
+
+/** The Orders this officer unit can pick from: the universal six, plus its enhancement's. */
+export function ordersAvailableTo(officer: UnitInstance): OrderDef[] {
+  const extra = extraOrderIdsFor(officer);
+  return [...AM_ORDERS, ...ENHANCEMENT_ORDERS.filter((o) => extra.includes(o.effectId))];
+}
+
+const ORDER_EFFECT_IDS = new Set([...AM_ORDERS, ...ENHANCEMENT_ORDERS].map((o) => o.effectId));
 
 const effectsOf = (u: UnitInstance): string[] => u.status.activeEffects ?? [];
 
@@ -70,6 +83,8 @@ export function unitIsOfficer(
   u: UnitInstance,
   ctx: { datasheets: Map<string, Datasheet> },
 ): boolean {
+  // Battalion Commander (Steel Hammer): the bearer gains Voice of Command / OFFICER.
+  if (grantsOfficer(u)) return true;
   const officerDs = (id: string): boolean => {
     const ds = ctx.datasheets.get(id);
     return isOfficer(ds, (ds?.abilities ?? []).map((a) => a.name));

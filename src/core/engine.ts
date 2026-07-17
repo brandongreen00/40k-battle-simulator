@@ -20,6 +20,10 @@ import { battleShockTest } from './battleshock';
 import { rollCharge } from './movement';
 import { gatherAttackModifiers, type AttackContext } from './effects';
 import { hasLoneOperative, ignoresLoneOperative, innateEffectIds } from './abilities';
+import {
+  enhancementEffectIds, enhancementLdBonus, enhancementOcBonus, enhancementWeaponGrantFor,
+  hasDigitalWeapons, shockedOcFloor,
+} from './enhancements';
 import { defensiveProfileForItem } from './wargear';
 import { ocBonusFromOrders, ldBonusFromOrders } from './orders';
 import { canFly, embarkedUnits, firingDeckX, isAircraft } from './transport';
@@ -136,14 +140,17 @@ export function availableUnitWeapons(
 export const INNATE_ABILITY_EFFECTS: Record<string, string[]> = {};
 
 /** All effect ids active on a unit right now: issued Orders/Stratagems, curated innate effects,
- *  plus the ability-derived ones (innate Stealth, innate Feel No Pain X+) read off the unit's
- *  primary datasheet. (A merged Leader's personal Stealth/FNP does not cover the whole unit —
- *  10e grants unit-wide versions only when every model has the ability.) */
-function effectsOf(unit: UnitInstance, ctx?: EngineContext): string[] {
+ *  the ability-derived ones (innate Stealth, innate Feel No Pain X+) read off the unit's
+ *  primary datasheet, and enhancement bindings (core/enhancements.ts — `state` powers the
+ *  conditional ones like Drill Commander's Remained Stationary). (A merged Leader's personal
+ *  Stealth/FNP does not cover the whole unit — 10e grants unit-wide versions only when every
+ *  model has the ability.) */
+function effectsOf(unit: UnitInstance, ctx?: EngineContext, state?: GameState): string[] {
   return [
     ...(unit.status.activeEffects ?? []),
     ...(INNATE_ABILITY_EFFECTS[unit.datasheetId] ?? []),
     ...(ctx ? innateEffectIds(ctx.datasheets.get(unit.datasheetId)) : []),
+    ...enhancementEffectIds(unit, ctx, state),
   ];
 }
 
@@ -399,16 +406,39 @@ export function resolveAttack(
     targetKeywords: tDs.keywords.map((k) => k.toUpperCase()),
     gap,
   };
-  const mods = gatherAttackModifiers(abilityCtx, effectsOf(attacker, ctx), effectsOf(target, ctx));
+  const mods = gatherAttackModifiers(abilityCtx, effectsOf(attacker, ctx, state), effectsOf(target, ctx, state));
 
-  const cover = (forceCover || (!isMelee && unitCoverIn(aPts, target, state, ctx))) && !mods.ignoresCover;
+  // Enhancement weapon grants: apply only when this weapon is fired from the BEARER's datasheet
+  // (Ignis Judicium's [DEVASTATING WOUNDS]+[MELTA 1]+[PRECISION] on the Inquisitor's own guns,
+  // Universal Anathema's [ANTI-…] melee, Legacy Sidearm's +2 A Pistols).
+  const rawGrant = enhancementWeaponGrantFor(attacker, found.sourceDsId);
+  const wGrant =
+    rawGrant &&
+    (!rawGrant.type || rawGrant.type === (isMelee ? 'melee' : 'ranged')) &&
+    (!rawGrant.pistolOnly || kw.pistol)
+      ? rawGrant
+      : null;
+  if (wGrant) {
+    profile.keywords = {
+      ...profile.keywords,
+      ...(wGrant.devastatingWounds ? { devastatingWounds: true } : {}),
+      ...(wGrant.melta ? { melta: Math.max(kw.melta ?? 0, wGrant.melta) } : {}),
+      ...(wGrant.anti ? { anti: [...(kw.anti ?? []), ...wGrant.anti] } : {}),
+    };
+  }
+  // Target Weak Spot (Order): improve the attack's AP (AP is stored ≤ 0 — more negative = better).
+  if (mods.apImprove) profile.AP -= mods.apImprove;
+
+  const cover =
+    (forceCover || mods.grantCover || (!isMelee && unitCoverIn(aPts, target, state, ctx))) && !mods.ignoresCover;
   // Granted weapon abilities (Epic Challenge's [PRECISION], Dispense Justice's [LETHAL HITS]).
   if (mods.grantPrecision && !kw.precision) profile.keywords = { ...profile.keywords, precision: true };
   if (mods.grantLethalHits && !kw.lethalHits) profile.keywords = { ...profile.keywords, lethalHits: true };
+  if (wGrant?.precision && !profile.keywords.precision) profile.keywords = { ...profile.keywords, precision: true };
   // [PRECISION] (24.28): with a visible CHARACTER in the target unit, the attacker may promote
   // that CHARACTER's allocation group to current. The AI/engine always does when it can.
   const precisionActive =
-    (kw.precision || mods.grantPrecision) &&
+    (kw.precision || mods.grantPrecision || !!wGrant?.precision) &&
     target.models.some(
       (m) =>
         m.alive &&
@@ -436,7 +466,7 @@ export function resolveAttack(
     rerollHits: mods.rerollHits,
     rerollWounds: mods.rerollWounds,
     damageReduction: mods.damageReduction,
-    extraAttacks: mods.extraAttacks,
+    extraAttacks: mods.extraAttacks + (wGrant?.extraAttacks ?? 0),
   };
 
   // Allocate damage in casualty order (owner removes from the back, keeping the unit coherent;
@@ -870,6 +900,28 @@ export interface UnitFightParams {
  * resolved SEQUENTIALLY (casualties from one weapon are removed before the next swings), exactly
  * like unit-level shooting. Marks the unit as having fought.
  */
+/** Apply N mortal wounds to a unit (06.02 order: wounded non-CHARACTERs → non-CHARACTERs → chars). */
+function applyMortalsTo(unit: UnitInstance, mortals: number, ctx: EngineContext): UnitInstance {
+  const models = [...unit.models];
+  let left = mortals;
+  while (left > 0) {
+    const alive = models.filter((m) => m.alive);
+    if (alive.length === 0) break;
+    const isChar = (m: ModelInstance) => m.datasheetId != null && m.datasheetId !== unit.datasheetId;
+    const maxW = (m: ModelInstance) => modelDatasheet(m, unit, ctx)?.models[0]?.W ?? m.wounds + 1;
+    const pick =
+      alive.find((m) => !isChar(m) && m.wounds < maxW(m)) ??
+      alive.find((m) => !isChar(m)) ??
+      alive.find((m) => m.wounds < maxW(m)) ??
+      alive[0]!;
+    const k = models.indexOf(pick);
+    const wounds = pick.wounds - 1;
+    models[k] = { ...pick, wounds, alive: wounds > 0 };
+    left--;
+  }
+  return { ...unit, models };
+}
+
 export function resolveUnitFight(
   state: GameState,
   params: UnitFightParams,
@@ -905,6 +957,22 @@ export function resolveUnitFight(
       ...notes.map((n) => `  ${n}`),
     ],
   };
+  // Digital Weapons (Imperialis Fleet enhancement): when the bearer is selected to fight, roll
+  // 3D6 — each 4+ inflicts 1 mortal wound on an engaged enemy (allocated like [PRECISION]; here
+  // the fight target takes them via the normal mortal-wound order — noted simplification).
+  if (hasDigitalWeapons(attacker)) {
+    const rolls = [rng.d6(), rng.d6(), rng.d6()];
+    const mortals = rolls.filter((r) => r >= 4).length;
+    if (mortals > 0) {
+      cur = {
+        ...cur,
+        units: cur.units.map((u) => (u.id === target.id ? applyMortalsTo(u, mortals, ctx) : u)),
+        log: [...cur.log, `  Digital Weapons: 3D6 [${rolls.join(' ')}] → ${mortals} mortal wound(s) to ${tDs.name}`],
+      };
+    } else {
+      cur = { ...cur, log: [...cur.log, `  Digital Weapons: 3D6 [${rolls.join(' ')}] — no effect`] };
+    }
+  }
   let swungCount = 0;
   const skipped: string[] = [];
   for (const w of fire) {
@@ -954,12 +1022,16 @@ function ocModels(state: GameState, ctx: EngineContext): OcModel[] {
   for (const u of state.units) {
     const ds = ctx.datasheets.get(u.datasheetId);
     if (!ds) continue;
-    const ocBonus = ocBonusFromOrders(u);
+    const ocBonus = ocBonusFromOrders(u) + enhancementOcBonus(u);
     for (const m of u.models) {
       if (!m.alive) continue;
       const mds = modelDatasheet(m, u, ctx) ?? ds; // per-model (a merged Leader has its own OC)
-      // Battle-shocked units have OC 0; otherwise add any Order/detachment OC bonus.
-      const oc = u.status.battleShocked ? 0 : mds.models[0]!.OC + ocBonus;
+      // Battle-shocked units have OC 0 — Death Mask of Ollanius keeps OC−1 instead.
+      const oc = u.status.battleShocked
+        ? shockedOcFloor(u)
+          ? Math.max(0, mds.models[0]!.OC + ocBonus - 1)
+          : 0
+        : mds.models[0]!.OC + ocBonus;
       out.push({ pos: m.pos, oc, radius: baseRadius(mds.baseShape), owner: u.owner });
     }
   }
@@ -1001,7 +1073,7 @@ export function runCommandPhase(state: GameState, ctx: EngineContext, rng: RNG):
     if (!ds) return { ...u, status: { ...u.status, battleShocked: false } };
     const alive = aliveCount(u);
     if (alive === 0) return u;
-    const ld = ds.models[0]!.Ld - ldBonusFromOrders(u); // +Ld = a lower target number (easier test)
+    const ld = ds.models[0]!.Ld - ldBonusFromOrders(u) - enhancementLdBonus(u); // +Ld = a lower target number
     const woundsFraction =
       u.startingModels === 1 ? u.models[0]!.wounds / Math.max(1, ds.models[0]!.W) : undefined;
     // Insane Bravery (15.04): a pre-paid battle-shock roll is automatically successful. The

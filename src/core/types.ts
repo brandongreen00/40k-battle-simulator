@@ -268,6 +268,8 @@ export interface UnitInstance {
   /** Full wargear item→count map from the roster (e.g. {"Meltagun": 1, "Navis shotgun": 7}).
    *  Drives how many models fire a given weapon. Absent for units spawned without loadout data. */
   wargearCounts?: Record<string, number>;
+  /** The roster entry's Enhancement (Wahapedia id) — drives in-game effects (core/enhancements.ts). */
+  enhancementId?: string;
   /** Defender's casualty-allocation preference (persists; set by the owner):
    *  'shields_first' (default) — defensive-wargear bearers (4++ shields…) soak wounds first;
    *  'bodies_first' — regular models die first, preserving the wargear bearers for later. */
@@ -292,6 +294,8 @@ export interface UnitInstance {
     wounds: number;
     /** The Leader's own wargear counts, preserved through the merge (restored on detach). */
     wargearCounts?: Record<string, number>;
+    /** The Leader's Enhancement, preserved through the merge (its effects cover the led unit). */
+    enhancementId?: string;
   }[];
 }
 
@@ -496,6 +500,13 @@ export interface SetupState {
   splits?: DeclaredSplit[];
   /** Warrant of Trade redeploy state per side, once that side has used (or declined) it. */
   warrant?: Partial<Record<Side, WarrantState>>;
+  /** Army-wide Declare Battle Formations enhancement picks (Clandestine Operation's Infiltrators,
+   *  Combat Landers' Deep Strike): which roster entries were granted the ability. A record with
+   *  empty entryKeys marks the decision as resolved-without-picks. */
+  grants?: { side: Side; enhancementId: string; label: string; grant: 'infiltrators' | 'deep_strike'; entryKeys: string[] }[];
+  /** Post-deployment enhancement redeploys (Liber Heresius etc.), Warrant-of-Trade mould:
+   *  present once used/declined; `remaining` counts down as units are pulled back. */
+  redeploy?: Partial<Record<Side, { enhancementId: string; label: string; remaining: number }>>;
   /** Roll-off that set the first turn (for the dice display). */
   firstTurnRoll?: RollOff;
   firstTurn?: Side;

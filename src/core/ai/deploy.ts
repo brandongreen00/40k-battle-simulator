@@ -9,6 +9,7 @@
 import type { Datasheet, DeclaredFormation, GameState, Roster, RosterUnit, Side, Vec2 } from '../types';
 import { otherSide } from '../setup';
 import { checkUnitDeployment, isEntryPlaced, zoneFor, type DeployAbility } from '../deployment';
+import { grantedDeployAbility } from '../enhancements';
 import { occupiedBases } from '../collision';
 import { formationPositions } from '../formation';
 import { canAttach, isCharacter } from '../leaders';
@@ -398,9 +399,13 @@ export function aiDeployAction(state: GameState, side: Side, profile: AiProfile,
   const pairedLeaderEntry = pair
     ? rosterEntries(deps.rosters[side], side, deps.ctx).find((e) => e.key === pair.leaderKey)
     : undefined;
-  const ability: DeployAbility = pair
+  const baseAbility: DeployAbility = pair
     ? pairDeployAbility(pair, deps.ctx, deps.deployAbility)
     : deps.deployAbility(entry.ds);
+  // A declared Battle Formations grant (Clandestine Operation's Infiltrators) upgrades a standard
+  // deployer; datasheet Deep Strike / Infiltrators keep priority.
+  const grantAb = grantedDeployAbility(state, entry.key);
+  const ability: DeployAbility = baseAbility === 'standard' && grantAb === 'infiltrators' ? 'infiltrators' : baseAbility;
 
   const common = {
     unitId: entry.key,
@@ -410,6 +415,7 @@ export function aiDeployAction(state: GameState, side: Side, profile: AiProfile,
     modelCount: entry.unit.modelCount,
     wounds: entry.ds.models[0]?.W ?? 1,
     ...(entry.unit.wargearCounts ? { wargear: entry.unit.wargearCounts } : {}),
+    ...(entry.unit.enhancementId ? { enhancementId: entry.unit.enhancementId } : {}),
   };
   const leaderCommon = pairedLeaderEntry
     ? {
@@ -420,6 +426,7 @@ export function aiDeployAction(state: GameState, side: Side, profile: AiProfile,
         modelCount: pairedLeaderEntry.unit.modelCount,
         wounds: pairedLeaderEntry.ds.models[0]?.W ?? 1,
         ...(pairedLeaderEntry.unit.wargearCounts ? { wargear: pairedLeaderEntry.unit.wargearCounts } : {}),
+        ...(pairedLeaderEntry.unit.enhancementId ? { enhancementId: pairedLeaderEntry.unit.enhancementId } : {}),
       }
     : null;
   const mergeIntents = (leaderUnitId: string, bodyguardUnitId: string): AiIntent => ({

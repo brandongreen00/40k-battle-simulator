@@ -6,6 +6,7 @@
 
 import type { GameState, Side, UnitInstance } from '../types';
 import { unitIsOfficer, canReceiveOrders, AM_ORDERS } from '../orders';
+import { extraOrderCount } from '../enhancements';
 import { orderableUnits, isOnBoard, engagedEnemies } from '../phases';
 import { objectiveControl, availableUnitWeapons } from '../engine';
 import { parseKeywords } from '../keywords';
@@ -67,13 +68,15 @@ export function aiCommandAction(state: GameState, side: Side, profile: AiProfile
   const myUnits = state.units.filter((u) => u.owner === side && isOnBoard(u));
   const detachment = deps.detachments[side] ?? '';
 
-  // AM Orders (Voice of Command): one per Officer, +1 for Grizzled Company.
-  const ordersPerOfficer = detachment === 'Grizzled Company' ? 2 : 1;
+  // AM Orders (Voice of Command): one per Officer, +1 for Grizzled Company, +1 for a Grand
+  // Strategist (Combined Arms) bearer.
+  const baseOrdersPerOfficer = detachment === 'Grizzled Company' ? 2 : 1;
   const ordered = new Set<string>();
   for (const officer of myUnits) {
     // unitIsOfficer sees through the Leader merge: Yarrick attached to a Death Korps squad
     // still issues Orders (and may order his own unit — orderableUnits includes it).
     if (!unitIsOfficer(officer, ctx)) continue;
+    const ordersPerOfficer = baseOrdersPerOfficer + extraOrderCount(officer);
     let issued = 0;
     const targets = orderableUnits(officer, state, ctx)
       .filter((t) => !ordered.has(t.id) && canReceiveOrders(ctx.datasheets.get(t.datasheetId), t))

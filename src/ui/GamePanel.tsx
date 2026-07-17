@@ -11,7 +11,7 @@ import {
   gapBetween, type Eligibility,
 } from '../core/phases';
 import { disembarkMode, embarkOptions } from '../core/transport';
-import { AM_ORDERS, unitIsOfficer } from '../core/orders';
+import { ordersAvailableTo, unitIsOfficer } from '../core/orders';
 import { secondaryCard } from '../core/secondaries';
 import { dispositionName, MISSION_NAMES, PRIMARY_CAP, actionsForSide, objectivePoints } from '../core/missions11';
 import { canStartAction, SECONDARY_ACTIONS } from '../core/missionflow';
@@ -319,7 +319,7 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
                         onChange={(e) => { if (e.target.value) issueOrder(t.id, e.target.value); }}
                       >
                         <option value="">— issue order —</option>
-                        {AM_ORDERS.map((o) => <option key={o.id} value={o.effectId} title={o.desc}>{o.name} — {o.desc}</option>)}
+                        {ordersAvailableTo(off).map((o) => <option key={o.id} value={o.effectId} title={o.desc}>{o.name} — {o.desc}</option>)}
                       </select>
                     </div>
                   ))

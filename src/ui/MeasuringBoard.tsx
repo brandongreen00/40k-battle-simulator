@@ -8,6 +8,7 @@ import { anyOverlap, occupiedBases, unitOverlaps } from '../core/collision';
 import { unitCoherency, unitCentroid } from '../core/phases';
 import { gapBetweenBases } from '../core/geometry';
 import { canEmbark, remainingCapacity, splitRideCounts, splitRuleSelects, transportSplitRule } from '../core/transport';
+import { grantedDeployAbility } from '../core/enhancements';
 import { planUnitShooting } from '../core/engine';
 import { defensiveProfileForItem } from '../core/wargear';
 import {
@@ -429,15 +430,19 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
   }
 
   /** Pick a unit up for deployment placement (ghost tracks the cursor, zone-limited). A paired
-   *  Bodyguard deploys with its declared pair ability (e.g. Backroom Deals → Infiltrators). */
+   *  Bodyguard deploys with its declared pair ability (e.g. Backroom Deals → Infiltrators);
+   *  a Clandestine Operation-style Battle Formations grant upgrades a standard deployer. */
   function beginDeploy(entry: DeployEntry, side: Side) {
     const pair = formationForBodyguard(state, entry.key);
-    const ability = pair
+    let ability = pair
       ? (() => {
           const a = pairDeployAbility(pair, { datasheets: datasheetsById }, deployAbilityForDatasheet);
           return a === 'deep_strike' ? 'standard' : a; // on-board placement; Reserves handles DS
         })()
       : deployAbilityForDatasheet(entry.ds);
+    if (ability === 'standard' && grantedDeployAbility(state, entry.key) === 'infiltrators') {
+      ability = 'infiltrators';
+    }
     setPlacing({ unit: entry.unit, ds: entry.ds, formation: 'block', rotation: 0, side, entryKey: entry.key, ability });
   }
   /** Pick a unit up for free sandbox placement (no zone restriction). */
@@ -455,6 +460,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
       modelCount: placing.unit.modelCount,
       wounds: placing.ds.models[0]?.W ?? 1,
       ...(placing.unit.wargearCounts ? { wargear: placing.unit.wargearCounts } : {}),
+      ...(placing.unit.enhancementId ? { enhancementId: placing.unit.enhancementId } : {}),
     };
     if (placing.disembarkUnitId) {
       dispatch({ type: 'DisembarkUnit', unitId: placing.disembarkUnitId, anchor, formation: placing.formation, rotation: placing.rotation });
@@ -481,6 +487,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
           modelCount: leaderEntry.unit.modelCount,
           wounds: leaderEntry.ds.models[0]?.W ?? 1,
           ...(leaderEntry.unit.wargearCounts ? { wargear: leaderEntry.unit.wargearCounts } : {}),
+          ...(leaderEntry.unit.enhancementId ? { enhancementId: leaderEntry.unit.enhancementId } : {}),
         });
         dispatch({ type: 'AttachLeader', leaderUnitId: pair.leaderKey, bodyguardUnitId: placing.entryKey });
       }
@@ -558,7 +565,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
 
   function placeReserves(entry: DeployEntry, side: Side) {
     const ds = entry.ds;
-    dispatch({ type: 'PlaceInReserves', unitId: entry.key, owner: side, datasheetId: ds.id, baseShape: ds.baseShape, modelCount: entry.unit.modelCount, wounds: ds.models[0]?.W ?? 1, ...(entry.unit.wargearCounts ? { wargear: entry.unit.wargearCounts } : {}) });
+    dispatch({ type: 'PlaceInReserves', unitId: entry.key, owner: side, datasheetId: ds.id, baseShape: ds.baseShape, modelCount: entry.unit.modelCount, wounds: ds.models[0]?.W ?? 1, ...(entry.unit.wargearCounts ? { wargear: entry.unit.wargearCounts } : {}), ...(entry.unit.enhancementId ? { enhancementId: entry.unit.enhancementId } : {}) });
     // A paired Leader follows its unit into Reserves and merges there.
     const pair = formationForBodyguard(state, entry.key);
     const leaderEntry = pair ? entriesFor(side).find((e) => e.key === pair.leaderKey) : undefined;
@@ -568,6 +575,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
         unitId: pair.leaderKey, owner: side, datasheetId: leaderEntry.ds.id, baseShape: leaderEntry.ds.baseShape,
         modelCount: leaderEntry.unit.modelCount, wounds: leaderEntry.ds.models[0]?.W ?? 1,
         ...(leaderEntry.unit.wargearCounts ? { wargear: leaderEntry.unit.wargearCounts } : {}),
+        ...(leaderEntry.unit.enhancementId ? { enhancementId: leaderEntry.unit.enhancementId } : {}),
       });
       dispatch({ type: 'AttachLeader', leaderUnitId: pair.leaderKey, bodyguardUnitId: entry.key });
     }
@@ -811,6 +819,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
                                 wounds: e.ds.models[0]?.W ?? 1, anchor: { x: 0, y: 0 },
                                 intoTransportId: bus.id,
                                 ...(e.unit.wargearCounts ? { wargear: e.unit.wargearCounts } : {}),
+                                ...(e.unit.enhancementId ? { enhancementId: e.unit.enhancementId } : {}),
                               });
                             }}
                           >
@@ -832,7 +841,12 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
                       </>
                     )}
                     <span className="unit-name">{e.ds.name}{pair ? ' ⚑' : ''}{e.half === 'a' ? ' · riders' : e.half === 'b' ? ' · on foot' : ''}</span>
-                    <span className="unit-meta">×{e.unit.modelCount}{deployAbilityForDatasheet(e.ds) !== 'standard' ? ` · ${deployAbilityForDatasheet(e.ds) === 'infiltrators' ? 'Infiltrators' : 'Deep Strike'}` : ''}{pair?.infiltrate ? ' · Infiltrators (granted)' : ''}</span>
+                    <span className="unit-meta">
+                      ×{e.unit.modelCount}
+                      {deployAbilityForDatasheet(e.ds) !== 'standard' ? ` · ${deployAbilityForDatasheet(e.ds) === 'infiltrators' ? 'Infiltrators' : 'Deep Strike'}` : ''}
+                      {pair?.infiltrate ? ' · Infiltrators (granted)' : ''}
+                      {grantedDeployAbility(state, e.key) === 'infiltrators' ? ' · Infiltrators ✨' : grantedDeployAbility(state, e.key) === 'deep_strike' ? ' · Deep Strike ✨' : ''}
+                    </span>
                     {splitting?.entryKey === e.key && !placed && (
                       <SplitEditor
                         state={state}

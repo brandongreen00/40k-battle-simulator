@@ -889,6 +889,24 @@ button.remove {
 .embark-select:hover {
   border-color: var(--accent);
 }
+/* Declare Battle Formations enhancement grant picker (Clandestine Operation…) */
+.grant-picker {
+  border: 1px solid #6d5a1f;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #1d1a10;
+}
+.grant-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  cursor: pointer;
+}
+.grant-row input {
+  width: 16px;
+  height: 16px;
+}
 /* Inline transport-split editor (Immolator: half rides, half walks) */
 .split-editor {
   flex-basis: 100%;
