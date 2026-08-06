@@ -1,0 +1,1785 @@
+[
+ {
+  "id": "cp-crowes-sanctifiers-strike-squad",
+  "name": "Crowe's Sanctifiers Strike Squad",
+  "faction": "Grey Knights",
+  "role": "Battleline",
+  "loadout": "The Grey Knight with Incinerator and Ceramite Fists is equipped with: 1 Ceramite Fists; 1 Incinerator. The Grey Knight with Psycannon and Ceramite Fists is equipped with: 1 Ceramite Fists; 1 Psycannon. The Justicar is equipped with: 1 Nemesis Force Weapon; 1 Storm Bolter. Every Grey Knight with Storm Bolter and Nemesis Force Weapon is equipped with: 1 Nemesis Force Weapon; 1 Storm Bolter.",
+  "models": [
+   {
+    "name": "Grey Knight with Incinerator and Ceramite Fists",
+    "M": 6,
+    "T": 4,
+    "Sv": 2,
+    "W": 2,
+    "Ld": 6,
+    "OC": 2
+   },
+   {
+    "name": "Grey Knight with Psycannon and Ceramite Fists",
+    "M": 6,
+    "T": 4,
+    "Sv": 2,
+    "W": 2,
+    "Ld": 6,
+    "OC": 2
+   },
+   {
+    "name": "Grey Knight with Storm Bolter and Nemesis Force Weapon",
+    "M": 6,
+    "T": 4,
+    "Sv": 2,
+    "W": 2,
+    "Ld": 6,
+    "OC": 2
+   },
+   {
+    "name": "Justicar",
+    "M": 6,
+    "T": 4,
+    "Sv": 2,
+    "W": 2,
+    "Ld": 6,
+    "OC": 2
+   }
+  ],
+  "weapons": [
+   {
+    "name": "Incinerator",
+    "type": "ranged",
+    "range": 12,
+    "attacks": "D6",
+    "skill": 0,
+    "S": 6,
+    "AP": -1,
+    "D": "1",
+    "keywords": [
+     "IGNORES COVER",
+     "TORRENT"
+    ]
+   },
+   {
+    "name": "Psycannon",
+    "type": "ranged",
+    "range": 24,
+    "attacks": "3",
+    "skill": 3,
+    "S": 8,
+    "AP": -1,
+    "D": "2",
+    "keywords": [
+     "PSYCHIC"
+    ]
+   },
+   {
+    "name": "Storm Bolter",
+    "type": "ranged",
+    "range": 24,
+    "attacks": "2",
+    "skill": 3,
+    "S": 4,
+    "AP": 0,
+    "D": "1",
+    "keywords": [
+     "RAPID FIRE 2"
+    ]
+   },
+   {
+    "name": "Ceramite Fists",
+    "type": "melee",
+    "attacks": "3",
+    "skill": 3,
+    "S": 4,
+    "AP": 0,
+    "D": "1",
+    "keywords": []
+   },
+   {
+    "name": "Nemesis Force Weapon",
+    "type": "melee",
+    "attacks": "3",
+    "skill": 3,
+    "S": 6,
+    "AP": -2,
+    "D": "2",
+    "keywords": [
+     "PSYCHIC"
+    ]
+   }
+  ],
+  "baseShape": {
+   "kind": "circle",
+   "radius": 0.6299
+  },
+  "keywords": [
+   "BATTLELINE",
+   "CROWE'S SANCTIFIERS",
+   "EXPLOSIVES",
+   "IMPERIUM",
+   "INFANTRY",
+   "PSYKER",
+   "GREY KNIGHTS"
+  ],
+  "abilityIds": [],
+  "abilities": [
+   {
+    "name": "GATE OF INFINITY",
+    "description": "If your Army Faction is GREY KNIGHTS, at the end of your opponent's Fight phase, you can select a number of units (see below) from your army that are on the battlefield (excluding units that are within Engagement Range of one or more enemy units), provided every model in those units has this ability. The maximum number of units you can select depends on the battle size, as follows:\nOnce you have made your selections, remove those units from the battlefield and place them into Strategic Reserves.",
+    "type": "Faction"
+   },
+   {
+    "name": "SANCTIFYING RITUAL (PSYCHIC)",
+    "description": "At the end of your Command phase, if this unit is controlling an objective, that objective is secured.",
+    "type": "Datasheet"
+   },
+   {
+    "name": "COMBAT SQUAD",
+    "description": "At the start of the Declare Battle Formations step, you can split this unit into two separate units, each containing five models.",
+    "type": "Datasheet"
+   }
+  ],
+  "composition": [
+   "1 Grey Knight with Incinerator and Ceramite Fists model",
+   "1 Grey Knight with Psycannon and Ceramite Fists model",
+   "1 Justicar model",
+   "7 Grey Knight with Storm Bolter and Nemesis Force Weapon models"
+  ],
+  "patrol": "crowes_sanctifiers"
+ },
+ {
+  "id": "cp-crowes-sanctifiers-castellan-crowe",
+  "name": "Sanctifiers Castellan Crowe",
+  "faction": "Grey Knights",
+  "role": "Characters",
+  "loadout": "This model is equipped with: 1 Black Blade of Antwyr; 1 Purifying Flame; 1 Storm Bolter.",
+  "models": [
+   {
+    "name": "Sanctifiers Castellan Crowe",
+    "M": 6,
+    "T": 4,
+    "Sv": 2,
+    "invuln": 4,
+    "W": 5,
+    "Ld": 6,
+    "OC": 1
+   }
+  ],
+  "weapons": [
+   {
+    "name": "Purifying Flame",
+    "type": "ranged",
+    "range": 18,
+    "attacks": "3",
+    "skill": 2,
+    "S": 4,
+    "AP": -2,
+    "D": "1",
+    "keywords": [
+     "ANTI-INFANTRY 2+",
+     "IGNORES COVER",
+     "PSYCHIC"
+    ]
+   },
+   {
+    "name": "Storm Bolter",
+    "type": "ranged",
+    "range": 24,
+    "attacks": "2",
+    "skill": 2,
+    "S": 4,
+    "AP": 0,
+    "D": "1",
+    "keywords": [
+     "RAPID FIRE 2"
+    ]
+   },
+   {
+    "name": "Black Blade of Antwyr",
+    "type": "melee",
+    "attacks": "5",
+    "skill": 2,
+    "S": 6,
+    "AP": -2,
+    "D": "2",
+    "keywords": [
+     "DEVASTATING WOUNDS",
+     "PRECISION"
+    ]
+   }
+  ],
+  "baseShape": {
+   "kind": "circle",
+   "radius": 0.7874
+  },
+  "keywords": [
+   "CHARACTER",
+   "CROWE'S SANCTIFIERS",
+   "EPIC HERO",
+   "EXPLOSIVES",
+   "IMPERIUM",
+   "INFANTRY",
+   "PSYKER",
+   "GREY KNIGHTS"
+  ],
+  "abilityIds": [],
+  "abilities": [
+   {
+    "name": "GATE OF INFINITY",
+    "description": "If your Army Faction is GREY KNIGHTS, at the end of your opponent's Fight phase, you can select a number of units (see below) from your army that are on the battlefield (excluding units that are within Engagement Range of one or more enemy units), provided every model in those units has this ability. The maximum number of units you can select depends on the battle size, as follows:\nOnce you have made your selections, remove those units from the battlefield and place them into Strategic Reserves.",
+    "type": "Faction"
+   },
+   {
+    "name": "FOESIGHT (PSYCHIC)",
+    "description": "This unit's attacks that target a CHARACTER unit can re-roll hit rolls.",
+    "type": "Datasheet"
+   }
+  ],
+  "composition": [
+   "1 Castellan Crowe model"
+  ],
+  "patrol": "crowes_sanctifiers"
+ },
+ {
+  "id": "cp-crowes-sanctifiers-venerable-dreadnought",
+  "name": "Crowe's Sanctifiers Venerable Dreadnought",
+  "faction": "Grey Knights",
+  "role": "Characters",
+  "loadout": "This model is equipped with: 1 Dreadnought Fist; 1 Storm Bolter; 1 Twin Lascannon.",
+  "models": [
+   {
+    "name": "Crowe's Sanctifiers Venerable Dreadnought",
+    "M": 8,
+    "T": 9,
+    "Sv": 2,
+    "W": 8,
+    "Ld": 6,
+    "OC": 3
+   }
+  ],
+  "weapons": [
+   {
+    "name": "Storm Bolter",
+    "type": "ranged",
+    "range": 24,
+    "attacks": "2",
+    "skill": 3,
+    "S": 4,
+    "AP": 0,
+    "D": "1",
+    "keywords": [
+     "RAPID FIRE 2"
+    ]
+   },
+   {
+    "name": "Twin Lascannon",
+    "type": "ranged",
+    "range": 48,
+    "attacks": "1",
+    "skill": 3,
+    "S": 12,
+    "AP": -3,
+    "D": "D6+1",
+    "keywords": [
+     "TWIN-LINKED"
+    ]
+   },
+   {
+    "name": "Dreadnought Fist",
+    "type": "melee",
+    "attacks": "5",
+    "skill": 3,
+    "S": 12,
+    "AP": -2,
+    "D": "3",
+    "keywords": []
+   }
+  ],
+  "baseShape": {
+   "kind": "circle",
+   "radius": 1.1811
+  },
+  "keywords": [
+   "CHARACTER",
+   "CROWE'S SANCTIFIERS",
+   "IMPERIUM",
+   "PSYKER",
+   "SMOKE",
+   "VEHICLE",
+   "VENERABLE DREADNOUGHT",
+   "WALKER",
+   "GREY KNIGHTS"
+  ],
+  "abilityIds": [],
+  "abilities": [
+   {
+    "name": "GATE OF INFINITY",
+    "description": "If your Army Faction is GREY KNIGHTS, at the end of your opponent's Fight phase, you can select a number of units (see below) from your army that are on the battlefield (excluding units that are within Engagement Range of one or more enemy units), provided every model in those units has this ability. The maximum number of units you can select depends on the battle size, as follows:\nOnce you have made your selections, remove those units from the battlefield and place them into Strategic Reserves.",
+    "type": "Faction"
+   },
+   {
+    "name": "GUIDANCE OF THE ANCIENTS (PSYCHIC)",
+    "description": "In your Shooting phase, when this unit has shot, you can select one enemy unit hit by those ranged attacks. If you do, friendly GREY KNIGHTS models' ranged attacks that target that enemy unit have +1 to hit rolls.",
+    "type": "Datasheet"
+   }
+  ],
+  "composition": [
+   "1 Venerable Dreadnought model"
+  ],
+  "cpReserveRound": 3,
+  "patrol": "crowes_sanctifiers"
+ },
+ {
+  "id": "cp-crowes-sanctifiers-brotherhood-terminator-squad",
+  "name": "Crowe's Sanctifiers Brotherhood Terminator Squad",
+  "faction": "Grey Knights",
+  "role": "Battleline",
+  "loadout": "The Brotherhood Terminator Justicar is equipped with: 1 Nemesis Force Weapon; 1 Storm Bolter. The Brotherhood Terminator with Psycannon and Nemesis Force Weapon is equipped with: 1 Nemesis Force Weapon; 1 Psycannon. Every Brotherhood Terminator with Storm Bolter and Nemesis Force Weapon is equipped with: 1 Nemesis Force Weapon; 1 Storm Bolter.",
+  "models": [
+   {
+    "name": "Brotherhood Terminator Justicar",
+    "M": 5,
+    "T": 5,
+    "Sv": 2,
+    "invuln": 4,
+    "W": 3,
+    "Ld": 6,
+    "OC": 2
+   },
+   {
+    "name": "Brotherhood Terminator with Storm Bolter and Nemesis Force Weapon",
+    "M": 5,
+    "T": 5,
+    "Sv": 2,
+    "invuln": 4,
+    "W": 3,
+    "Ld": 6,
+    "OC": 2
+   },
+   {
+    "name": "Brotherhood Terminator with Psycannon and Nemesis Force Weapon",
+    "M": 5,
+    "T": 5,
+    "Sv": 2,
+    "invuln": 4,
+    "W": 3,
+    "Ld": 6,
+    "OC": 2
+   }
+  ],
+  "weapons": [
+   {
+    "name": "Psycannon",
+    "type": "ranged",
+    "range": 24,
+    "attacks": "3",
+    "skill": 3,
+    "S": 8,
+    "AP": -1,
+    "D": "2",
+    "keywords": [
+     "PSYCHIC"
+    ]
+   },
+   {
+    "name": "Storm Bolter",
+    "type": "ranged",
+    "range": 24,
+    "attacks": "2",
+    "skill": 3,
+    "S": 4,
+    "AP": 0,
+    "D": "1",
+    "keywords": [
+     "RAPID FIRE 2"
+    ]
+   },
+   {
+    "name": "Nemesis Force Weapon",
+    "type": "melee",
+    "attacks": "4",
+    "skill": 3,
+    "S": 6,
+    "AP": -2,
+    "D": "2",
+    "keywords": [
+     "PSYCHIC"
+    ]
+   }
+  ],
+  "baseShape": {
+   "kind": "circle",
+   "radius": 0.7874
+  },
+  "keywords": [
+   "BATTLELINE",
+   "BROTHERHOOD TERMINATOR SQUAD",
+   "CROWE'S SANCTIFIERS",
+   "EXPLOSIVES",
+   "IMPERIUM",
+   "INFANTRY",
+   "PSYKER",
+   "TERMINATOR",
+   "GREY KNIGHTS"
+  ],
+  "abilityIds": [],
+  "abilities": [
+   {
+    "name": "GATE OF INFINITY",
+    "description": "If your Army Faction is GREY KNIGHTS, at the end of your opponent's Fight phase, you can select a number of units (see below) from your army that are on the battlefield (excluding units that are within Engagement Range of one or more enemy units), provided every model in those units has this ability. The maximum number of units you can select depends on the battle size, as follows:\nOnce you have made your selections, remove those units from the battlefield and place them into Strategic Reserves.",
+    "type": "Faction"
+   },
+   {
+    "name": "FORCE EDGE (PSYCHIC)",
+    "description": "This unit's melee attacks that target a unit (excluding MONSTER/VEHICLE units) have +1 AP.",
+    "type": "Datasheet"
+   }
+  ],
+  "composition": [
+   "1 Brotherhood Terminator Justicar model",
+   "1 Brotherhood Terminator with Psycannon and Nemesis Force Weapon model",
+   "3 Brotherhood Terminator with Storm Bolter and Nemesis Force Weapon models"
+  ],
+  "cpReserveRound": 2,
+  "patrol": "crowes_sanctifiers"
+ },
+ {
+  "id": "cp-inquisitors-hand-preacher-teguen",
+  "name": "Preacher Teguen",
+  "faction": "Agents of the Imperium",
+  "role": "Characters",
+  "loadout": "This model is equipped with: 1 Zealot's Vindictor.",
+  "models": [
+   {
+    "name": "Preacher Teguen",
+    "M": 6,
+    "T": 3,
+    "Sv": 6,
+    "invuln": 4,
+    "W": 3,
+    "Ld": 7,
+    "OC": 1
+   }
+  ],
+  "weapons": [
+   {
+    "name": "Zealot's Vindictor",
+    "type": "ranged",
+    "range": 12,
+    "attacks": "D6",
+    "skill": 0,
+    "S": 5,
+    "AP": 0,
+    "D": "1",
+    "keywords": [
+     "IGNORES COVER",
+     "TORRENT"
+    ]
+   },
+   {
+    "name": "Zealot's Vindictor",
+    "type": "melee",
+    "attacks": "3",
+    "skill": 4,
+    "S": 5,
+    "AP": -1,
+    "D": "2",
+    "keywords": []
+   }
+  ],
+  "baseShape": {
+   "kind": "circle",
+   "radius": 0.6299
+  },
+  "keywords": [
+   "CHARACTER",
+   "IMPERIUM",
+   "INFANTRY",
+   "INQUISITOR'S HAND",
+   "MINISTORUM PRIEST",
+   "ORDO HERETICUS",
+   "AGENTS OF THE IMPERIUM"
+  ],
+  "abilityIds": [],
+  "abilities": [
+   {
+    "name": "ASSIGNED AGENTS",
+    "description": "",
+    "type": "Faction"
+   },
+   {
+    "name": "ZEALOT (ONCE PER BATTLE PER UNIT)",
+    "description": "When this unit is selected to fight, you can use this ability. If you do, this model's melee attacks have +3 A and S.",
+    "type": "Datasheet"
+   },
+   {
+    "name": "HOLY HATRED",
+    "description": "If this is an Attached unit, this unit's melee attacks have [SUSTAINED HITS 1].",
+    "type": "Datasheet"
+   }
+  ],
+  "composition": [
+   "1 Preacher Teguen model"
+  ],
+  "canLead": [
+   "cp-inquisitors-hand-inquisitorial-agents"
+  ],
+  "patrol": "inquisitors_hand"
+ },
+ {
+  "id": "cp-inquisitors-hand-vigilant-squad",
+  "name": "Inquisitor's Hand Vigilant Squad",
+  "faction": "Agents of the Imperium",
+  "role": "Battleline",
+  "loadout": "The Cyber-Mastiff is equipped with: 1 Mechanical Bite. The Proctor-Vigilant is equipped with: 1 Combat Shotgun; 1 Gun Stocks; Nuncio-Aquila; 1 Shotpistol. The Vigilant with Grenade Launcher, Shotpistol and Gun Stocks is equipped with: 1 Grenade Launcher - Frag; 1 Gun Stocks; 1 Shotpistol. The Vigilant with Shotpistol, Webber and Gun Stocks is equipped with: 1 Gun Stocks; 1 Shotpistol; 1 Webber. Every Vigilant with Combat Shotgun, Shotpistol and Gun Stocks is equipped with: 1 Combat Shotgun; 1 Gun Stocks; 1 Shotpistol.",
+  "models": [
+   {
+    "name": "Cyber-Mastiff",
+    "M": 6,
+    "T": 3,
+    "Sv": 4,
+    "W": 1,
+    "Ld": 7,
+    "OC": 2
+   },
+   {
+    "name": "Proctor-Vigilant",
+    "M": 6,
+    "T": 3,
+    "Sv": 4,
+    "W": 1,
+    "Ld": 7,
+    "OC": 2
+   },
+   {
+    "name": "Vigilant with Combat Shotgun, Shotpistol and Gun Stocks",
+    "M": 6,
+    "T": 3,
+    "Sv": 4,
+    "W": 1,
+    "Ld": 7,
+    "OC": 2
+   },
+   {
+    "name": "Vigilant with Grenade Launcher, Shotpistol and Gun Stocks",
+    "M": 6,
+    "T": 3,
+    "Sv": 4,
+    "W": 1,
+    "Ld": 7,
+    "OC": 2
+   },
+   {
+    "name": "Vigilant with Shotpistol, Webber and Gun Stocks",
+    "M": 6,
+    "T": 3,
+    "Sv": 4,
+    "W": 1,
+    "Ld": 7,
+    "OC": 2
+   }
+  ],
+  "weapons": [
+   {
+    "name": "Combat Shotgun",
+    "type": "ranged",
+    "range": 18,
+    "attacks": "2",
+    "skill": 4,
+    "S": 4,
+    "AP": 0,
+    "D": "1",
+    "keywords": []
+   },
+   {
+    "name": "Grenade Launcher – Frag",
+    "type": "ranged",
+    "range": 24,
+    "attacks": "D3",
+    "skill": 4,
+    "S": 4,
+    "AP": 0,
+    "D": "1",
+    "keywords": [
+     "BLAST 1"
+    ]
+   },
+   {
+    "name": "Grenade Launcher – Krak",
+    "type": "ranged",
+    "range": 24,
+    "attacks": "1",
+    "skill": 4,
+    "S": 9,
+    "AP": -2,
+    "D": "D3",
+    "keywords": []
+   },
+   {
+    "name": "Shotpistol",
+    "type": "ranged",
+    "range": 12,
+    "attacks": "1",
+    "skill": 4,
+    "S": 4,
+    "AP": 0,
+    "D": "1",
+    "keywords": [
+     "CLOSE-QUARTERS"
+    ]
+   },
+   {
+    "name": "Webber",
+    "type": "ranged",
+    "range": 12,
+    "attacks": "D6",
+    "skill": 3,
+    "S": 2,
+    "AP": 0,
+    "D": "1",
+    "keywords": [
+     "ASSAULT",
+     "DEVASTATING WOUNDS"
+    ]
+   },
+   {
+    "name": "Gun Stocks",
+    "type": "melee",
+    "attacks": "2",
+    "skill": 4,
+    "S": 3,
+    "AP": 0,
+    "D": "1",
+    "keywords": []
+   },
+   {
+    "name": "Mechanical Bite",
+    "type": "melee",
+    "attacks": "3",
+    "skill": 4,
+    "S": 4,
+    "AP": 0,
+    "D": "1",
+    "keywords": []
+   }
+  ],
+  "baseShape": {
+   "kind": "circle",
+   "radius": 0.561
+  },
+  "keywords": [
+   "ADEPTUS ARBITES",
+   "BATTLELINE",
+   "EXPLOSIVES",
+   "IMPERIUM",
+   "INFANTRY",
+   "INQUISITOR'S HAND",
+   "RETINUE",
+   "AGENTS OF THE IMPERIUM"
+  ],
+  "abilityIds": [],
+  "abilities": [
+   {
+    "name": "ASSIGNED AGENTS",
+    "description": "",
+    "type": "Faction"
+   },
+   {
+    "name": "NUNCIO-AQUILA",
+    "description": "At the start of the Command phase, you can use this ability. If you do, select one objective within 6\" of this model that has not been selected for this ability this turn. Enemy units (excluding MONSTER/VEHICLE units) within range of that objective must make a battle-shock roll.",
+    "type": "Datasheet"
+   },
+   {
+    "name": "MERCILESS JUDGEMENT",
+    "description": "This unit's ranged attacks that target a unit below half-strength have +1 to wound rolls.",
+    "type": "Datasheet"
+   }
+  ],
+  "composition": [
+   "1 Cyber-Mastiff model",
+   "1 Proctor-Vigilant model",
+   "1 Vigilant with Grenade Launcher, Shotpistol and Gun Stocks model",
+   "1 Vigilant with Shotpistol, Webber and Gun Stocks model",
+   "6 Vigilant with Combat Shotgun, Shotpistol and Gun Stocks models"
+  ],
+  "patrol": "inquisitors_hand"
+ },
+ {
+  "id": "cp-inquisitors-hand-eversor-assassin",
+  "name": "Inquisitor's Hand Eversor Assassin",
+  "faction": "Agents of the Imperium",
+  "role": "Characters",
+  "loadout": "This model is equipped with: 1 Executioner Pistol; 1 Power Sword and Neuro-Gauntlet.",
+  "models": [
+   {
+    "name": "Eversor Assassin",
+    "M": 9,
+    "T": 4,
+    "Sv": 6,
+    "invuln": 4,
+    "W": 4,
+    "Ld": 6,
+    "OC": 1
+   }
+  ],
+  "weapons": [
+   {
+    "name": "Executioner Pistol",
+    "type": "ranged",
+    "range": 12,
+    "attacks": "4",
+    "skill": 2,
+    "S": 4,
+    "AP": 0,
+    "D": "1",
+    "keywords": [
+     "ANTI-INFANTRY 3+",
+     "CLOSE-QUARTERS",
+     "PRECISION",
+     "SUSTAINED HITS 3"
+    ]
+   },
+   {
+    "name": "Power Sword and Neuro-Gauntlet",
+    "type": "melee",
+    "attacks": "6",
+    "skill": 2,
+    "S": 5,
+    "AP": -2,
+    "D": "2",
+    "keywords": [
+     "ANTI-INFANTRY 3+",
+     "PRECISION",
+     "SUSTAINED HITS 3"
+    ]
+   }
+  ],
+  "baseShape": {
+   "kind": "circle",
+   "radius": 0.6299
+  },
+  "keywords": [
+   "CHARACTER",
+   "EPIC HERO",
+   "EVERSOR ASSASSIN",
+   "EXPLOSIVES",
+   "IMPERIUM",
+   "INFANTRY",
+   "INQUISITOR'S HAND",
+   "OFFICIO ASSASSINORUM",
+   "AGENTS OF THE IMPERIUM"
+  ],
+  "abilityIds": [],
+  "abilities": [
+   {
+    "name": "ASSIGNED AGENTS",
+    "description": "",
+    "type": "Faction"
+   },
+   {
+    "name": "OVERKILL (ONCE PER BATTLE PER UNIT)",
+    "description": "When this unit is selected to attack, you can use this ability. If you do, this unit's melee attacks have -4 AP.",
+    "type": "Datasheet"
+   }
+  ],
+  "composition": [
+   "1 Eversor Assassin model"
+  ],
+  "patrol": "inquisitors_hand"
+ },
+ {
+  "id": "cp-inquisitors-hand-inquisitorial-agents",
+  "name": "Inquisitor's Hand Inquisitorial Agents",
+  "faction": "Agents of the Imperium",
+  "role": "Other",
+  "loadout": "The Gun Servitor is equipped with: 1 Agent's Implement; 1 Heavy Bolter. The Inquisitorial Agent with Agent's Firearm, Agent's Implement and Mystic Stave is equipped with: 1 Agent's Firearm; 1 Agent's Implement; 1 Mystic Stave; Tome Skull. The Inquisitorial Agent with Agent's Firearm, Plasma Pistol and Agent's Implement is equipped with: 1 Agent's Firearm; 1 Agent's Implement; 1 Plasma Pistol - Standard. Every Inquisitorial Agent with Agent's Firearm and Agent's Implement is equipped with: 1 Agent's Firearm; 1 Agent's Implement.",
+  "models": [
+   {
+    "name": "Inquisitorial Agent with Agent's Firearm, Agent's Implement and Mystic Stave",
+    "M": 6,
+    "T": 3,
+    "Sv": 5,
+    "W": 1,
+    "Ld": 7,
+    "OC": 1
+   },
+   {
+    "name": "Inquisitorial Agent with Agent's Firearm and Agent's Implement",
+    "M": 6,
+    "T": 3,
+    "Sv": 5,
+    "W": 1,
+    "Ld": 7,
+    "OC": 1
+   },
+   {
+    "name": "Gun Servitor",
+    "M": 6,
+    "T": 3,
+    "Sv": 5,
+    "W": 1,
+    "Ld": 7,
+    "OC": 1
+   },
+   {
+    "name": "Inquisitorial Agent with Agent's Firearm, Plasma Pistol and Agent's Implement",
+    "M": 6,
+    "T": 3,
+    "Sv": 5,
+    "W": 1,
+    "Ld": 7,
+    "OC": 1
+   }
+  ],
+  "weapons": [
+   {
+    "name": "Agent's Firearm",
+    "type": "ranged",
+    "range": 12,
+    "attacks": "1",
+    "skill": 3,
+    "S": 4,
+    "AP": -1,
+    "D": "1",
+    "keywords": [
+     "CLOSE-QUARTERS"
+    ]
+   },
+   {
+    "name": "Heavy Bolter",
+    "type": "ranged",
+    "range": 36,
+    "attacks": "3",
+    "skill": 4,
+    "S": 5,
+    "AP": -1,
+    "D": "2",
+    "keywords": [
+     "HEAVY",
+     "SUSTAINED HITS 1"
+    ]
+   },
+   {
+    "name": "Plasma Pistol – Standard",
+    "type": "ranged",
+    "range": 12,
+    "attacks": "1",
+    "skill": 3,
+    "S": 7,
+    "AP": -2,
+    "D": "1",
+    "keywords": [
+     "CLOSE-QUARTERS"
+    ]
+   },
+   {
+    "name": "Plasma Pistol – Supercharge",
+    "type": "ranged",
+    "range": 12,
+    "attacks": "1",
+    "skill": 3,
+    "S": 8,
+    "AP": -3,
+    "D": "2",
+    "keywords": [
+     "CLOSE-QUARTERS",
+     "HAZARDOUS"
+    ]
+   },
+   {
+    "name": "Agent's Implement",
+    "type": "melee",
+    "attacks": "3",
+    "skill": 3,
+    "S": 3,
+    "AP": 0,
+    "D": "1",
+    "keywords": []
+   },
+   {
+    "name": "Mystic Stave",
+    "type": "melee",
+    "attacks": "2",
+    "skill": 3,
+    "S": 5,
+    "AP": -1,
+    "D": "D3",
+    "keywords": [
+     "ANTI-INFANTRY 4+",
+     "PSYCHIC"
+    ]
+   }
+  ],
+  "baseShape": {
+   "kind": "circle",
+   "radius": 0.4921
+  },
+  "keywords": [
+   "EXPLOSIVES",
+   "IMPERIUM",
+   "INFANTRY",
+   "INQUISITOR'S HAND",
+   "RETINUE",
+   "AGENTS OF THE IMPERIUM"
+  ],
+  "abilityIds": [],
+  "abilities": [
+   {
+    "name": "ASSIGNED AGENTS",
+    "description": "",
+    "type": "Faction"
+   },
+   {
+    "name": "TOME SKULL (ONCE PER BATTLE PER UNIT)",
+    "description": "At the start of any phase, you can select one friendly battle-shocked AGENTS OF THE IMPERIUM unit within 6\" of this unit or one enemy within 6\" of this unit. If you select a friendly unit, that unit is no longer battle-shocked. If you select an enemy unit, that unit must make a battle-shock roll.",
+    "type": "Datasheet"
+   },
+   {
+    "name": "LOYAL TO THE CAUSE",
+    "description": "When an enemy unit targets this unit, if this unit is within range of an objective, attacks that target this unit have -1 to wound rolls.",
+    "type": "Datasheet"
+   }
+  ],
+  "composition": [
+   "1 Gun Servitor model",
+   "1 Inquisitorial Agent with Agent's Firearm, Agent's Implement and Mystic Stave model",
+   "1 Inquisitorial Agent with Agent's Firearm, Plasma Pistol and Agent's Implement model",
+   "3 Inquisitorial Agent with Agent's Firearm and Agent's Implement models"
+  ],
+  "patrol": "inquisitors_hand"
+ },
+ {
+  "id": "cp-sudden-dawn-cadre-pathfinder-team",
+  "name": "Sudden Dawn Cadre Pathfinder Team",
+  "faction": "T'au Empire",
+  "role": "Other",
+  "loadout": "The Pathfinder Shas'ui is equipped with: 1 Gun Stocks; 1 Pulse Carbine; 1 Pulse Pistol. Every Pathfinder with Pulse Pistol, Rail Rifle and Close Combat Weapon is equipped with: 1 Gun Stocks; 1 Pulse Pistol; 1 Rail Rifle. Every Pathfinder with Pulse Carbine, Pulse Pistol and Close Combat Weapon is equipped with: 1 Gun Stocks; 1 Pulse Carbine; 1 Pulse Pistol.",
+  "models": [
+   {
+    "name": "Pathfinder with Pulse Pistol, Rail Rifle and Close Combat Weapon",
+    "M": 7,
+    "T": 3,
+    "Sv": 4,
+    "W": 1,
+    "Ld": 7,
+    "OC": 1
+   },
+   {
+    "name": "Pathfinder Shas'ui",
+    "M": 7,
+    "T": 3,
+    "Sv": 4,
+    "W": 1,
+    "Ld": 7,
+    "OC": 1
+   },
+   {
+    "name": "Pathfinder with Pulse Carbine, Pulse Pistol and Close Combat Weapon",
+    "M": 7,
+    "T": 3,
+    "Sv": 4,
+    "W": 1,
+    "Ld": 7,
+    "OC": 1
+   }
+  ],
+  "weapons": [
+   {
+    "name": "Pulse Carbine",
+    "type": "ranged",
+    "range": 20,
+    "attacks": "2",
+    "skill": 4,
+    "S": 5,
+    "AP": 0,
+    "D": "1",
+    "keywords": []
+   },
+   {
+    "name": "Pulse Pistol",
+    "type": "ranged",
+    "range": 12,
+    "attacks": "1",
+    "skill": 4,
+    "S": 5,
+    "AP": 0,
+    "D": "1",
+    "keywords": [
+     "CLOSE-QUARTERS"
+    ]
+   },
+   {
+    "name": "Rail Rifle",
+    "type": "ranged",
+    "range": 30,
+    "attacks": "1",
+    "skill": 5,
+    "S": 10,
+    "AP": -4,
+    "D": "3",
+    "keywords": [
+     "DEVASTATING WOUNDS",
+     "HEAVY"
+    ]
+   },
+   {
+    "name": "Gun Stocks",
+    "type": "melee",
+    "attacks": "1",
+    "skill": 5,
+    "S": 3,
+    "AP": 0,
+    "D": "1",
+    "keywords": []
+   }
+  ],
+  "baseShape": {
+   "kind": "circle",
+   "radius": 0.4921
+  },
+  "keywords": [
+   "EXPLOSIVES",
+   "INFANTRY",
+   "MARKERLIGHT",
+   "SUDDEN DAWN CADRE",
+   "T'AU EMPIRE"
+  ],
+  "abilityIds": [],
+  "abilities": [
+   {
+    "name": "DRONES",
+    "description": "If you have upgraded a model to have a drone, place a Drone token next to your model as a reminder. These do not count as models for any rules purposes.\n\nShield Drone\nAdd 1 to the bearer's Wounds characteristic.",
+    "type": "Faction"
+   },
+   {
+    "name": "FOR THE GREATER GOOD",
+    "description": "If your Army Faction is T'AU EMPIRE, at the start of your Shooting phase you can select units from your army with this ability to become Observer units.\n\nDuring your Shooting phase, for each Observer unit from your army that has not been selected to shoot this phase and is eligible to shoot (excluding FORTIFICATION and Battle-shocked units] select one enemy unit that is visible to be marked as their Spotted unit until the end of the phase. Each enemy unit can only be marked as a Spotted unit once per phase.\n\nUnits from your army with the For the Greater Good ability (excluding Observer units) are Guided units while targeting one or more Spotted units.\n\nUntil the end of the phase, each time a model from your army in a Guided unit makes an attack that targets a Spotted unit, improve the Ballistic Skill characteristic of that attack by 1 and, if the Spotted unit was marked by an Observer unit that has the Markerlight keyword, that attack has the [IGNORES COVER] ability.",
+    "type": "Faction"
+   },
+   {
+    "name": "Grav-Inhibitor Drone",
+    "description": "When an enemy unit selects this unit as a charge target, that charge roll has -2.",
+    "type": "Datasheet"
+   },
+   {
+    "name": "Target Uploaded",
+    "description": "This unit's attacks that target its Spotted unit have:\n• +1 BS.\n• [IGNORES COVER].",
+    "type": "Datasheet"
+   }
+  ],
+  "composition": [
+   "1 Pathfinder Shas'ui model",
+   "3 Pathfinder with Pulse Pistol, Rail Rifle and Close Combat Weapon models",
+   "6 Pathfinder with Pulse Carbine, Pulse Pistol and Close Combat Weapon models"
+  ],
+  "patrol": "sudden_dawn_cadre"
+ },
+ {
+  "id": "cp-sudden-dawn-cadre-breacher-team",
+  "name": "Sudden Dawn Cadre Breacher Team",
+  "faction": "T'au Empire",
+  "role": "Battleline",
+  "loadout": "Every model is equipped with: 1 Gun Stocks; 1 Pulse Blaster; 1 Pulse Pistol.",
+  "models": [
+   {
+    "name": "Sha'sui",
+    "M": 6,
+    "T": 3,
+    "Sv": 4,
+    "W": 1,
+    "Ld": 7,
+    "OC": 2
+   },
+   {
+    "name": "Breacher Team",
+    "M": 6,
+    "T": 3,
+    "Sv": 4,
+    "W": 1,
+    "Ld": 7,
+    "OC": 2
+   }
+  ],
+  "weapons": [
+   {
+    "name": "Pulse Blaster",
+    "type": "ranged",
+    "range": 10,
+    "attacks": "2",
+    "skill": 3,
+    "S": 6,
+    "AP": -1,
+    "D": "1",
+    "keywords": [
+     "ASSAULT"
+    ]
+   },
+   {
+    "name": "Pulse Pistol",
+    "type": "ranged",
+    "range": 12,
+    "attacks": "1",
+    "skill": 4,
+    "S": 5,
+    "AP": 0,
+    "D": "1",
+    "keywords": [
+     "CLOSE-QUARTERS"
+    ]
+   },
+   {
+    "name": "Gun Stocks",
+    "type": "melee",
+    "attacks": "1",
+    "skill": 5,
+    "S": 3,
+    "AP": 0,
+    "D": "1",
+    "keywords": []
+   }
+  ],
+  "baseShape": {
+   "kind": "circle",
+   "radius": 0.4921
+  },
+  "keywords": [
+   "BATTLELINE",
+   "EXPLOSIVES",
+   "FIRE WARRIOR",
+   "INFANTRY",
+   "MARKERLIGHT",
+   "SUDDEN DAWN CADRE",
+   "T'AU EMPIRE"
+  ],
+  "abilityIds": [],
+  "abilities": [
+   {
+    "name": "DRONES",
+    "description": "If you have upgraded a model to have a drone, place a Drone token next to your model as a reminder. These do not count as models for any rules purposes.\n\nShield Drone\nAdd 1 to the bearer's Wounds characteristic.",
+    "type": "Faction"
+   },
+   {
+    "name": "FOR THE GREATER GOOD",
+    "description": "If your Army Faction is T'AU EMPIRE, at the start of your Shooting phase you can select units from your army with this ability to become Observer units.\n\nDuring your Shooting phase, for each Observer unit from your army that has not been selected to shoot this phase and is eligible to shoot (excluding FORTIFICATION and Battle-shocked units] select one enemy unit that is visible to be marked as their Spotted unit until the end of the phase. Each enemy unit can only be marked as a Spotted unit once per phase.\n\nUnits from your army with the For the Greater Good ability (excluding Observer units) are Guided units while targeting one or more Spotted units.\n\nUntil the end of the phase, each time a model from your army in a Guided unit makes an attack that targets a Spotted unit, improve the Ballistic Skill characteristic of that attack by 1 and, if the Spotted unit was marked by an Observer unit that has the Markerlight keyword, that attack has the [IGNORES COVER] ability.",
+    "type": "Faction"
+   },
+   {
+    "name": "Breach and Clear",
+    "description": "This unit's ranged attacks that target a unit within range of an objective can re-roll wound rolls.",
+    "type": "Datasheet"
+   }
+  ],
+  "composition": [
+   "1 Sha'sui model",
+   "9 Breacher Team models"
+  ],
+  "patrol": "sudden_dawn_cadre"
+ },
+ {
+  "id": "cp-sudden-dawn-cadre-devilfish",
+  "name": "Sudden Dawn Cadre Devilfish",
+  "faction": "T'au Empire",
+  "role": "Dedicated Transports",
+  "loadout": "This model is equipped with: 1 Accelerator Burst Cannon; 1 Armoured Hull; 1 Twin Pulse Carbine.",
+  "models": [
+   {
+    "name": "Devilfish",
+    "M": 12,
+    "T": 9,
+    "Sv": 3,
+    "W": 13,
+    "Ld": 7,
+    "OC": 2
+   }
+  ],
+  "weapons": [
+   {
+    "name": "Accelerator Burst Cannon",
+    "type": "ranged",
+    "range": 18,
+    "attacks": "4",
+    "skill": 4,
+    "S": 6,
+    "AP": -1,
+    "D": "1",
+    "keywords": []
+   },
+   {
+    "name": "Twin Pulse Carbine",
+    "type": "ranged",
+    "range": 20,
+    "attacks": "2",
+    "skill": 4,
+    "S": 5,
+    "AP": 0,
+    "D": "1",
+    "keywords": [
+     "ASSAULT",
+     "TWIN-LINKED"
+    ]
+   },
+   {
+    "name": "Armoured Hull",
+    "type": "melee",
+    "attacks": "3",
+    "skill": 5,
+    "S": 6,
+    "AP": 0,
+    "D": "1",
+    "keywords": []
+   }
+  ],
+  "baseShape": {
+   "kind": "oval",
+   "rx": 2.3622,
+   "ry": 1.2795
+  },
+  "keywords": [
+   "DEDICATED TRANSPORT",
+   "FLY",
+   "SUDDEN DAWN CADRE",
+   "TRANSPORT",
+   "VEHICLE",
+   "T'AU EMPIRE"
+  ],
+  "abilityIds": [],
+  "abilities": [
+   {
+    "name": "DRONES",
+    "description": "If you have upgraded a model to have a drone, place a Drone token next to your model as a reminder. These do not count as models for any rules purposes.\n\nShield Drone\nAdd 1 to the bearer's Wounds characteristic.",
+    "type": "Faction"
+   },
+   {
+    "name": "FOR THE GREATER GOOD",
+    "description": "If your Army Faction is T'AU EMPIRE, at the start of your Shooting phase you can select units from your army with this ability to become Observer units.\n\nDuring your Shooting phase, for each Observer unit from your army that has not been selected to shoot this phase and is eligible to shoot (excluding FORTIFICATION and Battle-shocked units] select one enemy unit that is visible to be marked as their Spotted unit until the end of the phase. Each enemy unit can only be marked as a Spotted unit once per phase.\n\nUnits from your army with the For the Greater Good ability (excluding Observer units) are Guided units while targeting one or more Spotted units.\n\nUntil the end of the phase, each time a model from your army in a Guided unit makes an attack that targets a Spotted unit, improve the Ballistic Skill characteristic of that attack by 1 and, if the Spotted unit was marked by an Observer unit that has the Markerlight keyword, that attack has the [IGNORES COVER] ability.",
+    "type": "Faction"
+   },
+   {
+    "name": "Rapid Disembark",
+    "description": "When a unit embarked within this model makes a disembark move using the rapid disembark/tactical disembark modes, the set-up distance is 6\".",
+    "type": "Datasheet"
+   }
+  ],
+  "composition": [
+   "1 Devilfish model"
+  ],
+  "transport": "This model has a transport capacity of 12 Infantry models. It cannot transport Battlesuit, Kroot or Vespid Stingwings models.",
+  "patrol": "sudden_dawn_cadre"
+ },
+ {
+  "id": "cp-sudden-dawn-cadre-commander-cloudspear",
+  "name": "Commander Cloudspear",
+  "faction": "T'au Empire",
+  "role": "Characters",
+  "loadout": "This model is equipped with: 1 Airbursting Fragmentation Projector; 1 Battlesuit Fists; 1 Plasma Rifle.",
+  "models": [
+   {
+    "name": "Commander Cloudspear",
+    "M": 8,
+    "T": 5,
+    "Sv": 2,
+    "W": 6,
+    "Ld": 7,
+    "OC": 2
+   }
+  ],
+  "weapons": [
+   {
+    "name": "Airbursting Fragmentation Projector",
+    "type": "ranged",
+    "range": 24,
+    "attacks": "D6",
+    "skill": 3,
+    "S": 3,
+    "AP": 0,
+    "D": "1",
+    "keywords": [
+     "BLAST 1",
+     "INDIRECT FIRE"
+    ]
+   },
+   {
+    "name": "Plasma Rifle",
+    "type": "ranged",
+    "range": 18,
+    "attacks": "1",
+    "skill": 3,
+    "S": 8,
+    "AP": -3,
+    "D": "3",
+    "keywords": []
+   },
+   {
+    "name": "Battlesuit Fists",
+    "type": "melee",
+    "attacks": "3",
+    "skill": 4,
+    "S": 5,
+    "AP": 0,
+    "D": "1",
+    "keywords": []
+   }
+  ],
+  "baseShape": {
+   "kind": "circle",
+   "radius": 1.1811
+  },
+  "keywords": [
+   "CHARACTER",
+   "COMMANDER IN ENFORCER BATTLESUIT",
+   "FLY",
+   "SUDDEN DAWN CADRE",
+   "VEHICLE",
+   "WALKER",
+   "T'AU EMPIRE"
+  ],
+  "abilityIds": [],
+  "abilities": [
+   {
+    "name": "DRONES",
+    "description": "If you have upgraded a model to have a drone, place a Drone token next to your model as a reminder. These do not count as models for any rules purposes.\n\nShield Drone\nAdd 1 to the bearer's Wounds characteristic.",
+    "type": "Faction"
+   },
+   {
+    "name": "FOR THE GREATER GOOD",
+    "description": "If your Army Faction is T'AU EMPIRE, at the start of your Shooting phase you can select units from your army with this ability to become Observer units.\n\nDuring your Shooting phase, for each Observer unit from your army that has not been selected to shoot this phase and is eligible to shoot (excluding FORTIFICATION and Battle-shocked units] select one enemy unit that is visible to be marked as their Spotted unit until the end of the phase. Each enemy unit can only be marked as a Spotted unit once per phase.\n\nUnits from your army with the For the Greater Good ability (excluding Observer units) are Guided units while targeting one or more Spotted units.\n\nUntil the end of the phase, each time a model from your army in a Guided unit makes an attack that targets a Spotted unit, improve the Ballistic Skill characteristic of that attack by 1 and, if the Spotted unit was marked by an Observer unit that has the Markerlight keyword, that attack has the [IGNORES COVER] ability.",
+    "type": "Faction"
+   },
+   {
+    "name": "Shield Drone",
+    "description": "This model has +1 W.",
+    "type": "Datasheet"
+   },
+   {
+    "name": "Superior Weapon Support System",
+    "description": "This model's ranged attacks can ignore modifiers to:\n• BS.\n• Hit rolls.",
+    "type": "Datasheet"
+   }
+  ],
+  "composition": [
+   "1 Commander Cloudspear model"
+  ],
+  "patrol": "sudden_dawn_cadre"
+ },
+ {
+  "id": "cp-vengeful-brethren-intercessor-squad",
+  "name": "Vengeful Brethren Intercessor Squad",
+  "faction": "Dark Angels",
+  "role": "Battleline",
+  "loadout": "Every model is equipped with: 1 Bolt Pistol; 1 Bolt Rifle; 1 Knives and Fists.",
+  "models": [
+   {
+    "name": "Intercessor Sergeant",
+    "M": 6,
+    "T": 4,
+    "Sv": 3,
+    "W": 2,
+    "Ld": 6,
+    "OC": 2
+   },
+   {
+    "name": "Intercessor",
+    "M": 6,
+    "T": 4,
+    "Sv": 3,
+    "W": 2,
+    "Ld": 6,
+    "OC": 2
+   }
+  ],
+  "weapons": [
+   {
+    "name": "Bolt Pistol",
+    "type": "ranged",
+    "range": 12,
+    "attacks": "1",
+    "skill": 3,
+    "S": 4,
+    "AP": 0,
+    "D": "1",
+    "keywords": [
+     "CLOSE-QUARTERS"
+    ]
+   },
+   {
+    "name": "Bolt Rifle",
+    "type": "ranged",
+    "range": 24,
+    "attacks": "2",
+    "skill": 3,
+    "S": 4,
+    "AP": -1,
+    "D": "1",
+    "keywords": [
+     "ASSAULT",
+     "HEAVY"
+    ]
+   },
+   {
+    "name": "Knives and Fists",
+    "type": "melee",
+    "attacks": "3",
+    "skill": 3,
+    "S": 4,
+    "AP": 0,
+    "D": "1",
+    "keywords": []
+   }
+  ],
+  "baseShape": {
+   "kind": "circle",
+   "radius": 0.6299
+  },
+  "keywords": [
+   "BATTLELINE",
+   "EXPLOSIVES",
+   "IMPERIUM",
+   "INFANTRY",
+   "TACTICUS",
+   "VENGEFUL BRETHREN",
+   "DARK ANGELS",
+   "ADEPTUS ASTARTES"
+  ],
+  "abilityIds": [],
+  "abilities": [
+   {
+    "name": "THE DEATHWING",
+    "description": "",
+    "type": "Faction"
+   },
+   {
+    "name": "THE RAVENWING",
+    "description": "",
+    "type": "Faction"
+   },
+   {
+    "name": "THE UNFORGIVEN",
+    "description": "",
+    "type": "Faction"
+   },
+   {
+    "name": "OBJECTIVE SECURED",
+    "description": "At the end of your Command phase, if this unit is controlling an objective, that objective is secured.",
+    "type": "Datasheet"
+   }
+  ],
+  "composition": [
+   "1 Intercessor Sergeant model",
+   "9 Intercessor models"
+  ],
+  "patrol": "vengeful_brethren"
+ },
+ {
+  "id": "cp-vengeful-brethren-master-zacharial",
+  "name": "Master Zacharial",
+  "faction": "Dark Angels",
+  "role": "Characters",
+  "loadout": "This model is equipped with: 1 Boltstorm Gauntlet; 1 Power Fist; 1 Relic Chainsword.",
+  "models": [
+   {
+    "name": "Master Zacharial",
+    "M": 5,
+    "T": 6,
+    "Sv": 3,
+    "invuln": 4,
+    "W": 6,
+    "Ld": 6,
+    "OC": 1
+   }
+  ],
+  "weapons": [
+   {
+    "name": "Boltstorm Gauntlet",
+    "type": "ranged",
+    "range": 12,
+    "attacks": "3",
+    "skill": 2,
+    "S": 4,
+    "AP": -1,
+    "D": "1",
+    "keywords": [
+     "CLOSE-QUARTERS"
+    ]
+   },
+   {
+    "name": "Power Fist",
+    "type": "melee",
+    "attacks": "5",
+    "skill": 2,
+    "S": 8,
+    "AP": -2,
+    "D": "2",
+    "keywords": []
+   },
+   {
+    "name": "Relic Chainsword",
+    "type": "melee",
+    "attacks": "3",
+    "skill": 2,
+    "S": 4,
+    "AP": -1,
+    "D": "2",
+    "keywords": [
+     "EXTRA ATTACKS"
+    ]
+   }
+  ],
+  "baseShape": {
+   "kind": "circle",
+   "radius": 0.7874
+  },
+  "keywords": [
+   "CAPTAIN",
+   "CHARACTER",
+   "GRAVIS",
+   "IMPERIUM",
+   "INFANTRY",
+   "VENGEFUL BRETHREN",
+   "DARK ANGELS",
+   "ADEPTUS ASTARTES"
+  ],
+  "abilityIds": [],
+  "abilities": [
+   {
+    "name": "THE DEATHWING",
+    "description": "",
+    "type": "Faction"
+   },
+   {
+    "name": "THE RAVENWING",
+    "description": "",
+    "type": "Faction"
+   },
+   {
+    "name": "THE UNFORGIVEN",
+    "description": "",
+    "type": "Faction"
+   },
+   {
+    "name": "GRAVIS PROTECTION",
+    "description": "Attacks that target this unit have -1 D.",
+    "type": "Datasheet"
+   }
+  ],
+  "composition": [
+   "1 Master Zacharial model"
+  ],
+  "patrol": "vengeful_brethren"
+ },
+ {
+  "id": "cp-vengeful-brethren-hellblaster-squad",
+  "name": "Vengeful Brethren Hellblaster Squad",
+  "faction": "Dark Angels",
+  "role": "Other",
+  "loadout": "Every model is equipped with: 1 Bolt Pistol; 1 Knives and Fists; 1 Plasma Incinerator - Standard.",
+  "models": [
+   {
+    "name": "Hellblaster Sergeant",
+    "M": 6,
+    "T": 4,
+    "Sv": 3,
+    "W": 2,
+    "Ld": 6,
+    "OC": 1
+   },
+   {
+    "name": "Hellblaster",
+    "M": 6,
+    "T": 4,
+    "Sv": 3,
+    "W": 2,
+    "Ld": 6,
+    "OC": 1
+   }
+  ],
+  "weapons": [
+   {
+    "name": "Bolt Pistol",
+    "type": "ranged",
+    "range": 12,
+    "attacks": "1",
+    "skill": 3,
+    "S": 4,
+    "AP": 0,
+    "D": "1",
+    "keywords": [
+     "CLOSE-QUARTERS"
+    ]
+   },
+   {
+    "name": "Plasma Incinerator – Standard",
+    "type": "ranged",
+    "range": 24,
+    "attacks": "2",
+    "skill": 3,
+    "S": 7,
+    "AP": -2,
+    "D": "1",
+    "keywords": [
+     "ASSAULT",
+     "HEAVY"
+    ]
+   },
+   {
+    "name": "Plasma Incinerator – Supercharge",
+    "type": "ranged",
+    "range": 24,
+    "attacks": "2",
+    "skill": 3,
+    "S": 8,
+    "AP": -3,
+    "D": "2",
+    "keywords": [
+     "ASSAULT",
+     "HAZARDOUS",
+     "HEAVY"
+    ]
+   },
+   {
+    "name": "Knives and Fists",
+    "type": "melee",
+    "attacks": "3",
+    "skill": 3,
+    "S": 4,
+    "AP": 0,
+    "D": "1",
+    "keywords": []
+   }
+  ],
+  "baseShape": {
+   "kind": "circle",
+   "radius": 0.6299
+  },
+  "keywords": [
+   "EXPLOSIVES",
+   "IMPERIUM",
+   "INFANTRY",
+   "TACTICUS",
+   "VENGEFUL BRETHREN",
+   "DARK ANGELS",
+   "ADEPTUS ASTARTES"
+  ],
+  "abilityIds": [],
+  "abilities": [
+   {
+    "name": "THE DEATHWING",
+    "description": "",
+    "type": "Faction"
+   },
+   {
+    "name": "THE RAVENWING",
+    "description": "",
+    "type": "Faction"
+   },
+   {
+    "name": "THE UNFORGIVEN",
+    "description": "",
+    "type": "Faction"
+   },
+   {
+    "name": "PUNISHING VOLLEY",
+    "description": "In your Shooting phase, when this unit has shot, select one enemy unit hit by those attacks. That unit makes a battle-shock roll.",
+    "type": "Datasheet"
+   }
+  ],
+  "composition": [
+   "1 Hellblaster Sergeant model",
+   "4 Hellblaster models"
+  ],
+  "patrol": "vengeful_brethren"
+ },
+ {
+  "id": "cp-vengeful-brethren-bladeguard-veteran-squad",
+  "name": "Vengeful Brethren Bladeguard Veteran Squad",
+  "faction": "Dark Angels",
+  "role": "Other",
+  "loadout": "Every model is equipped with: 1 Heavy Bolt Pistol; 1 Master-crafted Power Weapon.",
+  "models": [
+   {
+    "name": "Bladeguard Veteran",
+    "M": 6,
+    "T": 4,
+    "Sv": 3,
+    "invuln": 4,
+    "W": 3,
+    "Ld": 6,
+    "OC": 1
+   },
+   {
+    "name": "Bladeguard Veteran Sergeant",
+    "M": 6,
+    "T": 3,
+    "Sv": 3,
+    "invuln": 4,
+    "W": 3,
+    "Ld": 6,
+    "OC": 1
+   }
+  ],
+  "weapons": [
+   {
+    "name": "Heavy Bolt Pistol",
+    "type": "ranged",
+    "range": 18,
+    "attacks": "1",
+    "skill": 3,
+    "S": 4,
+    "AP": -1,
+    "D": "1",
+    "keywords": [
+     "CLOSE-QUARTERS"
+    ]
+   },
+   {
+    "name": "Master-crafted Power Weapon",
+    "type": "melee",
+    "attacks": "4",
+    "skill": 3,
+    "S": 5,
+    "AP": -2,
+    "D": "2",
+    "keywords": []
+   }
+  ],
+  "baseShape": {
+   "kind": "circle",
+   "radius": 0.7874
+  },
+  "keywords": [
+   "EXPLOSIVES",
+   "IMPERIUM",
+   "INFANTRY",
+   "TACTICUS",
+   "VENGEFUL BRETHREN",
+   "DARK ANGELS",
+   "ADEPTUS ASTARTES"
+  ],
+  "abilityIds": [],
+  "abilities": [
+   {
+    "name": "THE DEATHWING",
+    "description": "",
+    "type": "Faction"
+   },
+   {
+    "name": "THE RAVENWING",
+    "description": "",
+    "type": "Faction"
+   },
+   {
+    "name": "THE UNFORGIVEN",
+    "description": "",
+    "type": "Faction"
+   },
+   {
+    "name": "BLADEGUARD (ONCE PER TURN PER UNIT)",
+    "description": "(Once per turn, per unit): In the Fight phase, when this unit is selected\n• to fight or when an enemy unit targets this unit, you can select one of.the following:\n■ This unit's melee attacks have +1 to hit rolls.\n■ Or: Attacks that target this unit have -1 to hit rolls.",
+    "type": "Datasheet"
+   }
+  ],
+  "composition": [
+   "1 Bladeguard Veteran Sergeant model",
+   "2 Bladeguard Veteran models"
+  ],
+  "patrol": "vengeful_brethren"
+ }
+]

@@ -1,0 +1,48 @@
+{
+ "name": "Inquisitor's Hand",
+ "faction": "Agents of the Imperium",
+ "detachment": "Inquisitor's Hand",
+ "points": 0,
+ "combatPatrol": true,
+ "note": "Fixed Combat Patrol list (Agents of the Imperium); extracted from the Warhammer app 2026-08 — see tools/combatpatrol/extracted/inquisitors_hand_flags.md",
+ "units": [
+  {
+   "datasheetId": "cp-inquisitors-hand-preacher-teguen",
+   "modelCount": 1,
+   "wargearCounts": {
+    "Zealot's Vindictor": 1
+   }
+  },
+  {
+   "datasheetId": "cp-inquisitors-hand-vigilant-squad",
+   "modelCount": 10,
+   "wargearCounts": {
+    "Mechanical Bite": 1,
+    "Combat Shotgun": 7,
+    "Gun Stocks": 9,
+    "Shotpistol": 9,
+    "Grenade Launcher": 1,
+    "Webber": 1
+   }
+  },
+  {
+   "datasheetId": "cp-inquisitors-hand-eversor-assassin",
+   "modelCount": 1,
+   "wargearCounts": {
+    "Executioner Pistol": 1,
+    "Power Sword and Neuro-Gauntlet": 1
+   }
+  },
+  {
+   "datasheetId": "cp-inquisitors-hand-inquisitorial-agents",
+   "modelCount": 6,
+   "wargearCounts": {
+    "Agent's Implement": 6,
+    "Heavy Bolter": 1,
+    "Agent's Firearm": 5,
+    "Mystic Stave": 1,
+    "Plasma Pistol": 1
+   }
+  }
+ ]
+}

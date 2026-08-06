@@ -1,0 +1,228 @@
+{
+  "id": "crowes_sanctifiers",
+  "name": "Crowe's Sanctifiers",
+  "faction": "Grey Knights",
+  "patrolRules": [
+    {
+      "name": "Detachment Points",
+      "text": "To use this detachment you must spend 1DP."
+    },
+    {
+      "name": "Strike from the Warp",
+      "text": "• When a friendly CROWE'S SANCTIFIERS unit ends a charge move, if that unit made an ingress move this turn, you can select one enemy unit engaged with that friendly unit. If you do, that enemy unit makes a battle-shock roll.\n• When playing a Combat Patrol battle, the following friendly units must start the battle in strategic reserves and cannot be set up on the battlefield before the battle round stated. When doing so, they must be set up wholly within your deployment zone.\n• BROTHERHOOD TERMINATOR SQUAD: Battle round 2.\n• VENERABLE DREADNOUGHT: Battle round 3."
+    },
+    {
+      "name": "Gate of Infinity",
+      "text": "If your Army Faction is GREY KNIGHTS, at the end of your opponent's Fight phase, you can select a number of units (see below) from your army that are on the battlefield (excluding units that are within Engagement Range of one or more enemy units), provided every model in those units has this ability. The maximum number of units you can select depends on the battle size, as follows:\nOnce you have made your selections, remove those units from the battlefield and place them into Strategic Reserves."
+    }
+  ],
+  "enhancements": [
+    {
+      "name": "Sanctified Auspexes",
+      "text": "Upgrade: CROWE'S SANCTIFIERS VENERABLE DREADNOUGHT unit only. This unit's ranged attacks can re-roll one hit roll."
+    },
+    {
+      "name": "Purifying Force",
+      "text": "Upgrade: CROWE'S SANCTIFIERS BROTHERHOOD TERMINATOR SQUAD unit only. (Once per battle, per army) When this unit is selected to fight, if it made a charge move this turn, you can use this ability. If you do, this unit's melee attacks have [LETHAL HITS]."
+    }
+  ],
+  "stratagems": [
+    {
+      "name": "Exigent Assignments",
+      "cp": 1,
+      "when": "Fight phase, when a friendly CROWE'S SANCTIFIERS unit is selected to make a consolidation move.",
+      "target": "That CROWE'S SANCTIFIERS unit.",
+      "effect": "When making that consolidation move, your unit can move up to D3+3\".",
+      "restrictions": ""
+    },
+    {
+      "name": "Refusal to Yield",
+      "cp": 1,
+      "when": "Your opponent's Shooting phase, when an enemy unit targets a friendly CROWE'S SANCTIFIERS STRIKE SQUAD unit.",
+      "target": "That CROWE'S SANCTIFIERS STRIKE SQUAD unit.",
+      "effect": "Ranged attacks that target your unit with a S greater than your unit's T have -1 to wound rolls.",
+      "restrictions": ""
+    },
+    {
+      "name": "Psi-reactive Ammunition",
+      "cp": 1,
+      "when": "Your Shooting phase, when a friendly CROWE'S SANCTIFIERS unit is selected to shoot.",
+      "target": "That CROWE'S SANCTIFIERS unit.",
+      "effect": "Your unit's storm bolter weapons have [PSYCHIC].",
+      "restrictions": ""
+    }
+  ],
+  "forceDispositions": ["Priority Assets"],
+  "rosterList": [
+    { "name": "Crowe's Sanctifiers Strike Squad", "count": "1 (10 models)" },
+    { "name": "Sanctifiers Castellan Crowe", "count": "1 (1 model)" },
+    { "name": "Crowe's Sanctifiers Venerable Dreadnought", "count": "1 (1 model)" },
+    { "name": "Crowe's Sanctifiers Brotherhood Terminator Squad", "count": "1 (5 models)" }
+  ],
+  "units": [
+    {
+      "name": "Crowe's Sanctifiers Strike Squad",
+      "profiles": [
+        { "name": "Grey Knight with Incinerator and Ceramite Fists", "M": "6\"", "T": 4, "SV": "2+", "W": 2, "LD": "6+", "OC": 2 },
+        { "name": "Grey Knight with Psycannon and Ceramite Fists", "M": "6\"", "T": 4, "SV": "2+", "W": 2, "LD": "6+", "OC": 2 },
+        { "name": "Grey Knight with Storm Bolter and Nemesis Force Weapon", "M": "6\"", "T": 4, "SV": "2+", "W": 2, "LD": "6+", "OC": 2 },
+        { "name": "Justicar", "M": "6\"", "T": 4, "SV": "2+", "W": 2, "LD": "6+", "OC": 2 }
+      ],
+      "rangedWeapons": [
+        { "name": "Incinerator", "profileOf": null, "range": "12\"", "A": "D6", "BS": "-", "S": 6, "AP": -1, "D": "1", "tags": ["IGNORES COVER", "TORRENT"] },
+        { "name": "Psycannon", "profileOf": null, "range": "24\"", "A": "3", "BS": "3+", "S": 8, "AP": -1, "D": "2", "tags": ["PSYCHIC"] },
+        { "name": "Storm Bolter", "profileOf": null, "range": "24\"", "A": "2", "BS": "3+", "S": 4, "AP": 0, "D": "1", "tags": ["RAPID FIRE 2"] }
+      ],
+      "meleeWeapons": [
+        { "name": "Ceramite Fists", "range": "Melee", "A": "3", "WS": "3+", "S": 4, "AP": 0, "D": "1", "tags": [] },
+        { "name": "Nemesis Force Weapon", "range": "Melee", "A": "3", "WS": "3+", "S": 6, "AP": -2, "D": "2", "tags": ["PSYCHIC"] }
+      ],
+      "factionAbilities": ["GATE OF INFINITY"],
+      "datasheetAbilities": [
+        {
+          "name": "SANCTIFYING RITUAL (PSYCHIC)",
+          "text": "At the end of your Command phase, if this unit is controlling an objective, that objective is secured."
+        },
+        {
+          "name": "COMBAT SQUAD",
+          "text": "At the start of the Declare Battle Formations step, you can split this unit into two separate units, each containing five models."
+        }
+      ],
+      "wargearAbilities": [],
+      "composition": {
+        "bullets": [
+          "1 Grey Knight with Incinerator and Ceramite Fists model",
+          "1 Grey Knight with Psycannon and Ceramite Fists model",
+          "1 Justicar model",
+          "7 Grey Knight with Storm Bolter and Nemesis Force Weapon models"
+        ],
+        "equipment": [
+          "The Grey Knight with Incinerator and Ceramite Fists is equipped with: 1 Ceramite Fists; 1 Incinerator.",
+          "The Grey Knight with Psycannon and Ceramite Fists is equipped with: 1 Ceramite Fists; 1 Psycannon.",
+          "The Justicar is equipped with: 1 Nemesis Force Weapon; 1 Storm Bolter.",
+          "Every Grey Knight with Storm Bolter and Nemesis Force Weapon is equipped with: 1 Nemesis Force Weapon; 1 Storm Bolter."
+        ],
+        "notes": "Model count table: Grey Knight with Incinerator and Ceramite Fists x1; Grey Knight with Psycannon and Ceramite Fists x1; Grey Knight with Storm Bolter and Nemesis Force Weapon x7; Justicar x1.",
+        "baseSize": "32mm"
+      },
+      "keywords": ["BATTLELINE", "CROWE'S SANCTIFIERS", "EXPLOSIVES", "IMPERIUM", "INFANTRY", "PSYKER"],
+      "factionKeywords": ["GREY KNIGHTS"]
+    },
+    {
+      "name": "Sanctifiers Castellan Crowe",
+      "profiles": [
+        { "name": "Sanctifiers Castellan Crowe", "M": "6\"", "T": 4, "SV": "2+", "W": 5, "LD": "6+", "OC": 1 }
+      ],
+      "invuln": "4+",
+      "rangedWeapons": [
+        { "name": "Purifying Flame", "profileOf": null, "range": "18\"", "A": "3", "BS": "2+", "S": 4, "AP": -2, "D": "1", "tags": ["ANTI-INFANTRY 2+", "IGNORES COVER", "PSYCHIC"] },
+        { "name": "Storm Bolter", "profileOf": null, "range": "24\"", "A": "2", "BS": "2+", "S": 4, "AP": 0, "D": "1", "tags": ["RAPID FIRE 2"] }
+      ],
+      "meleeWeapons": [
+        { "name": "Black Blade of Antwyr", "range": "Melee", "A": "5", "WS": "2+", "S": 6, "AP": -2, "D": "2", "tags": ["DEVASTATING WOUNDS", "PRECISION"] }
+      ],
+      "factionAbilities": ["GATE OF INFINITY"],
+      "datasheetAbilities": [
+        {
+          "name": "FOESIGHT (PSYCHIC)",
+          "text": "This unit's attacks that target a CHARACTER unit can re-roll hit rolls."
+        }
+      ],
+      "wargearAbilities": [],
+      "composition": {
+        "bullets": ["1 Castellan Crowe model"],
+        "equipment": ["This model is equipped with: 1 Black Blade of Antwyr; 1 Purifying Flame; 1 Storm Bolter."],
+        "notes": "Model count table: Castellan Crowe x1.",
+        "baseSize": "40mm"
+      },
+      "keywords": ["CHARACTER", "CROWE'S SANCTIFIERS", "EPIC HERO", "EXPLOSIVES", "IMPERIUM", "INFANTRY", "PSYKER"],
+      "factionKeywords": ["GREY KNIGHTS"]
+    },
+    {
+      "name": "Crowe's Sanctifiers Venerable Dreadnought",
+      "profiles": [
+        { "name": "Crowe's Sanctifiers Venerable Dreadnought", "M": "8\"", "T": 9, "SV": "2+", "W": 8, "LD": "6+", "OC": 3 }
+      ],
+      "rangedWeapons": [
+        { "name": "Storm Bolter", "profileOf": null, "range": "24\"", "A": "2", "BS": "3+", "S": 4, "AP": 0, "D": "1", "tags": ["RAPID FIRE 2"] },
+        { "name": "Twin Lascannon", "profileOf": null, "range": "48\"", "A": "1", "BS": "3+", "S": 12, "AP": -3, "D": "D6+1", "tags": ["TWIN-LINKED"] }
+      ],
+      "meleeWeapons": [
+        { "name": "Dreadnought Fist", "range": "Melee", "A": "5", "WS": "3+", "S": 12, "AP": -2, "D": "3", "tags": [] }
+      ],
+      "factionAbilities": ["GATE OF INFINITY"],
+      "datasheetAbilities": [
+        {
+          "name": "GUIDANCE OF THE ANCIENTS (PSYCHIC)",
+          "text": "In your Shooting phase, when this unit has shot, you can select one enemy unit hit by those ranged attacks. If you do, friendly GREY KNIGHTS models' ranged attacks that target that enemy unit have +1 to hit rolls."
+        }
+      ],
+      "wargearAbilities": [],
+      "composition": {
+        "bullets": ["1 Venerable Dreadnought model"],
+        "equipment": ["This model is equipped with: 1 Dreadnought Fist; 1 Storm Bolter; 1 Twin Lascannon."],
+        "notes": "Model count table: Venerable Dreadnought x1.",
+        "baseSize": "60mm"
+      },
+      "keywords": ["CHARACTER", "CROWE'S SANCTIFIERS", "IMPERIUM", "PSYKER", "SMOKE", "VEHICLE", "VENERABLE DREADNOUGHT", "WALKER"],
+      "factionKeywords": ["GREY KNIGHTS"]
+    },
+    {
+      "name": "Crowe's Sanctifiers Brotherhood Terminator Squad",
+      "profiles": [
+        { "name": "Brotherhood Terminator Justicar", "M": "5\"", "T": 5, "SV": "2+", "W": 3, "LD": "6+", "OC": 2 },
+        { "name": "Brotherhood Terminator with Storm Bolter and Nemesis Force Weapon", "M": "5\"", "T": 5, "SV": "2+", "W": 3, "LD": "6+", "OC": 2 },
+        { "name": "Brotherhood Terminator with Psycannon and Nemesis Force Weapon", "M": "5\"", "T": 5, "SV": "2+", "W": 3, "LD": "6+", "OC": 2 }
+      ],
+      "invuln": "4+",
+      "rangedWeapons": [
+        { "name": "Psycannon", "profileOf": null, "range": "24\"", "A": "3", "BS": "3+", "S": 8, "AP": -1, "D": "2", "tags": ["PSYCHIC"] },
+        { "name": "Storm Bolter", "profileOf": null, "range": "24\"", "A": "2", "BS": "3+", "S": 4, "AP": 0, "D": "1", "tags": ["RAPID FIRE 2"] }
+      ],
+      "meleeWeapons": [
+        { "name": "Nemesis Force Weapon", "range": "Melee", "A": "4", "WS": "3+", "S": 6, "AP": -2, "D": "2", "tags": ["PSYCHIC"] }
+      ],
+      "factionAbilities": ["GATE OF INFINITY"],
+      "datasheetAbilities": [
+        {
+          "name": "FORCE EDGE (PSYCHIC)",
+          "text": "This unit's melee attacks that target a unit (excluding MONSTER/VEHICLE units) have +1 AP."
+        }
+      ],
+      "wargearAbilities": [],
+      "composition": {
+        "bullets": [
+          "1 Brotherhood Terminator Justicar model",
+          "1 Brotherhood Terminator with Psycannon and Nemesis Force Weapon model",
+          "3 Brotherhood Terminator with Storm Bolter and Nemesis Force Weapon models"
+        ],
+        "equipment": [
+          "The Brotherhood Terminator Justicar is equipped with: 1 Nemesis Force Weapon; 1 Storm Bolter.",
+          "The Brotherhood Terminator with Psycannon and Nemesis Force Weapon is equipped with: 1 Nemesis Force Weapon; 1 Psycannon.",
+          "Every Brotherhood Terminator with Storm Bolter and Nemesis Force Weapon is equipped with: 1 Nemesis Force Weapon; 1 Storm Bolter."
+        ],
+        "notes": "Model count table: Brotherhood Terminator Justicar x1; Brotherhood Terminator with Storm Bolter and Nemesis Force Weapon x3; Brotherhood Terminator with Psycannon and Nemesis Force Weapon x1.",
+        "baseSize": "40mm"
+      },
+      "keywords": ["BATTLELINE", "BROTHERHOOD TERMINATOR SQUAD", "CROWE'S SANCTIFIERS", "EXPLOSIVES", "IMPERIUM", "INFANTRY", "PSYKER", "TERMINATOR"],
+      "factionKeywords": ["GREY KNIGHTS"]
+    }
+  ],
+  "sourceImages": {
+    "IMG_4450.PNG": "Battle Setup screen (missions, not patrol reference): 'Seize their Strongholds' (collapsed) as Your Mission; opponent's mission 'Purification' expanded with 'Sanctification' twist selector and two End of the Battle scoring lines (5VP per objective controlled; 10VP per objective sanctified by your army).",
+    "IMG_4451.PNG": "Patrol landing page: title CROWE'S SANCTIFIERS, Enhancements/Stratagems links (collapsed), Detachment Rules (Detachment Points 1DP + 'Strike from the Warp' card), Datasheets roster list (4 units), Force Dispositions (Priority Assets).",
+    "IMG_4452.PNG": "Stratagems page: Exigent Assignments (1CP), Refusal to Yield (1CP), Psi-reactive Ammunition (1CP), all fully expanded.",
+    "IMG_4453.PNG": "Enhancements page: Sanctified Auspexes and Purifying Force, both fully expanded; no cost values shown.",
+    "IMG_4454.PNG": "Army Rules page: 'Gate of Infinity' faction ability card (battle-size table referenced by the text is not rendered).",
+    "IMG_4455.PNG": "Strike Squad datasheet 1/3: photo, four profile bars + stat plaques (all 6\"/4/2+/2/6+/2), RANGED WEAPONS header, top of Incinerator row.",
+    "IMG_4456.PNG": "Strike Squad datasheet 2/3: Justicar plaque overlap (no invuln banner), Incinerator/Psycannon/Storm Bolter rows, MELEE (Ceramite Fists, Nemesis Force Weapon), ABILITIES start (Gate of Infinity tag, Sanctifying Ritual pill).",
+    "IMG_4457.PNG": "Strike Squad datasheet 3/3: Sanctifying Ritual + Combat Squad texts, unit composition, equipment, model count table, base 32mm, keywords.",
+    "IMG_4458.PNG": "Venerable Dreadnought datasheet 1/2: photo, stat plaque (8\"/9/2+/8/6+/3), Storm Bolter + Twin Lascannon rows, MELEE header, Dreadnought Fist row.",
+    "IMG_4459.PNG": "Venerable Dreadnought datasheet 2/2: Dreadnought Fist row (no tags), ABILITIES (Guidance of the Ancients), composition, base 60mm, keywords.",
+    "IMG_4460.PNG": "Brotherhood Terminator Squad datasheet 1/3: photo, three profile bars + plaques (all 5\"/5/2+/3/6+/2), INVULNERABLE SAVE 4+ banner, RANGED header, Psycannon row.",
+    "IMG_4461.PNG": "Brotherhood Terminator Squad datasheet 2/3: invuln 4+ overlap, Psycannon/Storm Bolter rows, Nemesis Force Weapon melee row, Force Edge ability, composition bullets + first equipment sentences.",
+    "IMG_4462.PNG": "Brotherhood Terminator Squad datasheet 3/3: melee overlap, Force Edge text, full composition, model count table, base 40mm, keywords.",
+    "IMG_4463.PNG": "Castellan Crowe datasheet 1/2: photo, stat plaque (6\"/4/2+/5/6+/1), INVULNERABLE SAVE 4+, Purifying Flame + Storm Bolter rows, MELEE header, Black Blade of Antwyr stat line.",
+    "IMG_4464.PNG": "Castellan Crowe datasheet 2/2: Black Blade of Antwyr row with DEVASTATING WOUNDS + PRECISION, FOESIGHT (PSYCHIC) ability, composition, base 40mm, keywords."
+  }
+}
