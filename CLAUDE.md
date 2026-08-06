@@ -330,6 +330,41 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-08-06] — REACTION PROMPTS (owner: "I'd like the user and AI to be prompted on when they
+  can act next" — Overwatch at the end of the opponent's Movement, defensive stratagems when
+  targeted).** The auto-playing AI used to blow straight past every reactive window; it now
+  PAUSES and prompts the human. All gates green: `pnpm typecheck`, `pnpm test` (**515 tests**,
+  +8 pure `tests/prompts.test.ts` + 2 jsdom `tests/reactionPrompts.test.tsx`), `pnpm build`; a
+  Playwright human-vs-AI game shows the ⚡ prompt at the AI's phase end with Continue releasing
+  the held phase, zero console errors.
+  - **New pure `src/core/ai/prompts.ts`** — reaction-availability detectors (the reducer stays
+    the enforcer): `phaseEndReactions` (Movement → Fire Overwatch / Rapid Ingress [not in CP];
+    Charge → Heroic Intervention; Fight → Gate of Infinity / Swift Embarkation),
+    `counteroffensiveCandidates`, `determinedAvailable` (Bladeguard targeted in melee),
+    `volleyDefensiveCards` (Refusal to Yield / Urban Enforcers vs an incoming volley),
+    `promptableDefender` (which human seat can react).
+  - **UI holds (MeasuringBoard)** — the incoming-volley hold generalised: aiTick now also holds
+    (a) an AI `AdvancePhase` whose phase the human could still react in → a pulsing amber
+    "⚡ You can react" panel names the plays; the phase has NOT advanced, so the existing
+    Stratagem plays / Unit abilities / Stratagems controls below it are live; ▶ Continue
+    releases the held intents (skipIf re-checked); (b) an enemy Fight activation when
+    Counteroffensive is affordable (inline 2-CP buttons; playing it DISCARDS the AI's held
+    batch — it re-plans; Continue = don't ask again this phase); (c) an enemy `FightUnit` at
+    the Bladeguard when Determined to the Last is playable (inline 1-CP button, then the fight
+    resolves). Resume re-checks later items so Continue-past-Counteroffensive still offers
+    Determined on the same activation. Auto-play pauses while held; prompts auto-resume if the
+    prompted seat flips to AI; phones auto-jump to the Game tab.
+  - **Incoming fire panel** now offers the patrol defensive cards (Refusal to Yield / Urban
+    Enforcers with the every-model-in-one-area check) beside Go to Ground/Smokescreen.
+  - **Test seam**: `MeasuringBoard` accepts `initialState` so jsdom tests seed exact mid-battle
+    moments (an AI volley 8" from the Strike Squad; an AI Movement end with Overwatch live).
+  - **AI side**: unchanged — its reaction seams (aiReactionToShooting/PhaseEnd/Fight) already
+    answer these windows; `promptableDefender` returns null for AI seats so AI-vs-AI games and
+    the headless runner are untouched.
+  - **Known nits**: phase-end detection over-offers slightly (the reducer still rejects illegal
+    plays); the Counteroffensive prompt is per-activation with a per-phase dismissal; no prompt
+    for windows only the ACTIVE player can use (those are the human's own turn).
+
 - **[2026-08-06] — COMBAT PATROL step 5: enhancement picker + all 8 enhancement bindings,
   fights-on-death, Combat Squad (owner: "Please do an enhancement picker with the combat patrol
   enhancements, fights-on-death and combat squad"). Combat Patrol is FEATURE-COMPLETE.** All

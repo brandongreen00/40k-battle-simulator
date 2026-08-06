@@ -15,6 +15,10 @@ import {
   aiAction, aiMayAct, aiReactionToFight, aiReactionToPhaseEnd, aiReactionToShooting, resolveProfile, sharedAction, whoActs, type AiDeps,
 } from '../core/ai/controller';
 import { formationForBodyguard, isPairedLeader, pairDeployAbility } from '../core/ai/deploy';
+import {
+  counteroffensiveCandidates, determinedAvailable, phaseEndReactions, promptableDefender,
+  volleyDefensiveCards, type ReactionWindow,
+} from '../core/ai/prompts';
 import { dataIndex, datasheetsById, deployAbilityForDatasheet, getDatasheet, layouts, layoutsForPairing, rosters, stratagems } from '../data/loaders';
 import { DISPOSITIONS, MISSION_MATRIX, MISSION_NAMES, type DispositionId } from '../core/missions11';
 import { Board, type Placement, type MovementUI, type ShotFx } from './Board';
@@ -69,13 +73,15 @@ interface Props {
   /** Lists built in the List Builder this session, surfaced ahead of the on-disk rosters. */
   extraRosters?: Roster[];
   initialRosterName?: string;
+  /** Test seam: seed an exact game state (jsdom tests drive mid-battle moments directly). */
+  initialState?: GameState;
 }
 
-export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) {
+export function MeasuringBoard({ extraRosters = [], initialRosterName, initialState }: Props) {
   // The reducer draws from the RNG, so it must run exactly once per intent. React's useReducer
   // double-invokes reducers in dev StrictMode (the dice would be consumed twice and diverge from
   // the seed), so we reduce OUTSIDE React — once, in the event handler — and store the result.
-  const [state, setState] = useState(() => createInitialState(layouts[0]!));
+  const [state, setState] = useState(() => initialState ?? createInitialState(layouts[0]!));
   const stateRef = useRef(state);
   // AI seats: who is the computer. Defaults: you play `player`, the computer plays `ai`.
   const [aiSeats, setAiSeats] = useState<AiSeats>({
@@ -280,6 +286,30 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
   // when the human advances the phase past a held volley — bridge with a ref.
   const resolveIncomingRef = useRef<(allocation?: 'shields_first' | 'bodies_first') => void>(() => {});
 
+  // A REACTION PROMPT: the AI is paused just before a moment the human could react to (the end
+  // of its Movement/Charge/Fight phase, or a fight activation) — the held intents resume when
+  // the human continues (or are discarded when the reaction re-plans the AI, e.g.
+  // Counteroffensive). Auto-play pauses while set.
+  type HeldPrompt = {
+    kind: 'phase_end' | 'fight_start' | 'melee';
+    side: Side; // the human defender being prompted
+    label: string;
+    windows: ReactionWindow[];
+    intents: { intent: Intent; skipIf?: (s: GameState) => boolean }[];
+    note: string;
+    /** Determined to the Last target (kind 'melee'). */
+    meleeTargetId?: string;
+  };
+  const [heldPrompt, setHeldPromptState] = useState<HeldPrompt | null>(null);
+  const heldPromptRef = useRef<HeldPrompt | null>(null);
+  const setHeldPrompt = useCallback((v: HeldPrompt | null) => {
+    heldPromptRef.current = v;
+    setHeldPromptState(v);
+  }, []);
+  // Fight-start prompts (Counteroffensive) recur every enemy activation — one dismissal
+  // silences them for the rest of that phase.
+  const promptDismissRef = useRef<string>('');
+
   const rosterFor = (side: Side): Roster | undefined => allRosters.find((r) => r.name === rosterNameBySide[side]);
   const setRosterName = (side: Side, name: string) => setRosterNameBySide((m) => ({ ...m, [side]: name }));
 
@@ -305,14 +335,38 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
     const cur = stateRef.current;
     if (cur.mode !== 'match') return false; // the AI plays matches, never the free sandbox
     if (incomingRef.current) return false; // waiting on the defender's allocation choice
+    if (heldPromptRef.current) return false; // waiting on the human's reaction window
     const seats = aiSeatsRef.current;
     const actor = aiMayAct(whoActs(cur, aiDeps), { player: seats.player.enabled, ai: seats.ai.enabled });
     if (!actor) return false;
     const action = actor === 'shared' ? sharedAction(cur) : aiAction(cur, actor, seats[actor].profile, aiDeps);
+    /** The human seat (if any) that could react to the AI's current turn. */
+    const humanDefender = (s: GameState): Side | null =>
+      promptableDefender(s, { player: !aiSeatsRef.current.player.enabled, ai: !aiSeatsRef.current.ai.enabled });
+    /** Hold `intents` (starting at index i) behind a reaction prompt. Returns true. */
+    const holdFor = (
+      kind: 'phase_end' | 'fight_start' | 'melee',
+      side: Side,
+      label: string,
+      windows: ReactionWindow[],
+      intents: { intent: Intent; skipIf?: (s: GameState) => boolean }[],
+      note: string,
+      meleeTargetId?: string,
+    ): boolean => {
+      setHeldPrompt({ kind, side, label, windows, intents, note, ...(meleeTargetId ? { meleeTargetId } : {}) });
+      setAiNote(`⚡ Reaction window — ${label}`);
+      return true;
+    };
     if (!action || action.intents.length === 0) {
       // Mirror the headless runner: an empty battle-phase action would stall auto-play forever
       // (no dispatch → no state change → the effect never re-fires), so advance the phase.
       if (cur.stage === 'battle' && !cur.ended) {
+        // Even a forced advance is a phase end the human may want to react to.
+        const side = humanDefender(cur);
+        const windows = side ? phaseEndReactions(cur, side, { datasheets: datasheetsById }) : [];
+        if (side && windows.length > 0) {
+          return holdFor('phase_end', side, `the opponent is ending its ${cur.phase} phase`, windows, [{ intent: { type: 'AdvancePhase' } }], 'phase advanced');
+        }
         dispatch({ type: 'AdvancePhase' });
         setAiNote(`${actor}: nothing to do — phase advanced`);
         return true;
@@ -323,19 +377,97 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
       const item = action.intents[i]!;
       if (item.skipIf?.(stateRef.current)) continue;
       const it = item.intent;
+      const now = stateRef.current;
       if (it.type === 'ShootUnit') {
-        const target = stateRef.current.units.find((u) => u.id === it.targetUnitId);
+        const target = now.units.find((u) => u.id === it.targetUnitId);
         if (target && !aiSeatsRef.current[target.owner].enabled && target.models.some((m) => m.alive)) {
           setIncoming({ intent: it, rest: action.intents.slice(i + 1), note: action.note });
           setAiNote('⚠ Incoming fire — choose your casualty allocation');
           return true;
         }
       }
+      // Reaction prompts: pause the AI just before a moment the human could react to.
+      if (now.stage === 'battle' && !now.ended) {
+        const side = humanDefender(now);
+        if (side) {
+          // End of the AI's Movement/Charge/Fight phase → Overwatch / Rapid Ingress / Heroic
+          // Intervention / Gate of Infinity / Swift Embarkation.
+          if (it.type === 'AdvancePhase') {
+            const windows = phaseEndReactions(now, side, { datasheets: datasheetsById });
+            if (windows.length > 0) {
+              return holdFor('phase_end', side, `the opponent is ending its ${now.phase} phase`, windows, action.intents.slice(i), action.note);
+            }
+          }
+          // Before an enemy Fight activation → Counteroffensive (2 CP to swing first).
+          if (
+            it.type === 'FightMove' && it.mode === 'pile_in' &&
+            promptDismissRef.current !== `${now.round}:${now.activePlayer}:${now.phase}` &&
+            counteroffensiveCandidates(now, side, { datasheets: datasheetsById }).length > 0
+          ) {
+            return holdFor(
+              'fight_start', side, 'an enemy unit is about to fight',
+              [{ id: 'counter', label: 'Counteroffensive (2 CP)', hint: 'One of your un-fought engaged units swings first instead.' }],
+              action.intents.slice(i), action.note,
+            );
+          }
+          // An enemy melee volley at the Bladeguard → Determined to the Last (fights-on-death).
+          if (it.type === 'FightUnit') {
+            const target = now.units.find((u) => u.id === it.targetUnitId);
+            if (target && target.owner === side && determinedAvailable(now, target.id, { datasheets: datasheetsById })) {
+              return holdFor(
+                'melee', side, 'the Bladeguard are targeted in melee',
+                [{ id: 'determined', label: 'Determined to the Last (1 CP)', hint: 'Destroyed models fight on a 2+ before they are removed.' }],
+                action.intents.slice(i), action.note, target.id,
+              );
+            }
+          }
+        }
+      }
       dispatch(it);
     }
     setAiNote(action.note);
     return true;
-  }, [aiDeps, dispatch]);
+  }, [aiDeps, dispatch, setHeldPrompt, setIncoming]);
+
+  /** Resume a held reaction prompt: dispatch what the AI had queued (skipIf re-checked). A
+   *  later item can open the NEXT window (Continue past Counteroffensive must still offer
+   *  Determined to the Last on the same activation's melee volley). */
+  const resumePrompt = useCallback(() => {
+    const held = heldPromptRef.current;
+    if (!held) return;
+    setHeldPrompt(null);
+    if (held.kind === 'fight_start') {
+      promptDismissRef.current = `${stateRef.current.round}:${stateRef.current.activePlayer}:${stateRef.current.phase}`;
+    }
+    for (let i = 0; i < held.intents.length; i++) {
+      const item = held.intents[i]!;
+      if (item.skipIf?.(stateRef.current)) continue;
+      const it = item.intent;
+      const now = stateRef.current;
+      if (held.kind !== 'melee' && it.type === 'FightUnit' && now.stage === 'battle' && !now.ended) {
+        const target = now.units.find((u) => u.id === it.targetUnitId);
+        if (
+          target && target.owner === held.side && !aiSeatsRef.current[held.side].enabled &&
+          determinedAvailable(now, target.id, { datasheets: datasheetsById })
+        ) {
+          setHeldPrompt({
+            kind: 'melee', side: held.side, label: 'the Bladeguard are targeted in melee',
+            windows: [{ id: 'determined', label: 'Determined to the Last (1 CP)', hint: 'Destroyed models fight on a 2+ before they are removed.' }],
+            intents: held.intents.slice(i), note: held.note, meleeTargetId: target.id,
+          });
+          return;
+        }
+      }
+      dispatch(it);
+    }
+    setAiNote(held.note);
+  }, [dispatch, setHeldPrompt]);
+
+  /** Discard a held prompt WITHOUT dispatching — used when the human's reaction re-plans the
+   *  AI's activation (Counteroffensive: the human fights next, the AI re-picks on its tick). */
+  const discardPrompt = useCallback(() => {
+    setHeldPrompt(null);
+  }, [setHeldPrompt]);
 
   /** The defender confirmed: apply the allocation choice, then let the held volley resolve
    *  (plus whatever followed it in the AI's batch). */
@@ -362,11 +494,12 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
   resolveIncomingRef.current = resolveIncoming;
 
   // Whether the game is currently waiting on an AI seat (drives auto-play and the Step button).
-  // A held incoming volley pauses auto-play until the defender resolves it.
+  // A held incoming volley or reaction prompt pauses auto-play until the human resolves it.
   const aiCanAct =
     state.mode === 'match' &&
     !placing &&
     !incoming &&
+    !heldPrompt &&
     aiMayAct(whoActs(state, aiDeps), { player: aiSeats.player.enabled, ai: aiSeats.ai.enabled }) !== null;
 
   // Auto-play: whenever the game waits on an AI seat, take the next action after a short beat
@@ -402,6 +535,14 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
     const target = state.units.find((u) => u.id === incoming.intent.targetUnitId);
     if (!target || aiSeats[target.owner].enabled) resolveIncoming();
   }, [incoming, state.mode, aiSeats, resolveIncoming, state.units]);
+
+  // A held reaction prompt likewise: drop it when the game resets, resume automatically when
+  // the prompted seat flips to AI (its own reaction seams already answered).
+  useEffect(() => {
+    if (!heldPrompt) return;
+    if (state.mode !== 'match' || state.stage !== 'battle') { setHeldPrompt(null); return; }
+    if (aiSeats[heldPrompt.side].enabled) resumePrompt();
+  }, [heldPrompt, state.mode, state.stage, aiSeats, resumePrompt, setHeldPrompt]);
 
   // Deployment entries per side, and which are already on the board / in reserves. An entry split
   // by a transport's Declare Battle Formations rule (Immolator) expands into its two half-units.
@@ -461,6 +602,10 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
   useEffect(() => {
     setMTab(flowKey === 'deploy' || flowKey === 'sandbox' ? 'tools' : 'game');
   }, [flowKey]);
+  // A prompt (incoming fire / reaction window) must be SEEN — on phones, jump to the Game tab.
+  useEffect(() => {
+    if (incoming || heldPrompt) setMTab('game');
+  }, [incoming, heldPrompt]);
 
   if (!layout) return <div className="app-shell">No layout found in data/layouts.</div>;
 
@@ -1095,6 +1240,16 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
             dispatch={dispatch}
           />
         )}
+        {heldPrompt && (
+          <ReactionPromptPanel
+            state={state}
+            held={heldPrompt}
+            datasheetsById={datasheetsById}
+            onContinue={resumePrompt}
+            onDiscard={discardPrompt}
+            dispatch={dispatch}
+          />
+        )}
         {inSetup ? (
           <DeploymentPanel
             state={state}
@@ -1280,10 +1435,112 @@ function IncomingFirePanel({
           </button>
         </div>
       )}
+      {/* Combat Patrol defensive cards (Refusal to Yield / Urban Enforcers) — same window. */}
+      {volleyDefensiveCards(state, target, { datasheets: datasheetsById }).map((c) => (
+        <div className="btnrow" key={c.stratagemId}>
+          <button
+            title={c.hint}
+            onClick={() =>
+              dispatch({
+                type: 'UseStratagem', name: c.name, side, cost: 1,
+                stratagemId: c.stratagemId, targetUnitId: target.id, effectId: c.effectId,
+              })
+            }
+          >
+            🛡 {c.name} (1 CP)
+          </button>
+          <span className="muted">{c.hint}</span>
+        </div>
+      ))}
       {stealthUp && <p className="muted">Stealth is up (-1 to be hit).</p>}
       <div className="btnrow">
         <button className="primary" onClick={() => onResolve(gearBearers > 0 ? alloc : undefined)}>
           🎲 Resolve incoming fire
+        </button>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * A reactive-window prompt: the AI is paused at a moment the human can act on (the end of its
+ * Movement/Charge/Fight phase, an enemy fight activation, or a melee volley at the Bladeguard).
+ * The phase has NOT advanced, so the panel's usual controls below (Stratagem plays / Unit
+ * abilities / the Stratagems list) are live — direct one-tap plays render inline.
+ */
+function ReactionPromptPanel({
+  state, held, datasheetsById, onContinue, onDiscard, dispatch,
+}: {
+  state: GameState;
+  held: {
+    kind: 'phase_end' | 'fight_start' | 'melee';
+    side: Side;
+    label: string;
+    windows: { id: string; label: string; hint: string }[];
+    meleeTargetId?: string;
+  };
+  datasheetsById: Map<string, Datasheet>;
+  onContinue: () => void;
+  onDiscard: () => void;
+  dispatch: (i: Intent) => void;
+}) {
+  const name = (id: string) => {
+    const u = state.units.find((x) => x.id === id);
+    return u ? datasheetsById.get(u.datasheetId)?.name ?? id : id;
+  };
+  const counterUnits =
+    held.kind === 'fight_start'
+      ? counteroffensiveCandidates(state, held.side, { datasheets: datasheetsById })
+      : [];
+  return (
+    <section className="incoming-fire reaction-prompt">
+      <h4>⚡ You can react — {held.label}</h4>
+      {held.windows.map((w) => (
+        <p className="fire-plan" key={w.id}>
+          <strong>{w.label}</strong> — {w.hint}
+        </p>
+      ))}
+      {held.kind === 'fight_start' && counterUnits.length > 0 && (
+        <div className="btnrow">
+          <span className="muted">Fight next with:</span>
+          {counterUnits.slice(0, 3).map((u) => (
+            <button
+              key={u.id}
+              onClick={() => {
+                // The reaction re-plans the enemy's activation — discard what it had queued;
+                // the AI re-picks on its next tick (after your unit fights).
+                dispatch({ type: 'Counteroffensive', unitId: u.id });
+                onDiscard();
+              }}
+            >
+              ⚔ {name(u.id)} (2 CP)
+            </button>
+          ))}
+        </div>
+      )}
+      {held.kind === 'melee' && held.meleeTargetId && (
+        <div className="btnrow">
+          <button
+            onClick={() => {
+              dispatch({
+                type: 'UseStratagem', name: 'Determined to the Last', side: held.side, cost: 1,
+                stratagemId: 'cp:vengeful_brethren:determined_to_the_last',
+                targetUnitId: held.meleeTargetId!, effectId: 'cp:fights_on_death',
+              });
+              // The buffed fight still happens — resume the enemy's activation.
+              onContinue();
+            }}
+          >
+            🛡 Determined to the Last (1 CP)
+          </button>
+        </div>
+      )}
+      {held.kind === 'phase_end' && (
+        <p className="muted">The phase has not ended yet — the controls below are live.</p>
+      )}
+      <div className="btnrow">
+        <button className="primary" onClick={onContinue}>
+          ▶ Continue{held.kind === 'fight_start' ? " (don't ask again this phase)" : ''}
         </button>
       </div>
     </section>

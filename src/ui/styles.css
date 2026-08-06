@@ -1543,3 +1543,17 @@ body {
 .incoming-fire h4 { margin: 0 0 6px; color: #ef4444; }
 .incoming-fire .fire-plan { margin: 4px 0; font-size: 13px; }
 .incoming-fire label.alloc { display: block; margin: 3px 0; font-size: 13px; cursor: pointer; }
+
+/* ── Reaction prompt (pauses the AI at a human reactive window) ───────────── */
+.reaction-prompt {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.08);
+  animation: reaction-pulse 1.6s ease-in-out infinite;
+}
+.reaction-prompt h4 {
+  color: #fbbf24;
+}
+@keyframes reaction-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.35); }
+  50% { box-shadow: 0 0 0 5px rgba(245, 158, 11, 0.08); }
+}
