@@ -12,7 +12,7 @@ import { gapBetweenBases } from '../geometry';
 import { pointLosBlocked } from '../visibility';
 import { weaponEV } from './evaluate';
 import { secondaryKillBonus } from '../secondaries';
-import { cpKillBonus } from '../cpmissions';
+import { cpKillBonus, cpSanctificationCandidate } from '../cpmissions';
 import { bestMissionAction } from './missionplay';
 import { shootingEV, unitThreat, unitValue } from './evaluate';
 import { unitRolePlan } from './roles';
@@ -136,6 +136,23 @@ export function aiShootingAction(state: GameState, side: Side, profile: AiProfil
     };
     if (actionScore > shooterBestEv(action.params.unitId)) {
       return { intents: [{ intent: { type: 'StartAction', ...action.params } }], note: action.note };
+    }
+  }
+
+  // Combat Patrol — Purification: Sanctification pays 10VP at the end of the battle. Start it
+  // with a unit already in range whenever that unit's own shooting is worth less.
+  const sanct = cpSanctificationCandidate(state, side, ctx, exclude);
+  if (sanct) {
+    let ev = 0;
+    const u = state.units.find((x) => x.id === sanct.unitId);
+    if (u && eligibleToShoot(u, state, ctx).eligible) {
+      for (const t of validUnitShootingTargets(u, state, ctx)) ev = Math.max(ev, shootingEV(state, u, t, ctx));
+    }
+    if (10 * 12 * (profile.actionPriority ?? 1) > ev) {
+      return {
+        intents: [{ intent: { type: 'StartSanctification', ...sanct } }],
+        note: `sanctifies objective ${sanct.objectiveIdx + 1}`,
+      };
     }
   }
 

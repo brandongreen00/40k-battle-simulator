@@ -361,11 +361,21 @@ ability-system design that these stages depend on.
     Reflexes, Sanctic Slayers) in `cp_patrols.json`; owner-confirmed the patrol has NO faction/
     detachment rule (gap closed). Owner rulings recorded in the flags files' resolution logs:
     FOESIGHT + all as-shown stats intentional; Gate of Infinity table gap + map numbering fine.
-  - **Handoff / next**: (a) screenshot the full *Purification* card (incl. Sanctification) and
-    *Seize their Strongholds* + confirm which patrol owns each — scoring then slots into the
-    registry; (b) step 3 = patrol stratagems/enhancements in play (swap the stratagem list per
-    battle type; "secured" objectives 14.03 for Inquisitorial Mandate); (c) per-unit specials
-    bindings (Shield Drone +1W, FTGG, Honoured Knights, Zealot, Overkill, Gate of Infinity…).
+  - **MISSION DECK COMPLETED same day** (owner supplied the remaining cards, IMG_0167–0169):
+    **Purification** = the Sanctification objective action (starts in your Shooting phase with
+    16.01 eligibility + once/turn, completes at your NEXT Command phase or battle end, sanctifies
+    if not battle-shocked — new `StartSanctification` intent, `cpMissions.sanctified/sanctifying`
+    state, "⚡ Sanctify" UI picker, AI starts it when the unit's shooting is worth less; probed
+    3–7 sanctifications per AI game) + end-of-battle 5VP/objective + 10VP/sanctified.
+    **Seize their Strongholds** = round 2+ at the END OF YOUR COMMAND PHASE (new
+    cpMissionsOnCommandEnd hook in RunCommandPhase; round-5 rider moves it to turn end):
+    more-objectives 5 + own-home 5 + non-home 5, cumulative. All four cards now 'full'
+    (**480 tests**, +3: Seize windows, Sanctification lifecycle, Crowe's-vs-VB full game).
+  - **Handoff / next**: (a) step 3 = patrol stratagems/enhancements in play (swap the stratagem
+    list per battle type; "secured" objectives 14.03 for Inquisitorial Mandate); (b) per-unit
+    specials bindings (Shield Drone +1W, FTGG, Honoured Knights, Zealot, Overkill, Gate of
+    Infinity…). Known simplification: a pending Sanctification ignores attacks made mid-window
+    (fails only on death/off-board/battle-shock).
 
 - **[2026-08-06] — COMBAT PATROL, step 1 of N (owner: "build out a way for me to play Combat
   Patrol… first, creating an army and deployment"): the four patrols extracted from the owner's

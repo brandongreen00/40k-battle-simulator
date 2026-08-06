@@ -1,10 +1,10 @@
 // Combat Patrol missions (11e): each patrol plays its OWN fixed mission card, scored at the
 // end of the controlling player's turn and at the end of the battle. PURE — no React/DOM/I/O.
 //
-// Source of truth: the owner's Warhammer-app Battle Setup screenshots (2026-08). Two cards were
-// captured in full (Inquisitorial Sanction, Expansionary Campaign); Purification only partially
-// (its END OF BATTLE block; the Sanctification mechanic is uncaptured); Seize their Strongholds
-// only by name. Nothing is invented: uncaptured blocks simply do not score, and the UI says so.
+// Source of truth: the owner's Warhammer-app Battle Setup screenshots (2026-08). All four
+// cards are captured in full (Inquisitorial Sanction, Expansionary Campaign, Purification incl.
+// its Sanctification action, Seize their Strongholds); the patrol↔mission pairing was confirmed
+// by the owner's follow-up captures.
 //
 // Interpretation note (recorded, owner-visible): the cards list stacked scoring lines
 // ("You control two or more…: X VP" / "You control one or more…: Y VP"). Following the GW
@@ -12,8 +12,9 @@
 // two objectives under Inquisitorial Sanction scores 5+5=10VP that turn.
 
 import type { EngineContext } from './engine';
-import type { CpMissionState, GameState, KillRecord, Side } from './types';
-import { objectiveStatuses } from './missions11';
+import type { CpMissionState, GameState, KillRecord, Side, UnitInstance } from './types';
+import { objectivePoints, objectiveStatuses, withinObjectiveRange } from './missions11';
+import { baseRadius, gapBetweenBases } from './geometry';
 
 const other = (s: Side): Side => (s === 'player' ? 'ai' : 'player');
 
@@ -52,27 +53,33 @@ export const CP_MISSIONS: Record<string, CpMissionDef> = {
       'objectives: 15VP. You control one or more expansion objectives: 10VP. THIRD BATTLE ROUND ' +
       'ONWARDS — When: End of your turn. You control one or more expansion objectives: 5VP. ' +
       'You control two or more expansion objectives: 10VP.',
-    note: 'Captured as the OPPONENT\'S MISSION on the Sudden Dawn Cadre battle-setup screen — patrol pairing inferred, confirm.',
   },
   purification: {
     id: 'purification',
     name: 'Purification',
     patrol: 'crowes_sanctifiers',
-    captured: 'partial',
+    captured: 'full',
     text:
-      'END OF THE BATTLE — 5VP per objective you control. 10VP per objective sanctified by your army.',
+      'SANCTIFICATION (action) — Starts: Start of your Shooting phase. Units: One friendly ' +
+      "CROWE'S SANCTIFIERS unit within range of an objective that is not sanctified. Use limit: " +
+      'Once per turn. Completes: End of your next Command phase or the end of the battle ' +
+      '(whichever occurs first). Effect: If that unit is not battle-shocked, that objective is ' +
+      'sanctified by your army. END OF THE BATTLE — For each objective you control: 5VP. For ' +
+      'each objective that was sanctified by your army: 10VP.',
     note:
-      'Only the END OF BATTLE block was captured (partially shown on a battle-setup screen); the ' +
-      'Sanctification mechanic/twist and any per-turn blocks are uncaptured and do not score. ' +
-      'Patrol pairing inferred from the sanctification theme — confirm, and screenshot the full card.',
+      'Simplification: a pending Sanctification fails only if the unit is destroyed, leaves the ' +
+      'battlefield or is battle-shocked at completion (attacks made mid-window are not tracked).',
   },
   seize_their_strongholds: {
     id: 'seize_their_strongholds',
     name: 'Seize their Strongholds',
     patrol: 'vengeful_brethren',
-    captured: 'none',
-    text: 'Card seen only as a collapsed accordion on a battle-setup screenshot — contents not captured.',
-    note: 'Scores nothing until the card is captured. Patrol pairing inferred — confirm, and screenshot the card.',
+    captured: 'full',
+    text:
+      'SECOND BATTLE ROUND ONWARDS — When: End of your Command phase (or the end of your turn ' +
+      'in the fifth battle round). You control more objectives than your opponent: 5VP. You ' +
+      'control your home objective: 5VP. You control one or more objectives (excluding your ' +
+      'home objective): 5VP.',
   },
 };
 
@@ -150,6 +157,127 @@ function addVp(state: GameState, side: Side, vp: number, label: string): GameSta
   };
 }
 
+// ── Sanctification (Purification's objective action) ──────────────────────────
+
+const ENGAGEMENT = 2; // 11e Engagement Range, inches
+
+function unitEngaged(state: GameState, ctx: EngineContext, unit: UnitInstance): boolean {
+  const shape = ctx.datasheets.get(unit.datasheetId)?.baseShape ?? { kind: 'circle' as const, radius: 0.63 };
+  for (const e of state.units) {
+    if (e.owner === unit.owner || e.inReserves) continue;
+    const eShape = ctx.datasheets.get(e.datasheetId)?.baseShape ?? shape;
+    for (const m of unit.models) {
+      if (!m.alive) continue;
+      for (const em of e.models) {
+        if (em.alive && gapBetweenBases(m.pos, shape, em.pos, eShape) <= ENGAGEMENT) return true;
+      }
+    }
+  }
+  return false;
+}
+
+/** Start Sanctification (16.01-style eligibility; the reducer's StartSanctification intent). */
+export function startSanctification(state: GameState, ctx: EngineContext | undefined, unitId: string, objectiveIdx: number): GameState {
+  const reject = (why: string): GameState => ({ ...state, log: [...state.log, `Sanctification rejected: ${why}`] });
+  const cp = state.cpMissions;
+  if (!cp || !ctx) return reject('no Combat Patrol mission state');
+  const unit = state.units.find((u) => u.id === unitId);
+  if (!unit) return reject('unit not found');
+  const side = unit.owner;
+  if (cp.missionId[side] !== 'purification') return reject('your mission has no Sanctification action');
+  if (state.stage !== 'battle' || state.phase !== 'Shooting') return reject('starts in your Shooting phase');
+  if (state.activePlayer !== side) return reject('not your turn');
+  if (unit.inReserves || !unit.models.some((m) => m.alive)) return reject('unit is not on the battlefield');
+  if (unit.status.battleShocked) return reject('battle-shocked units cannot start actions');
+  if (unit.status.advanced || unit.status.fellBack) return reject('advanced/fell back this turn');
+  if (unit.status.hasShot) return reject('already shot this phase');
+  if ((ctx.datasheets.get(unit.datasheetId)?.models[0]?.OC ?? 0) <= 0) return reject('OC 0 units cannot start actions');
+  if (unitEngaged(state, ctx, unit)) return reject('engaged units cannot start actions');
+  if ((cp.sanctifying ?? []).some((s) => s.unitId === unit.id)) return reject('this unit is already sanctifying');
+  const turnCounter = state.turnCounter ?? 0;
+  if ((cp.sanctifying ?? []).some((s) => s.side === side && s.startedTurnCounter === turnCounter)) {
+    return reject('once per turn');
+  }
+  const points = objectivePoints(state.layout);
+  const o = points[objectiveIdx];
+  if (!o) return reject('no such objective');
+  if ((cp.sanctified ?? []).some((s) => s.idx === objectiveIdx)) return reject('that objective is already sanctified');
+  const inRange = unit.models.some((m) => {
+    if (!m.alive) return false;
+    const r = baseRadius(ctx.datasheets.get(m.datasheetId ?? unit.datasheetId)?.baseShape ?? { kind: 'circle', radius: 0.63 });
+    return withinObjectiveRange(m.pos, r, o, state.layout);
+  });
+  if (!inRange) return reject('unit is not within range of that objective');
+  return {
+    ...state,
+    cpMissions: {
+      ...cp,
+      sanctifying: [...(cp.sanctifying ?? []), { side, unitId: unit.id, objectiveIdx, startedTurnCounter: turnCounter }],
+    },
+    // Starting an action: not eligible to shoot or charge this turn (16.01).
+    units: state.units.map((u) => (u.id === unit.id ? { ...u, status: { ...u.status, hasShot: true, chargeAttempted: true } } : u)),
+    log: [...state.log, `${side} starts Sanctification of objective ${objectiveIdx + 1} (completes at ${side}'s next Command phase)`],
+  };
+}
+
+/** Resolve pending Sanctifications for `side` (next-Command-phase or end-of-battle windows). */
+function completeSanctifications(state: GameState, side: Side, window: 'command' | 'battle_end'): GameState {
+  const cp = state.cpMissions;
+  if (!cp?.sanctifying?.length) return state;
+  const turnCounter = state.turnCounter ?? 0;
+  const due = cp.sanctifying.filter(
+    (s) => s.side === side && (window === 'battle_end' || s.startedTurnCounter < turnCounter),
+  );
+  if (due.length === 0) return state;
+  let next = state;
+  const sanctified = [...(cp.sanctified ?? [])];
+  for (const s of due) {
+    const unit = next.units.find((u) => u.id === s.unitId);
+    const ok = !!unit && !unit.inReserves && unit.models.some((m) => m.alive) && !unit.status.battleShocked;
+    if (ok) {
+      sanctified.push({ idx: s.objectiveIdx, side });
+      next = { ...next, log: [...next.log, `${side} sanctifies objective ${s.objectiveIdx + 1}`] };
+    } else {
+      next = { ...next, log: [...next.log, `${side}'s Sanctification of objective ${s.objectiveIdx + 1} fails`] };
+    }
+  }
+  return {
+    ...next,
+    cpMissions: {
+      ...next.cpMissions!,
+      sanctified,
+      sanctifying: cp.sanctifying.filter((s) => !due.includes(s)),
+    },
+  };
+}
+
+// ── Seize their Strongholds (command-end windows, round-5 turn-end rider) ─────
+
+function scoreSeize(state: GameState, ctx: EngineContext, side: Side): GameState {
+  const statuses = objectiveStatuses(state, ctx, state.cpMissions?.attacker ?? 'player');
+  const mine = statuses.filter((s) => s.controller === side);
+  const theirs = statuses.filter((s) => s.controller === other(side));
+  let next = state;
+  if (mine.length > theirs.length) next = addVp(next, side, 5, 'controls more objectives than the opponent');
+  if (mine.some((s) => s.homeOf === side)) next = addVp(next, side, 5, 'controls its home objective');
+  if (mine.some((s) => s.homeOf !== side)) next = addVp(next, side, 5, 'controls one or more non-home objectives');
+  return next;
+}
+
+// ── Command-phase scoring window (end of the active player's Command phase) ───
+
+export function cpMissionsOnCommandEnd(state: GameState, ctx: EngineContext | undefined): GameState {
+  const cp = state.cpMissions;
+  if (!cp || !ctx || state.stage !== 'battle') return state;
+  const side = state.activePlayer;
+  // Pending Sanctifications complete at the start of this window, before any scoring.
+  let next = completeSanctifications(state, side, 'command');
+  if (cp.missionId[side] === 'seize_their_strongholds' && state.round >= 2 && state.round <= 4) {
+    next = scoreSeize(next, ctx, side);
+  }
+  return next;
+}
+
 // ── Turn-end scoring (end of the ACTIVE player's turn) ────────────────────────
 
 export function cpMissionsOnTurnEnd(state: GameState, ctx: EngineContext | undefined): GameState {
@@ -180,8 +308,11 @@ export function cpMissionsOnTurnEnd(state: GameState, ctx: EngineContext | undef
       if (expansion >= 1) next = addVp(next, side, 5, 'controls one or more expansion objectives');
       if (expansion >= 2) next = addVp(next, side, 10, 'controls two or more expansion objectives');
     }
+  } else if (mission?.id === 'seize_their_strongholds' && state.round === 5) {
+    // Round-5 rider: the command-end window moves to the end of your turn.
+    next = scoreSeize(next, ctx, side);
   }
-  // 'purification' has no captured per-turn block; 'seize_their_strongholds' is uncaptured.
+  // 'purification' scores only at the end of the battle.
 
   // Rotate the kill window: the ledger of the turn that just ended becomes "the previous turn".
   return {
@@ -196,6 +327,8 @@ export function cpMissionsOnBattleEnd(state: GameState, ctx: EngineContext | und
   const cp = state.cpMissions;
   if (!cp || !ctx) return state;
   let next = state;
+  // Pending Sanctifications complete at the end of the battle (whichever occurs first).
+  for (const side of ['player', 'ai'] as Side[]) next = completeSanctifications(next, side, 'battle_end');
   for (const side of ['player', 'ai'] as Side[]) {
     const mission = CP_MISSIONS[cp.missionId[side]];
     if (mission?.id === 'inquisitorial_sanction') {
@@ -205,10 +338,47 @@ export function cpMissionsOnBattleEnd(state: GameState, ctx: EngineContext | und
     } else if (mission?.id === 'purification') {
       const { total } = controlledObjectives(next, ctx, side);
       if (total > 0) next = addVp(next, side, total * 5, `controls ${total} objective(s) at the end of the battle`);
-      // "10VP per objective sanctified by your army" — the Sanctification mechanic is uncaptured.
+      const holy = (next.cpMissions!.sanctified ?? []).filter((s) => s.side === side).length;
+      if (holy > 0) next = addVp(next, side, holy * 10, `${holy} objective(s) sanctified by its army`);
     }
   }
   return next;
+}
+
+/** AI: the best Sanctification start available to `side` this Shooting phase (null if none).
+ *  Prefers a unit already standing in range whose loss of shooting hurts least — the caller
+ *  compares the 10VP payoff against that unit's shooting EV. */
+export function cpSanctificationCandidate(
+  state: GameState,
+  side: Side,
+  ctx: EngineContext,
+  exclude?: Set<string>,
+): { unitId: string; objectiveIdx: number } | null {
+  const cp = state.cpMissions;
+  if (!cp || cp.missionId[side] !== 'purification') return null;
+  if (state.stage !== 'battle' || state.phase !== 'Shooting' || state.activePlayer !== side) return null;
+  const turnCounter = state.turnCounter ?? 0;
+  if ((cp.sanctifying ?? []).some((s) => s.side === side && s.startedTurnCounter === turnCounter)) return null;
+  const points = objectivePoints(state.layout);
+  for (const u of state.units) {
+    if (u.owner !== side || u.inReserves || exclude?.has(u.id)) continue;
+    if (!u.models.some((m) => m.alive)) continue;
+    if (u.status.battleShocked || u.status.advanced || u.status.fellBack || u.status.hasShot) continue;
+    if ((cp.sanctifying ?? []).some((s) => s.unitId === u.id)) continue;
+    if ((ctx.datasheets.get(u.datasheetId)?.models[0]?.OC ?? 0) <= 0) continue;
+    if (unitEngaged(state, ctx, u)) continue;
+    for (let idx = 0; idx < points.length; idx++) {
+      if ((cp.sanctified ?? []).some((s) => s.idx === idx)) continue;
+      const o = points[idx]!;
+      const inRange = u.models.some((m) => {
+        if (!m.alive) return false;
+        const r = baseRadius(ctx.datasheets.get(m.datasheetId ?? u.datasheetId)?.baseShape ?? { kind: 'circle', radius: 0.63 });
+        return withinObjectiveRange(m.pos, r, o, state.layout);
+      });
+      if (inRange) return { unitId: u.id, objectiveIdx: idx };
+    }
+  }
+  return null;
 }
 
 // ── AI hooks (mirror the secondaryKillBonus / secondaryPositionBonus seams) ───

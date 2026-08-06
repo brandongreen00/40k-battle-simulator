@@ -30,7 +30,7 @@ import { eligibleToShoot } from './phases';
 import { pointLosBlocked } from './visibility';
 import { initSecondaries, recordKills, secondariesOnTurnEnd, secondariesOnTurnStart, secondaryCard } from './secondaries';
 import { initMissions, missionsOnBattleEnd, missionsOnCommandEnd, missionsOnTurnEnd, missionsOnTurnStart, startAction, type StartActionParams } from './missionflow';
-import { cpMissionsOnBattleEnd, cpMissionsOnTurnEnd, initCpMissions } from './cpmissions';
+import { cpMissionsOnBattleEnd, cpMissionsOnCommandEnd, cpMissionsOnTurnEnd, initCpMissions, startSanctification } from './cpmissions';
 import type { DispositionId } from './missions11';
 import { canAttach, leaderJoinPositions } from './leaders';
 import { unitScoutDistance } from './abilities';
@@ -125,6 +125,8 @@ export type Intent =
   /** Discard one of your active Tactical Missions (the end-of-turn discard choice; the AI relies
    *  on the automatic stale-discard instead). */
   | { type: 'DiscardSecondary'; side: Side; cardId: string }
+  /** Combat Patrol (Purification): start the Sanctification action in your Shooting phase. */
+  | { type: 'StartSanctification'; unitId: string; objectiveIdx: number }
   /** Pre-battle (secret) Secondary Missions choice: Tactical (draw from the deck — the default)
    *  or Fixed with exactly two FIXED-capable cards, scored all battle at 20VP each. */
   | { type: 'ChooseSecondaryMode'; side: Side; fixedCardIds?: [string, string] }
@@ -615,6 +617,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         next = missionsOnTurnStart(next, ctx);
         next = secondariesOnTurnStart(next, ctx);
         next = missionsOnCommandEnd(next, ctx);
+        next = cpMissionsOnCommandEnd(next, ctx);
       }
       return next;
     }
@@ -652,6 +655,9 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         log: [...state.log, `${intent.side} uses Stratagem "${intent.name}" (-${intent.cost} CP)${intent.effectId ? ` → ${intent.effectId}` : ''}`],
       };
     }
+
+    case 'StartSanctification':
+      return startSanctification(state, ctx, intent.unitId, intent.objectiveIdx);
 
     case 'DiscardSecondary': {
       const sec = state.secondaries?.[intent.side];

@@ -472,6 +472,11 @@ export interface CpMissionState {
   events: CpMissionEvent[];
   /** Kill ledger of the PREVIOUS player turn ("destroyed in this or the previous turn"). */
   prevTurnKills?: KillRecord[];
+  /** Objectives sanctified (Purification): objective index + the side whose army sanctified it. */
+  sanctified?: { idx: number; side: Side }[];
+  /** Pending Sanctification actions — complete at that side's NEXT Command phase (or the end of
+   *  the battle, whichever occurs first). */
+  sanctifying?: { side: Side; unitId: string; objectiveIdx: number; startedTurnCounter: number }[];
 }
 
 // ── Pre-battle setup / deployment ────────────────────────────────────────────

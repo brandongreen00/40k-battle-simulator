@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import type { CpMissionState, GameState, Roster, Side, UnitInstance } from '../src/core/types';
 import { distancePointToPolygon, pointInPolygon } from '../src/core/geometry';
 import { parseTransportCapacity } from '../src/core/transport';
-import { CP_MISSIONS, cpMissionsOnBattleEnd, cpMissionsOnTurnEnd, missionForPatrol } from '../src/core/cpmissions';
+import { CP_MISSIONS, cpMissionsOnBattleEnd, cpMissionsOnCommandEnd, cpMissionsOnTurnEnd, missionForPatrol, startSanctification } from '../src/core/cpmissions';
 import { createInitialState } from '../src/core/state';
 import { runMatch, type MatchData } from '../src/core/ai/match';
 import {
@@ -175,7 +175,13 @@ describe('combat patrol missions (core/cpmissions.ts)', () => {
     startingModels: count,
     status: {},
   });
-  const mkState = (round: number, active: Side, units: UnitInstance[], cpOverrides?: Partial<CpMissionState>): GameState => ({
+  const mkState = (
+    round: number,
+    active: Side,
+    units: UnitInstance[],
+    cpOverrides?: Partial<CpMissionState>,
+    extra?: Partial<GameState>,
+  ): GameState => ({
     ...createInitialState(layoutsCp[0]!),
     stage: 'battle',
     mode: 'match',
@@ -191,16 +197,17 @@ describe('combat patrol missions (core/cpmissions.ts)', () => {
       events: [],
       ...cpOverrides,
     },
+    ...extra,
   });
 
   it('maps every patrol to a mission card', () => {
     for (const pid of ['crowes_sanctifiers', 'inquisitors_hand', 'sudden_dawn_cadre', 'vengeful_brethren']) {
       expect(missionForPatrol(pid), pid).toBeTruthy();
     }
-    expect(CP_MISSIONS['inquisitorial_sanction']!.captured).toBe('full');
-    expect(CP_MISSIONS['expansionary_campaign']!.captured).toBe('full');
-    expect(CP_MISSIONS['purification']!.captured).toBe('partial');
-    expect(CP_MISSIONS['seize_their_strongholds']!.captured).toBe('none');
+    // All four cards are captured in full (owner screenshots 2026-08-06).
+    for (const id of ['inquisitorial_sanction', 'expansionary_campaign', 'purification', 'seize_their_strongholds']) {
+      expect(CP_MISSIONS[id]!.captured, id).toBe('full');
+    }
   });
 
   it('Inquisitorial Sanction: 10VP per enemy CHARACTER model this + previous turn, objectives from round 2', () => {
@@ -238,13 +245,70 @@ describe('combat patrol missions (core/cpmissions.ts)', () => {
     expect(s3.cpMissions!.vp.ai).toBe(10);
   });
 
+  it('Seize their Strongholds: command-end windows rounds 2-4, end-of-turn in round 5', () => {
+    const inter = 'cp-vengeful-brethren-intercessor-squad';
+    // ai is the defender (attacker: player) → its home objective sits on the EF ruin area.
+    const units = [mkUnit('ai', inter, { x: 20, y: 38 }, 5), mkUnit('ai', inter, { x: 4, y: 28 }, 5)];
+    const seize = { missionId: { player: 'inquisitorial_sanction', ai: 'seize_their_strongholds' } };
+    // Round 2, end of ai's Command phase: more objectives (5) + home (5) + non-home (5) = 15.
+    let s = mkState(2, 'ai', units, seize, { phase: 'Command' });
+    s = cpMissionsOnCommandEnd(s, ctx);
+    expect(s.cpMissions!.vp.ai).toBe(15);
+    // Round 1 command phase scores nothing; round 5's window moves to the end of the turn.
+    let s1 = mkState(1, 'ai', units, seize, { phase: 'Command' });
+    expect(cpMissionsOnCommandEnd(s1, ctx).cpMissions!.vp.ai).toBe(0);
+    let s5c = mkState(5, 'ai', units, seize, { phase: 'Command' });
+    expect(cpMissionsOnCommandEnd(s5c, ctx).cpMissions!.vp.ai).toBe(0);
+    let s5t = mkState(5, 'ai', units, seize);
+    expect(cpMissionsOnTurnEnd(s5t, ctx).cpMissions!.vp.ai).toBe(15);
+  });
+
+  it('Sanctification: starts in your Shooting phase, completes at your next Command phase, pays at battle end', () => {
+    const strike = 'cp-crowes-sanctifiers-strike-squad';
+    const purify = { missionId: { player: 'purification', ai: 'seize_their_strongholds' } };
+    const unit = mkUnit('player', strike, { x: 4, y: 28 }, 5); // inside the GH expansion area
+    const unitB = mkUnit('player', strike, { x: 26, y: 16 }, 5); // inside the AB expansion area
+    const points = layoutsCp[0]!.objectivePoints!;
+    const ghIdx = points.findIndex((o) => o.kind === 'expansion' && o.pos.x < 15);
+    const abIdx = points.findIndex((o) => o.kind === 'expansion' && o.pos.x > 15);
+    let s = mkState(1, 'player', [unit, unitB], purify, { phase: 'Shooting', turnCounter: 0 });
+    s = startSanctification(s, ctx, unit.id, ghIdx);
+    expect(s.cpMissions!.sanctifying).toHaveLength(1);
+    expect(s.units[0]!.status.hasShot).toBe(true); // 16.01: cannot shoot after starting
+    // Once per turn: a second start the same turn is rejected.
+    const again = startSanctification(s, ctx, unitB.id, abIdx);
+    expect(again.log[again.log.length - 1]).toContain('once per turn');
+    // The action does NOT complete in the same turn it started…
+    let sameTurn = cpMissionsOnCommandEnd({ ...s, phase: 'Command' }, ctx);
+    expect(sameTurn.cpMissions!.sanctified ?? []).toHaveLength(0);
+    // …but completes at the player's NEXT Command phase (a later turnCounter).
+    let done = cpMissionsOnCommandEnd({ ...s, phase: 'Command', turnCounter: 2 }, ctx);
+    expect(done.cpMissions!.sanctified).toEqual([{ idx: ghIdx, side: 'player' }]);
+    // Battle end: 5VP × two controlled objectives + 10VP for the sanctified one.
+    const scored = cpMissionsOnBattleEnd(done, ctx);
+    expect(scored.cpMissions!.vp.player).toBe(20);
+    // A battle-shocked unit fails the completion (card effect condition).
+    const shocked = {
+      ...s,
+      phase: 'Command',
+      turnCounter: 2,
+      units: s.units.map((u) => ({ ...u, status: { ...u.status, battleShocked: true } })),
+    };
+    const failed = cpMissionsOnCommandEnd(shocked, ctx);
+    expect(failed.cpMissions!.sanctified ?? []).toHaveLength(0);
+    expect(failed.cpMissions!.sanctifying).toHaveLength(0);
+    // Pending sanctifications also complete at the end of the battle (whichever occurs first).
+    const atEnd = cpMissionsOnBattleEnd(s, ctx);
+    expect(atEnd.cpMissions!.sanctified).toEqual([{ idx: ghIdx, side: 'player' }]);
+  });
+
   it('end of battle: Purification pays 5VP per controlled objective; Sanction 10VP for a tabled character roster', () => {
     const strike = 'cp-crowes-sanctifiers-strike-squad';
     const units = [mkUnit('player', strike, { x: 4, y: 28 }, 5), mkUnit('player', strike, { x: 26, y: 16 }, 5)];
     let s = mkState(5, 'player', units, { missionId: { player: 'purification', ai: 'seize_their_strongholds' } });
     s = cpMissionsOnBattleEnd(s, ctx);
     expect(s.cpMissions!.vp.player).toBe(10); // two objectives controlled × 5
-    expect(s.cpMissions!.vp.ai).toBe(0); // uncaptured card scores nothing
+    expect(s.cpMissions!.vp.ai).toBe(0); // Seize their Strongholds has no end-of-battle block
     // Sanction end-of-battle: no enemy CHARACTER model alive anywhere → +10.
     let s2 = mkState(5, 'player', units); // enemy has no units at all
     s2 = cpMissionsOnBattleEnd(s2, ctx);
@@ -313,6 +377,28 @@ describe('combat patrol battles (deployment + full game through the real reducer
     expect(result.ended).toBe(true);
     expect(result.rejectedLog).toEqual([]);
     expect(result.forcedAdvances).toBe(0);
+  });
+
+  it('plays a full Purification vs Seize their Strongholds game (command windows + sanctification)', () => {
+    let finalState: GameState | null = null;
+    const result = runMatch(
+      {
+        layout: layoutsCp[0]!,
+        rosters: { player: crowes, ai: brethren },
+        profiles: { player: 'balanced', ai: 'balanced' },
+        battleType: 'combat_patrol',
+        seed: 13,
+        observe: (s) => { finalState = s; },
+      },
+      data,
+    );
+    expect(result.ended).toBe(true);
+    expect(result.rejectedLog).toEqual([]);
+    const s = finalState! as GameState;
+    expect(s.cpMissions?.missionId).toEqual({ player: 'purification', ai: 'seize_their_strongholds' });
+    expect(result.score).toEqual(s.cpMissions!.vp);
+    // Both full cards produce VP in a real game between these patrols.
+    expect(result.score.player + result.score.ai).toBeGreaterThan(0);
   });
 
   it('scores ONLY the patrol mission cards in a full game (Inquisitor\'s Hand vs Sudden Dawn Cadre)', () => {

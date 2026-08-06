@@ -42,13 +42,10 @@ A4 + Sustained Hits 3 at 2+, "BLAST 1", Zealot "+3 A and S", …); the missing
 Gate of Infinity battle-size table is an accepted source gap; map numbering 1–3
 is fine.
 
-Still open:
-- **Inquisitor's Hand landing page** (its detachment-rule card + DP cost, roster
-  list, Force Disposition) and the ASSIGNED AGENTS faction-ability text — the
-  only pages of that patrol never captured.
-- Mission cards seen in the captures ("Inquisitorial Sanction", "Expansionary
-  Campaign", plus collapsed "Seize their Strongholds"/"Purification") are stored
-  in `cp_patrols.json` rules text for the missions step.
+All extraction gaps are now closed: the owner confirmed the Inquisitor's Hand
+has no faction/detachment rule (so its landing page holds no rules content),
+and all four mission cards were captured in full via follow-up screenshots
+(their canonical texts live in `src/core/cpmissions.ts`).
 
 ### Conversion decisions
 
@@ -106,8 +103,8 @@ a patrol per side → **⚔ New Combat Patrol battle**. The normal setup flow ru
 - Only the four patrol rosters offered (standard lists hidden, and patrol lists
   hidden from standard battles).
 - `GameState.battleType = 'combat_patrol'`: the 11e Chapter Approved mission
-  layer and Tactical Missions deck are **not** initialised (CP missions come in
-  a later step; primary scoring currently falls back to the objective markers).
+  layer, the Tactical Missions deck and the legacy Pariah primary are all off —
+  scoring comes exclusively from the patrol mission cards (§4a).
 - **Strike from the Warp** enforced: Brotherhood Terminators and the Venerable
   Dreadnought cannot be set up on the battlefield; they must be placed in
   Strategic Reserves and arrive from their stated round, **wholly within their
@@ -127,35 +124,35 @@ both cards, their capture status, and a per-event VP log.
 |---|---|---|---|
 | Inquisitor's Hand | Inquisitorial Sanction | full | 10VP per enemy CHARACTER model destroyed in this/previous turn (end of your turn, any round); round 2+: control 1+ objectives 5VP, control 2+ another 5VP; end of battle: all enemy CHARACTERs destroyed 10VP |
 | Sudden Dawn Cadre | Expansionary Campaign | full | end of your turn — rounds 1–2: control 1+ expansion objectives 10VP, 2+ another 15VP; rounds 3–5: 5VP / another 10VP |
-| Crowe's Sanctifiers | Purification | **partial** | only the END OF BATTLE block was captured: 5VP per objective controlled (the "10VP per objective sanctified" mechanic is uncaptured and scores nothing) |
-| The Vengeful Brethren | Seize their Strongholds | **none** | card contents never captured — scores nothing, and the panel says so |
+| Crowe's Sanctifiers | Purification | full | **Sanctification action**: starts in your Shooting phase (16.01 eligibility, once per turn, unit within range of an unsanctified objective), completes at your **next Command phase** or the end of the battle; end of battle: 5VP per objective controlled + 10VP per objective sanctified |
+| The Vengeful Brethren | Seize their Strongholds | full | round 2+ at the **end of your Command phase** (end of your turn in round 5): more objectives than opponent 5VP + your home objective 5VP + 1+ non-home objectives 5VP |
 
 Interpretation (recorded): the cards' stacked lines score **cumulatively**
 (every satisfied line pays — GW's Combat Patrol card convention), so e.g.
-holding both expansion objectives in round 1 pays 10+15=25VP. Patrol↔mission
-pairing for Purification / Seize their Strongholds is inferred (theme + which
-battle-setup screen showed which card) — flag open for owner confirmation.
+holding both expansion objectives in round 1 pays 10+15=25VP. The
+patrol↔mission pairing is owner-confirmed. Sanctification simplification: a
+pending action fails only if the unit is destroyed, leaves the battlefield or
+is battle-shocked at completion (attacks made mid-window are not tracked).
 
-The AI plays its card: Inquisitorial Sanction boosts CHARACTER-kill EV, and
+The AI plays its card: Inquisitorial Sanction boosts CHARACTER-kill EV,
 Expansionary Campaign pulls units toward the expansion objectives (strongest in
-rounds 1–2).
+rounds 1–2), and Purification starts Sanctifications whenever a unit in range
+is worth more sanctifying than shooting (probed: 3–7 sanctification events per
+AI game). Seize their Strongholds rides the AI's normal objective play.
+Humans get a "⚡ Sanctify" unit+objective picker in the missions panel during
+their Shooting phase.
 
 ## 5. Not yet implemented (honest gaps → next steps)
 
-1. **The two incomplete mission cards** — screenshot the full *Purification*
-   card (incl. the Sanctification mechanic/twist selector) and *Seize their
-   Strongholds*, and confirm which patrol owns each; then their scoring slots
-   into the existing registry. The divider markers' meaning likely lands with
-   the sanctification/mission actions too.
-2. **Patrol stratagems/enhancements in play** — texts are extracted into
+1. **Patrol stratagems/enhancements in play** — texts are extracted into
    `cp_patrols.json`; no engine bindings yet. Core 11e stratagems still apply in
    CP battles except AI Rapid Ingress (disabled); a later step should swap the
    whole stratagem list per battle type (incl. "secured" objectives for
    Inquisitorial Mandate, 14.03).
-3. **Per-unit specials** — abilities ride on the datasheets as text; none are
+2. **Per-unit specials** — abilities ride on the datasheets as text; none are
    bound to effects yet (Shield Drone, For the Greater Good, Honoured Knights,
    Zealot, Overkill, Gate of Infinity teleport, Co-ordinated Eradication, …).
-4. **Leaders**: only Preacher Teguen has a Leader rule (→ Inquisitorial Agents);
+3. **Leaders**: only Preacher Teguen has a Leader rule (→ Inquisitorial Agents);
    the pairing works in Declare Battle Formations.
-5. Drone tokens (T'au) are modelled as ability text only (Shield Drone's +1 W is
+4. Drone tokens (T'au) are modelled as ability text only (Shield Drone's +1 W is
    not applied yet — it belongs with the specials pass).

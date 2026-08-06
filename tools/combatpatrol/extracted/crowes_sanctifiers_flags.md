@@ -93,3 +93,11 @@ spot-check, plus explicit data gaps and verified-absent notes.
   skills, EXPLOSIVES keyword). Accepted, never re-litigate.
 - **2026-08-06 (owner):** the missing Gate of Infinity battle-size table (item 1) is accepted
   as a source gap ("that's fine").
+- **2026-08-06 (owner):** supplied the full **Purification** mission card (follow-up screenshots
+  IMG_0168–0169): the Sanctification action (Starts: start of your Shooting phase; Units: one
+  friendly CROWE'S SANCTIFIERS unit within range of an objective that is not sanctified; Use
+  limit: once per turn; Completes: end of your next Command phase or the end of the battle;
+  Effect: if that unit is not battle-shocked, that objective is sanctified by your army) and the
+  two END OF THE BATTLE blocks (5VP per objective controlled; 10VP per objective sanctified).
+  Patrol↔mission pairing (Crowe's = Purification) owner-confirmed. Item 2's mission-card gap is
+  closed; card text lives in src/core/cpmissions.ts.

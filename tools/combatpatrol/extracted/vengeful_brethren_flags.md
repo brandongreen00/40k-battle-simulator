@@ -77,3 +77,9 @@ None remaining — every stat that was small or seam-adjacent was re-read from a
 
 - **2026-08-06 (owner):** all transcribed-as-shown stats confirmed intentional (incl. the
   Bladeguard Sergeant T3 vs squad T4). Accepted, never re-litigate.
+- **2026-08-06 (owner):** supplied the full **Seize their Strongholds** mission card (follow-up
+  screenshot IMG_0167): SECOND BATTLE ROUND ONWARDS — When: end of your Command phase (or the
+  end of your turn in the fifth battle round); you control more objectives than your opponent:
+  5VP; you control your home objective: 5VP; you control one or more objectives (excluding your
+  home objective): 5VP. Patrol↔mission pairing (Vengeful Brethren = Seize their Strongholds)
+  owner-confirmed. The collapsed-card gap is closed; card text lives in src/core/cpmissions.ts.

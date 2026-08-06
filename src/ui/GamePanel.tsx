@@ -261,6 +261,20 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
               </div>
             );
           })}
+          {(state.cpMissions.sanctified ?? []).length > 0 && (
+            <p className="muted">
+              Sanctified: {(state.cpMissions.sanctified ?? []).map((s) => `objective ${s.idx + 1} (${s.side})`).join(', ')}
+            </p>
+          )}
+          {(state.cpMissions.sanctifying ?? []).length > 0 && (
+            <p className="muted">
+              Sanctifying: {(state.cpMissions.sanctifying ?? []).map((s) => `objective ${s.objectiveIdx + 1} (${s.side})`).join(', ')}
+            </p>
+          )}
+          {state.stage === 'battle' && state.phase === 'Shooting' &&
+            state.cpMissions.missionId[state.activePlayer] === 'purification' && (
+              <SanctifyBlock state={state} dispatch={dispatch} datasheetsById={datasheetsById} />
+            )}
         </div>
       )}
 
@@ -821,6 +835,58 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
 }
 
 /** 11e Objective Actions: pick a unit + action + target; validity comes from missionflow. */
+/** Purification's Sanctification action: pick a unit + an unsanctified objective in your
+ *  Shooting phase; it completes at your next Command phase (the reducer validates 16.01). */
+function SanctifyBlock({
+  state,
+  dispatch,
+  datasheetsById,
+}: {
+  state: GameState;
+  dispatch: (i: Intent) => void;
+  datasheetsById: Map<string, Datasheet>;
+}) {
+  const side = state.activePlayer;
+  const [unitId, setUnitId] = useState('');
+  const [objIdx, setObjIdx] = useState('');
+  const points = objectivePoints(state.layout);
+  const sanctified = new Set((state.cpMissions?.sanctified ?? []).map((s) => s.idx));
+  const pending = new Set((state.cpMissions?.sanctifying ?? []).map((s) => s.unitId));
+  const units = state.units.filter(
+    (u) =>
+      u.owner === side && !u.inReserves && u.models.some((m) => m.alive) &&
+      !u.status.hasShot && !u.status.advanced && !u.status.fellBack && !u.status.battleShocked &&
+      !pending.has(u.id),
+  );
+  const objectives = points.map((o, i) => ({ o, i })).filter(({ i }) => !sanctified.has(i));
+  return (
+    <div className="btnrow">
+      <select value={unitId} onChange={(e) => setUnitId(e.target.value)}>
+        <option value="">— sanctifying unit —</option>
+        {units.map((u) => (
+          <option key={u.id} value={u.id}>{datasheetsById.get(u.datasheetId)?.name ?? u.id}</option>
+        ))}
+      </select>
+      <select value={objIdx} onChange={(e) => setObjIdx(e.target.value)}>
+        <option value="">— objective —</option>
+        {objectives.map(({ o, i }) => (
+          <option key={i} value={i}>objective {i + 1} ({o.kind})</option>
+        ))}
+      </select>
+      <button
+        disabled={!unitId || objIdx === ''}
+        onClick={() => {
+          dispatch({ type: 'StartSanctification', unitId, objectiveIdx: Number(objIdx) });
+          setUnitId('');
+          setObjIdx('');
+        }}
+      >
+        ⚡ Sanctify
+      </button>
+    </div>
+  );
+}
+
 function ActionsBlock({
   state,
   dispatch,
