@@ -42,10 +42,12 @@ export interface ListUnit {
 
 export interface ArmyList {
   name: string;
-  faction: string; // 'AM' | 'AoI'
+  faction: string; // 'AM' | 'AoI' — or a patrol's faction name for Combat Patrol lists
   detachment: string;
   battleSize: BattleSize;
   units: ListUnit[];
+  /** A fixed Combat Patrol (one of the four boxed patrols) — validation is the box itself. */
+  combatPatrol?: boolean;
 }
 
 export interface DataIndex {
@@ -103,6 +105,39 @@ export function addUnit(list: ArmyList, ds: Datasheet): ArmyList {
   const unit: ListUnit = { uid: nextUid(list, ds.id), datasheetId: ds.id, modelCount: defaultModelCount(ds) };
   return { ...list, units: [...list.units, unit] };
 }
+/** Add a unit at a FIXED size/loadout (Combat Patrol box contents — the datasheets carry no
+ *  points tiers, the patrol roster is the source of truth). */
+export function addUnitWithCount(list: ArmyList, ds: Datasheet, modelCount: number, loadout?: Loadout): ArmyList {
+  const unit: ListUnit = {
+    uid: nextUid(list, ds.id),
+    datasheetId: ds.id,
+    modelCount,
+    ...(loadout && Object.keys(loadout).length ? { loadout } : {}),
+  };
+  return { ...list, units: [...list.units, unit] };
+}
+
+/**
+ * The four boxed Combat Patrols as List Builder lists: built from the fixed patrol roster
+ * (units, sizes, wargear). The first CHARACTER is marked Warlord. `combatPatrol` rides through
+ * `toRoster`, so "Open in board" hands the board a roster its Combat Patrol picker accepts.
+ */
+export function patrolArmyList(roster: Roster, ix: DataIndex): ArmyList {
+  let list: ArmyList = {
+    name: roster.name,
+    faction: roster.faction,
+    detachment: roster.detachment,
+    battleSize: 'Combat Patrol',
+    combatPatrol: true,
+    units: [],
+  };
+  for (const u of roster.units) {
+    list = addUnitWithCount(list, ix.datasheets.get(u.datasheetId)!, u.modelCount, u.wargearCounts);
+  }
+  const chief = list.units.find((u) => isCharacter(ix.datasheets.get(u.datasheetId)));
+  if (chief) list = { ...list, units: list.units.map((u) => ({ ...u, warlord: u.uid === chief.uid })) };
+  return list;
+}
 export function removeUnit(list: ArmyList, uid: string): ArmyList {
   return {
     ...list,
@@ -147,6 +182,13 @@ export interface Violation {
 }
 
 export function validate(list: ArmyList, ix: DataIndex): Violation[] {
+  // A boxed Combat Patrol is pre-validated by the box: fixed units, sizes and wargear; the
+  // patrol datasheets carry no points/enhancement catalog, so the standard checks don't apply.
+  if (list.combatPatrol) {
+    const v: Violation[] = [];
+    if (!list.detachment) v.push({ severity: 'error', message: 'Pick one of the four Combat Patrols.' });
+    return v;
+  }
   const v: Violation[] = [];
   const rule = BATTLE_SIZES[list.battleSize];
   const total = listPoints(list, ix);
@@ -262,6 +304,7 @@ export function toRoster(list: ArmyList, ix: DataIndex): Roster {
     name: list.name,
     faction: list.faction,
     detachment: list.detachment,
+    ...(list.combatPatrol ? { combatPatrol: true } : {}),
     points: listPoints(list, ix),
     units: list.units.map((u) => {
       const wargearCounts = resolveWargearCounts(ix.datasheets.get(u.datasheetId), u);

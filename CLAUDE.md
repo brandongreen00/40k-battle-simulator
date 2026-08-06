@@ -330,6 +330,32 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-08-06] — List Builder: Combat Patrol picking (owner, with screenshot: "I can't pick
+  combat patrols. Please add it so that when 'combat patrol' is selected, the 4 armies … are
+  available from the faction and detachment menus"). Separate PR off main.** All gates green:
+  `pnpm typecheck`, `pnpm test` (**508 tests**, +3 in `tests/cpListBuilder.test.tsx`), `pnpm build`;
+  a Playwright mobile (iPhone-13) drive of the owner's exact reported flow passes 6/6 checks
+  (four patrols offered / detachment shows the patrol / legal list / fixed units loaded / the
+  board's CP army picker includes the opened patrol / zero console errors).
+  - **`army.ts`**: `ArmyList.combatPatrol?: boolean` rides through `toRoster` (so "Open in board"
+    hands the board a roster its Combat Patrol battle-type picker accepts); new
+    `patrolArmyList(roster, ix)` builds the fixed list from a cp roster (exact model counts +
+    wargearCounts, first CHARACTER = Warlord) and `addUnitWithCount` restores a removed patrol
+    unit at its boxed size; `validate` short-circuits for combatPatrol lists — the box IS the
+    validation (only error: no patrol picked yet). Points/battle-size/copy-limit rules don't
+    apply to fixed boxes.
+  - **`ListBuilder.tsx`**: when Battle size = Combat Patrol, the Faction select becomes the patrol
+    picker (the four cp rosters as "Name — Faction"; picking one loads its fixed list), the
+    Detachment select is disabled showing the patrol (a patrol IS its detachment), the DP note is
+    hidden, and a hint explains the fixed-box model. Switching battle size to/from CP clears the
+    list behind a confirm guard. Catalog re-adds in CP mode restore the boxed size/wargear.
+  - **Decisions**: the patrol picker keys off `roster.combatPatrol` (the four `cp_*.json` rosters)
+    so a future 5th patrol appears automatically; CP datasheet factions are full names ("Grey
+    Knights", "T'au Empire", …) so the Catalog's faction filter works unchanged; ListUnitCard's
+    static-text branch already handles tier-less cp datasheets (no steppers offered).
+  - **Handoff**: this PR and the mobile-UI PR (#20) both touch `ListBuilder.tsx` — whichever
+    merges second needs a trivial rebase (the changes are in different regions).
+
 - **[2026-08-06] — REACTION PROMPTS (owner: "I'd like the user and AI to be prompted on when they
   can act next" — Overwatch at the end of the opponent's Movement, defensive stratagems when
   targeted).** The auto-playing AI used to blow straight past every reactive window; it now
