@@ -1,0 +1,227 @@
+{
+  "id": "vengeful_brethren",
+  "name": "The Vengeful Brethren",
+  "faction": "Dark Angels (Adeptus Astartes)",
+  "patrolRules": [
+    {
+      "name": "Detachment Points",
+      "text": "To use this detachment you must spend 1DP."
+    },
+    {
+      "name": "Honoured Knights",
+      "text": "When an enemy unit ends a charge move, friendly VENGEFUL BRETHREN units engaged with that enemy unit are in defence stance until the end of the turn:\n• While a unit is in defence stance, attacks that target that unit with a S greater than that unit's T have -1 to wound rolls."
+    },
+    {
+      "name": "Oath of Moment (Army Rule)",
+      "text": "This ability is described in full in the Army Rules section of Codex: Space Marines."
+    },
+    {
+      "name": "The Deathwing (Army Rule)",
+      "text": "The following ADEPTUS ASTARTES units gain the DEATHWING keyword if they are drawn from the Dark Angels Chapter:\n■ TERMINATOR units\n■ BLADEGUARD ANCIENT, BLADEGUARD VETERAN SQUAD, STERNGUARD VETERAN SQUAD and VANGUARD VETERAN SQUAD WITH JUMP PACKS units\n■ LAND RAIDER, LAND RAIDER CRUSADER, LAND RAIDER REDEEMER, REPULSOR and REPULSOR EXECUTIONER units\n■ DREADNOUGHT units"
+    },
+    {
+      "name": "The Ravenwing (Army Rule)",
+      "text": "The following ADEPTUS ASTARTES units gain the RAVENWING keyword if they are drawn from the Dark Angels Chapter:\n■ MOUNTED units\n■ VEHICLE units that can FLY"
+    },
+    {
+      "name": "The Unforgiven (Army Rule)",
+      "text": "■ If an ADEPTUS ASTARTES unit has a second Faction keyword on its datasheet, that Faction keyword is the name of that unit's Chapter. For example, Asmodai has both the ADEPTUS ASTARTES and DARK ANGELS Faction keywords, and is therefore from the Dark Angels Chapter.\n■ You cannot include units from more than one Chapter in your army.\n\nDesigner's Note: The rules presented in this section assume that the ADEPTUS ASTARTES units in your army are from the Dark Angels Chapter, but they can also be used to represent any Dark Angels successor Chapter, such as one described in the background section of this book, or even one of your own invention. However, players who wish to faithfully recreate the Dark Angels Chapter on the tabletop should only include DARK ANGELS EPIC HEROES if their collection is intended to represent the First Founding Chapter itself; Ezekiel is the Chief Librarian of the Dark Angels, for example, and not of any of their successors."
+    }
+  ],
+  "enhancements": [
+    {
+      "name": "Supreme Combatant",
+      "text": "VENGEFUL BRETHREN GRAVIS CAPTAIN model only. When this unit is selected to attack, this unit's attacks have:\n• [LETHAL HITS].\n• Or: [SUSTAINED HITS 1]."
+    },
+    {
+      "name": "Dutiful Defenders",
+      "text": "Upgrade: VENGEFUL BRETHREN BLADEGUARD VETERAN SQUAD unit only. (Once per battle round, per army) When you target this unit with the Heroic Intervention stratagem, that use is -1 CP."
+    }
+  ],
+  "stratagems": [
+    {
+      "name": "For the Lion",
+      "cp": 1,
+      "when": "Command phase.",
+      "target": "One friendly VENGEFUL BRETHREN unit.",
+      "effect": "Your unit has +1 OC until the end of the turn.",
+      "restrictions": ""
+    },
+    {
+      "name": "Mission Focus",
+      "cp": 1,
+      "when": "Your Shooting phase or the Fight phase, when a friendly VENGEFUL BRETHREN unit within range of an objective is selected to attack.",
+      "target": "That VENGEFUL BRETHREN unit.",
+      "effect": "Your unit's attacks have +1 to hit rolls.",
+      "restrictions": ""
+    },
+    {
+      "name": "Determined to the Last",
+      "cp": 1,
+      "when": "Fight phase, when an enemy unit targets a friendly VENGEFUL BRETHREN BLADEGUARD VETERAN SQUAD unit.",
+      "target": "That VENGEFUL BRETHREN BLADEGUARD VETERAN SQUAD unit.",
+      "effect": "When a model in your unit is destroyed, if your unit has not been selected to fight this phase, roll one D6:\n• On a 2+, do not remove that model from the battlefield. When your unit has fought, or at the end of the phase (whichever comes first), that model is removed from the battlefield.",
+      "restrictions": ""
+    }
+  ],
+  "forceDispositions": ["Take and Hold"],
+  "rosterList": [
+    {"name": "Vengeful Brethren Intercessor Squad", "count": "1 (10 models)"},
+    {"name": "Master Zacharial", "count": "1 (1 model)"},
+    {"name": "Vengeful Brethren Hellblaster Squad", "count": "1 (5 models)"},
+    {"name": "Vengeful Brethren Bladeguard Veteran Squad", "count": "1 (3 models)"}
+  ],
+  "units": [
+    {
+      "name": "Vengeful Brethren Intercessor Squad",
+      "profiles": [
+        {"name": "Intercessor Sergeant", "M": "6\"", "T": 4, "SV": "3+", "W": 2, "LD": "6+", "OC": 2},
+        {"name": "Intercessor", "M": "6\"", "T": 4, "SV": "3+", "W": 2, "LD": "6+", "OC": 2}
+      ],
+      "invuln": null,
+      "invulnNote": null,
+      "rangedWeapons": [
+        {"name": "Bolt Pistol", "profileOf": null, "range": "12\"", "A": "1", "BS": "3+", "S": 4, "AP": 0, "D": "1", "tags": ["CLOSE-QUARTERS"]},
+        {"name": "Bolt Rifle", "profileOf": null, "range": "24\"", "A": "2", "BS": "3+", "S": 4, "AP": -1, "D": "1", "tags": ["ASSAULT", "HEAVY"]}
+      ],
+      "meleeWeapons": [
+        {"name": "Knives and Fists", "range": "Melee", "A": "3", "WS": "3+", "S": 4, "AP": 0, "D": "1", "tags": []}
+      ],
+      "factionAbilities": ["THE DEATHWING", "THE RAVENWING", "THE UNFORGIVEN"],
+      "datasheetAbilities": [
+        {
+          "name": "OBJECTIVE SECURED",
+          "text": "At the end of your Command phase, if this unit is controlling an objective, that objective is secured."
+        }
+      ],
+      "wargearAbilities": [],
+      "composition": {
+        "bullets": ["1 Intercessor Sergeant model", "9 Intercessor models"],
+        "equipment": ["Every model is equipped with: 1 Bolt Pistol; 1 Bolt Rifle; 1 Knives and Fists."],
+        "notes": "Model count table: Intercessor Sergeant x1, Intercessor x9.",
+        "baseSize": "32mm"
+      },
+      "leaderAttach": null,
+      "transport": null,
+      "keywords": ["BATTLELINE", "EXPLOSIVES", "IMPERIUM", "INFANTRY", "TACTICUS", "VENGEFUL BRETHREN"],
+      "factionKeywords": ["DARK ANGELS", "ADEPTUS ASTARTES"]
+    },
+    {
+      "name": "Master Zacharial",
+      "profiles": [
+        {"name": "Master Zacharial", "M": "5\"", "T": 6, "SV": "3+", "W": 6, "LD": "6+", "OC": 1}
+      ],
+      "invuln": "4+",
+      "invulnNote": null,
+      "rangedWeapons": [
+        {"name": "Boltstorm Gauntlet", "profileOf": null, "range": "12\"", "A": "3", "BS": "2+", "S": 4, "AP": -1, "D": "1", "tags": ["CLOSE-QUARTERS"]}
+      ],
+      "meleeWeapons": [
+        {"name": "Power Fist", "range": "Melee", "A": "5", "WS": "2+", "S": 8, "AP": -2, "D": "2", "tags": []},
+        {"name": "Relic Chainsword", "range": "Melee", "A": "3", "WS": "2+", "S": 4, "AP": -1, "D": "2", "tags": ["EXTRA ATTACKS"]}
+      ],
+      "factionAbilities": ["THE DEATHWING", "THE RAVENWING", "THE UNFORGIVEN"],
+      "datasheetAbilities": [
+        {
+          "name": "GRAVIS PROTECTION",
+          "text": "Attacks that target this unit have -1 D."
+        }
+      ],
+      "wargearAbilities": [],
+      "composition": {
+        "bullets": ["1 Master Zacharial model"],
+        "equipment": ["This model is equipped with: 1 Boltstorm Gauntlet; 1 Power Fist; 1 Relic Chainsword."],
+        "notes": "Model count table: Master Zacharial x1. No Leader/attachment section appears on the captured datasheet screens (see flags).",
+        "baseSize": "40mm"
+      },
+      "leaderAttach": null,
+      "transport": null,
+      "keywords": ["CAPTAIN", "CHARACTER", "GRAVIS", "IMPERIUM", "INFANTRY", "VENGEFUL BRETHREN"],
+      "factionKeywords": ["DARK ANGELS", "ADEPTUS ASTARTES"]
+    },
+    {
+      "name": "Vengeful Brethren Hellblaster Squad",
+      "profiles": [
+        {"name": "Hellblaster Sergeant", "M": "6\"", "T": 4, "SV": "3+", "W": 2, "LD": "6+", "OC": 1},
+        {"name": "Hellblaster", "M": "6\"", "T": 4, "SV": "3+", "W": 2, "LD": "6+", "OC": 1}
+      ],
+      "invuln": null,
+      "invulnNote": null,
+      "rangedWeapons": [
+        {"name": "Bolt Pistol", "profileOf": null, "range": "12\"", "A": "1", "BS": "3+", "S": 4, "AP": 0, "D": "1", "tags": ["CLOSE-QUARTERS"]},
+        {"name": "Plasma Incinerator - Standard", "profileOf": "Plasma Incinerator", "range": "24\"", "A": "2", "BS": "3+", "S": 7, "AP": -2, "D": "1", "tags": ["ASSAULT", "HEAVY"]},
+        {"name": "Plasma Incinerator - Supercharge", "profileOf": "Plasma Incinerator", "range": "24\"", "A": "2", "BS": "3+", "S": 8, "AP": -3, "D": "2", "tags": ["ASSAULT", "HAZARDOUS", "HEAVY"]}
+      ],
+      "meleeWeapons": [
+        {"name": "Knives and Fists", "range": "Melee", "A": "3", "WS": "3+", "S": 4, "AP": 0, "D": "1", "tags": []}
+      ],
+      "factionAbilities": ["THE DEATHWING", "THE RAVENWING", "THE UNFORGIVEN"],
+      "datasheetAbilities": [
+        {
+          "name": "PUNISHING VOLLEY",
+          "text": "In your Shooting phase, when this unit has shot, select one enemy unit hit by those attacks. That unit makes a battle-shock roll."
+        }
+      ],
+      "wargearAbilities": [],
+      "composition": {
+        "bullets": ["1 Hellblaster Sergeant model", "4 Hellblaster models"],
+        "equipment": ["Every model is equipped with: 1 Bolt Pistol; 1 Knives and Fists; 1 Plasma Incinerator - Standard."],
+        "notes": "Model count table: Hellblaster Sergeant x1, Hellblaster x4. Multi-profile weapon footnote (marked with a right-pointing marker on both Plasma Incinerator rows): 'Before selecting targets with this weapon, select one of its profiles to make attacks with.'",
+        "baseSize": "32mm"
+      },
+      "leaderAttach": null,
+      "transport": null,
+      "keywords": ["EXPLOSIVES", "IMPERIUM", "INFANTRY", "TACTICUS", "VENGEFUL BRETHREN"],
+      "factionKeywords": ["DARK ANGELS", "ADEPTUS ASTARTES"]
+    },
+    {
+      "name": "Vengeful Brethren Bladeguard Veteran Squad",
+      "profiles": [
+        {"name": "Bladeguard Veteran", "M": "6\"", "T": 4, "SV": "3+", "W": 3, "LD": "6+", "OC": 1},
+        {"name": "Bladeguard Veteran Sergeant", "M": "6\"", "T": 3, "SV": "3+", "W": 3, "LD": "6+", "OC": 1}
+      ],
+      "invuln": "4+",
+      "invulnNote": null,
+      "rangedWeapons": [
+        {"name": "Heavy Bolt Pistol", "profileOf": null, "range": "18\"", "A": "1", "BS": "3+", "S": 4, "AP": -1, "D": "1", "tags": ["CLOSE-QUARTERS"]}
+      ],
+      "meleeWeapons": [
+        {"name": "Master-crafted Power Weapon", "range": "Melee", "A": "4", "WS": "3+", "S": 5, "AP": -2, "D": "2", "tags": []}
+      ],
+      "factionAbilities": ["THE DEATHWING", "THE RAVENWING", "THE UNFORGIVEN"],
+      "datasheetAbilities": [
+        {
+          "name": "BLADEGUARD (ONCE PER TURN PER UNIT)",
+          "text": "(Once per turn, per unit): In the Fight phase, when this unit is selected\n• to fight or when an enemy unit targets this unit, you can select one of.the following:\n■ This unit's melee attacks have +1 to hit rolls.\n■ Or: Attacks that target this unit have -1 to hit rolls."
+        }
+      ],
+      "wargearAbilities": [],
+      "composition": {
+        "bullets": ["1 Bladeguard Veteran Sergeant model", "2 Bladeguard Veteran models"],
+        "equipment": ["Every model is equipped with: 1 Heavy Bolt Pistol; 1 Master-crafted Power Weapon."],
+        "notes": "Model count table: Bladeguard Veteran x2, Bladeguard Veteran Sergeant x1.",
+        "baseSize": "40mm"
+      },
+      "leaderAttach": null,
+      "transport": null,
+      "keywords": ["EXPLOSIVES", "IMPERIUM", "INFANTRY", "TACTICUS", "VENGEFUL BRETHREN"],
+      "factionKeywords": ["DARK ANGELS", "ADEPTUS ASTARTES"]
+    }
+  ],
+  "sourceImages": {
+    "IMG_4436.PNG": "Patrol landing page: The Vengeful Brethren — Enhancements/Stratagems links, Detachment Rules (1DP, Honoured Knights), Datasheets roster list, Force Dispositions (Take and Hold).",
+    "IMG_4437.PNG": "Stratagems page: For the Lion (1CP), Mission Focus (1CP), Determined to the Last (1CP) — all three cards fully visible; page ends after the third.",
+    "IMG_4438.PNG": "Enhancements page: Supreme Combatant, Dutiful Defenders — both cards fully visible.",
+    "IMG_4439.PNG": "Army Rules page: Oath of Moment (pointer to Codex: Space Marines), The Deathwing, The Ravenwing, The Unforgiven (incl. Designer's Note).",
+    "IMG_4440.PNG": "Bladeguard Veteran Squad datasheet 1/2: photo, both stat profiles (Sergeant T3), 4+ invuln banner, Heavy Bolt Pistol row, start of melee (Master-crafted Power Weapon).",
+    "IMG_4441.PNG": "Bladeguard Veteran Squad datasheet 2/2: Master-crafted Power Weapon row (no tags), abilities (Bladeguard once-per-turn), composition, base 40mm, keywords.",
+    "IMG_4442.PNG": "Master Zacharial datasheet 1/2: photo, stat plaque (5\"/6/3+/6/6+/1), 4+ invuln, Boltstorm Gauntlet, Power Fist, Relic Chainsword rows.",
+    "IMG_4443.PNG": "Master Zacharial datasheet 2/2: melee rows repeated (EXTRA ATTACKS tag), Gravis Protection ability, composition, base 40mm, keywords.",
+    "IMG_4444.PNG": "Hellblaster Squad datasheet 1/3: photo, both stat profiles, Bolt Pistol, Plasma Incinerator Standard row, start of Supercharge row.",
+    "IMG_4445.PNG": "Hellblaster Squad datasheet 2/3: full ranged table incl. both Plasma profiles + multi-profile footnote, Knives and Fists, Punishing Volley ability, start of composition.",
+    "IMG_4446.PNG": "Hellblaster Squad datasheet 3/3: melee table, abilities repeated, composition (1+4 models), base 32mm, keywords.",
+    "IMG_4447.PNG": "Intercessor Squad datasheet 1/2: photo, both stat profiles (OC 2), Bolt Pistol, Bolt Rifle rows with tags.",
+    "IMG_4448.PNG": "Intercessor Squad datasheet 2/2: Knives and Fists, Objective Secured ability, composition (1+9 models), base 32mm, keywords (BATTLELINE).",
+    "IMG_4449.PNG": "Battle Setup screen (not patrol reference): Your Mission = Seize their Strongholds (Second Battle Round Onwards scoring 5VP x3), Opponent's Mission = Purification (collapsed), Create Battlefield button."
+  }
+}

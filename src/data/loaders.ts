@@ -6,11 +6,18 @@ import type { DataIndex } from '../core/army';
 import { deployAbilityFromKeywords, type DeployAbility } from '../core/deployment';
 import { CORE_STRATAGEMS, DETACHMENT_STRAT_EFFECTS, parseTurn, type Stratagem } from '../core/stratagems';
 import datasheetsJson from '../../data/game/datasheets.json';
+import cpDatasheetsJson from '../../data/game/cp_datasheets.json';
+import cpPatrolsJson from '../../data/game/cp_patrols.json';
 import enhancementsJson from '../../data/game/enhancements.json';
 import abilitiesJson from '../../data/game/abilities.json';
 import stratagemsJson from '../../data/game/stratagems.json';
 
-export const datasheets = datasheetsJson as unknown as Datasheet[];
+// The Combat Patrol datasheets (tools/combatpatrol) join the Wahapedia-converted ones — every
+// engine path looks units up through this one list/map.
+export const datasheets = [
+  ...(datasheetsJson as unknown as Datasheet[]),
+  ...(cpDatasheetsJson as unknown as Datasheet[]),
+];
 
 export const datasheetsById: Map<string, Datasheet> = new Map(
   datasheets.map((d) => [d.id, d]),
@@ -62,8 +69,95 @@ const detachmentStratagems: Stratagem[] = stratRows.map((s) => ({
     : {}),
 }));
 
-/** Core stratagems + every detachment stratagem from the data. */
-export const stratagems: Stratagem[] = [...CORE_STRATAGEMS, ...detachmentStratagems];
+// ── Combat Patrol stratagems (each patrol's three, from tools/combatpatrol) ──
+// detachment = the patrol name (CP rosters carry it), so the standard detachment filter scopes
+// them to their patrol; battleType gating (Core bans) lives in usableStratagems.
+interface CpPatrolRaw {
+  id: string;
+  name: string;
+  faction: string;
+  stratagems: { name: string; cp?: number; when?: string; target?: string; effect?: string }[];
+}
+const cpSlug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+const CP_STRAT_META: Record<string, { phase: string; turn: 'either' | 'your' | 'opponent'; effectId?: string; note?: string }> = {
+  // Crowe's Sanctifiers
+  'Exigent Assignments': { phase: 'Fight phase', turn: 'either', effectId: 'cp:consolidate_extended' },
+  'Refusal to Yield': { phase: 'Shooting phase', turn: 'opponent', effectId: 'cp:wound_shield_strong' },
+  'Psi-reactive Ammunition': { phase: 'Shooting phase', turn: 'your', effectId: 'cp:psychic_ammo' },
+  // Inquisitor's Hand
+  'Urban Enforcers': { phase: 'Shooting or Fight phase', turn: 'either', effectId: 'cp:ap_shield', note: '(Play on your unit when it is targeted with every model within a terrain area.)' },
+  'Superior Weaponry': { phase: 'Shooting or Fight phase', turn: 'either', effectId: 'cp:ap_boost' },
+  'Inquisitorial Mandate': { phase: 'Movement phase', turn: 'your', effectId: 'cp:secure_objective' },
+  // Sudden Dawn Cadre
+  'Suppressing Fire': { phase: 'Shooting phase', turn: 'your', effectId: 'cp:pin' },
+  'Rapid Acquisition': { phase: 'Movement phase', turn: 'your', effectId: 'cp:secure_objective' },
+  'Swift Embarkation': { phase: 'Fight phase', turn: 'opponent', effectId: 'cp:swift_embark' },
+  // The Vengeful Brethren
+  'For the Lion': { phase: 'Command phase', turn: 'either', effectId: 'cp:oc_plus1' },
+  'Mission Focus': { phase: 'Shooting or Fight phase', turn: 'either', effectId: 'cp:plus1_hit', note: '(The "within range of an objective" condition is checked when you play it, not per attack.)' },
+  'Determined to the Last': { phase: 'Fight phase', turn: 'either', effectId: 'cp:fights_on_death', note: '(Play on the Bladeguard when an enemy targets them in melee — destroyed models fight on a 2+ before they are removed.)' },
+};
+export const patrolStratagems: Stratagem[] = (cpPatrolsJson as unknown as CpPatrolRaw[]).flatMap((p) =>
+  p.stratagems.map((s) => {
+    const meta = CP_STRAT_META[s.name] ?? { phase: 'Any phase', turn: 'either' as const };
+    return {
+      id: `cp:${p.id}:${cpSlug(s.name)}`,
+      name: s.name,
+      cp: s.cp ?? 1,
+      phase: meta.phase,
+      turn: meta.turn,
+      detachment: p.name,
+      faction: p.faction,
+      type: 'Combat Patrol',
+      text: [
+        s.when ? `When: ${s.when}` : '',
+        s.target ? `Target: ${s.target}` : '',
+        s.effect ? `Effect: ${s.effect}` : '',
+        meta.note ?? '',
+      ]
+        .filter(Boolean)
+        .join(' '),
+      ...(meta.effectId ? { effectId: meta.effectId } : {}),
+    };
+  }),
+);
+
+/** Core stratagems + every detachment stratagem from the data + the Combat Patrol sets. */
+export const stratagems: Stratagem[] = [...CORE_STRATAGEMS, ...detachmentStratagems, ...patrolStratagems];
+
+// ── Combat Patrol enhancements (each patrol's two, from tools/combatpatrol) ──
+// The bearer datasheet is curated per card ("EVERSOR ASSASSIN model only", …); the reducer
+// stamps the enhancement onto the matching unit when it deploys (see ChooseCpEnhancement).
+const CP_ENH_TARGET: Record<string, string> = {
+  'Sanctified Auspexes': 'cp-crowes-sanctifiers-venerable-dreadnought',
+  'Purifying Force': 'cp-crowes-sanctifiers-brotherhood-terminator-squad',
+  'Killer Reflexes': 'cp-inquisitors-hand-eversor-assassin',
+  'Sanctic Slayers': 'cp-inquisitors-hand-preacher-teguen',
+  'Proximity Scanners': 'cp-sudden-dawn-cadre-devilfish',
+  'Earth Caste Modifications': 'cp-sudden-dawn-cadre-commander-cloudspear',
+  'Supreme Combatant': 'cp-vengeful-brethren-master-zacharial',
+  'Dutiful Defenders': 'cp-vengeful-brethren-bladeguard-veteran-squad',
+};
+export interface CpEnhancement {
+  id: string; // `cpenh:<patrol>:<slug>` — becomes the unit's enhancementId
+  name: string;
+  text: string;
+  patrol: string; // patrol id, e.g. 'inquisitors_hand'
+  patrolName: string;
+  targetDsId: string;
+}
+export const patrolEnhancements: CpEnhancement[] = (cpPatrolsJson as unknown as (CpPatrolRaw & {
+  enhancements?: { name: string; text?: string }[];
+})[]).flatMap((p) =>
+  (p.enhancements ?? []).map((e) => ({
+    id: `cpenh:${p.id}:${cpSlug(e.name)}`,
+    name: e.name,
+    text: e.text ?? '',
+    patrol: p.id,
+    patrolName: p.name,
+    targetDsId: CP_ENH_TARGET[e.name] ?? '',
+  })),
+);
 
 /** The lookup bundle the pure army engine expects. */
 export const dataIndex: DataIndex = {
@@ -228,5 +322,55 @@ export function layoutsForPairing(a: string, b: string): Layout[] {
   });
 }
 
-/** 11e Event Companion layouts first, then the legacy 10e maps. */
-export const layouts: Layout[] = [...layouts11, ...legacyLayouts];
+// ── Combat Patrol maps (data/layouts_cp, produced by tools/layouts_cp) ──
+// Same raw shape as the Event Companion files plus `name`/`dividerMarkers`; no pairing.
+interface CpRaw extends Omit<Ec11Raw, 'players' | 'page' | 'layoutLetter'> {
+  name: string;
+  dividerMarkers?: { pos: number[] }[];
+  terrainAreas: (Ec11Raw['terrainAreas'][number] & { letter?: string })[];
+}
+
+function convertCp(raw: CpRaw): Layout {
+  const base = convertEc11({ ...raw, page: 0, layoutLetter: '', players: [] });
+  const { pairing: _pairing, ...rest } = base;
+  return {
+    ...rest,
+    name: raw.name,
+    deployment: 'Combat Patrol',
+    deploymentId: raw.id,
+    combatPatrol: true,
+    // Preserve the printed ruin letters (AB/CD/EF/GH) the CP missions reference.
+    terrainAreas: rest.terrainAreas?.map((a, i) => {
+      const letter = raw.terrainAreas[i]?.letter;
+      return letter ? { ...a, letter } : a;
+    }),
+    ...(raw.dividerMarkers?.length ? { dividerMarkers: raw.dividerMarkers.map((m) => v(m.pos)) } : {}),
+  };
+}
+
+const cpModules = import.meta.glob<{ default: CpRaw }>('../../data/layouts_cp/cp*.json', {
+  eager: true,
+});
+export const layoutsCp: Layout[] = Object.values(cpModules)
+  .map((m) => convertCp(m.default))
+  .sort((a, b) => a.id.localeCompare(b.id));
+
+// ── Combat Patrol rosters + patrol meta ──
+export interface PatrolMeta {
+  id: string;
+  name: string;
+  faction: string;
+  rules: { name: string; text: string }[];
+  enhancements: { name: string; text: string }[];
+  stratagems: { name: string; cp?: number; when?: string; target?: string; effect?: string; restrictions?: string }[];
+  forceDispositions: string[];
+}
+export const patrols = cpPatrolsJson as unknown as PatrolMeta[];
+
+/** The fixed Combat Patrol lists (the only rosters offered in a Combat Patrol battle). */
+export function combatPatrolRosters(all: Roster[]): Roster[] {
+  return all.filter((r) => r.combatPatrol);
+}
+
+/** 11e Event Companion layouts first, then Combat Patrol maps, then the legacy 10e maps. */
+export const layouts: Layout[] = [...layouts11, ...layoutsCp, ...legacyLayouts];

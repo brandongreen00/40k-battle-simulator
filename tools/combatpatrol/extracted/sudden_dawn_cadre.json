@@ -1,0 +1,231 @@
+{
+  "id": "sudden_dawn_cadre",
+  "name": "Sudden Dawn Cadre",
+  "faction": "T'au Empire",
+  "patrolRules": [
+    {
+      "name": "Detachment Points",
+      "text": "To use this detachment you must spend 1DP."
+    },
+    {
+      "name": "Co-ordinated Eradication",
+      "text": "(Once per battle, per army) When a friendly SUDDEN DAWN CADRE unit is selected to shoot, you can use this ability. If you do, select one enemy unit. Friendly SUDDEN DAWN CADRE units' attacks that target that enemy unit have +1 AP until the end of the battle."
+    },
+    {
+      "name": "Drones",
+      "text": "If you have upgraded a model to have a drone, place a Drone token next to your model as a reminder. These do not count as models for any rules purposes.\n\nShield Drone\nAdd 1 to the bearer's Wounds characteristic."
+    },
+    {
+      "name": "For the Greater Good",
+      "text": "If your Army Faction is T'AU EMPIRE, at the start of your Shooting phase you can select units from your army with this ability to become Observer units.\n\nDuring your Shooting phase, for each Observer unit from your army that has not been selected to shoot this phase and is eligible to shoot (excluding FORTIFICATION and Battle-shocked units] select one enemy unit that is visible to be marked as their Spotted unit until the end of the phase. Each enemy unit can only be marked as a Spotted unit once per phase.\n\nUnits from your army with the For the Greater Good ability (excluding Observer units) are Guided units while targeting one or more Spotted units.\n\nUntil the end of the phase, each time a model from your army in a Guided unit makes an attack that targets a Spotted unit, improve the Ballistic Skill characteristic of that attack by 1 and, if the Spotted unit was marked by an Observer unit that has the Markerlight keyword, that attack has the [IGNORES COVER] ability."
+    }
+  ],
+  "enhancements": [
+    {
+      "name": "Proximity Scanners",
+      "text": "Upgrade: SUDDEN DAWN CADRE DEVILFISH unit only. When a friendly unit embarked within this unit disembarks, that friendly unit's pulse blaster and pulse carbine weapons have +1 A."
+    },
+    {
+      "name": "Earth Caste Modifications",
+      "text": "SUDDEN DAWN CADRE COMMANDER IN ENFORCER BATTLESUIT model only.\n• When this unit has shot, you can select one enemy unit hit by those attacks. That enemy unit is suppressed until the start of your next turn:\n• While a unit is suppressed, that unit's attacks have -1 to hit rolls.\n• When this unit makes an ingress move, it can be set up more than 6\" horizontally from all enemy units (instead of more than 8\"). If this unit does, is not eligible to declare a charge until the end of the turn."
+    }
+  ],
+  "stratagems": [
+    {
+      "name": "Suppressing Fire",
+      "cp": 1,
+      "when": "Your Shooting phase, when a friendly SUDDEN DAWN CADRE INFANTRY unit has shot.",
+      "target": "That SUDDEN DAWN CADRE INFANTRY unit.",
+      "effect": "Select one enemy unit hit by those attacks. That enemy unit is pinned until the start of your next Command phase:\n• While a unit is pinned, that unit has -2\" M.",
+      "restrictions": null
+    },
+    {
+      "name": "Rapid Acquisition",
+      "cp": 1,
+      "when": "End of your Movement phase.",
+      "target": "One friendly SUDDEN DAWN CADRE unit.",
+      "effect": "Select one objective your unit is controlling. That objective is secured.",
+      "restrictions": null
+    },
+    {
+      "name": "Swift Embarkation",
+      "cp": 1,
+      "when": "End of your opponent's Fight phase.",
+      "target": "One friendly unengaged SUDDEN DAWN CADRE INFANTRY unit that was eligible to fight this phase, is wholly within 6\" of a friendly SUDDEN DAWN CADRE TRANSPORT unit, and is eligible to embark within that TRANSPORT unit.",
+      "effect": "Your unit embarks within that TRANSPORT unit.",
+      "restrictions": null
+    }
+  ],
+  "forceDispositions": ["Take and Hold"],
+  "rosterList": [
+    { "name": "Commander Cloudspear", "count": "1 (1 model)" },
+    { "name": "Sudden Dawn Cadre Devilfish", "count": "1 (1 model)" },
+    { "name": "Sudden Dawn Cadre Pathfinder Team", "count": "1 (10 models)" },
+    { "name": "Sudden Dawn Cadre Breacher Team", "count": "1 (10 models)" }
+  ],
+  "units": [
+    {
+      "name": "Sudden Dawn Cadre Pathfinder Team",
+      "profiles": [
+        { "name": "Pathfinder with Pulse Pistol, Rail Rifle and Close Combat Weapon", "M": "7\"", "T": 3, "SV": "4+", "W": 1, "LD": "7+", "OC": 1 },
+        { "name": "Pathfinder Shas'ui", "M": "7\"", "T": 3, "SV": "4+", "W": 1, "LD": "7+", "OC": 1 },
+        { "name": "Pathfinder with Pulse Carbine, Pulse Pistol and Close Combat Weapon", "M": "7\"", "T": 3, "SV": "4+", "W": 1, "LD": "7+", "OC": 1 }
+      ],
+      "invuln": null,
+      "invulnNote": null,
+      "rangedWeapons": [
+        { "name": "Pulse Carbine", "profileOf": null, "range": "20\"", "A": "2", "BS": "4+", "S": 5, "AP": 0, "D": "1", "tags": [] },
+        { "name": "Pulse Pistol", "profileOf": null, "range": "12\"", "A": "1", "BS": "4+", "S": 5, "AP": 0, "D": "1", "tags": ["CLOSE-QUARTERS"] },
+        { "name": "Rail Rifle", "profileOf": null, "range": "30\"", "A": "1", "BS": "5+", "S": 10, "AP": -4, "D": "3", "tags": ["DEVASTATING WOUNDS", "HEAVY"] }
+      ],
+      "meleeWeapons": [
+        { "name": "Gun Stocks", "range": "Melee", "A": "1", "WS": "5+", "S": 3, "AP": 0, "D": "1", "tags": [] }
+      ],
+      "factionAbilities": ["DRONES", "FOR THE GREATER GOOD"],
+      "datasheetAbilities": [
+        { "name": "Grav-Inhibitor Drone", "text": "When an enemy unit selects this unit as a charge target, that charge roll has -2." },
+        { "name": "Target Uploaded", "text": "This unit's attacks that target its Spotted unit have:\n• +1 BS.\n• [IGNORES COVER]." }
+      ],
+      "wargearAbilities": [],
+      "composition": {
+        "bullets": [
+          "1 Pathfinder Shas'ui model",
+          "3 Pathfinder with Pulse Pistol, Rail Rifle and Close Combat Weapon models",
+          "6 Pathfinder with Pulse Carbine, Pulse Pistol and Close Combat Weapon models"
+        ],
+        "equipment": [
+          "The Pathfinder Shas'ui is equipped with: 1 Gun Stocks; 1 Pulse Carbine; 1 Pulse Pistol.",
+          "Every Pathfinder with Pulse Pistol, Rail Rifle and Close Combat Weapon is equipped with: 1 Gun Stocks; 1 Pulse Pistol; 1 Rail Rifle.",
+          "Every Pathfinder with Pulse Carbine, Pulse Pistol and Close Combat Weapon is equipped with: 1 Gun Stocks; 1 Pulse Carbine; 1 Pulse Pistol."
+        ],
+        "notes": "Model count table as shown: Pathfinder with Pulse Pistol, Rail Rifle and Close Combat Weapon x3; Pathfinder Shas'ui x1; Pathfinder with Pulse Carbine, Pulse Pistol and Close Combat Weapon x6.",
+        "baseSize": "25mm"
+      },
+      "leaderAttach": null,
+      "transport": null,
+      "keywords": ["EXPLOSIVES", "INFANTRY", "MARKERLIGHT", "SUDDEN DAWN CADRE"],
+      "factionKeywords": ["T'AU EMPIRE"]
+    },
+    {
+      "name": "Sudden Dawn Cadre Breacher Team",
+      "profiles": [
+        { "name": "Sha'sui", "M": "6\"", "T": 3, "SV": "4+", "W": 1, "LD": "7+", "OC": 2 },
+        { "name": "Breacher Team", "M": "6\"", "T": 3, "SV": "4+", "W": 1, "LD": "7+", "OC": 2 }
+      ],
+      "invuln": null,
+      "invulnNote": null,
+      "rangedWeapons": [
+        { "name": "Pulse Blaster", "profileOf": null, "range": "10\"", "A": "2", "BS": "3+", "S": 6, "AP": -1, "D": "1", "tags": ["ASSAULT"] },
+        { "name": "Pulse Pistol", "profileOf": null, "range": "12\"", "A": "1", "BS": "4+", "S": 5, "AP": 0, "D": "1", "tags": ["CLOSE-QUARTERS"] }
+      ],
+      "meleeWeapons": [
+        { "name": "Gun Stocks", "range": "Melee", "A": "1", "WS": "5+", "S": 3, "AP": 0, "D": "1", "tags": [] }
+      ],
+      "factionAbilities": ["DRONES", "FOR THE GREATER GOOD"],
+      "datasheetAbilities": [
+        { "name": "Breach and Clear", "text": "This unit's ranged attacks that target a unit within range of an objective can re-roll wound rolls." }
+      ],
+      "wargearAbilities": [],
+      "composition": {
+        "bullets": [
+          "1 Sha'sui model",
+          "9 Breacher Team models"
+        ],
+        "equipment": [
+          "Every model is equipped with: 1 Gun Stocks; 1 Pulse Blaster; 1 Pulse Pistol."
+        ],
+        "notes": "Model count table as shown: Sha'sui x1; Breacher Team x9.",
+        "baseSize": "25mm"
+      },
+      "leaderAttach": null,
+      "transport": null,
+      "keywords": ["BATTLELINE", "EXPLOSIVES", "FIRE WARRIOR", "INFANTRY", "MARKERLIGHT", "SUDDEN DAWN CADRE"],
+      "factionKeywords": ["T'AU EMPIRE"]
+    },
+    {
+      "name": "Sudden Dawn Cadre Devilfish",
+      "profiles": [
+        { "name": "Devilfish", "M": "12\"", "T": 9, "SV": "3+", "W": 13, "LD": "7+", "OC": 2 }
+      ],
+      "invuln": null,
+      "invulnNote": null,
+      "rangedWeapons": [
+        { "name": "Accelerator Burst Cannon", "profileOf": null, "range": "18\"", "A": "4", "BS": "4+", "S": 6, "AP": -1, "D": "1", "tags": [] },
+        { "name": "Twin Pulse Carbine", "profileOf": null, "range": "20\"", "A": "2", "BS": "4+", "S": 5, "AP": 0, "D": "1", "tags": ["ASSAULT", "TWIN-LINKED"] }
+      ],
+      "meleeWeapons": [
+        { "name": "Armoured Hull", "range": "Melee", "A": "3", "WS": "5+", "S": 6, "AP": 0, "D": "1", "tags": [] }
+      ],
+      "factionAbilities": ["DRONES", "FOR THE GREATER GOOD"],
+      "datasheetAbilities": [
+        { "name": "Rapid Disembark", "text": "When a unit embarked within this model makes a disembark move using the rapid disembark/tactical disembark modes, the set-up distance is 6\"." }
+      ],
+      "wargearAbilities": [],
+      "composition": {
+        "bullets": [
+          "1 Devilfish model"
+        ],
+        "equipment": [
+          "This model is equipped with: 1 Accelerator Burst Cannon; 1 Armoured Hull; 1 Twin Pulse Carbine."
+        ],
+        "notes": "Model count table as shown: Devilfish x1.",
+        "baseSize": "Large Flying Base"
+      },
+      "leaderAttach": null,
+      "transport": "This model has a transport capacity of 12 Infantry models. It cannot transport Battlesuit, Kroot or Vespid Stingwings models.",
+      "keywords": ["DEDICATED TRANSPORT", "FLY", "SUDDEN DAWN CADRE", "TRANSPORT", "VEHICLE"],
+      "factionKeywords": ["T'AU EMPIRE"]
+    },
+    {
+      "name": "Commander Cloudspear",
+      "profiles": [
+        { "name": "Commander Cloudspear", "M": "8\"", "T": 5, "SV": "2+", "W": 6, "LD": "7+", "OC": 2 }
+      ],
+      "invuln": null,
+      "invulnNote": "No INVULNERABLE SAVE banner is displayed on this datasheet (verified by crop between the stat plaque and the RANGED WEAPONS header).",
+      "rangedWeapons": [
+        { "name": "Airbursting Fragmentation Projector", "profileOf": null, "range": "24\"", "A": "D6", "BS": "3+", "S": 3, "AP": 0, "D": "1", "tags": ["BLAST 1", "INDIRECT FIRE"] },
+        { "name": "Plasma Rifle", "profileOf": null, "range": "18\"", "A": "1", "BS": "3+", "S": 8, "AP": -3, "D": "3", "tags": [] }
+      ],
+      "meleeWeapons": [
+        { "name": "Battlesuit Fists", "range": "Melee", "A": "3", "WS": "4+", "S": 5, "AP": 0, "D": "1", "tags": [] }
+      ],
+      "factionAbilities": ["DRONES", "FOR THE GREATER GOOD"],
+      "datasheetAbilities": [
+        { "name": "Shield Drone", "text": "This model has +1 W." },
+        { "name": "Superior Weapon Support System", "text": "This model's ranged attacks can ignore modifiers to:\n• BS.\n• Hit rolls." }
+      ],
+      "wargearAbilities": [],
+      "composition": {
+        "bullets": [
+          "1 Commander Cloudspear model"
+        ],
+        "equipment": [
+          "This model is equipped with: 1 Airbursting Fragmentation Projector; 1 Battlesuit Fists; 1 Plasma Rifle."
+        ],
+        "notes": "Model count table as shown: Commander Cloudspear x1. No Leader/attachment section is displayed on this datasheet.",
+        "baseSize": "60mm"
+      },
+      "leaderAttach": null,
+      "transport": null,
+      "keywords": ["CHARACTER", "COMMANDER IN ENFORCER BATTLESUIT", "FLY", "SUDDEN DAWN CADRE", "VEHICLE", "WALKER"],
+      "factionKeywords": ["T'AU EMPIRE"]
+    }
+  ],
+  "sourceImages": {
+    "IMG_4422.PNG": "Battle Setup screen (missions), not patrol data: 'Your Mission — Inquisitorial Sanction' (collapsed) and 'Opponent's Mission — Expansionary Campaign' (expanded: 15/10VP for expansion objectives to second battle round, 5/10VP third round onwards); Create Battlefield button.",
+    "IMG_4423.PNG": "Sudden Dawn Cadre patrol landing page: Enhancements/Stratagems links; Detachment Rules — Detachment Points (1DP) and Co-ordinated Eradication; Datasheets roster list (4 units); Force Dispositions — Take and Hold.",
+    "IMG_4424.PNG": "Stratagems page: Suppressing Fire (1CP), Rapid Acquisition (1CP), Swift Embarkation (1CP, red/opponent's-turn card).",
+    "IMG_4425.PNG": "Enhancements page: Proximity Scanners, Earth Caste Modifications.",
+    "IMG_4426.PNG": "Army Rules page: Drones (Shield Drone: +1 W) and For the Greater Good (Observer/Spotted/Guided rules).",
+    "IMG_4427.PNG": "Pathfinder Team datasheet 1/3: photo, three profile bars with identical stat plaques (M7\" T3 SV4+ W1 LD7+ OC1), start of RANGED WEAPONS (Pulse Carbine row, top of Pulse Pistol row).",
+    "IMG_4428.PNG": "Pathfinder Team datasheet 2/3: full ranged table (Pulse Carbine, Pulse Pistol CLOSE-QUARTERS, Rail Rifle DEVASTATING WOUNDS/HEAVY), melee Gun Stocks, abilities (Grav-Inhibitor Drone, Target Uploaded), start of unit composition.",
+    "IMG_4429.PNG": "Pathfinder Team datasheet 3/3: melee section header (Gun Stocks row hidden behind scroll seam; captured in IMG_4428), abilities repeated, full unit composition + model table, Base Size 25mm, keywords.",
+    "IMG_4430.PNG": "Breacher Team datasheet 1/2: photo, Sha'sui and Breacher Team profiles (M6\" T3 SV4+ W1 LD7+ OC2), ranged Pulse Blaster (ASSAULT) and Pulse Pistol (CLOSE-QUARTERS), top of melee section.",
+    "IMG_4431.PNG": "Breacher Team datasheet 2/2: melee Gun Stocks, abilities (Breach and Clear), unit composition + model table, Base Size 25mm, keywords.",
+    "IMG_4432.PNG": "Devilfish datasheet 1/2: photo, stat plaque (M12\" T9 SV3+ W13 LD7+ OC2, no profile-name bar), ranged Accelerator Burst Cannon and Twin Pulse Carbine (ASSAULT/TWIN-LINKED), melee Armoured Hull.",
+    "IMG_4433.PNG": "Devilfish datasheet 2/2: melee Armoured Hull, abilities (Rapid Disembark), TRANSPORT section (capacity 12 Infantry), unit composition, Base Size Large Flying Base, keywords.",
+    "IMG_4434.PNG": "Commander Cloudspear datasheet 1/2: photo, stat plaque (M8\" T5 SV2+ W6 LD7+ OC2, no invuln banner), ranged Airbursting Fragmentation Projector (BLAST 1/INDIRECT FIRE) and Plasma Rifle, melee Battlesuit Fists.",
+    "IMG_4435.PNG": "Commander Cloudspear datasheet 2/2: melee Battlesuit Fists, abilities (Shield Drone +1 W, Superior Weapon Support System), unit composition, Base Size 60mm, keywords."
+  }
+}

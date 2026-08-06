@@ -10,6 +10,47 @@ import { unitOverlaps } from '../core/collision';
 import { gapBetweenBases } from '../core/geometry';
 import { RollOffDice } from './Dice';
 import { OWNER_COLOR } from './view';
+import { patrolEnhancements, type CpEnhancement } from '../data/loaders';
+
+/** One side's Combat Patrol enhancement pick: a select over its patrol's two cards + decline. */
+function CpEnhancementRow({
+  side, options, datasheetsById, dispatch,
+}: {
+  side: Side;
+  options: CpEnhancement[];
+  datasheetsById: Map<string, Datasheet>;
+  dispatch: (i: Intent) => void;
+}) {
+  const [pick, setPick] = useState('');
+  const chosen = options.find((e) => e.id === pick);
+  return (
+    <div className="btnrow" title={chosen?.text}>
+      <strong style={{ color: OWNER_COLOR[side].fill }}>{side}</strong>
+      <select value={pick} onChange={(e) => setPick(e.target.value)}>
+        <option value="">— pick an enhancement —</option>
+        {options.map((e) => (
+          <option key={e.id} value={e.id} title={e.text}>
+            {e.name} ({datasheetsById.get(e.targetDsId)?.name ?? e.targetDsId})
+          </option>
+        ))}
+        <option value="none">No enhancement</option>
+      </select>
+      <button
+        disabled={pick === ''}
+        onClick={() => {
+          dispatch(
+            pick === 'none' || !chosen
+              ? { type: 'ChooseCpEnhancement', side, enhancementId: null }
+              : { type: 'ChooseCpEnhancement', side, enhancementId: chosen.id, targetDsId: chosen.targetDsId },
+          );
+          setPick('');
+        }}
+      >
+        Confirm
+      </button>
+    </div>
+  );
+}
 
 /** A roster entry as the deployment list sees it (key matches the unit id used on deploy). */
 export interface PanelEntry {
@@ -195,6 +236,27 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
           </div>
         )}
       </div>
+
+      {/* Combat Patrol enhancements: one pick per patrol, stamped onto the bearer's unit. */}
+      {state.battleType === 'combat_patrol' && setup.attacker && (
+        <div className="dep-step">
+          <h3>Patrol enhancement</h3>
+          {(['player', 'ai'] as const).map((side) => {
+            const decided = state.cpEnhancements?.[side];
+            const patrolName = rosters.find((r) => r.name === rosterName[side])?.detachment ?? '';
+            const options = patrolEnhancements.filter((e) => e.patrolName === patrolName);
+            if (decided) {
+              const chosen = options.find((e) => e.id === decided.id);
+              return (
+                <p className="muted" key={side}>
+                  <strong style={{ color: OWNER_COLOR[side].fill }}>{side}</strong>: {chosen ? `${chosen.name} → ${datasheetsById.get(chosen.targetDsId)?.name ?? chosen.targetDsId}` : 'no enhancement'}
+                </p>
+              );
+            }
+            return <CpEnhancementRow key={side} side={side} options={options} datasheetsById={datasheetsById} dispatch={dispatch} />;
+          })}
+        </div>
+      )}
 
       {/* Step 2 — Declare Battle Formations + Deploy */}
       {setup.attacker && setup.step === 'deploy' && (

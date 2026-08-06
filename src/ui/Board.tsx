@@ -686,6 +686,21 @@ export function Board({
                     strokeDasharray="4 3"
                     strokeWidth={1.25}
                   />
+                ) : s.kind === 'rect' ? (
+                  <rect
+                    key={i}
+                    x={cx - pxLen(s.rx!)}
+                    y={cy - pxLen(s.ry!)}
+                    width={pxLen(s.rx!) * 2}
+                    height={pxLen(s.ry!) * 2}
+                    rx={2}
+                    fill={fill}
+                    fillOpacity={0.28}
+                    stroke={stroke}
+                    strokeOpacity={0.9}
+                    strokeDasharray="4 3"
+                    strokeWidth={1.25}
+                  />
                 ) : (
                   <ellipse
                     key={i}

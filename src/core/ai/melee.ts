@@ -13,6 +13,8 @@ import { eligibleToCharge, chargeTargets, eligibleToFight, engagedEnemies, fight
 import { availableUnitWeapons, chargePathExists, objectiveControl } from '../engine';
 import { chargeProb, meleeEV, unitGap, unitValue } from './evaluate';
 import { secondaryKillBonus } from '../secondaries';
+import { cpKillBonus } from '../cpmissions';
+import { cpEnhancementSlug, unitHasAbilityStarting } from '../abilities';
 import { unitRolePlan } from './roles';
 import type { AiAction, AiDeps, AiIntent } from './types';
 import type { AiProfile } from './profile';
@@ -45,7 +47,7 @@ export function aiChargeAction(state: GameState, side: Side, profile: AiProfile,
       const p = chargeProb(need);
       if (p <= 0) continue;
       const value =
-        meleeEV(c, t, ctx, true) * secondaryKillBonus(state, side, t, ctx) +
+        meleeEV(c, t, ctx, true) * secondaryKillBonus(state, side, t, ctx) * cpKillBonus(state, side, t, ctx) +
         (holdsObjective(t) ? 15 * profile.objective : 0);
       const retaliation = meleeEV(t, c, ctx) * profile.caution;
       const score = p * (value - retaliation * 0.5) * plan.chargeWeight;
@@ -79,9 +81,9 @@ export function aiChargeAction(state: GameState, side: Side, profile: AiProfile,
         intent: { type: 'Charge', chargerUnitId: chargerId, targetUnitIds: [targetId], commandReroll: true },
       },
     ];
-    if (isMV) {
+    if (isMV && state.battleType !== 'combat_patrol') {
       // Crushing Impact (15.06): T dice of mortal wounds is nearly always worth 1 CP after a
-      // successful tank/monster charge. The guard mirrors the reducer's full legality.
+      // successful tank/monster charge (banned in Combat Patrol). Mirrors the reducer's legality.
       intents.push({
         intent: { type: 'CrushingImpact', unitId: chargerId, targetUnitId: targetId },
         skipIf: (s) => {
@@ -131,6 +133,41 @@ export function aiFightAction(state: GameState, side: Side, profile: AiProfile, 
   const hasMelee = availableUnitWeapons(unit, ctx).some((w) => w.weapon.type === 'melee');
   if (target && hasMelee) {
     const targetId = target.id;
+    // Combat Patrol per-unit specials: free once-per-battle/turn melee buffs on this activation.
+    if (state.battleType === 'combat_patrol') {
+      const used = unit.status.abilityUsed ?? {};
+      if (unitHasAbilityStarting(unit, ctx, 'zealot') && used['zealot'] == null) {
+        intents.push({ intent: { type: 'UseUnitAbility', unitId, ability: 'zealot' } });
+      }
+      if (unitHasAbilityStarting(unit, ctx, 'overkill') && used['overkill'] == null) {
+        intents.push({ intent: { type: 'UseUnitAbility', unitId, ability: 'overkill' } });
+      }
+      if (unitHasAbilityStarting(unit, ctx, 'bladeguard') && used['bladeguard'] !== (state.turnCounter ?? 0)) {
+        intents.push({ intent: { type: 'UseUnitAbility', unitId, ability: 'bladeguard_hit' } });
+      }
+      // Purifying Force (enhancement, once per battle per army): [LETHAL HITS] after a charge.
+      if (cpEnhancementSlug(unit) === 'purifying_force' && unit.status.charged && !state.cpArmyOnce?.[`${side}:purifying_force`]) {
+        intents.push({ intent: { type: 'UseUnitAbility', unitId, ability: 'purifying_force' } });
+      }
+      // Sanctic Slayers (Teguen's enhancement, once per turn): +1 to wound for this IH activation.
+      if (ctx.datasheets.get(unit.datasheetId)?.patrol === 'inquisitors_hand') {
+        const bearer = state.units.find(
+          (b) =>
+            b.owner === side && isOnBoard(b) && cpEnhancementSlug(b) === 'sanctic_slayers' &&
+            b.status.abilityUsed?.['sanctic_slayers'] !== (state.turnCounter ?? 0),
+        );
+        if (bearer) {
+          const bearerId = bearer.id;
+          intents.push({
+            intent: { type: 'UseUnitAbility', unitId: bearerId, ability: 'sanctic_slayers', targetUnitId: unitId },
+            skipIf: (s) => {
+              const b = s.units.find((x) => x.id === bearerId);
+              return !b || !b.models.some((m) => m.alive) || b.status.abilityUsed?.['sanctic_slayers'] === (s.turnCounter ?? 0);
+            },
+          });
+        }
+      }
+    }
     // Epic Challenge (15.03): when our CHARACTER fights a unit that is hiding a CHARACTER inside
     // a squad, 1 CP of [PRECISION] lets the melee wounds go straight for that character.
     const isChar = (dsId: string) => ctx.datasheets.get(dsId)?.keywords.some((k) => k.toLowerCase() === 'character');

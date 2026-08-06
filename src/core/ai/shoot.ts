@@ -5,13 +5,16 @@
 // targets come from phases.ts (`eligibleToShoot` / `validUnitShootingTargets`), so an emitted
 // ShootUnit is legal by construction. When nothing useful is left to fire, the phase advances.
 
-import type { GameState, Side } from '../types';
+import type { GameState, Side, UnitInstance } from '../types';
 import { eligibleToShoot, engagedEnemies, validUnitShootingTargets, isOnBoard } from '../phases';
+import { hasAbility, hasAbilityStarting } from '../abilities';
+import { unitCanSeeIn } from '../visibility';
 import { objectiveControl, planUnitShooting } from '../engine';
 import { gapBetweenBases } from '../geometry';
 import { pointLosBlocked } from '../visibility';
 import { weaponEV } from './evaluate';
 import { secondaryKillBonus } from '../secondaries';
+import { cpKillBonus, cpSanctificationCandidate } from '../cpmissions';
 import { bestMissionAction } from './missionplay';
 import { shootingEV, unitThreat, unitValue } from './evaluate';
 import { unitRolePlan } from './roles';
@@ -21,6 +24,7 @@ import type { AiProfile } from './profile';
 /** Explosives (15.05): a legal, worthwhile grenade throw this phase, or null. Mirrors the
  *  reducer's legality exactly so the emitted intent cannot bounce. */
 function explosivesPlay(state: GameState, side: Side, deps: AiDeps): AiAction | null {
+  if (state.battleType === 'combat_patrol') return null; // Explosives is banned in Combat Patrol
   const { ctx } = deps;
   if (state.cp[side] < 1) return null;
   if (state.stratUsed?.[`${side}:core:explosives`] === `${state.round}:${state.activePlayer}:${state.phase}`) return null;
@@ -67,6 +71,31 @@ export function aiShootingAction(state: GameState, side: Side, profile: AiProfil
   // A worthwhile grenade throw is a free action beside the phase's shooting activations.
   const grenades = explosivesPlay(state, side, deps);
   if (grenades) return grenades;
+  // Co-ordinated Eradication (Sudden Dawn Cadre, once per battle per army): +1 AP against one
+  // enemy for the rest of the battle — spent early, on the highest-value enemy on the board.
+  if (state.battleType === 'combat_patrol' && !state.cpArmyOnce?.[`${side}:coordinated_eradication`] && state.round <= 2) {
+    const sdc = state.units.find(
+      (u) => u.owner === side && isOnBoard(u) && ctx.datasheets.get(u.datasheetId)?.patrol === 'sudden_dawn_cadre',
+    );
+    const mark = state.units
+      .filter((e) => e.owner !== side && isOnBoard(e) && unitValue(e, ctx) >= 100)
+      .sort((a, b) => unitValue(b, ctx) - unitValue(a, ctx))[0];
+    if (sdc && mark) {
+      const unitId = sdc.id;
+      const targetId = mark.id;
+      return {
+        intents: [
+          {
+            intent: { type: 'UseUnitAbility', unitId, ability: 'coordinated_eradication', targetUnitId: targetId },
+            skipIf: (s) =>
+              !!s.cpArmyOnce?.[`${side}:coordinated_eradication`] ||
+              !s.units.find((x) => x.id === targetId)?.models.some((m) => m.alive),
+          },
+        ],
+        note: `${side} marks ${ctx.datasheets.get(mark.datasheetId)?.name ?? mark.id} for Co-ordinated Eradication`,
+      };
+    }
+  }
   const shooters = state.units.filter(
     (u) => u.owner === side && isOnBoard(u) && eligibleToShoot(u, state, ctx).eligible,
   );
@@ -94,8 +123,9 @@ export function aiShootingAction(state: GameState, side: Side, profile: AiProfil
       if (plan.characterHunter > 1 && ctx.datasheets.get(t.datasheetId)?.keywords.some((k) => k.toLowerCase() === 'character')) {
         ev *= plan.characterHunter;
       }
-      // Active Tactical Missions (Assassination / Bring It Down) pay extra for this kill.
-      ev *= secondaryKillBonus(state, side, t, ctx);
+      // Active Tactical Missions (Assassination / Bring It Down) pay extra for this kill —
+      // and so does a Combat Patrol mission (Inquisitorial Sanction: CHARACTER kills).
+      ev *= secondaryKillBonus(state, side, t, ctx) * cpKillBonus(state, side, t, ctx);
       if (ev <= 0) continue;
       const tValue = unitValue(t, ctx);
       let score = ev * profile.damage;
@@ -104,6 +134,56 @@ export function aiShootingAction(state: GameState, side: Side, profile: AiProfil
       if (ev >= tValue) score += tValue * 0.3; // finishing a unit is worth extra
       if (!best || score > best.score || (score === best.score && s.id < best.shooter)) {
         best = { shooter: s.id, target: t.id, score, names };
+      }
+    }
+  }
+
+  // For the Greater Good (T'au, CP): mark Spotted units before the volleys go out.
+  //  • Pathfinders (Target Uploaded) spot their own best target — free +1 BS / [IGNORES COVER];
+  //  • a weak-EV FTGG unit forgoes its shooting to Guide the side's best volley (+1 BS).
+  if (state.battleType === 'combat_patrol') {
+    const spotPlay = (observer: string, targetId: string, note: string): AiAction => ({
+      intents: [
+        {
+          intent: { type: 'SpotTarget', unitId: observer, targetUnitId: targetId },
+          skipIf: (s) =>
+            !!s.spotted?.[targetId] ||
+            Object.values(s.spotted ?? {}).some((x) => x.by === observer) ||
+            !!s.units.find((x) => x.id === observer)?.status.hasShot ||
+            !s.units.find((x) => x.id === targetId)?.models.some((m) => m.alive),
+        },
+      ],
+      note,
+    });
+    const canObserve = (u: UnitInstance): boolean =>
+      hasAbility(ctx.datasheets.get(u.datasheetId), 'For the Greater Good') &&
+      !u.status.hasShot && !u.status.battleShocked &&
+      !Object.values(state.spotted ?? {}).some((x) => x.by === u.id) &&
+      eligibleToShoot(u, state, ctx).eligible;
+    const sees = (u: UnitInstance, t: UnitInstance): boolean =>
+      unitCanSeeIn(u.models.filter((m) => m.alive).map((m) => m.pos), t, state, ctx);
+    for (const u of shooters) {
+      if (!canObserve(u)) continue;
+      const pathfinder = hasAbilityStarting(ctx.datasheets.get(u.datasheetId), 'target uploaded');
+      if (pathfinder) {
+        // Spot their own best target (they may still shoot it).
+        let bestOwn: { id: string; ev: number } | null = null;
+        for (const t of validUnitShootingTargets(u, state, ctx)) {
+          if (state.spotted?.[t.id] || !sees(u, t)) continue;
+          const ev = shootingEV(state, u, t, ctx);
+          if (!bestOwn || ev > bestOwn.ev) bestOwn = { id: t.id, ev };
+        }
+        if (bestOwn && bestOwn.ev > 0) {
+          return spotPlay(u.id, bestOwn.id, `${side} spots with ${ctx.datasheets.get(u.datasheetId)?.name} (Target Uploaded)`);
+        }
+      } else if (best && u.id !== best.shooter && !state.spotted?.[best.target]) {
+        // A unit whose own shooting is nearly worthless Guides the main volley instead.
+        let own = 0;
+        for (const t of validUnitShootingTargets(u, state, ctx)) own = Math.max(own, shootingEV(state, u, t, ctx));
+        const target = state.units.find((x) => x.id === best!.target);
+        if (own < 12 && target && sees(u, target)) {
+          return spotPlay(u.id, best.target, `${side} spots ${ctx.datasheets.get(target.datasheetId)?.name} (Observer: ${ctx.datasheets.get(u.datasheetId)?.name})`);
+        }
       }
     }
   }
@@ -137,6 +217,23 @@ export function aiShootingAction(state: GameState, side: Side, profile: AiProfil
     }
   }
 
+  // Combat Patrol — Purification: Sanctification pays 10VP at the end of the battle. Start it
+  // with a unit already in range whenever that unit's own shooting is worth less.
+  const sanct = cpSanctificationCandidate(state, side, ctx, exclude);
+  if (sanct) {
+    let ev = 0;
+    const u = state.units.find((x) => x.id === sanct.unitId);
+    if (u && eligibleToShoot(u, state, ctx).eligible) {
+      for (const t of validUnitShootingTargets(u, state, ctx)) ev = Math.max(ev, shootingEV(state, u, t, ctx));
+    }
+    if (10 * 12 * (profile.actionPriority ?? 1) > ev) {
+      return {
+        intents: [{ intent: { type: 'StartSanctification', ...sanct } }],
+        note: `sanctifies objective ${sanct.objectiveIdx + 1}`,
+      };
+    }
+  }
+
   if (best) {
     // Per-weapon target splitting (04.02): weapons that do clearly better work elsewhere are
     // reassigned (the anti-tank gun leaves the infantry volley). Only meaningfully better
@@ -152,7 +249,7 @@ export function aiShootingAction(state: GameState, side: Side, profile: AiProfil
         let alt: { id: string; ev: number } | null = null;
         for (const t of targets) {
           if (t.id === best.target) continue;
-          const ev = weaponEV(state, shooter, w, t, ctx) * secondaryKillBonus(state, side, t, ctx);
+          const ev = weaponEV(state, shooter, w, t, ctx) * secondaryKillBonus(state, side, t, ctx) * cpKillBonus(state, side, t, ctx);
           if (!alt || ev > alt.ev) alt = { id: t.id, ev };
         }
         if (alt && alt.ev > evMain * 1.3 + 5) splitTargets[`${w.sourceDsId}|${w.weapon.name}`] = alt.id;

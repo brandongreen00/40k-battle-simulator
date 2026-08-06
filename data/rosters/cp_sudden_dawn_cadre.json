@@ -1,0 +1,47 @@
+{
+ "name": "Sudden Dawn Cadre",
+ "faction": "T'au Empire",
+ "detachment": "Sudden Dawn Cadre",
+ "points": 0,
+ "combatPatrol": true,
+ "note": "Fixed Combat Patrol list (T'au Empire); extracted from the Warhammer app 2026-08 — see tools/combatpatrol/extracted/sudden_dawn_cadre_flags.md",
+ "units": [
+  {
+   "datasheetId": "cp-sudden-dawn-cadre-pathfinder-team",
+   "modelCount": 10,
+   "wargearCounts": {
+    "Gun Stocks": 10,
+    "Pulse Carbine": 7,
+    "Pulse Pistol": 10,
+    "Rail Rifle": 3
+   }
+  },
+  {
+   "datasheetId": "cp-sudden-dawn-cadre-breacher-team",
+   "modelCount": 10,
+   "wargearCounts": {
+    "Gun Stocks": 10,
+    "Pulse Blaster": 10,
+    "Pulse Pistol": 10
+   }
+  },
+  {
+   "datasheetId": "cp-sudden-dawn-cadre-devilfish",
+   "modelCount": 1,
+   "wargearCounts": {
+    "Accelerator Burst Cannon": 1,
+    "Armoured Hull": 1,
+    "Twin Pulse Carbine": 1
+   }
+  },
+  {
+   "datasheetId": "cp-sudden-dawn-cadre-commander-cloudspear",
+   "modelCount": 1,
+   "wargearCounts": {
+    "Airbursting Fragmentation Projector": 1,
+    "Battlesuit Fists": 1,
+    "Plasma Rifle": 1
+   }
+  }
+ ]
+}

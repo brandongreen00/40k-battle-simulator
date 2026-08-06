@@ -1,0 +1,48 @@
+{
+ "name": "Crowe's Sanctifiers",
+ "faction": "Grey Knights",
+ "detachment": "Crowe's Sanctifiers",
+ "points": 0,
+ "combatPatrol": true,
+ "note": "Fixed Combat Patrol list (Grey Knights); extracted from the Warhammer app 2026-08 — see tools/combatpatrol/extracted/crowes_sanctifiers_flags.md",
+ "units": [
+  {
+   "datasheetId": "cp-crowes-sanctifiers-strike-squad",
+   "modelCount": 10,
+   "wargearCounts": {
+    "Ceramite Fists": 2,
+    "Incinerator": 1,
+    "Psycannon": 1,
+    "Nemesis Force Weapon": 8,
+    "Storm Bolter": 8
+   }
+  },
+  {
+   "datasheetId": "cp-crowes-sanctifiers-castellan-crowe",
+   "modelCount": 1,
+   "wargearCounts": {
+    "Black Blade of Antwyr": 1,
+    "Purifying Flame": 1,
+    "Storm Bolter": 1
+   }
+  },
+  {
+   "datasheetId": "cp-crowes-sanctifiers-venerable-dreadnought",
+   "modelCount": 1,
+   "wargearCounts": {
+    "Dreadnought Fist": 1,
+    "Storm Bolter": 1,
+    "Twin Lascannon": 1
+   }
+  },
+  {
+   "datasheetId": "cp-crowes-sanctifiers-brotherhood-terminator-squad",
+   "modelCount": 5,
+   "wargearCounts": {
+    "Nemesis Force Weapon": 5,
+    "Storm Bolter": 4,
+    "Psycannon": 1
+   }
+  }
+ ]
+}

@@ -10,7 +10,9 @@ export interface Vec2 {
 
 /** Model base footprint. Circle uses `radius`; oval uses `rx`/`ry` (semi-axes). Inches. */
 export interface BaseShape {
-  kind: 'circle' | 'oval';
+  /** 'rect' = a rectangular hull footprint (rx/ry are the HALF-extents along x/y, axis-aligned —
+   *  base rotation isn't tracked, same as ovals). Used for hull-measured vehicles. */
+  kind: 'circle' | 'oval' | 'rect';
   radius?: number; // circle, inches
   rx?: number; // oval semi-axis along x, inches
   ry?: number; // oval semi-axis along y, inches
@@ -75,6 +77,11 @@ export interface Datasheet {
   /** Transport capacity rules text, verbatim from the data (e.g. "This model has a transport
    *  capacity of 12 Astra Militarum Infantry models. …"). Parsed by core/transport.ts. */
   transport?: string;
+  /** Combat Patrol: the unit MUST start in Strategic Reserves and cannot arrive before this
+   *  battle round; it arrives wholly within its own deployment zone (e.g. Strike from the Warp). */
+  cpReserveRound?: number;
+  /** The Combat Patrol this datasheet belongs to (CP datasheets are patrol-specific). */
+  patrol?: string;
 }
 
 /** A datasheet ability — a Core/Faction ability (resolved from the catalog) or a unit-specific
@@ -125,6 +132,8 @@ export interface Roster {
   note?: string;
   /** True for non-canonical demo rosters used only to exercise the board. */
   sample?: boolean;
+  /** True for the fixed Combat Patrol lists (played only in Combat Patrol battles). */
+  combatPatrol?: boolean;
   /** 11e recommendation: the Force Disposition this list plays best + the AI profile for it. */
   recommended?: { disposition: string; profile: string };
 }
@@ -161,6 +170,8 @@ export interface TerrainArea {
   id: string;
   polygon: Vec2[];
   features: TerrainFeature[];
+  /** Printed component letters on the Combat Patrol maps (AB/CD/EF/GH ruin labels). */
+  letter?: string;
   /** Areas sharing a groupId count as ONE terrain area (the layouts' "single terrain area"
    *  eye markers merge adjacent footprints). Absent = the area stands alone. */
   groupId?: string;
@@ -204,6 +215,11 @@ export interface Layout {
   attackerEdge?: 'top' | 'bottom' | 'left' | 'right';
   /** The Force Disposition pairing this layout is recommended for, plus its A/B/C letter. */
   pairing?: { dispositions: [string, string]; missions: [string, string]; letter: string };
+  /** True for the Combat Patrol maps (30"×44"; picked in Combat Patrol battles). */
+  combatPatrol?: boolean;
+  /** Paired attacker/defender mission-marker points printed on the territory divider of the
+   *  Combat Patrol maps (semantics arrive with the CP mission deck; rendered for reference). */
+  dividerMarkers?: Vec2[];
 }
 
 // ── Live game state (skeleton; grows in later stages) ────────────────────────
@@ -221,6 +237,9 @@ export interface ModelInstance {
   moveStart?: Vec2;
   /** Datasheet override for this model (a merged Leader's model uses its own profile/weapons). */
   datasheetId?: string;
+  /** Fights-on-death (Determined to the Last / Killer Reflexes): destroyed but not yet removed —
+   *  the model still fights; it is removed when its unit has fought or the Fight phase ends. */
+  dying?: boolean;
 }
 
 /** Per-unit, per-turn activation + status flags. Reset at the points the rules dictate. */
@@ -248,8 +267,21 @@ export interface UnitStatus {
   cannotCharge?: boolean;
   /** Absolute player-turn index the unit last made ranged attacks in (Hidden, 13.09). */
   lastShotOnTurn?: number;
+  /** Pinned (Suppressing Fire): -2" Move while turnCounter < pinnedUntil. Survives the
+   *  per-turn status reset so it covers the pinned unit's own following turn. */
+  pinnedUntil?: number;
+  /** Suppressed (Earth Caste Modifications): -1 to hit while turnCounter < suppressedUntil.
+   *  Survives the per-turn status reset (it must cover the suppressed unit's own turn). */
+  suppressedUntil?: number;
   /** Active ability/Order/Stratagem effect ids (see core/effects.ts). Expire at turn reset. */
   activeEffects?: string[];
+  /** Effect ids that never expire (e.g. Co-ordinated Eradication's until-end-of-battle mark).
+   *  Survives the per-turn status reset. */
+  permanentEffects?: string[];
+  /** Datasheet-ability plays this unit has made: slug → turnCounter of use. Once-per-battle
+   *  abilities check for the key; once-per-turn abilities compare the value. Survives the
+   *  per-turn status reset. */
+  abilityUsed?: Record<string, number>;
   // ── Movement-phase activation (transient; set by BeginMove, cleared by EndMove/turn) ──
   /** The move mode chosen for the current activation. Undefined when not moving. */
   moveMode?: import('./movement').MoveMode;
@@ -437,6 +469,36 @@ export interface MissionState {
   securedBy?: (Side | null)[];
 }
 
+/** One Combat Patrol mission scoring event (for the panel + logs). */
+export interface CpMissionEvent {
+  round: number;
+  turn: Side;
+  side: Side;
+  label: string;
+  vp: number;
+}
+
+/** Combat Patrol mission state: each side plays its own patrol's card (core/cpmissions.ts). */
+export interface CpMissionState {
+  /** Attacker side (setup is cleared at BeginBattle; home-objective ownership needs it). */
+  attacker: Side;
+  missionId: Record<Side, string>;
+  /** Mission VP per side (also added into `score` — CP has no other VP source). */
+  vp: Record<Side, number>;
+  events: CpMissionEvent[];
+  /** Kill ledger of the PREVIOUS player turn ("destroyed in this or the previous turn"). */
+  prevTurnKills?: KillRecord[];
+  /** Objectives sanctified (Purification): objective index + the side whose army sanctified it. */
+  sanctified?: { idx: number; side: Side }[];
+  /** Pending Sanctification actions — complete at that side's NEXT Command phase (or the end of
+   *  the battle, whichever occurs first). */
+  sanctifying?: { side: Side; unitId: string; objectiveIdx: number; startedTurnCounter: number }[];
+  /** Objectives secured (14.03, via Inquisitorial Mandate / Rapid Acquisition), index-aligned
+   *  with objectivePoints. A secured objective stays under that side's control while nobody
+   *  live-controls it; cleared when the opponent takes control. */
+  securedBy?: (Side | null)[];
+}
+
 // ── Pre-battle setup / deployment ────────────────────────────────────────────
 export type Stage = 'setup' | 'battle' | 'done';
 
@@ -469,15 +531,17 @@ export interface SplitGroup {
   wargear?: Record<string, number>;
 }
 
-/** A unit split declared at Declare Battle Formations by a transport's split rule. The roster
+/** A unit split declared at Declare Battle Formations. Via a transport's split rule the roster
  *  entry `entryKey` becomes two half-units keyed `${entryKey}#a` (which must start the battle
- *  embarked within `transportUnitId`) and `${entryKey}#b` (deployed like any other unit). */
+ *  embarked within `transportUnitId`) and `${entryKey}#b` (deployed like any other unit).
+ *  A COMBAT SQUAD split has no transport — both halves deploy like any other unit. */
 export interface DeclaredSplit {
   side: Side;
   entryKey: string; // roster entry key of the split unit ("side:index")
   dsId: string;
-  transportUnitId: string; // the transport whose rule performed the split (carries group A)
-  groups: [SplitGroup, SplitGroup]; // [riders, on-foot]
+  /** The transport whose rule performed the split (carries group A). Absent for Combat Squad. */
+  transportUnitId?: string;
+  groups: [SplitGroup, SplitGroup]; // [riders, on-foot] — or the two Combat Squads
 }
 
 /** Warrant of Trade (Rogue Trader): after both armies have deployed, redeploy up to D3 IMPERIUM
@@ -524,6 +588,9 @@ export interface GameState {
   /** 'sandbox' = the free measuring board (no rules guards); 'match' = a real battle started via
    *  NewBattle — phase/once-per-turn guards apply and sandbox controls are hidden. */
   mode: 'sandbox' | 'match';
+  /** 'combat_patrol' = a Combat Patrol battle (fixed patrol lists, 30"×44" maps, CP missions —
+   *  the 11e Chapter Approved mission layer is skipped). Absent/'standard' = a normal battle. */
+  battleType?: 'standard' | 'combat_patrol';
   /** The active player has already run their Command phase this turn (match-mode guard). */
   commandRun?: boolean;
   /** Core Stratagem "Command Re-roll" usage: side → phase key (`round:turn:phase`) it was last
@@ -537,6 +604,15 @@ export interface GameState {
   fightNext?: string;
   /** Insane Bravery (15.04) is once per BATTLE per side. */
   insaneBraveryUsed?: Partial<Record<Side, boolean>>;
+  /** For the Greater Good (T'au): enemy unit id → its Observer this Shooting phase. Cleared on
+   *  every phase change. `pathfinder` = the Observer has Target Uploaded (may still shoot its
+   *  Spotted unit, with +1 BS and [IGNORES COVER]). */
+  spotted?: Record<string, { by: string; markerlight: boolean; pathfinder?: boolean }>;
+  /** Once-per-battle-per-ARMY ability plays (e.g. Co-ordinated Eradication), keyed `side:slug`. */
+  cpArmyOnce?: Partial<Record<string, boolean>>;
+  /** Combat Patrol enhancement choice per side (`cpenh:<patrol>:<slug>` + the bearer datasheet;
+   *  id null = declined). Stamped onto the bearer's unit when it deploys. */
+  cpEnhancements?: Partial<Record<Side, { id: string | null; targetDsId?: string }>>;
   /** Tactical (Secondary) Missions — per-side deck/hand/VP (match mode only). */
   secondaries?: Record<Side, SecondarySideState>;
   /** 11e Chapter Approved mission state (dispositions, primaries, markers, actions). */
@@ -545,6 +621,8 @@ export interface GameState {
   activeActions?: ActiveAction[];
   /** Units destroyed during the CURRENT turn (secondary scoring); reset at every turn end. */
   turnKills?: KillRecord[];
+  /** Combat Patrol mission state (battleType 'combat_patrol' only; set at BeginBattle). */
+  cpMissions?: CpMissionState;
   /** Objective control snapshot taken at the start of the active player's turn
    *  (Storm Hostile Objective). Index-aligned with `layout.objectives`. */
   controlAtTurnStart?: (Side | null)[];

@@ -295,6 +295,8 @@ function wantsReserves(state: GameState, side: Side, entry: DeployEntry, ability
   // AIRCRAFT must start in Strategic Reserves (23.01) — the reducer enforces it, so this is
   // not profile-gated.
   if (isAircraft(entry.ds)) return true;
+  // Combat Patrol mandatory reserves (Strike from the Warp) — the reducer enforces it too.
+  if (state.battleType === 'combat_patrol' && entry.ds.cpReserveRound) return true;
   if (!profile.useReserves) return false;
   // Lone Operative characters that ALSO have Deep Strike (the Callidus has Infiltrators too, so
   // her classified ability is 'infiltrators') survive by arriving from Reserves on round 2 —
@@ -350,6 +352,29 @@ export function aiDeployAction(state: GameState, side: Side, profile: AiProfile,
         fixedWorth >= 26
           ? `${side} picks FIXED missions (${first[0]} + ${second[0]})`
           : `${side} will draw Tactical Missions`,
+    };
+  }
+
+  // Combat Patrol: pick the patrol's enhancement before deploying (one per side). Curated
+  // passive picks — the AI prefers always-on/auto-trigger value over activation-dependent cards.
+  if (state.battleType === 'combat_patrol' && !state.cpEnhancements?.[side]) {
+    const AI_CP_ENH: Record<string, { id: string; targetDsId: string }> = {
+      "Crowe's Sanctifiers": { id: 'cpenh:crowes_sanctifiers:sanctified_auspexes', targetDsId: 'cp-crowes-sanctifiers-venerable-dreadnought' },
+      "Inquisitor's Hand": { id: 'cpenh:inquisitors_hand:killer_reflexes', targetDsId: 'cp-inquisitors-hand-eversor-assassin' },
+      'Sudden Dawn Cadre': { id: 'cpenh:sudden_dawn_cadre:earth_caste_modifications', targetDsId: 'cp-sudden-dawn-cadre-commander-cloudspear' },
+      'The Vengeful Brethren': { id: 'cpenh:vengeful_brethren:supreme_combatant', targetDsId: 'cp-vengeful-brethren-master-zacharial' },
+    };
+    const pick = AI_CP_ENH[deps.rosters[side]?.detachment ?? ''];
+    return {
+      intents: [
+        {
+          intent: pick
+            ? { type: 'ChooseCpEnhancement', side, enhancementId: pick.id, targetDsId: pick.targetDsId }
+            : { type: 'ChooseCpEnhancement', side, enhancementId: null },
+          skipIf: (s) => !!s.cpEnhancements?.[side],
+        },
+      ],
+      note: `${side} picks its patrol enhancement`,
     };
   }
 

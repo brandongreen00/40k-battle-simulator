@@ -148,7 +148,7 @@ export function deepStrikeArrivalLegal(
   enemyModels: { pos: Vec2; shape: BaseShape }[],
   round: number,
   occupied: OccupiedBase[] = [],
-  opts: { deepStrike?: boolean; layout?: Layout; side?: Side } = {},
+  opts: { deepStrike?: boolean; layout?: Layout; side?: Side; minEnemyDist?: number } = {},
 ): DeploymentCheck {
   if (round < 2) {
     return { legal: false, perModel: positions.map(() => false), reason: 'Reserves cannot arrive in the first battle round' };
@@ -157,6 +157,7 @@ export function deepStrikeArrivalLegal(
   const stacked = positions.some((p) => !clearOfModels(p));
   const deepStrike = opts.deepStrike ?? true; // legacy callers treated every arrival as Deep Strike
   const layout = opts.layout;
+  const enemyMin = opts.minEnemyDist ?? INGRESS_ENEMY_MIN; // Earth Caste Modifications: 6"
   const r = baseRadius(baseShape);
 
   const nearEdge = (p: Vec2): boolean => {
@@ -171,7 +172,7 @@ export function deepStrikeArrivalLegal(
   };
 
   const perModel = positions.map((p) => {
-    const farFromEnemies = enemyModels.every((e) => gapBetweenBases(p, baseShape, e.pos, e.shape) > INGRESS_ENEMY_MIN);
+    const farFromEnemies = enemyModels.every((e) => gapBetweenBases(p, baseShape, e.pos, e.shape) > enemyMin);
     if (!farFromEnemies || !clearOfModels(p)) return false;
     if (deepStrike) return true;
     if (!nearEdge(p)) return false;

@@ -87,6 +87,30 @@ export function TerrainLayer({ layout, markers }: Props) {
                   }`}</title>
                 </polygon>
               ))}
+              {a.letter && (
+                <text
+                  x={pxX((Math.min(...a.polygon.map((p) => p.x)) + Math.max(...a.polygon.map((p) => p.x))) / 2)}
+                  y={pxY((Math.min(...a.polygon.map((p) => p.y)) + Math.max(...a.polygon.map((p) => p.y))) / 2, boardHeight)}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fontSize={11}
+                  fill="#e5e7eb"
+                  fillOpacity={0.75}
+                  style={{ pointerEvents: 'none' }}
+                >
+                  {a.letter}
+                </text>
+              )}
+            </g>
+          ))}
+
+          {/* Combat Patrol divider mission-marker points (semantics arrive with the CP missions) */}
+          {(layout.dividerMarkers ?? []).map((m, i) => (
+            <g key={`dm${i}`}>
+              <circle cx={pxX(m.x)} cy={pxY(m.y, boardHeight) - 5} r={4} fill={OWNER_COLOR.ai.fill} fillOpacity={0.8} />
+              <circle cx={pxX(m.x)} cy={pxY(m.y, boardHeight) + 5} r={4} fill={OWNER_COLOR.player.fill} fillOpacity={0.8}>
+                <title>Combat Patrol divider marker (mission point)</title>
+              </circle>
             </g>
           ))}
 

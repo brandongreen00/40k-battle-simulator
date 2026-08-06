@@ -13,15 +13,16 @@ import type { EngineContext } from '../engine';
 import { aliveModels, isOnBoard, engagedEnemies, pendingScoutUnits, reservesArrivable, unitCentroid, ENGAGEMENT_RANGE } from '../phases';
 import { checkCoherency } from '../coherency';
 import { anyOverlap, clampDeltaAvoidingOverlap, occupiedBases, unitBases, unitOverlaps } from '../collision';
-import { deepStrikeArrivalLegal, zoneFor } from '../deployment';
+import { checkUnitDeployment, deepStrikeArrivalLegal, zoneFor } from '../deployment';
 import { formationPositions } from '../formation';
 import { gapBetweenBases, dist, baseRadius } from '../geometry';
 import { objectiveControl } from '../engine';
 import { unitScoutDistance } from '../abilities';
 import { firingDeckX } from '../transport';
 import { secondaryPositionBonus } from '../secondaries';
+import { cpPositionBonus } from '../cpmissions';
 import { missionPositionBonus } from './missionplay';
-import { shootingEV, unitThreat, unitValue, unitGap, unitOC, maxWeaponRange, meleeEV } from './evaluate';
+import { chargeProb, shootingEV, unitThreat, unitValue, unitGap, unitOC, maxWeaponRange, meleeEV } from './evaluate';
 import { homeGarrisonId, unitRolePlan, type RolePlan } from './roles';
 import type { AiAction, AiDeps } from './types';
 import type { AiProfile } from './profile';
@@ -120,6 +121,8 @@ function positionScore(
 
   // Active Tactical Missions: standing where a card scores (enemy DZ, outpost/NML markers…).
   score += secondaryPositionBonus(state, unit.owner, at, ctx);
+  // Combat Patrol missions: Expansionary Campaign pays for the expansion objectives early.
+  score += cpPositionBonus(state, unit.owner, at);
   // The PRIMARY mission: standing where the side's disposition pays VP (enemy home for
   // Outmanoeuvre, centrals for Immovable Object, quarters for Reconnaissance Sweep…).
   score += missionPositionBonus(state, unit.owner, at, ctx) * 1.5 * profile.objective;
@@ -134,6 +137,22 @@ function positionScore(
     bestEV = Math.max(bestEV, ev);
   }
   score += bestEV * profile.damage;
+
+  // Melee payoff: a sword-first unit values standing where a charge can LAND next Charge phase.
+  // P(2D6 ≥ gap) shapes the reward, so 6" out scores far better than the 12"-sidearm band a
+  // pistol-carrying assault squad used to park in (where a charge needs boxcars).
+  if (plan.chargeWeight > 0 && unitThreat(unit, ctx, 'melee') > unitThreat(unit, ctx, 'ranged')) {
+    let bestCharge = 0;
+    for (const e of enemies) {
+      const ev = meleeEV(unit, e, ctx, true);
+      if (ev <= 0) continue;
+      let g = Infinity;
+      for (const m of e.models) if (m.alive) g = Math.min(g, dist(m.pos, at));
+      g = Math.max(0, g - 1.5); // centroid-to-model → rough base-to-base
+      bestCharge = Math.max(bestCharge, ev * chargeProb(g));
+    }
+    score += bestCharge * profile.damage * plan.chargeWeight;
+  }
 
   // Role standoff: closing inside the role's keep-away band is penalised (a sniper that CAN
   // shoot from 36" should not be standing at 10").
@@ -210,7 +229,12 @@ export function planMove(
     // Close to weapons range (or to melee), but no closer than the ROLE's keep-away band
     // (profile standoff acts as a floor for cagey personalities).
     const standoff = Math.max(plan.standoff, plan.role === 'assault' || plan.role === 'assassin' ? 0 : Math.min(profile.standoff, 12), 0);
-    const closeBy = Math.max(0, Math.min(gap - standoff, gap - (range > 0 ? range * 0.6 : 1)));
+    // A unit whose melee threat beats its guns wants CHARGE range, not its pistols' range band —
+    // otherwise a 12" sidearm keeps a sword squad parked at 12" forever (2D6 needs boxcars).
+    const meleeFirst = plan.chargeWeight > 0 && unitThreat(unit, ctx, 'melee') > unitThreat(unit, ctx, 'ranged');
+    const closeBy = meleeFirst
+      ? Math.max(0, gap - Math.max(standoff, 5))
+      : Math.max(0, Math.min(gap - standoff, gap - (range > 0 ? range * 0.6 : 1)));
     if (closeBy > 0.5) goals.push({ goal: { x: centroid.x + (towards.x / len) * closeBy, y: centroid.y + (towards.y / len) * closeBy }, advanceOk: range === 0 });
     // And the kite-away option for soft shooters.
     goals.push({ goal: { x: centroid.x - (towards.x / len) * M, y: centroid.y - (towards.y / len) * M }, advanceOk: false });
@@ -279,6 +303,12 @@ export function findArrivalAnchor(state: GameState, unit: UnitInstance, deps: Ai
   const { ctx } = deps;
   const ds = ctx.datasheets.get(unit.datasheetId);
   if (!ds) return null;
+  // Combat Patrol mandatory reserves: not before the stated round, and the unit arrives wholly
+  // within its own deployment zone — mirror the reducer's exact check.
+  if (state.battleType === 'combat_patrol' && ds.cpReserveRound) {
+    if (state.round < ds.cpReserveRound) return null;
+    return findZoneArrivalAnchor(state, unit, deps);
+  }
   const deepStrike = arrivalAbility(unit, deps) === 'deep_strike';
   const enemies: { pos: Vec2; shape: typeof ds.baseShape }[] = [];
   for (const e of state.units) {
@@ -305,6 +335,35 @@ export function findArrivalAnchor(state: GameState, unit: UnitInstance, deps: Ai
         const positions = formationPositions({ anchor, count: unit.models.length, baseShape: ds.baseShape, formation: 'block', rotation: 0 });
         if (!deepStrikeArrivalLegal(positions, ds.baseShape, enemies, state.round, occupied, legalOpts).legal) continue;
         if (positions.some((p) => p.x < r || p.y < r || p.x > W - r || p.y > H - r)) continue;
+        if (!best || -objDist > best.score) best = { anchor, score: -objDist };
+      }
+    }
+    if (best) return best.anchor;
+  }
+  return null;
+}
+
+/** Combat Patrol reserves arrival: the best legal anchor wholly within the unit's own
+ *  deployment zone (closest to an objective), validated with the reducer's exact check. */
+function findZoneArrivalAnchor(state: GameState, unit: UnitInstance, deps: AiDeps): Vec2 | null {
+  const { ctx } = deps;
+  const ds = ctx.datasheets.get(unit.datasheetId);
+  if (!ds) return null;
+  const zone = zoneFor(state.layout, unit.owner);
+  if (zone.length === 0) return null;
+  const xs = zone.map((p) => p.x);
+  const ys = zone.map((p) => p.y);
+  const occupied = occupiedBases(state, ctx, [unit.id]);
+  const targets = [...state.layout.objectives, { x: state.layout.boardWidth / 2, y: state.layout.boardHeight / 2 }];
+  for (const step of [2, 1, 0.5]) {
+    let best: { anchor: Vec2; score: number } | null = null;
+    for (let x = Math.min(...xs); x <= Math.max(...xs); x += step) {
+      for (let y = Math.min(...ys); y <= Math.max(...ys); y += step) {
+        const anchor = { x, y };
+        const objDist = Math.min(...targets.map((o) => dist(anchor, o)));
+        if (best && objDist >= -best.score) continue;
+        const positions = formationPositions({ anchor, count: unit.models.length, baseShape: ds.baseShape, formation: 'block', rotation: 0 });
+        if (!checkUnitDeployment(positions, ds.baseShape, state.layout, unit.owner, 'standard', [], occupied).legal) continue;
         if (!best || -objDist > best.score) best = { anchor, score: -objDist };
       }
     }

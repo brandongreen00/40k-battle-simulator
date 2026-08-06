@@ -29,6 +29,8 @@ export interface MatchConfig {
   profiles: Record<Side, string | AiProfile>;
   /** 11e Force Dispositions per side (defaults to Take and Hold for both). */
   dispositions?: Record<Side, import('../missions11').DispositionId>;
+  /** 'combat_patrol' plays a Combat Patrol battle (fixed lists, CP maps, no 11e mission layer). */
+  battleType?: 'standard' | 'combat_patrol';
   seed: number;
   /** Hard safety budget; a finished 5-round game uses a few hundred intents. */
   maxIntents?: number;
@@ -86,7 +88,12 @@ export function runMatch(cfg: MatchConfig, data: MatchData): MatchResult {
   };
   const maxIntents = cfg.maxIntents ?? 5000;
 
-  let state = reduce(createInitialState(cfg.layout), { type: 'NewBattle', dispositions: cfg.dispositions }, rng, data.ctx);
+  let state = reduce(
+    createInitialState(cfg.layout),
+    { type: 'NewBattle', dispositions: cfg.dispositions, battleType: cfg.battleType },
+    rng,
+    data.ctx,
+  );
   let intentCount = 1;
   let forcedAdvances = 0;
   const snapshots: TurnSnapshot[] = [];

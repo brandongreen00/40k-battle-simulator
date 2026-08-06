@@ -88,6 +88,10 @@ export interface CombatSituation {
   rerollWounds?: Reroll;
   damageReduction?: number; // -X to Damage per wound (floored at 1)
   extraAttacks?: number; // +N to the Attacks characteristic per firing model
+  /** Ignore negative BS and hit-roll modifiers (Superior Weapon Support System). */
+  ignoreBadHitMods?: boolean;
+  /** Re-roll ONE failed hit roll in this attack sequence (Sanctified Auspexes). */
+  rerollOneHit?: boolean;
 }
 
 // ── Outputs ──────────────────────────────────────────────────────────────────
@@ -292,6 +296,11 @@ export function resolveAttacks(
     let hitMod = clampMod(situation.hitModifier) + (kw.heavy && situation.stationary ? 1 : 0);
     let reroll = situation.rerollHits ?? 'none';
     if (kw.psychic) hitMod = Math.max(hitMod, 0); // may ignore negative modifiers
+    if (situation.ignoreBadHitMods) {
+      // Superior Weapon Support System: ignore modifiers that worsen BS or the hit roll.
+      skill = Math.min(skill, weapon.skill);
+      hitMod = Math.max(hitMod, 0);
+    }
     let critHitOn = clampThreshold(situation.critHitOn ?? 6);
     if (kw.conversion && situation.longRange) critHitOn = Math.min(critHitOn, 5);
     if (situation.snapShooting) {
@@ -305,7 +314,7 @@ export function resolveAttacks(
       hitMod = 0;
       reroll = 'none';
     }
-    const { successes, crits, faces } = rollPool(
+    let { successes, crits, faces } = rollPool(
       totalAttacks,
       skill,
       clampMod(hitMod),
@@ -313,6 +322,15 @@ export function resolveAttacks(
       reroll,
       rng,
     );
+    // Sanctified Auspexes: re-roll ONE failed hit roll (not with snap shooting — no re-rolls).
+    let auspexNote = '';
+    if (situation.rerollOneHit && !situation.snapShooting && successes < totalAttacks) {
+      const extra = rollPool(1, skill, clampMod(hitMod), critHitOn, 'none', rng);
+      successes += extra.successes;
+      crits += extra.crits;
+      faces = [...faces, ...extra.faces];
+      auspexNote = ` (one miss re-rolled: ${extra.successes ? 'hit' : 'miss'})`;
+    }
     const sustained = kw.sustainedHits ? crits * kw.sustainedHits : 0;
     lethalAutoWounds = kw.lethalHits ? crits : 0;
     hitsToWound = successes - lethalAutoWounds + sustained;
@@ -321,6 +339,7 @@ export function resolveAttacks(
       detail:
         `${successes} hits (${crits} crit)` +
         (coverApplies ? ' (cover: BS worsened)' : '') +
+        auspexNote +
         (sustained ? ` +${sustained} Sustained` : '') +
         (lethalAutoWounds ? `, ${lethalAutoWounds} Lethal auto-wound` : ''),
       rolls: faces,

@@ -10,6 +10,9 @@ import { extraOrderCount } from '../enhancements';
 import { orderableUnits, isOnBoard, engagedEnemies } from '../phases';
 import { objectiveControl, availableUnitWeapons } from '../engine';
 import { parseKeywords } from '../keywords';
+import { unitHasAbilityStarting } from '../abilities';
+import { baseRadius } from '../geometry';
+import { withinObjectiveRange } from '../missions11';
 import { unitGap, unitThreat, unitValue, maxWeaponRange } from './evaluate';
 import type { AiAction, AiDeps, AiIntent } from './types';
 import type { AiProfile } from './profile';
@@ -124,6 +127,58 @@ export function aiCommandAction(state: GameState, side: Side, profile: AiProfile
           intent: { type: 'UseStratagem', name: 'Acquire At All Costs', side, cost: 0, targetUnitId: holder.id, effectId: 'acquire_buff' },
         });
         notes.push(`Acquire → ${ctx.datasheets.get(holder.datasheetId)?.name ?? holder.id}`);
+      }
+    }
+  }
+
+  // Combat Patrol per-unit specials with Command-phase windows.
+  if (state.battleType === 'combat_patrol') {
+    for (const u of myUnits) {
+      // TOME SKULL (once per battle): unshock a nearby friend, else shock a nearby enemy.
+      if (unitHasAbilityStarting(u, ctx, 'tome skull') && u.status.abilityUsed?.['tome_skull'] == null) {
+        const near = (t: UnitInstance) => unitGap(u, t, ctx) <= 6;
+        const friend = state.units.find((t) => t.owner === side && isOnBoard(t) && t.status.battleShocked && near(t));
+        const enemy = state.units
+          .filter((t) => t.owner !== side && isOnBoard(t) && !t.status.battleShocked && near(t))
+          .sort((a, b) => unitValue(b, ctx) - unitValue(a, ctx))[0];
+        const pick = friend ?? enemy;
+        if (pick) {
+          const unitId = u.id;
+          const targetId = pick.id;
+          intents.push({
+            intent: { type: 'UseUnitAbility', unitId, ability: 'tome_skull', targetUnitId: targetId },
+            skipIf: (s) => {
+              const me = s.units.find((x) => x.id === unitId);
+              const t = s.units.find((x) => x.id === targetId);
+              return !me || !t || !t.models.some((m) => m.alive) || me.status.abilityUsed?.['tome_skull'] != null;
+            },
+          });
+          notes.push(`Tome Skull → ${ctx.datasheets.get(pick.datasheetId)?.name ?? pick.id}`);
+        }
+      }
+      // NUNCIO-AQUILA: shock enemy infantry holding an objective within 6" of the Vigilants.
+      if (unitHasAbilityStarting(u, ctx, 'nuncio-aquila')) {
+        const objs = state.layout.objectivePoints ?? [];
+        const uShape = ctx.datasheets.get(u.datasheetId)?.baseShape;
+        const uRadius = uShape ? baseRadius(uShape) : 0.63;
+        const idx = objs.findIndex((o, i) => {
+          if (u.status.abilityUsed?.[`nuncio:${i}`] === (state.turnCounter ?? 0)) return false;
+          const near = u.models.some(
+            (m) => m.alive && Math.hypot(m.pos.x - o.pos.x, m.pos.y - o.pos.y) - uRadius <= 6,
+          );
+          if (!near) return false;
+          return state.units.some((e) => {
+            if (e.owner === side || !isOnBoard(e)) return false;
+            const eDs = ctx.datasheets.get(e.datasheetId);
+            if (eDs?.keywords.some((k) => /^(monster|vehicle)$/i.test(k))) return false;
+            const eRadius = eDs ? baseRadius(eDs.baseShape) : 0.63;
+            return e.models.some((m) => m.alive && withinObjectiveRange(m.pos, eRadius, o, state.layout));
+          });
+        });
+        if (idx >= 0) {
+          intents.push({ intent: { type: 'UseUnitAbility', unitId: u.id, ability: 'nuncio_aquila', objectiveIdx: idx } });
+          notes.push(`Nuncio-Aquila → objective ${idx + 1}`);
+        }
       }
     }
   }

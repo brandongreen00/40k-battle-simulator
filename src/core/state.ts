@@ -10,9 +10,9 @@
 // Stage 1 only needs to spawn units, move models, and clear the board. No combat, LoS, scoring,
 // or AI — those are later stages.
 
-import type { BaseShape, Datasheet, DeclaredFormation, GameState, Layout, ModelInstance, Side, SplitGroup, UnitInstance, Vec2 } from './types';
+import type { BaseShape, Datasheet, DeclaredFormation, DeclaredSplit, GameState, Layout, ModelInstance, Side, SplitGroup, UnitInstance, Vec2 } from './types';
 import type { RNG } from './rng';
-import { clamp, clampToRange, gapBetweenBases } from './geometry';
+import { baseRadius, clamp, clampToRange, gapBetweenBases } from './geometry';
 import { formationPositions, type Formation } from './formation';
 import { defensiveProfileForItem } from './wargear';
 import { rollOff, otherSide } from './setup';
@@ -26,13 +26,15 @@ import {
   transportAllowsChargeAfterMove,
 } from './enhancements';
 import { hazardRoll } from './combat';
-import { eligibleToShoot } from './phases';
-import { pointLosBlocked } from './visibility';
+import { eligibleToShoot, engagedEnemies } from './phases';
+import { pointLosBlocked, unitCanSeeIn } from './visibility';
 import { initSecondaries, recordKills, secondariesOnTurnEnd, secondariesOnTurnStart, secondaryCard } from './secondaries';
 import { initMissions, missionsOnBattleEnd, missionsOnCommandEnd, missionsOnTurnEnd, missionsOnTurnStart, startAction, type StartActionParams } from './missionflow';
+import { cpMissionsOnBattleEnd, cpMissionsOnCommandEnd, cpMissionsOnTurnEnd, initCpMissions, startSanctification } from './cpmissions';
 import type { DispositionId } from './missions11';
+import { objectiveStatuses, withinObjectiveRange } from './missions11';
 import { canAttach, leaderJoinPositions } from './leaders';
-import { unitScoutDistance } from './abilities';
+import { abilityWoundBonus, cpEnhancementSlug, hasAbility, hasAbilityStarting, unitHasAbilityStarting, unitScoutDistance } from './abilities';
 import { maxMoveDistance, rollAdvance, type MoveMode } from './movement';
 import { moveBonusFromOrders } from './orders';
 import {
@@ -46,6 +48,7 @@ import {
   runCommandPhase,
   resolveSurgeMove,
   stampFightStepEngagement,
+  sweepDyingModels,
   type AttackParams,
   type SurgeMoveParams,
   type ChargeParams,
@@ -120,10 +123,25 @@ export type Intent =
   /** Use a Stratagem: spend CP for a side and optionally apply an effect to a target unit.
    *  Not gated by the active player, so reactive stratagems (Displacer Field) work in the
    *  opponent's turn (architecture rule #3). */
-  | { type: 'UseStratagem'; name: string; side: Side; cost: number; targetUnitId?: string; effectId?: string }
+  | {
+      type: 'UseStratagem';
+      name: string;
+      side: Side;
+      cost: number;
+      targetUnitId?: string;
+      effectId?: string;
+      /** Stable id for the once-per-phase tracker (15.01); omitted = untracked (sandbox). */
+      stratagemId?: string;
+      /** Combat Patrol "secured objective" stratagems (Inquisitorial Mandate / Rapid Acquisition). */
+      objectiveIdx?: number;
+      /** Swift Embarkation: the transport to embark `targetUnitId` within. */
+      transportId?: string;
+    }
   /** Discard one of your active Tactical Missions (the end-of-turn discard choice; the AI relies
    *  on the automatic stale-discard instead). */
   | { type: 'DiscardSecondary'; side: Side; cardId: string }
+  /** Combat Patrol (Purification): start the Sanctification action in your Shooting phase. */
+  | { type: 'StartSanctification'; unitId: string; objectiveIdx: number }
   /** Pre-battle (secret) Secondary Missions choice: Tactical (draw from the deck — the default)
    *  or Fixed with exactly two FIXED-capable cards, scored all battle at 20VP each. */
   | { type: 'ChooseSecondaryMode'; side: Side; fixedCardIds?: [string, string] }
@@ -132,7 +150,7 @@ export type Intent =
   // ── Pre-battle setup / deployment (Stage: setup) ──────────────────────────────
   /** Start a new battle: clear the board and enter deployment at the roll-off step.
    *  `dispositions` selects each side's Force Disposition (11e missions; defaults apply). */
-  | { type: 'NewBattle'; dispositions?: Record<Side, DispositionId> }
+  | { type: 'NewBattle'; dispositions?: Record<Side, DispositionId>; battleType?: 'standard' | 'combat_patrol' }
   /** Roll off to determine Attacker (winner) and Defender; Defender then deploys first. */
   | { type: 'RollRoles' }
   /** Manually set the Attacker (the other side is Defender). Defender deploys first. */
@@ -208,6 +226,21 @@ export type Intent =
   /** Undo a declared split: removes BOTH half-units (wherever they are) and the split record, so
    *  the original entry re-enters the deployment flow. Setup only. */
   | { type: 'ClearSplit'; entryKey: string }
+  /** COMBAT SQUAD (Declare Battle Formations): split a 10-model unit into two 5-model units.
+   *  The wargear partitions as evenly as possible; both halves deploy like any other unit.
+   *  Does not consume the side's deployment slot (nothing is placed). */
+  | {
+      type: 'DeclareCombatSquad';
+      side: Side;
+      entryKey: string;
+      datasheetId: string;
+      modelCount: number;
+      totalWargear?: Record<string, number>;
+    }
+  /** Combat Patrol enhancement pick (one per side, before/during deployment): the enhancement is
+   *  stamped onto the bearer's unit (matched by `targetDsId`) — retroactively if it is already
+   *  on the board. `enhancementId: null` declines. */
+  | { type: 'ChooseCpEnhancement'; side: Side; enhancementId: string | null; targetDsId?: string }
   /** Undo a start-the-battle-embarked deployment: the unit instance is removed and its roster
    *  entry re-enters the deployment flow. Setup only; not for split halves (use ClearSplit). */
   | { type: 'UndeployUnit'; unitId: string }
@@ -243,6 +276,8 @@ export type Intent =
   /** Begin a Movement activation for one or more units: snapshot origins, set the per-unit budget
    *  (M, or M+D6 for an Advance), so MoveModel/NudgeUnit can clamp to range. */
   | { type: 'BeginMove'; unitIds: string[]; mode: MoveMode }
+  /** Command Re-roll (1 CP): re-roll the Advance D6 just rolled (before the unit moves). */
+  | { type: 'RerollAdvance'; unitId: string; side: Side }
   /** Rigidly translate the given (moving) units by `delta` inches from their move origins, clamped
    *  per-unit to the move budget. Used by the drag-select group move; preserves coherency. */
   | { type: 'NudgeUnit'; unitIds: string[]; delta: Vec2 }
@@ -280,7 +315,17 @@ export type Intent =
   /** Disembark from a transport (18.04). The mode is derived from the transport's state and the
    *  anchor: Rapid (transport moved: 3", no charge), Tactical (transport unmoved: 3", the unit may
    *  then move normally), Combat (6", hazard roll per model, battle-shocked, no charge). */
-  | { type: 'DisembarkUnit'; unitId: string; anchor: Vec2; formation?: Formation; rotation?: number };
+  | { type: 'DisembarkUnit'; unitId: string; anchor: Vec2; formation?: Formation; rotation?: number }
+  // ── Combat Patrol per-unit specials ──────────────────────────────────────────
+  /** For the Greater Good (T'au): in your Shooting phase, an eligible unshot FTGG unit becomes an
+   *  Observer and marks one visible enemy as its Spotted unit (once per enemy per phase). The
+   *  Observer forgoes its own shooting — except a Target Uploaded unit (Pathfinders), which may
+   *  still shoot its Spotted unit at +1 BS with [IGNORES COVER]. */
+  | { type: 'SpotTarget'; unitId: string; targetUnitId: string }
+  /** Play a datasheet/patrol ability (Combat Patrol per-unit specials): Zealot, Overkill,
+   *  Bladeguard (hit/stance), Tome Skull, Nuncio-Aquila, Co-ordinated Eradication,
+   *  Gate of Infinity. The reducer enforces phase/turn windows and once-per-battle/turn limits. */
+  | { type: 'UseUnitAbility'; unitId: string; ability: string; targetUnitId?: string; objectiveIdx?: number };
 
 export function createInitialState(layout: Layout): GameState {
   return {
@@ -311,6 +356,17 @@ function beginTurnFor(state: GameState, side: Side): UnitInstance[] {
           status: {
             ...(u.status.lastShotOnTurn != null ? { lastShotOnTurn: u.status.lastShotOnTurn } : {}),
             ...(u.status.battleShocked ? { battleShocked: true } : {}),
+            // Pinned (Suppressing Fire) lasts into the pinned unit's own turn.
+            ...(u.status.pinnedUntil != null && (state.turnCounter ?? 0) + 1 < u.status.pinnedUntil
+              ? { pinnedUntil: u.status.pinnedUntil }
+              : {}),
+            // Suppressed (Earth Caste Modifications) lasts into the suppressed unit's own turn.
+            ...(u.status.suppressedUntil != null && (state.turnCounter ?? 0) + 1 < u.status.suppressedUntil
+              ? { suppressedUntil: u.status.suppressedUntil }
+              : {}),
+            // Once-per-battle/turn ability plays and until-end-of-battle marks survive the reset.
+            ...(u.status.abilityUsed ? { abilityUsed: u.status.abilityUsed } : {}),
+            ...(u.status.permanentEffects ? { permanentEffects: u.status.permanentEffects } : {}),
           },
           models: u.models.map((m) => (m.moveStart ? { ...m, moveStart: undefined } : m)),
         }
@@ -379,6 +435,8 @@ function advancePhase(state: GameState, ctx?: EngineContext): GameState {
   if (open.cancelled.length > 0) {
     state = { ...state, units: open.units, log: [...state.log, 'Unconfirmed move cancelled (phase ended mid-activation)'] };
   }
+  // FTGG Spotted marks last "until the end of the phase" — any phase change clears them.
+  if (state.spotted) state = { ...state, spotted: undefined };
   const i = PARIAH_NEXUS_PHASES.indexOf(state.phase as Phase);
   if (i >= 0 && i < PARIAH_NEXUS_PHASES.length - 1) {
     const next: GameState = { ...state, phase: PARIAH_NEXUS_PHASES[i + 1]! };
@@ -390,9 +448,15 @@ function advancePhase(state: GameState, ctx?: EngineContext): GameState {
   // End of the Fight phase — the End of Turn step (11e): enforce coherency (03.03), then the
   // mission consults (primary + secondary scoring hooks), then clear the per-turn kill ledger.
   if (state.fightNext) state = { ...state, fightNext: undefined }; // Counteroffensive expires
+  // Fights-on-death expires with the phase: every dying model is removed (and its kill recorded).
+  {
+    const swept = sweepDyingModels(state, 'all', ctx);
+    if (swept !== state) state = recordKills(state, swept, ctx);
+  }
   state = enforceEndOfTurnCoherency(state, ctx);
   state = missionsOnTurnEnd(state, ctx);
   state = secondariesOnTurnEnd(state, ctx);
+  state = cpMissionsOnTurnEnd(state, ctx);
   // 23.02: at the end of your opponent's turn, your AIRCRAFT on the battlefield return to
   // Strategic Reserves. The turn ending belongs to `activePlayer`, so the OTHER side's aircraft
   // leave now.
@@ -442,8 +506,9 @@ function advancePhase(state: GameState, ctx?: EngineContext): GameState {
     }
   }
   if (state.round >= 5) {
-    // End of the battle: END OF BATTLE mission scoring + Battle Ready VP (missions11).
-    const finished = missionsOnBattleEnd({ ...state, ended: true }, ctx);
+    // End of the battle: END OF BATTLE mission scoring + Battle Ready VP (missions11), or the
+    // Combat Patrol cards' END OF BATTLE blocks.
+    const finished = cpMissionsOnBattleEnd(missionsOnBattleEnd({ ...state, ended: true }, ctx), ctx);
     return { ...finished, turnKills: [], log: [...finished.log, '— battle ends (round 5 complete) —'] };
   }
   const round = state.round + 1;
@@ -468,7 +533,10 @@ function advancePhase(state: GameState, ctx?: EngineContext): GameState {
 export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineContext): GameState {
   switch (intent.type) {
     case 'SpawnUnit': {
-      const models = layoutModels(intent, state.layout);
+      const models = layoutModels(
+        { ...intent, wounds: intent.wounds + (ctx ? abilityWoundBonus(ctx.datasheets.get(intent.datasheetId)) : 0) },
+        state.layout,
+      );
       const unit: UnitInstance = {
         id: intent.unitId,
         owner: intent.owner,
@@ -523,13 +591,20 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
     case 'SetFirstPlayer':
       return { ...state, firstPlayer: intent.side, activePlayer: intent.side, round: 1, phase: PARIAH_NEXUS_PHASES[0], ended: false };
 
-    case 'SetUnitStatus':
-      return {
+    case 'SetUnitStatus': {
+      let next: GameState = {
         ...state,
         units: state.units.map((u) =>
           u.id === intent.unitId ? { ...u, status: { ...u.status, ...intent.status } } : u,
         ),
       };
+      // A unit marked as having fought loses its fights-on-death (dying) models.
+      if (intent.status.hasFought) {
+        const swept = sweepDyingModels(next, [intent.unitId], ctx);
+        if (swept !== next) next = recordKills(state, swept, ctx);
+      }
+      return next;
+    }
 
     case 'SetAllocation':
       return {
@@ -547,7 +622,12 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       if (outcome.rejected) {
         return { ...state, log: [...state.log, `Attack rejected: ${outcome.rejected}`] };
       }
-      return recordKills(state, resolveEmergencyDisembarks(outcome.state, ctx, rng), ctx);
+      let after = resolveEmergencyDisembarks(outcome.state, ctx, rng);
+      // Fights-on-death expires once the unit has fought — its dying models are removed.
+      if (after.units.find((u) => u.id === intent.attackerUnitId)?.status.hasFought) {
+        after = sweepDyingModels(after, [intent.attackerUnitId], ctx);
+      }
+      return recordKills(state, after, ctx);
     }
 
     case 'ShootUnit': {
@@ -559,7 +639,10 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       if (outcome.rejected) {
         return { ...state, log: [...state.log, `Shooting rejected: ${outcome.rejected}`] };
       }
-      return recordKills(state, resolveEmergencyDisembarks(outcome.state, ctx, rng), ctx);
+      let next = recordKills(state, resolveEmergencyDisembarks(outcome.state, ctx, rng), ctx);
+      // Post-shoot per-unit specials (CP): Punishing Volley / Guidance of the Ancients.
+      next = cpPostShootAbilities(next, intent.attackerUnitId, intent.targetUnitId, ctx, rng);
+      return next;
     }
 
     case 'FightUnit': {
@@ -571,7 +654,9 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       if (outcome.rejected) {
         return { ...state, log: [...state.log, `Fight rejected: ${outcome.rejected}`] };
       }
-      return recordKills(state, resolveEmergencyDisembarks(outcome.state, ctx, rng), ctx);
+      // The activation is over: the unit has fought, so its dying models are removed.
+      const after = sweepDyingModels(resolveEmergencyDisembarks(outcome.state, ctx, rng), [intent.attackerUnitId], ctx);
+      return recordKills(state, after, ctx);
     }
 
     case 'Charge': {
@@ -583,7 +668,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
     case 'FightMove': {
       if (!ctx) return { ...state, log: [...state.log, 'Fight move ignored: no datasheet context supplied'] };
       const { type: _t, ...params } = intent;
-      return resolveFightMove(state, params, ctx).state;
+      return resolveFightMove(state, params, ctx, rng).state;
     }
 
     case 'SurgeMove': {
@@ -612,6 +697,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         next = missionsOnTurnStart(next, ctx);
         next = secondariesOnTurnStart(next, ctx);
         next = missionsOnCommandEnd(next, ctx);
+        next = cpMissionsOnCommandEnd(next, ctx);
       }
       return next;
     }
@@ -635,7 +721,86 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       if (state.cp[intent.side] < intent.cost) {
         return { ...state, log: [...state.log, `Stratagem "${intent.name}" rejected: needs ${intent.cost} CP, ${intent.side} has ${state.cp[intent.side]}`] };
       }
+      // Once per phase per stratagem (15.01) — tracked when the play carries a stable id.
+      const useKey = intent.stratagemId ? `${intent.side}:${intent.stratagemId}` : undefined;
+      if (useKey && state.mode === 'match' && state.stratUsed?.[useKey] === phaseKeyOf(state)) {
+        return { ...state, log: [...state.log, `Stratagem "${intent.name}" rejected: already used this phase`] };
+      }
       const cp = { ...state.cp, [intent.side]: state.cp[intent.side] - intent.cost };
+      const track = useKey ? { stratUsed: { ...(state.stratUsed ?? {}), [useKey]: phaseKeyOf(state) } } : {};
+      const reject = (why: string): GameState => ({ ...state, log: [...state.log, `Stratagem "${intent.name}" rejected: ${why}`] });
+
+      // ── Combat Patrol special effects (validated here; the generic path just applies an effect) ──
+      if (intent.effectId === 'cp:secure_objective') {
+        // Inquisitorial Mandate / Rapid Acquisition: end of your Movement phase, one objective
+        // your unit controls becomes secured (14.03).
+        const cpm = state.cpMissions;
+        if (!cpm || !ctx) return reject('no Combat Patrol mission state');
+        if (state.phase !== 'Movement' || state.activePlayer !== intent.side) return reject('end of your Movement phase only');
+        if (intent.objectiveIdx == null || !intent.targetUnitId) return reject('pick a unit and an objective');
+        const statuses = objectiveStatuses(state, ctx, cpm.attacker);
+        const st = statuses[intent.objectiveIdx];
+        if (!st) return reject('no such objective');
+        if (st.controller !== intent.side) return reject('your side does not control that objective');
+        const unit = state.units.find((u) => u.id === intent.targetUnitId);
+        const shape = unit ? ctx.datasheets.get(unit.datasheetId)?.baseShape : undefined;
+        const inRange = !!unit && unit.models.some(
+          (m) => m.alive && withinObjectiveRange(m.pos, shape ? baseRadius(shape) : 0.63, st.point, state.layout),
+        );
+        if (!inRange) return reject('that unit is not within range of the objective');
+        const securedBy = [...(cpm.securedBy ?? statuses.map(() => null))];
+        securedBy[intent.objectiveIdx] = intent.side;
+        return {
+          ...state, cp, ...track,
+          cpMissions: { ...cpm, securedBy },
+          log: [...state.log, `${intent.side} uses "${intent.name}" (-${intent.cost} CP) — objective ${intent.objectiveIdx + 1} is secured`],
+        };
+      }
+      if (intent.effectId === 'cp:pin') {
+        // Suppressing Fire: the enemy unit is pinned (-2" M) until the start of your next
+        // Command phase. ("Hit by those attacks" is the player's claim, not re-checked.)
+        const target = state.units.find((u) => u.id === intent.targetUnitId);
+        if (!target || target.owner === intent.side) return reject('pick an enemy unit');
+        if (state.phase !== 'Shooting' || state.activePlayer !== intent.side) return reject('your Shooting phase only');
+        return {
+          ...state, cp, ...track,
+          units: state.units.map((u) =>
+            u.id === target.id ? { ...u, status: { ...u.status, pinnedUntil: (state.turnCounter ?? 0) + 2 } } : u,
+          ),
+          log: [...state.log, `${intent.side} uses "${intent.name}" (-${intent.cost} CP) — the target is pinned (-2" M)`],
+        };
+      }
+      if (intent.effectId === 'cp:swift_embark') {
+        // Swift Embarkation: end of the opponent's Fight phase, an unengaged INFANTRY unit wholly
+        // within 6" of a friendly TRANSPORT embarks within it.
+        if (!ctx) return reject('no datasheet context');
+        const unit = state.units.find((u) => u.id === intent.targetUnitId);
+        const transport = state.units.find((u) => u.id === intent.transportId);
+        if (!unit || unit.owner !== intent.side) return reject('pick your unit');
+        if (!transport || transport.owner !== intent.side) return reject('pick a friendly transport');
+        if (state.phase !== 'Fight' || state.activePlayer === intent.side) return reject("end of your opponent's Fight phase only");
+        if (unit.inReserves || transport.inReserves) return reject('both units must be on the battlefield');
+        if (engagedEnemies(unit, state, ctx).length > 0) return reject('the unit must be unengaged');
+        const legal = canEmbark(state, unit, transport, ctx);
+        if (!legal.ok) return reject(legal.reason!);
+        const shape = ctx.datasheets.get(unit.datasheetId)?.baseShape ?? FALLBACK_SHAPE;
+        const tShape = ctx.datasheets.get(transport.datasheetId)?.baseShape ?? FALLBACK_SHAPE;
+        const tAlive = transport.models.filter((m) => m.alive);
+        const near = unit.models.every(
+          (m) => !m.alive || tAlive.some((tm) => gapBetweenBases(m.pos, shape, tm.pos, tShape) <= 6),
+        );
+        if (!near) return reject('every model must be wholly within 6" of the transport');
+        return {
+          ...state, cp, ...track,
+          units: state.units.map((u) =>
+            u.id === unit.id
+              ? { ...u, inReserves: true, embarkedIn: transport.id, status: { ...u.status, justEmbarked: true } }
+              : u,
+          ),
+          log: [...state.log, `${intent.side} uses "${intent.name}" (-${intent.cost} CP) — the unit embarks within the transport`],
+        };
+      }
+
       const units =
         intent.targetUnitId && intent.effectId
           ? state.units.map((u) =>
@@ -645,10 +810,14 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       return {
         ...state,
         cp,
+        ...track,
         units,
         log: [...state.log, `${intent.side} uses Stratagem "${intent.name}" (-${intent.cost} CP)${intent.effectId ? ` → ${intent.effectId}` : ''}`],
       };
     }
+
+    case 'StartSanctification':
+      return startSanctification(state, ctx, intent.unitId, intent.objectiveIdx);
 
     case 'DiscardSecondary': {
       const sec = state.secondaries?.[intent.side];
@@ -705,15 +874,22 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
     // ── Pre-battle setup / deployment ──────────────────────────────────────────
     case 'NewBattle': {
       const dispositions = intent.dispositions ?? { player: 'take_and_hold' as DispositionId, ai: 'take_and_hold' as DispositionId };
+      const battleType = intent.battleType ?? 'standard';
       return {
         ...createInitialState(state.layout),
         stage: 'setup',
         mode: 'match',
+        battleType,
         setup: { step: 'roll_roles', dispositions },
         // Each side shuffles its own Tactical Mission deck now (seeded — games stay reproducible).
-        secondaries: initSecondaries(rng),
+        // Combat Patrol plays its own mission cards (later stage) — no Tactical deck.
+        ...(battleType === 'combat_patrol' ? {} : { secondaries: initSecondaries(rng) }),
         turnKills: [],
-        log: ['— Deployment — roll off to determine Attacker and Defender —'],
+        log: [
+          battleType === 'combat_patrol'
+            ? '— Combat Patrol — roll off to determine Attacker and Defender —'
+            : '— Deployment — roll off to determine Attacker and Defender —',
+        ],
       };
     }
 
@@ -736,7 +912,8 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         log: [...state.log, `Roll-off: player ${ro.player}, ai ${ro.ai} → ${attacker} is Attacker; ${defender} deploys first`],
       };
       const dispositions = state.setup?.dispositions as Record<Side, DispositionId> | undefined;
-      if (dispositions && next.layout.terrainAreas) {
+      // Combat Patrol battles play the CP mission cards (a later stage), not the 11e CA deck.
+      if (dispositions && next.layout.terrainAreas && state.battleType !== 'combat_patrol') {
         next = initMissions(next, ctx, dispositions, attacker);
       }
       return next;
@@ -753,7 +930,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         log: [...state.log, `${attacker} is Attacker; ${defender} deploys first`],
       };
       const dispositions = state.setup?.dispositions as Record<Side, DispositionId> | undefined;
-      if (dispositions && next.layout.terrainAreas) {
+      if (dispositions && next.layout.terrainAreas && state.battleType !== 'combat_patrol') {
         next = initMissions(next, ctx, dispositions, attacker);
       }
       return next;
@@ -764,6 +941,14 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       if (state.mode === 'match' && ctx && isAircraft(ctx.datasheets.get(intent.datasheetId))) {
         return { ...state, log: [...state.log, 'Deployment rejected: AIRCRAFT must start in Strategic Reserves'] };
       }
+      // Combat Patrol: some units MUST start in Strategic Reserves (e.g. Strike from the Warp).
+      const cpRound = state.battleType === 'combat_patrol' ? ctx?.datasheets.get(intent.datasheetId)?.cpReserveRound : undefined;
+      if (state.mode === 'match' && cpRound) {
+        return {
+          ...state,
+          log: [...state.log, `Deployment rejected: this unit must start in Strategic Reserves (arrives battle round ${cpRound})`],
+        };
+      }
       // Start the battle embarked within a friendly transport (18.01) — capacity-checked; the
       // models are placeholders off the board until the unit disembarks.
       if (intent.intoTransportId) {
@@ -772,7 +957,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
           return { ...state, log: [...state.log, 'Deployment rejected: transport not found'] };
         }
         const models = layoutModels(
-          { ...intent, wounds: intent.wounds + enhancementWoundBonus(intent.enhancementId, intent.modelCount), anchor: { x: 0, y: 0 } },
+          { ...intent, wounds: intent.wounds + enhancementWoundBonus(intent.enhancementId, intent.modelCount) + (ctx ? abilityWoundBonus(ctx.datasheets.get(intent.datasheetId)) : 0), anchor: { x: 0, y: 0 } },
           state.layout,
         );
         const unit: UnitInstance = {
@@ -780,7 +965,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
           models, startingModels: models.length, status: {},
           inReserves: true, embarkedIn: transport.id,
           ...(intent.wargear ? { wargearCounts: intent.wargear } : {}),
-          ...(intent.enhancementId ? { enhancementId: intent.enhancementId } : {}),
+          ...(intent.enhancementId ? { enhancementId: intent.enhancementId } : cpEnhancementFor(state, intent.owner, intent.datasheetId) ? { enhancementId: cpEnhancementFor(state, intent.owner, intent.datasheetId)! } : {}),
         };
         const check = canEmbark(state, unit, transport, ctx);
         if (!check.ok) {
@@ -804,7 +989,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         return { ...state, log: [...state.log, `Deployment rejected (${intent.owner}): ${check.reason}`] };
       }
       const models = layoutModels(
-        { ...intent, wounds: intent.wounds + enhancementWoundBonus(intent.enhancementId, intent.modelCount) },
+        { ...intent, wounds: intent.wounds + enhancementWoundBonus(intent.enhancementId, intent.modelCount) + (ctx ? abilityWoundBonus(ctx.datasheets.get(intent.datasheetId)) : 0) },
         state.layout,
       );
       const grantAb = grantedDeployAbility(state, intent.unitId);
@@ -812,7 +997,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         id: intent.unitId, owner: intent.owner, datasheetId: intent.datasheetId,
         models, startingModels: models.length, status: {},
         ...(intent.wargear ? { wargearCounts: intent.wargear } : {}),
-        ...(intent.enhancementId ? { enhancementId: intent.enhancementId } : {}),
+        ...(intent.enhancementId ? { enhancementId: intent.enhancementId } : cpEnhancementFor(state, intent.owner, intent.datasheetId) ? { enhancementId: cpEnhancementFor(state, intent.owner, intent.datasheetId)! } : {}),
         ...(grantAb ? { deployGrant: grantAb } : {}),
       };
       const setup = state.setup ? { ...state.setup, toDeploy: otherSide(intent.owner) } : state.setup;
@@ -822,7 +1007,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
     case 'PlaceInReserves': {
       // Off-board until it arrives; lay the models out at the origin as placeholders.
       const models = layoutModels(
-        { ...intent, wounds: intent.wounds + enhancementWoundBonus(intent.enhancementId, intent.modelCount), anchor: { x: 0, y: 0 } },
+        { ...intent, wounds: intent.wounds + enhancementWoundBonus(intent.enhancementId, intent.modelCount) + (ctx ? abilityWoundBonus(ctx.datasheets.get(intent.datasheetId)) : 0), anchor: { x: 0, y: 0 } },
         state.layout,
       );
       // The Declare Battle Formations grant (Combat Landers' Deep Strike) must survive into the
@@ -832,7 +1017,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         id: intent.unitId, owner: intent.owner, datasheetId: intent.datasheetId,
         models, startingModels: models.length, status: {}, inReserves: true,
         ...(intent.wargear ? { wargearCounts: intent.wargear } : {}),
-        ...(intent.enhancementId ? { enhancementId: intent.enhancementId } : {}),
+        ...(intent.enhancementId ? { enhancementId: intent.enhancementId } : cpEnhancementFor(state, intent.owner, intent.datasheetId) ? { enhancementId: cpEnhancementFor(state, intent.owner, intent.datasheetId)! } : {}),
         ...(grantAb ? { deployGrant: grantAb } : {}),
       };
       const setup = state.setup ? { ...state.setup, toDeploy: otherSide(intent.owner) } : state.setup;
@@ -1093,6 +1278,76 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       };
     }
 
+    case 'DeclareCombatSquad': {
+      const reject = (why: string): GameState => ({ ...state, log: [...state.log, `Combat Squad rejected: ${why}`] });
+      if (state.stage !== 'setup' || state.setup?.step !== 'deploy') return reject('declare Combat Squads during deployment');
+      if (!ctx) return reject('no datasheet context supplied');
+      const ds = ctx.datasheets.get(intent.datasheetId);
+      if (!ds || !hasAbilityStarting(ds, 'combat squad')) return reject(`${ds?.name ?? intent.datasheetId} has no COMBAT SQUAD ability`);
+      if (intent.modelCount !== 10) return reject('COMBAT SQUAD splits a 10-model unit into two units of five');
+      if (state.setup.splits?.some((s) => s.entryKey === intent.entryKey)) return reject('that unit is already split');
+      if (isUnitPlaced(state, intent.entryKey)) return reject('that unit is already deployed');
+      if ((state.setup.formations ?? []).some((f) => f.leaderKey === intent.entryKey || f.bodyguardKey === intent.entryKey)) {
+        return reject('that unit is in a declared Leader pairing');
+      }
+      // Partition the wargear as evenly as possible (half A takes the odd item).
+      const a: Record<string, number> = {};
+      const b: Record<string, number> = {};
+      for (const [item, n] of Object.entries(intent.totalWargear ?? {})) {
+        if (n <= 0) continue;
+        const toA = Math.min(5, Math.ceil(n / 2));
+        const toB = n - toA;
+        if (toB > 5) return reject(`${n}× ${item} cannot be carried by two units of five`);
+        if (toA > 0) a[item] = toA;
+        if (toB > 0) b[item] = toB;
+      }
+      const split: DeclaredSplit = {
+        side: intent.side,
+        entryKey: intent.entryKey,
+        dsId: intent.datasheetId,
+        groups: [
+          { count: 5, ...(Object.keys(a).length ? { wargear: a } : {}) },
+          { count: 5, ...(Object.keys(b).length ? { wargear: b } : {}) },
+        ],
+      };
+      return {
+        ...state,
+        setup: { ...state.setup, splits: [...(state.setup.splits ?? []), split] },
+        log: [...state.log, `${intent.side} splits ${ds.name} into two Combat Squads of five`],
+      };
+    }
+
+    case 'ChooseCpEnhancement': {
+      const reject = (why: string): GameState => ({ ...state, log: [...state.log, `Enhancement rejected: ${why}`] });
+      if (state.battleType !== 'combat_patrol') return reject('Combat Patrol battles only');
+      if (state.stage !== 'setup') return reject('pick the enhancement during setup');
+      if (state.cpEnhancements?.[intent.side]) return reject('already decided (one enhancement per patrol)');
+      const pick = { id: intent.enhancementId, ...(intent.targetDsId ? { targetDsId: intent.targetDsId } : {}) };
+      let next: GameState = {
+        ...state,
+        cpEnhancements: { ...(state.cpEnhancements ?? {}), [intent.side]: pick },
+        log: [
+          ...state.log,
+          intent.enhancementId
+            ? `${intent.side} takes the ${intent.enhancementId.split(':')[2]?.replace(/_/g, ' ')} enhancement`
+            : `${intent.side} declines an enhancement`,
+        ],
+      };
+      // Stamp retroactively when the bearer is already down (deployed or reserved).
+      if (intent.enhancementId && intent.targetDsId) {
+        const bearer = next.units.find(
+          (u) => u.owner === intent.side && u.datasheetId === intent.targetDsId && !u.enhancementId,
+        );
+        if (bearer) {
+          next = {
+            ...next,
+            units: next.units.map((u) => (u.id === bearer.id ? { ...u, enhancementId: intent.enhancementId! } : u)),
+          };
+        }
+      }
+      return next;
+    }
+
     case 'ClearSplit': {
       if (state.stage !== 'setup' || state.setup?.step !== 'deploy') {
         return { ...state, log: [...state.log, 'Split kept: the battle is under way'] };
@@ -1316,7 +1571,8 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
 
     case 'BeginBattle': {
       const first = state.setup?.firstTurn ?? state.firstPlayer;
-      return {
+      const attacker = state.setup?.attacker ?? first;
+      let next: GameState = {
         ...state,
         stage: 'battle',
         setup: undefined,
@@ -1334,6 +1590,9 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         })),
         log: [...state.log, `— Battle begins — ${first} takes the first turn (round 1) —`],
       };
+      // Combat Patrol: each side now plays its patrol's own mission card.
+      if (state.battleType === 'combat_patrol' && ctx) next = initCpMissions(next, ctx, attacker);
+      return next;
     }
 
     // ── Movement ───────────────────────────────────────────────────────────────
@@ -1398,7 +1657,10 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
           log = [...log, `Advance roll: +${advanceRoll}" (move up to ${M + advanceRoll}")`];
         }
         const orderBonus = intent.mode === 'stationary' ? 0 : moveBonusFromOrders(u); // Move! Move! Move! +3"
-        const budget = maxMoveDistance(M, intent.mode, advanceRoll) + orderBonus;
+        // Pinned (Suppressing Fire): -2" Move until the caster's next Command phase.
+        const pinMalus =
+          intent.mode !== 'stationary' && u.status.pinnedUntil != null && (state.turnCounter ?? 0) < u.status.pinnedUntil ? 2 : 0;
+        const budget = Math.max(0, maxMoveDistance(M, intent.mode, advanceRoll) + orderBonus - pinMalus);
         return {
           ...u,
           status: { ...u.status, moveMode: intent.mode, moveBudget: budget },
@@ -1406,6 +1668,38 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         };
       });
       return { ...state, units, log };
+    }
+
+    case 'RerollAdvance': {
+      // Command Re-roll on the Advance D6: only mid-activation, before any model has moved.
+      const unit = state.units.find((u) => u.id === intent.unitId);
+      const reject = (why: string): GameState => ({ ...state, log: [...state.log, `Advance re-roll rejected: ${why}`] });
+      if (!unit || unit.owner !== intent.side) return reject('unit not found');
+      if (unit.status.moveMode !== 'advance' || unit.status.moveBudget == null) return reject('the unit is not mid-Advance');
+      if (unit.models.some((m) => m.alive && m.moveStart && (m.pos.x !== m.moveStart.x || m.pos.y !== m.moveStart.y))) {
+        return reject('re-roll before moving any model');
+      }
+      const phaseKey = phaseKeyOf(state);
+      if (state.mode === 'match') {
+        if (state.cp[intent.side] < 1) return reject('needs 1 CP');
+        if (state.rerollUsed?.[intent.side] === phaseKey) return reject('Command Re-roll already used this phase');
+      }
+      const M = ctx?.datasheets.get(unit.datasheetId)?.models[0]?.M ?? 6;
+      const roll = rollAdvance(rng).roll;
+      const orderBonus = moveBonusFromOrders(unit);
+      const pinMalus = unit.status.pinnedUntil != null && (state.turnCounter ?? 0) < unit.status.pinnedUntil ? 2 : 0;
+      const budget = Math.max(0, maxMoveDistance(M, 'advance', roll) + orderBonus - pinMalus);
+      return {
+        ...state,
+        units: state.units.map((u) => (u.id === unit.id ? { ...u, status: { ...u.status, moveBudget: budget } } : u)),
+        ...(state.mode === 'match'
+          ? {
+              cp: { ...state.cp, [intent.side]: state.cp[intent.side] - 1 },
+              rerollUsed: { ...(state.rerollUsed ?? {}), [intent.side]: phaseKey },
+            }
+          : {}),
+        log: [...state.log, `Command Re-roll (1 CP): Advance re-rolled → +${roll}" (move up to ${budget}")`],
+      };
     }
 
     case 'NudgeUnit': {
@@ -1518,6 +1812,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       const rapidKey = `${unit.owner}:core:rapid_ingress`;
       if (intent.rapidIngress && state.mode === 'match' && state.stage === 'battle') {
         const reject = (why: string): GameState => ({ ...state, log: [...state.log, `Rapid Ingress rejected: ${why}`] });
+        if (state.battleType === 'combat_patrol') return reject('not available in Combat Patrol battles');
         if (state.phase !== 'Movement') return reject(`only in the Movement phase (now ${state.phase})`);
         if (unit.owner === state.activePlayer) return reject("used at the end of the OPPONENT's Movement phase");
         if (state.cp[unit.owner] < 1) return reject('needs 1 CP');
@@ -1549,14 +1844,42 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
           : ds
             ? deployAbilityFromKeywords(ds.keywords, (ds.abilities ?? []).map((a) => a.name))
             : 'standard');
-      // Priority-drop Beacon: the bearer's unit may Deep Strike from the FIRST battle round.
-      const effectiveRound = allowsRound1DeepStrike(unit) ? Math.max(state.round, 2) : state.round;
-      const check = deepStrikeArrivalLegal(
-        formationWorld(opts), shape, enemies, effectiveRound,
-        occupiedBases(state, ctx, [unit.id]),
-        { deepStrike: ability === 'deep_strike', layout: state.layout, side: unit.owner },
-      );
-      if (!check.legal) return { ...state, log: [...state.log, `Reserves arrival rejected: ${check.reason}`] };
+      // Combat Patrol mandatory reserves (e.g. Strike from the Warp): the unit cannot arrive
+      // before its stated battle round and must be set up wholly within its own deployment zone.
+      const cpRound = state.battleType === 'combat_patrol' ? ds?.cpReserveRound : undefined;
+      if (cpRound) {
+        if (state.round < cpRound) {
+          return { ...state, log: [...state.log, `Reserves arrival rejected: cannot arrive before battle round ${cpRound}`] };
+        }
+        const zoneCheck = checkUnitDeployment(
+          formationWorld(opts), shape, state.layout, unit.owner, 'standard', [],
+          occupiedBases(state, ctx, [unit.id]),
+        );
+        if (!zoneCheck.legal) {
+          return { ...state, log: [...state.log, `Reserves arrival rejected: must arrive wholly within your deployment zone (${zoneCheck.reason})`] };
+        }
+      }
+      // Earth Caste Modifications (Cloudspear enhancement): the ingress may arrive more than 6"
+      // from enemies (instead of 8"), but the unit then cannot charge this turn.
+      const earthCaste = cpEnhancementSlug(unit) === 'earth_caste_modifications';
+      let earthCasteClose = false;
+      if (!cpRound) {
+        // Priority-drop Beacon: the bearer's unit may Deep Strike from the FIRST battle round.
+        const effectiveRound = allowsRound1DeepStrike(unit) ? Math.max(state.round, 2) : state.round;
+        const baseOpts = { deepStrike: ability === 'deep_strike', layout: state.layout, side: unit.owner };
+        let check = deepStrikeArrivalLegal(
+          formationWorld(opts), shape, enemies, effectiveRound,
+          occupiedBases(state, ctx, [unit.id]), baseOpts,
+        );
+        if (!check.legal && earthCaste) {
+          check = deepStrikeArrivalLegal(
+            formationWorld(opts), shape, enemies, effectiveRound,
+            occupiedBases(state, ctx, [unit.id]), { ...baseOpts, minEnemyDist: 6 },
+          );
+          if (check.legal) earthCasteClose = true;
+        }
+        if (!check.legal) return { ...state, log: [...state.log, `Reserves arrival rejected: ${check.reason}`] };
+      }
       const newModels = layoutModels(opts, state.layout).map((m, i) => ({
         ...m,
         wounds: unit.models[i]?.wounds ?? m.wounds,
@@ -1567,7 +1890,10 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         ...state,
         units: state.units.map((u) =>
           u.id === unit.id
-            ? { ...u, models: newModels, inReserves: false, arrivedRound: state.round, status: { ...u.status, moved: true, setUpThisTurn: true } }
+            ? {
+                ...u, models: newModels, inReserves: false, arrivedRound: state.round,
+                status: { ...u.status, moved: true, setUpThisTurn: true, ...(earthCasteClose ? { cannotCharge: true } : {}) },
+              }
             : u,
         ),
         ...(rapidCp > 0
@@ -1682,18 +2008,20 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         return reject('models would be set up on top of another model\'s base');
       }
       const whollyWithin = (d: number): boolean => positions.every((p) => distToTransport(p) <= d);
+      // Rapid Disembark (Devilfish): rapid/tactical disembark set-up distance becomes 6".
+      const nearDist = hasAbility(ctx?.datasheets.get(transport.datasheetId), 'Rapid Disembark') ? 6 : 3;
 
       let mode: 'rapid' | 'tactical' | 'combat';
       if (modeAvail === 'rapid') {
-        if (!whollyWithin(3)) return reject('rapid disembark: set up wholly within 3" of the transport');
+        if (!whollyWithin(nearDist)) return reject(`rapid disembark: set up wholly within ${nearDist}" of the transport`);
         if (erViolations(false)) return reject('cannot be set up within Engagement Range of an enemy');
         mode = 'rapid';
-      } else if (whollyWithin(3) && !erViolations(false)) {
+      } else if (whollyWithin(nearDist) && !erViolations(false)) {
         mode = 'tactical';
       } else if (whollyWithin(6) && !erViolations(true)) {
         mode = 'combat';
       } else {
-        return reject('set up wholly within 3" (tactical) or 6" (combat) of the transport, clear of enemies');
+        return reject(`set up wholly within ${nearDist}" (tactical) or 6" (combat) of the transport, clear of enemies`);
       }
 
       let log = [...state.log];
@@ -1731,16 +2059,265 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
               ...(chargeOk ? {} : { cannotCharge: true }),
               ...(shocked ? { battleShocked: true } : {}),
             };
+      // Proximity Scanners (Devilfish enhancement): the disembarking unit's pulse blasters and
+      // pulse carbines get +1 A (this turn — the effect expires at the unit's next turn reset).
+      let proximity = false;
+      if (cpEnhancementSlug(transport) === 'proximity_scanners') {
+        proximity = true;
+        log = [...log, `Proximity Scanners: ${uName}'s pulse weapons get +1 A`];
+      }
       log = [...log, `${uName} disembarks (${mode})${mode === 'tactical' ? ' and may move' : ''}`];
       return {
         ...state,
         units: state.units.map((u) =>
           u.id === unit.id
-            ? { ...u, models, inReserves: false, embarkedIn: undefined, status: { ...u.status, ...flags } }
+            ? {
+                ...u, models, inReserves: false, embarkedIn: undefined,
+                status: proximity ? addEffect({ ...u.status, ...flags }, 'cp:pulse_bonus') : { ...u.status, ...flags },
+              }
             : u,
         ),
         log,
       };
+    }
+
+    // ── Combat Patrol per-unit specials (step 4) ───────────────────────────────
+    case 'SpotTarget': {
+      // For the Greater Good (T'au): in your Shooting phase, an eligible FTGG unit that has not
+      // shot becomes an Observer and marks one visible enemy as its Spotted unit. The Observer
+      // forgoes shooting — unless it has Target Uploaded (Pathfinders).
+      const reject = (why: string): GameState => ({ ...state, log: [...state.log, `Spot rejected: ${why}`] });
+      if (!ctx) return reject('no datasheet context');
+      const unit = state.units.find((u) => u.id === intent.unitId);
+      const target = state.units.find((u) => u.id === intent.targetUnitId);
+      if (!unit || !target) return reject('unit not found');
+      if (state.mode === 'match' && state.stage === 'battle') {
+        if (state.phase !== 'Shooting') return reject(`only in the Shooting phase (now ${state.phase})`);
+        if (state.activePlayer !== unit.owner) return reject('not your turn');
+      }
+      if (target.owner === unit.owner) return reject('the Spotted unit must be an enemy');
+      if (unit.inReserves || !unit.models.some((m) => m.alive)) return reject('the Observer is not on the battlefield');
+      if (target.inReserves || !target.models.some((m) => m.alive)) return reject('the target is not on the battlefield');
+      const ds = ctx.datasheets.get(unit.datasheetId);
+      if (!hasAbility(ds, 'For the Greater Good')) return reject('the unit does not have For the Greater Good');
+      if (unit.status.battleShocked) return reject('a Battle-shocked unit cannot be an Observer');
+      if (unit.status.hasShot) return reject('the unit has already been selected to shoot this phase');
+      if (state.spotted?.[target.id]) return reject('that enemy unit is already Spotted this phase');
+      if (Object.values(state.spotted ?? {}).some((s) => s.by === unit.id)) {
+        return reject('this Observer has already marked a Spotted unit this phase');
+      }
+      const seers = unit.models.filter((m) => m.alive).map((m) => m.pos);
+      if (!unitCanSeeIn(seers, target, state, ctx)) return reject('the target is not visible to the Observer');
+      const pathfinder = hasAbilityStarting(ds, 'target uploaded');
+      const markerlight = (ds?.keywords ?? []).some((k) => k.toUpperCase() === 'MARKERLIGHT');
+      const tName = ctx.datasheets.get(target.datasheetId)?.name ?? target.id;
+      return {
+        ...state,
+        spotted: { ...(state.spotted ?? {}), [target.id]: { by: unit.id, markerlight, ...(pathfinder ? { pathfinder: true } : {}) } },
+        // A non-Pathfinder Observer forgoes its shooting this phase.
+        units: pathfinder
+          ? state.units
+          : state.units.map((u) => (u.id === unit.id ? { ...u, status: { ...u.status, hasShot: true } } : u)),
+        log: [
+          ...state.log,
+          `${ds?.name ?? unit.id} spots ${tName} (For the Greater Good${markerlight ? ', Markerlight' : ''}${pathfinder ? '; Target Uploaded — may still shoot it' : ' — forgoes its shooting'})`,
+        ],
+      };
+    }
+
+    case 'UseUnitAbility': {
+      const reject = (why: string): GameState => ({
+        ...state,
+        log: [...state.log, `Ability "${intent.ability}" rejected: ${why}`],
+      });
+      if (!ctx) return reject('no datasheet context');
+      const unit = state.units.find((u) => u.id === intent.unitId);
+      if (!unit) return reject('unit not found');
+      if (state.mode === 'match' && state.stage !== 'battle') return reject('only during the battle');
+      if (unit.inReserves && intent.ability !== 'gate_of_infinity') return reject('the unit is not on the battlefield');
+      if (!unit.models.some((m) => m.alive)) return reject('the unit has no models left');
+      const turnNow = state.turnCounter ?? 0;
+      const used = unit.status.abilityUsed ?? {};
+      const markUsed = (slug: string, u: UnitInstance): UnitInstance => ({
+        ...u,
+        status: { ...u.status, abilityUsed: { ...(u.status.abilityUsed ?? {}), [slug]: turnNow } },
+      });
+      const name = ctx.datasheets.get(unit.datasheetId)?.name ?? unit.id;
+
+      switch (intent.ability) {
+        case 'zealot': {
+          if (state.phase !== 'Fight') return reject('used when the unit is selected to fight (Fight phase)');
+          if (!unitHasAbilityStarting(unit, ctx, 'zealot')) return reject('the unit does not have Zealot');
+          if (used['zealot'] != null) return reject('once per battle');
+          return {
+            ...state,
+            units: state.units.map((u) => (u.id === unit.id ? markUsed('zealot', { ...u, status: addEffect(u.status, 'cp:zealot') }) : u)),
+            log: [...state.log, `${name} uses ZEALOT: +3 A and S to the Preacher's melee attacks this fight`],
+          };
+        }
+        case 'overkill': {
+          if (state.phase !== 'Fight') return reject('used when the unit is selected to attack (Fight phase)');
+          if (!unitHasAbilityStarting(unit, ctx, 'overkill')) return reject('the unit does not have Overkill');
+          if (used['overkill'] != null) return reject('once per battle');
+          return {
+            ...state,
+            units: state.units.map((u) => (u.id === unit.id ? markUsed('overkill', { ...u, status: addEffect(u.status, 'cp:overkill') }) : u)),
+            log: [...state.log, `${name} uses OVERKILL: melee attacks at AP -4 this fight`],
+          };
+        }
+        case 'bladeguard_hit':
+        case 'bladeguard_stance': {
+          if (state.phase !== 'Fight') return reject('used in the Fight phase');
+          if (!unitHasAbilityStarting(unit, ctx, 'bladeguard')) return reject('the unit does not have the Bladeguard ability');
+          if (used['bladeguard'] === turnNow) return reject('once per turn');
+          const effectId = intent.ability === 'bladeguard_hit' ? 'cp:bladeguard_hit' : 'cp:bladeguard_stance';
+          const what = intent.ability === 'bladeguard_hit' ? '+1 to hit in melee' : '-1 to be hit';
+          return {
+            ...state,
+            units: state.units.map((u) => (u.id === unit.id ? markUsed('bladeguard', { ...u, status: addEffect(u.status, effectId) }) : u)),
+            log: [...state.log, `${name} uses BLADEGUARD: ${what} until the end of the turn`],
+          };
+        }
+        case 'tome_skull': {
+          if (!unitHasAbilityStarting(unit, ctx, 'tome skull')) return reject('the unit does not have Tome Skull');
+          if (used['tome_skull'] != null) return reject('once per battle');
+          const target = state.units.find((u) => u.id === intent.targetUnitId);
+          if (!target || target.inReserves || !target.models.some((m) => m.alive)) return reject('target not on the battlefield');
+          const tDs = ctx.datasheets.get(target.datasheetId);
+          const tShape = tDs?.baseShape ?? FALLBACK_SHAPE;
+          const uShape = ctx.datasheets.get(unit.datasheetId)?.baseShape ?? FALLBACK_SHAPE;
+          const within6 = unit.models.some(
+            (m) => m.alive && target.models.some((t) => t.alive && gapBetweenBases(m.pos, uShape, t.pos, tShape) <= 6),
+          );
+          if (!within6) return reject('the target must be within 6"');
+          let next: GameState = {
+            ...state,
+            units: state.units.map((u) => (u.id === unit.id ? markUsed('tome_skull', u) : u)),
+          };
+          if (target.owner === unit.owner) {
+            if (!target.status.battleShocked) return reject('a friendly target must be battle-shocked');
+            return {
+              ...next,
+              units: next.units.map((u) => (u.id === target.id ? { ...u, status: { ...u.status, battleShocked: false } } : u)),
+              log: [...next.log, `${name} uses TOME SKULL: ${tDs?.name ?? target.id} is no longer battle-shocked`],
+            };
+          }
+          next = { ...next, log: [...next.log, `${name} uses TOME SKULL on ${tDs?.name ?? target.id}`] };
+          return forcedBattleShockRoll(next, target.id, 'Tome Skull', ctx, rng);
+        }
+        case 'nuncio_aquila': {
+          if (state.phase !== 'Command') return reject('used at the start of the Command phase');
+          if (!unitHasAbilityStarting(unit, ctx, 'nuncio-aquila')) return reject('the unit does not have Nuncio-Aquila');
+          const objIdx = intent.objectiveIdx;
+          const objPts = state.layout.objectivePoints;
+          if (objIdx == null || !objPts?.[objIdx]) return reject('pick an objective');
+          if (used[`nuncio:${objIdx}`] === turnNow) return reject('that objective was already selected this turn');
+          const obj = objPts[objIdx]!;
+          const uShape = ctx.datasheets.get(unit.datasheetId)?.baseShape ?? FALLBACK_SHAPE;
+          // "Within 6" of this model" is measured to the objective marker itself.
+          const near = unit.models.some(
+            (m) => m.alive && Math.hypot(m.pos.x - obj.pos.x, m.pos.y - obj.pos.y) - baseRadius(uShape) <= 6,
+          );
+          if (!near) return reject('the objective must be within 6" of this model');
+          let next: GameState = {
+            ...state,
+            units: state.units.map((u) => (u.id === unit.id ? markUsed(`nuncio:${objIdx}`, u) : u)),
+            log: [...state.log, `${name} uses NUNCIO-AQUILA on objective ${objIdx + 1}`],
+          };
+          for (const e of state.units) {
+            if (e.owner === unit.owner || e.inReserves || !e.models.some((m) => m.alive)) continue;
+            const eDs = ctx.datasheets.get(e.datasheetId);
+            if (eDs?.keywords.some((k) => /^(monster|vehicle)$/i.test(k))) continue;
+            const eShape = eDs?.baseShape ?? FALLBACK_SHAPE;
+            const inRange = e.models.some((m) => m.alive && withinObjectiveRange(m.pos, baseRadius(eShape), obj, state.layout));
+            if (inRange) next = forcedBattleShockRoll(next, e.id, 'Nuncio-Aquila', ctx, rng);
+          }
+          return next;
+        }
+        case 'coordinated_eradication': {
+          if (state.mode === 'match' && state.stage === 'battle') {
+            if (state.phase !== 'Shooting') return reject('used when a unit is selected to shoot (Shooting phase)');
+            if (state.activePlayer !== unit.owner) return reject('not your turn');
+          }
+          const ds = ctx.datasheets.get(unit.datasheetId);
+          if (ds?.patrol !== 'sudden_dawn_cadre') return reject('a Sudden Dawn Cadre unit must use it');
+          const onceKey = `${unit.owner}:coordinated_eradication`;
+          if (state.cpArmyOnce?.[onceKey]) return reject('once per battle per army');
+          const target = state.units.find((u) => u.id === intent.targetUnitId);
+          if (!target || target.owner === unit.owner || !target.models.some((m) => m.alive)) return reject('pick an enemy unit');
+          const tName = ctx.datasheets.get(target.datasheetId)?.name ?? target.id;
+          return {
+            ...state,
+            cpArmyOnce: { ...(state.cpArmyOnce ?? {}), [onceKey]: true },
+            units: state.units.map((u) =>
+              u.id === target.id
+                ? { ...u, status: { ...u.status, permanentEffects: [...(u.status.permanentEffects ?? []), 'cp:eradication_mark'] } }
+                : u,
+            ),
+            log: [...state.log, `${unit.owner} uses CO-ORDINATED ERADICATION: Sudden Dawn Cadre attacks against ${tName} have +1 AP for the rest of the battle`],
+          };
+        }
+        case 'sanctic_slayers': {
+          // Enhancement (Teguen, once per turn): a friendly IH unit's attacks get +1 to wound
+          // when the target's T is greater than or equal to the attack's S.
+          if (cpEnhancementSlug(unit) !== 'sanctic_slayers') return reject('the unit does not carry Sanctic Slayers');
+          if (used['sanctic_slayers'] === turnNow) return reject('once per turn');
+          const target = state.units.find((u) => u.id === intent.targetUnitId);
+          if (!target || target.owner !== unit.owner || target.inReserves || !target.models.some((m) => m.alive)) {
+            return reject('pick a friendly unit on the battlefield');
+          }
+          if (ctx.datasheets.get(target.datasheetId)?.patrol !== 'inquisitors_hand') {
+            return reject("an INQUISITOR'S HAND unit must be the target");
+          }
+          return {
+            ...state,
+            units: state.units.map((u) => {
+              if (u.id === unit.id) u = markUsed('sanctic_slayers', u);
+              if (u.id === target.id) u = { ...u, status: addEffect(u.status, 'cp:wound_boost_weak') };
+              return u;
+            }),
+            log: [...state.log, `${name} uses SANCTIC SLAYERS: ${ctx.datasheets.get(target.datasheetId)?.name ?? target.id} gets +1 to wound vs tougher targets`],
+          };
+        }
+        case 'purifying_force': {
+          // Enhancement (Brotherhood Terminators, once per battle per army): after a charge,
+          // the unit's melee attacks have [LETHAL HITS] this fight.
+          if (state.phase !== 'Fight') return reject('used when the unit is selected to fight (Fight phase)');
+          if (cpEnhancementSlug(unit) !== 'purifying_force') return reject('the unit does not carry Purifying Force');
+          if (!unit.status.charged) return reject('the unit must have made a charge move this turn');
+          const onceKey = `${unit.owner}:purifying_force`;
+          if (state.cpArmyOnce?.[onceKey]) return reject('once per battle per army');
+          return {
+            ...state,
+            cpArmyOnce: { ...(state.cpArmyOnce ?? {}), [onceKey]: true },
+            units: state.units.map((u) => (u.id === unit.id ? { ...u, status: addEffect(u.status, 'cp:lethal_melee') } : u)),
+            log: [...state.log, `${name} uses PURIFYING FORCE: melee attacks have [LETHAL HITS] this fight`],
+          };
+        }
+        case 'gate_of_infinity': {
+          // At the end of your OPPONENT's Fight phase — remove an unengaged unit to Reserves.
+          if (state.mode === 'match' && state.stage === 'battle') {
+            if (state.phase !== 'Fight') return reject("used at the end of your opponent's Fight phase");
+            if (state.activePlayer === unit.owner) return reject("used in your OPPONENT's Fight phase");
+          }
+          const ds = ctx.datasheets.get(unit.datasheetId);
+          if (ds?.patrol !== 'crowes_sanctifiers') return reject('every model must have Gate of Infinity');
+          if (unit.inReserves) return reject('the unit is already in Reserves');
+          if (engagedEnemies(unit, state, ctx).length > 0) return reject('an engaged unit cannot use Gate of Infinity');
+          // Battle-size table not captured — Combat Patrol allows ONE unit per use, once per phase.
+          const gateKey = `${unit.owner}:cp:gate_of_infinity`;
+          const phaseKey = `${state.round}:${state.activePlayer}:${state.phase}`;
+          if (state.stratUsed?.[gateKey] === phaseKey) return reject('already used this phase');
+          return {
+            ...state,
+            stratUsed: { ...(state.stratUsed ?? {}), [gateKey]: phaseKey },
+            units: state.units.map((u) => (u.id === unit.id ? { ...u, inReserves: true } : u)),
+            log: [...state.log, `${name} steps through the GATE OF INFINITY into Strategic Reserves`],
+          };
+        }
+        default:
+          return reject('unknown ability');
+      }
     }
 
     // ── Core Stratagem plays (15.03–15.12) ─────────────────────────────────────
@@ -1770,6 +2347,9 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
 
     case 'CrushingImpact': {
       if (!ctx) return { ...state, log: [...state.log, 'Crushing Impact ignored: no datasheet context'] };
+      if (state.battleType === 'combat_patrol') {
+        return { ...state, log: [...state.log, 'Crushing Impact rejected: not available in Combat Patrol battles'] };
+      }
       const unit = state.units.find((u) => u.id === intent.unitId);
       const target = state.units.find((u) => u.id === intent.targetUnitId);
       const reject = (why: string): GameState => ({ ...state, log: [...state.log, `Crushing Impact rejected: ${why}`] });
@@ -1818,6 +2398,9 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
 
     case 'ThrowExplosives': {
       if (!ctx) return { ...state, log: [...state.log, 'Explosives ignored: no datasheet context'] };
+      if (state.battleType === 'combat_patrol') {
+        return { ...state, log: [...state.log, 'Explosives rejected: not available in Combat Patrol battles'] };
+      }
       const unit = state.units.find((u) => u.id === intent.unitId);
       const target = state.units.find((u) => u.id === intent.targetUnitId);
       const reject = (why: string): GameState => ({ ...state, log: [...state.log, `Explosives rejected: ${why}`] });
@@ -1947,6 +2530,83 @@ function addEffect(status: UnitInstance['status'], effectId: string): UnitInstan
   const current = status.activeEffects ?? [];
   if (current.includes(effectId)) return status;
   return { ...status, activeEffects: [...current, effectId] };
+}
+
+/** The side's chosen Combat Patrol enhancement id, when this datasheet is its bearer and no
+ *  unit carries it yet (Combat Squad halves etc. — first matching deploy gets the stamp). */
+function cpEnhancementFor(state: GameState, owner: Side, datasheetId: string): string | undefined {
+  const pick = state.cpEnhancements?.[owner];
+  if (!pick?.id || pick.targetDsId !== datasheetId) return undefined;
+  if (state.units.some((u) => u.owner === owner && u.enhancementId === pick.id)) return undefined;
+  return pick.id;
+}
+
+/** A FORCED battle-shock roll (ability-triggered, regardless of strength): 2D6 vs Ld; on a
+ *  failure the unit is battle-shocked. Returns the updated state. */
+function forcedBattleShockRoll(
+  state: GameState,
+  unitId: string,
+  cause: string,
+  ctx: EngineContext,
+  rng: RNG,
+): GameState {
+  const unit = state.units.find((u) => u.id === unitId);
+  const ds = unit ? ctx.datasheets.get(unit.datasheetId) : undefined;
+  if (!unit || !ds || !unit.models.some((m) => m.alive)) return state;
+  const roll = rng.roll(2);
+  const total = roll[0]! + roll[1]!;
+  const ld = ds.models[0]?.Ld ?? 7;
+  const failed = total < ld;
+  return {
+    ...state,
+    units: failed
+      ? state.units.map((u) => (u.id === unitId ? { ...u, status: { ...u.status, battleShocked: true } } : u))
+      : state.units,
+    log: [...state.log, `${cause}: ${ds.name} battle-shock roll 2D6=${total} vs Ld ${ld} — ${failed ? 'FAILED (battle-shocked)' : 'passed'}`],
+  };
+}
+
+/** Combat Patrol post-shoot specials, applied after a ShootUnit resolves:
+ *  • PUNISHING VOLLEY (Hellblasters): one enemy unit hit makes a battle-shock roll;
+ *  • GUIDANCE OF THE ANCIENTS (Venerable Dreadnought): one enemy unit hit is marked — friendly
+ *    ranged attacks against it get +1 to hit.
+ *  Simplification: "hit by those attacks" is proxied by the volley's MAIN target. */
+function cpPostShootAbilities(
+  state: GameState,
+  attackerUnitId: string,
+  targetUnitId: string,
+  ctx: EngineContext,
+  rng: RNG,
+): GameState {
+  const attacker = state.units.find((u) => u.id === attackerUnitId);
+  const aDs = attacker ? ctx.datasheets.get(attacker.datasheetId) : undefined;
+  if (!attacker || !aDs) return state;
+  const target = state.units.find((u) => u.id === targetUnitId);
+  if (!target || !target.models.some((m) => m.alive)) return state;
+  let next = state;
+  if (hasAbilityStarting(aDs, 'punishing volley')) {
+    next = forcedBattleShockRoll(next, targetUnitId, 'Punishing Volley', ctx, rng);
+  }
+  if (hasAbilityStarting(aDs, 'guidance of the ancients') && !target.status.activeEffects?.includes('cp:guided_target')) {
+    next = {
+      ...next,
+      units: next.units.map((u) => (u.id === targetUnitId ? { ...u, status: addEffect(u.status, 'cp:guided_target') } : u)),
+      log: [...next.log, `Guidance of the Ancients: ranged attacks against ${ctx.datasheets.get(target.datasheetId)?.name ?? target.id} get +1 to hit`],
+    };
+  }
+  // Earth Caste Modifications (Cloudspear enhancement): one enemy unit hit is suppressed until
+  // the start of the bearer's next turn — its attacks take -1 to hit.
+  if (cpEnhancementSlug(attacker) === 'earth_caste_modifications') {
+    const until = (next.turnCounter ?? 0) + 2;
+    if ((target.status.suppressedUntil ?? 0) < until) {
+      next = {
+        ...next,
+        units: next.units.map((u) => (u.id === targetUnitId ? { ...u, status: { ...u.status, suppressedUntil: until } } : u)),
+        log: [...next.log, `Earth Caste Modifications: ${ctx.datasheets.get(target.datasheetId)?.name ?? target.id} is suppressed (-1 to hit)`],
+      };
+    }
+  }
+  return next;
 }
 
 // ── helpers ──────────────────────────────────────────────────────────────────

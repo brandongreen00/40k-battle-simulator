@@ -1,0 +1,45 @@
+{
+ "name": "The Vengeful Brethren",
+ "faction": "Dark Angels",
+ "detachment": "The Vengeful Brethren",
+ "points": 0,
+ "combatPatrol": true,
+ "note": "Fixed Combat Patrol list (Dark Angels); extracted from the Warhammer app 2026-08 — see tools/combatpatrol/extracted/vengeful_brethren_flags.md",
+ "units": [
+  {
+   "datasheetId": "cp-vengeful-brethren-intercessor-squad",
+   "modelCount": 10,
+   "wargearCounts": {
+    "Bolt Pistol": 10,
+    "Bolt Rifle": 10,
+    "Knives and Fists": 10
+   }
+  },
+  {
+   "datasheetId": "cp-vengeful-brethren-master-zacharial",
+   "modelCount": 1,
+   "wargearCounts": {
+    "Boltstorm Gauntlet": 1,
+    "Power Fist": 1,
+    "Relic Chainsword": 1
+   }
+  },
+  {
+   "datasheetId": "cp-vengeful-brethren-hellblaster-squad",
+   "modelCount": 5,
+   "wargearCounts": {
+    "Bolt Pistol": 5,
+    "Knives and Fists": 5,
+    "Plasma Incinerator": 5
+   }
+  },
+  {
+   "datasheetId": "cp-vengeful-brethren-bladeguard-veteran-squad",
+   "modelCount": 3,
+   "wargearCounts": {
+    "Heavy Bolt Pistol": 3,
+    "Master-crafted Power Weapon": 3
+   }
+  }
+ ]
+}

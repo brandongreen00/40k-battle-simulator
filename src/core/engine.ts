@@ -8,7 +8,7 @@
 
 import type { Datasheet, GameState, ModelInstance, UnitInstance, Vec2, BaseShape, WeaponProfile } from './types';
 import type { RNG } from './rng';
-import { baseRadius, gapBetweenBases } from './geometry';
+import { baseRadius, gapBetweenBases, pointInPolygon } from './geometry';
 import { parseKeywords } from './keywords';
 import { parseDice } from './dice';
 import { checkCoherency } from './coherency';
@@ -19,7 +19,8 @@ import { controlOfObjective, scorePrimary, type OcModel } from './objectives';
 import { battleShockTest } from './battleshock';
 import { rollCharge } from './movement';
 import { gatherAttackModifiers, type AttackContext } from './effects';
-import { hasLoneOperative, ignoresLoneOperative, innateEffectIds } from './abilities';
+import { abilityWoundBonus, cpEnhancementSlug, cpInnateEffectIds, hasAbility, hasLoneOperative, ignoresLoneOperative, innateEffectIds } from './abilities';
+import { atOrBelowHalfStrength } from './battleshock';
 import {
   enhancementEffectIds, enhancementLdBonus, enhancementOcBonus, enhancementWeaponGrantFor,
   hasDigitalWeapons, shockedOcFloor,
@@ -148,10 +149,59 @@ export const INNATE_ABILITY_EFFECTS: Record<string, string[]> = {};
 function effectsOf(unit: UnitInstance, ctx?: EngineContext, state?: GameState): string[] {
   return [
     ...(unit.status.activeEffects ?? []),
+    ...(unit.status.permanentEffects ?? []),
+    // Suppressed (Earth Caste Modifications): the unit's attacks take -1 to hit while it lasts.
+    ...(unit.status.suppressedUntil != null && (state?.turnCounter ?? 0) < unit.status.suppressedUntil
+      ? ['stunned']
+      : []),
     ...(INNATE_ABILITY_EFFECTS[unit.datasheetId] ?? []),
     ...(ctx ? innateEffectIds(ctx.datasheets.get(unit.datasheetId)) : []),
+    ...(ctx ? cpInnateEffectIds(unit, ctx) : []),
     ...enhancementEffectIds(unit, ctx, state),
   ];
+}
+
+/** Does fights-on-death (Determined to the Last / Killer Reflexes) cover this unit right now? */
+function hasFightsOnDeath(unit: UnitInstance, ctx: EngineContext, state: GameState): boolean {
+  return effectsOf(unit, ctx, state).includes('cp:fights_on_death');
+}
+
+/** Remove a unit's `dying` models (fights-on-death expired: the unit has fought, or the Fight
+ *  phase ended). Returns the state unchanged when there is nothing to sweep. */
+export function sweepDyingModels(state: GameState, unitIds: string[] | 'all', _ctx?: EngineContext): GameState {
+  const match = (u: UnitInstance) => unitIds === 'all' || unitIds.includes(u.id);
+  let swept = 0;
+  const units = state.units.map((u) => {
+    if (!match(u) || !u.models.some((m) => m.dying && m.alive)) return u;
+    const n = u.models.filter((m) => m.dying && m.alive).length;
+    swept += n;
+    return { ...u, models: u.models.map((m) => (m.dying && m.alive ? { ...m, alive: false, dying: undefined } : m)) };
+  });
+  if (swept === 0) return state;
+  return { ...state, units, log: [...state.log, `${swept} dying model(s) removed (fights-on-death expired)`] };
+}
+
+/** Any alive model of `unit` within range of an objective (11e: area-bound objectives count the
+ *  whole terrain area; marker objectives use the control radius). Mirrors
+ *  missions11.withinObjectiveRange without importing it (module cycle). */
+export function unitOnAnyObjective(state: GameState, unit: UnitInstance, ctx: EngineContext): boolean {
+  const layout = state.layout;
+  const shape = ctx.datasheets.get(unit.datasheetId)?.baseShape;
+  const radius = shape ? baseRadius(shape) : 0.63;
+  const alive = unit.models.filter((m) => m.alive);
+  if (layout.objectivePoints?.length && layout.terrainAreas) {
+    return layout.objectivePoints.some((o) => {
+      const area = o.areaId ? layout.terrainAreas!.find((a) => a.id === o.areaId) : undefined;
+      if (area) {
+        const members = area.groupId ? layout.terrainAreas!.filter((x) => x.groupId === area.groupId) : [area];
+        return alive.some((m) => members.some((x) => pointInPolygon(m.pos, x.polygon)));
+      }
+      const controlRadius = layout.objectiveControlRadiusIn ?? 3;
+      return alive.some((m) => Math.hypot(m.pos.x - o.pos.x, m.pos.y - o.pos.y) - radius <= controlRadius);
+    });
+  }
+  const controlRadius = (layout.objectiveControlRadiusIn ?? 3) + ((layout.objectiveMarkerDiameterIn ?? 1.575) / 2);
+  return layout.objectives.some((o) => alive.some((m) => Math.hypot(m.pos.x - o.x, m.pos.y - o.y) - radius <= controlRadius));
 }
 
 function defenderProfileFor(unit: UnitInstance, ctx: EngineContext, ordered?: ModelInstance[]): DefenderProfile {
@@ -193,7 +243,7 @@ function defenderProfileFor(unit: UnitInstance, ctx: EngineContext, ordered?: Mo
           if (def.saveBonus != null) save = Math.max(2, (save ?? base.Sv) - def.saveBonus);
         }
         return {
-          maxW: base.W,
+          maxW: base.W + abilityWoundBonus(mds), // Shield Drone: +1 W
           wounds: x.wounds,
           ...(invuln != null ? { invuln } : {}),
           ...(save != null ? { save } : {}),
@@ -219,7 +269,8 @@ function casualtyOrder(target: UnitInstance, ctx: EngineContext, attackerCentroi
   const dist = (m: ModelInstance) => Math.hypot(m.pos.x - attackerCentroid.x, m.pos.y - attackerCentroid.y);
   const preferGear = target.allocation !== 'bodies_first';
 
-  const remaining = target.models.filter((m) => m.alive);
+  // Dying models (fights-on-death) are already destroyed — they cannot soak further damage.
+  const remaining = target.models.filter((m) => m.alive && !m.dying);
   const order: ModelInstance[] = [];
   while (remaining.length > 0) {
     // Candidates: the preferred pool while any of it remains, then the rest; furthest first.
@@ -398,6 +449,8 @@ export function resolveAttack(
   const halfRange = (weaponDef.range ?? 0) / 2;
 
   // Gather ability/Order/Stratagem effects (Phase 3) and merge them into the situation.
+  const targetAliveWounds = target.models.filter((m) => m.alive).reduce((s, m) => s + m.wounds, 0);
+  const targetMaxWounds = (ctx.datasheets.get(target.datasheetId)?.models[0]?.W ?? 1) * target.startingModels;
   const abilityCtx: AttackContext = {
     phase: isMelee ? 'fight' : 'shooting',
     weaponType: isMelee ? 'melee' : 'ranged',
@@ -405,8 +458,32 @@ export function resolveAttack(
     attackerKeywords: aDs.keywords.map((k) => k.toUpperCase()),
     targetKeywords: tDs.keywords.map((k) => k.toUpperCase()),
     gap,
+    attackS: profile.S,
+    targetT: defenderProfileFor(target, ctx).T,
+    weaponName: weaponDef.name.toLowerCase(),
+    weaponSourceDsId: found.sourceDsId,
+    targetBelowHalf: atOrBelowHalfStrength(
+      aliveTargets, target.startingModels,
+      target.startingModels === 1 ? targetAliveWounds / Math.max(1, targetMaxWounds) : undefined,
+    ),
+    targetOnObjective: unitOnAnyObjective(state, target, ctx),
   };
   const mods = gatherAttackModifiers(abilityCtx, effectsOf(attacker, ctx, state), effectsOf(target, ctx, state));
+  // For the Greater Good (T'au): a Guided unit's ranged attacks against a Spotted enemy improve
+  // BS by 1 (+[IGNORES COVER] when the Observer has MARKERLIGHT). An Observer itself only gets
+  // the bonus against its own Spotted unit via Target Uploaded (Pathfinders).
+  let guided = false;
+  let guidedIgnoresCover = false;
+  const spot = !isMelee ? state.spotted?.[target.id] : undefined;
+  if (spot && hasAbility(aDs, 'For the Greater Good') && attacker.owner !== target.owner) {
+    if (spot.by !== attacker.id) {
+      guided = true;
+      guidedIgnoresCover = spot.markerlight;
+    } else if (spot.pathfinder) {
+      guided = true; // Target Uploaded: +1 BS and [IGNORES COVER] vs its own Spotted unit
+      guidedIgnoresCover = true;
+    }
+  }
 
   // Enhancement weapon grants: apply only when this weapon is fired from the BEARER's datasheet
   // (Ignis Judicium's [DEVASTATING WOUNDS]+[MELTA 1]+[PRECISION] on the Inquisitor's own guns,
@@ -428,12 +505,21 @@ export function resolveAttack(
   }
   // Target Weak Spot (Order): improve the attack's AP (AP is stored ≤ 0 — more negative = better).
   if (mods.apImprove) profile.AP -= mods.apImprove;
+  // Urban Enforcers: incoming attacks lose AP (toward 0, never past it).
+  if (mods.apWorsen) profile.AP = Math.min(0, profile.AP + mods.apWorsen);
+  // Overkill: the attack's AP becomes N (kept if the weapon's own AP is already better).
+  if (mods.apSet != null) profile.AP = Math.min(profile.AP, mods.apSet);
+  // Zealot: +N Strength.
+  if (mods.strengthBonus) profile.S += mods.strengthBonus;
 
   const cover =
-    (forceCover || mods.grantCover || (!isMelee && unitCoverIn(aPts, target, state, ctx))) && !mods.ignoresCover;
+    (forceCover || mods.grantCover || (!isMelee && unitCoverIn(aPts, target, state, ctx))) &&
+    !mods.ignoresCover && !guidedIgnoresCover;
   // Granted weapon abilities (Epic Challenge's [PRECISION], Dispense Justice's [LETHAL HITS]).
   if (mods.grantPrecision && !kw.precision) profile.keywords = { ...profile.keywords, precision: true };
   if (mods.grantLethalHits && !kw.lethalHits) profile.keywords = { ...profile.keywords, lethalHits: true };
+  if (mods.grantPsychic && !kw.psychic) profile.keywords = { ...profile.keywords, psychic: true };
+  if (mods.grantSustained && !kw.sustainedHits) profile.keywords = { ...profile.keywords, sustainedHits: mods.grantSustained };
   if (wGrant?.precision && !profile.keywords.precision) profile.keywords = { ...profile.keywords, precision: true };
   // [PRECISION] (24.28): with a visible CHARACTER in the target unit, the attacker may promote
   // that CHARACTER's allocation group to current. The AI/engine always does when it can.
@@ -450,6 +536,7 @@ export function resolveAttack(
     attackerCount: params.attackerCount ?? aliveAttackers,
     hitModifier: hitPenalty + mods.hitModifier,
     woundModifier: mods.woundModifier,
+    skillDelta: guided ? -1 : undefined, // FTGG Guided: BS improves by 1 (uncapped characteristic change)
     rapidFireActive: !isMelee && gap <= halfRange,
     meltaActive: !isMelee && gap <= halfRange,
     longRange: !isMelee && gap >= 12,
@@ -467,11 +554,18 @@ export function resolveAttack(
     rerollWounds: mods.rerollWounds,
     damageReduction: mods.damageReduction,
     extraAttacks: mods.extraAttacks + (wGrant?.extraAttacks ?? 0),
+    ignoreBadHitMods: mods.ignoreBadHitMods || undefined,
+    rerollOneHit: mods.rerollOneHit || undefined,
   };
 
   // Allocate damage in casualty order (owner removes from the back, keeping the unit coherent;
   // defensive-wargear bearers still soak first) instead of stripping the formation's front rows.
   const allocation = casualtyOrder(target, ctx, aliveUnitCentroid(attacker));
+  if (allocation.length === 0) {
+    // Every remaining model is already dying (fights-on-death) — the attack achieves nothing.
+    const noop = `${aDs.name} attacks ${tDs.name}: every remaining model is already dying — no effect`;
+    return { state: { ...state, log: [...state.log, noop] }, summary: noop };
+  }
   const defender = defenderProfileFor(target, ctx, allocation);
   if (mods.fnp != null) defender.fnp = mods.fnp;
   if (mods.invulnFloor != null) defender.invuln = Math.min(defender.invuln ?? 7, mods.invulnFloor);
@@ -522,12 +616,29 @@ export function resolveAttack(
     const m = allocation[k];
     if (m) updatedById.set(m.id, dm);
   });
-  const newTargetModels = target.models.map((m) => {
+  let newTargetModels = target.models.map((m) => {
     const updated = updatedById.get(m.id);
     if (!updated) return m;
     const wounds = updated.wounds;
     return { ...m, wounds, alive: wounds > 0 };
   });
+
+  // Fights-on-death (Determined to the Last / Killer Reflexes): in the Fight phase, a destroyed
+  // model of an un-fought covered unit stays on a 2+ — it fights, then is removed (the sweep
+  // happens when its unit has fought or the phase ends).
+  const fodLog: string[] = [];
+  if (isMelee && !target.status.hasFought && hasFightsOnDeath(target, ctx, state)) {
+    newTargetModels = newTargetModels.map((m, i) => {
+      if (m.alive || !target.models[i]?.alive || target.models[i]?.dying) return m;
+      const roll = rng.roll(1)[0]!;
+      if (roll >= 2) {
+        fodLog.push(`  Fights on death: a destroyed model stays to fight (rolled ${roll})`);
+        return { ...m, alive: true, wounds: 0, dying: true };
+      }
+      fodLog.push(`  Fights on death: rolled ${roll} — the model is removed`);
+      return m;
+    });
+  }
 
   const newUnits = state.units.map((u) => {
     if (u.id === target.id) return { ...u, models: newTargetModels };
@@ -547,12 +658,12 @@ export function resolveAttack(
 
   const verb = isMelee ? 'fights' : 'shoots';
   const summary =
-    `${aDs.name} ${verb} ${tDs.name} with ${profile.name}: ` +
+    `${aDs.name} ${verb} ${tDs.name} with ${profile.name}${guided ? ' (Guided: +1 BS)' : ''}: ` +
     `${result.hits} hits, ${result.failedSaves + result.devastating} wounds through, ` +
     `${result.damageDealt} damage, ${result.modelsSlain} slain`;
 
   return {
-    state: { ...state, units: newUnits, log: [...state.log, summary, ...result.log.map((l) => `  ${l.step}: ${l.detail}`), ...hazardLog] },
+    state: { ...state, units: newUnits, log: [...state.log, summary, ...result.log.map((l) => `  ${l.step}: ${l.detail}`), ...hazardLog, ...fodLog] },
     summary,
   };
 }
@@ -1122,10 +1233,10 @@ export function runCommandPhase(state: GameState, ctx: EngineContext, rng: RNG):
 
   // Primary VP: 11e mission games score via missions11.ts (Command-end + turn-end windows).
   // Legacy layouts (no mission state) keep the old Pariah-style hold-objectives scoring so the
-  // 10e maps stay playable.
+  // 10e maps stay playable. Combat Patrol battles score ONLY their mission cards (cpmissions.ts).
   const stateForScore = { ...state, units };
   let score = state.score;
-  if (!state.missions && state.round >= 2) {
+  if (!state.missions && state.battleType !== 'combat_patrol' && state.round >= 2) {
     const { controlled } = objectiveControl(stateForScore, ctx);
     const gained = scorePrimary(controlled[side], state.score[side]);
     if (gained > 0) {
@@ -1251,6 +1362,7 @@ export function resolveCharge(
 
   // Heroic Intervention (15.11) eligibility + CP (match mode).
   let heroicCp = 0;
+  let dutifulDiscount = false;
   const stratKey = `${charger.owner}:core:heroic_intervention`;
   const phaseKeyNow = `${state.round}:${state.activePlayer}:${state.phase}`;
   if (params.heroic && state.mode === 'match') {
@@ -1269,6 +1381,15 @@ export function resolveCharge(
     );
     if (engagedNow) return reject('the unit must be unengaged');
     heroicCp = params.heroic === 'into_the_fray' ? 2 : 1;
+    // Dutiful Defenders (VB enhancement, once per battle round per army): a Heroic Intervention
+    // targeting the bearer costs 1 less CP.
+    if (
+      cpEnhancementSlug(charger) === 'dutiful_defenders' &&
+      state.stratUsed?.[`${charger.owner}:cp:dutiful_defenders`] !== String(state.round)
+    ) {
+      heroicCp -= 1;
+      dutifulDiscount = true;
+    }
     if (state.cp[charger.owner] < heroicCp) return reject(`needs ${heroicCp} CP`);
     if (state.stratUsed?.[stratKey] === phaseKeyNow) return reject('already used this phase');
   }
@@ -1321,7 +1442,14 @@ export function resolveCharge(
     return null;
   };
 
+  // Grav-Inhibitor Drone (Pathfinders): a charge declared against the unit has -2 to the roll.
+  const gravMalus = targets.some((t) =>
+    hasAbility(ctx.datasheets.get(t.unit.datasheetId), 'Grav-Inhibitor Drone'),
+  )
+    ? 2
+    : 0;
   let { distance, rolls } = rollCharge(rng);
+  if (gravMalus) distance = Math.max(0, distance - gravMalus);
   // Into the Fray: a charge roll greater than 6 becomes 6.
   if (params.heroic === 'into_the_fray' && distance > 6) distance = 6;
   let result = attempt(distance);
@@ -1332,11 +1460,15 @@ export function resolveCharge(
   let rerollUsed = state.rerollUsed;
   let stratUsed = state.stratUsed;
   const extraLog: string[] = [];
-  if (heroicCp > 0) {
+  if (params.heroic && state.mode === 'match') {
     cp = { ...cp, [charger.owner]: cp[charger.owner] - heroicCp };
     stratUsed = { ...(stratUsed ?? {}), [stratKey]: phaseKeyNow };
+    if (dutifulDiscount) {
+      stratUsed = { ...stratUsed, [`${charger.owner}:cp:dutiful_defenders`]: String(state.round) };
+    }
     extraLog.push(
-      `${charger.owner} spends ${heroicCp} CP on Heroic Intervention (${params.heroic === 'into_the_fray' ? 'Into the Fray' : 'Leap to Defend'})`,
+      `${charger.owner} spends ${heroicCp} CP on Heroic Intervention (${params.heroic === 'into_the_fray' ? 'Into the Fray' : 'Leap to Defend'})` +
+        (dutifulDiscount ? ' — Dutiful Defenders: -1 CP' : ''),
     );
   }
   if (!result && params.commandReroll && state.mode === 'match') {
@@ -1346,6 +1478,7 @@ export function resolveCharge(
       rerollUsed = { ...(rerollUsed ?? {}), [charger.owner]: phaseKey };
       const first = `${rolls.join('+')}=${distance}"`;
       ({ distance, rolls } = rollCharge(rng));
+      if (gravMalus) distance = Math.max(0, distance - gravMalus);
       if (params.heroic === 'into_the_fray' && distance > 6) distance = 6;
       extraLog.push(`${charger.owner} spends 1 CP on Command Re-roll: charge 2D6 ${first} re-rolled`);
       result = attempt(distance);
@@ -1368,16 +1501,50 @@ export function resolveCharge(
     : distance < needed - 1e-6
       ? `failed — needed ${Math.max(0, needed).toFixed(1)}", rolled ${distance}"`
       : 'failed — no clear path (cannot reach a target without ending within Engagement Range of another enemy)';
-  const summary = `${cDs.name} charges ${names}: 2D6=${rolls.join('+')}=${distance}" → ${reason}`;
+  const gravNote = gravMalus ? ` (Grav-Inhibitor Drone: -${gravMalus}")` : '';
+  const summary = `${cDs.name} charges ${names}: 2D6=${rolls.join('+')}=${distance}"${gravNote} → ${reason}`;
 
   // The declaration is spent whether or not the roll/path succeeded (match mode; the sandbox
   // stays a free dice calculator).
   const attempted = state.mode === 'match' ? { chargeAttempted: true } : {};
-  const units = state.units.map((u) => {
+  let units = state.units.map((u) => {
     if (u.id !== charger.id) return u;
     if (success) return { ...translatedModels(u, move!), status: { ...u.status, ...attempted, charged: true, moved: true } };
     return { ...u, status: { ...u.status, ...attempted } };
   });
+  if (success) {
+    const movedCharger = units.find((u) => u.id === charger.id)!;
+    // Honoured Knights (Vengeful Brethren): when an enemy unit ends a charge move, friendly VB
+    // units engaged with it enter defence stance until the end of the turn.
+    units = units.map((u) => {
+      if (u.owner === charger.owner || u.inReserves || !u.models.some((m) => m.alive)) return u;
+      const uDs = ctx.datasheets.get(u.datasheetId);
+      if (uDs?.patrol !== 'vengeful_brethren') return u;
+      if (closestGap(movedCharger, cDs.baseShape, u, uDs.baseShape) > ENGAGEMENT_RANGE) return u;
+      if (u.status.activeEffects?.includes('cp:defence_stance')) return u;
+      extraLog.push(`${uDs.name} enters defence stance (Honoured Knights: -1 to wound when S > T)`);
+      return { ...u, status: { ...u.status, activeEffects: [...(u.status.activeEffects ?? []), 'cp:defence_stance'] } };
+    });
+    // Strike from the Warp (Crowe's Sanctifiers): a charge ending engaged after an ingress move
+    // this turn forces one engaged enemy unit to make a battle-shock roll.
+    if (cDs.patrol === 'crowes_sanctifiers' && charger.status.setUpThisTurn) {
+      const victim = engagedTargets[0]?.unit;
+      const vNow = victim ? units.find((u) => u.id === victim.id) : undefined;
+      const vDs = vNow ? ctx.datasheets.get(vNow.datasheetId) : undefined;
+      if (vNow && vDs && vNow.models.some((m) => m.alive)) {
+        const roll = rng.roll(2);
+        const total = roll[0]! + roll[1]!;
+        const ld = vDs.models[0]?.Ld ?? 7;
+        const failed = total < ld;
+        extraLog.push(
+          `Strike from the Warp: ${vDs.name} battle-shock roll 2D6=${total} vs Ld ${ld} — ${failed ? 'FAILED (battle-shocked)' : 'passed'}`,
+        );
+        if (failed) {
+          units = units.map((u) => (u.id === vNow.id ? { ...u, status: { ...u.status, battleShocked: true } } : u));
+        }
+      }
+    }
+  }
   return { state: { ...state, units, cp, rerollUsed, stratUsed, log: [...state.log, ...extraLog, summary] }, success, summary };
 }
 
@@ -1487,12 +1654,21 @@ export function resolveFightMove(
   state: GameState,
   params: FightMoveParams,
   ctx: EngineContext,
+  rng?: RNG,
 ): { state: GameState; summary: string } {
   const unit = state.units.find((u) => u.id === params.unitId);
   if (!unit) return { state, summary: 'unit not found' };
   const ds = ctx.datasheets.get(unit.datasheetId);
   if (!ds) return { state, summary: 'datasheet not found' };
   const verb = params.mode === 'pile_in' ? 'piles in' : 'consolidates';
+  // Exigent Assignments (Crowe's Sanctifiers): this consolidation may move up to D3+3".
+  let cap = 3;
+  let capNote = '';
+  if (params.mode === 'consolidate' && unit.status.activeEffects?.includes('cp:consolidate_extended')) {
+    const d3 = rng ? rng.int(1, 3) : 2;
+    cap = 3 + d3;
+    capNote = ` (Exigent Assignments: D3+3 = ${cap}")`;
+  }
 
   // Phase legality (real matches only).
   if (state.mode === 'match' && state.stage === 'battle' && state.phase !== 'Fight') {
@@ -1538,7 +1714,7 @@ export function resolveFightMove(
   } else if (engagedWith.length) {
     goal = engagedWith[0]!; // Ongoing Consolidation: closer to the closest engaged enemy
     modeNote = ' (ongoing)';
-  } else if (enemies.length && enemies[0]!.gap <= 3) {
+  } else if (enemies.length && enemies[0]!.gap <= cap) {
     goal = enemies[0]!; // Engaging Consolidation: must end engaged
     mustEndEngaged = true;
     modeNote = ' (engaging)';
@@ -1554,7 +1730,7 @@ export function resolveFightMove(
         if (!m.alive) continue;
         d = Math.min(d, Math.hypot(m.pos.x - o.x, m.pos.y - o.y));
       }
-      if ((!bestObj || d < bestObj.d) && d > controlR && d - 3 <= controlR + 1) bestObj = { pos: o, d };
+      if ((!bestObj || d < bestObj.d) && d > controlR && d - cap <= controlR + 1) bestObj = { pos: o, d };
     }
     if (!bestObj) return noMove('no eligible consolidation mode — stays put');
     objectiveGoal = bestObj.pos;
@@ -1565,7 +1741,7 @@ export function resolveFightMove(
   let moveDist: number;
   if (goal) {
     dir = closestAxis(unit, goal.unit);
-    moveDist = Math.min(3, Math.max(0, goal.gap)); // up to 3", stopping at base contact
+    moveDist = Math.min(cap, Math.max(0, goal.gap)); // up to the cap, stopping at base contact
   } else {
     // Toward the objective centre, just far enough to be in range.
     const controlR = state.layout.objectiveControlRadiusIn ?? 3;
@@ -1579,7 +1755,7 @@ export function resolveFightMove(
       if (!m.alive) continue;
       need = Math.min(need, Math.hypot(m.pos.x - objectiveGoal!.x, m.pos.y - objectiveGoal!.y) - controlR);
     }
-    moveDist = Math.min(3, Math.max(0, need + 0.1));
+    moveDist = Math.min(cap, Math.max(0, need + 0.1));
   }
 
   // Never end on top of another model's base (a friendly unit can sit between us and the enemy).
@@ -1601,10 +1777,17 @@ export function resolveFightMove(
   }
   const units = state.units.map((u) =>
     u.id === unit.id
-      ? { ...u, models: u.models.map((m) => (m.alive ? { ...m, pos: { x: m.pos.x + clamped.x, y: m.pos.y + clamped.y } } : m)) }
+      ? {
+          ...u,
+          models: u.models.map((m) => (m.alive ? { ...m, pos: { x: m.pos.x + clamped.x, y: m.pos.y + clamped.y } } : m)),
+          // The extended-consolidation grant is spent by this move.
+          ...(cap > 3
+            ? { status: { ...u.status, activeEffects: (u.status.activeEffects ?? []).filter((e) => e !== 'cp:consolidate_extended') } }
+            : {}),
+        }
       : u,
   );
-  const summary = `${ds.name} ${verb}${modeNote} ${moveDist.toFixed(1)}" ${goal ? 'toward the enemy' : 'toward the objective'}`;
+  const summary = `${ds.name} ${verb}${modeNote}${capNote} ${moveDist.toFixed(1)}" ${goal ? 'toward the enemy' : 'toward the objective'}`;
   return { state: { ...state, units, log: [...state.log, summary] }, summary };
 }
 

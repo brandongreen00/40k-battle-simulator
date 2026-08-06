@@ -27,6 +27,19 @@ export interface AttackContext {
   attackerKeywords: string[]; // datasheet unit keywords, upper-cased
   targetKeywords: string[];
   gap: number; // base-to-base, inches
+  /** The attack's Strength and the target's Toughness (S-vs-T-conditional effects, e.g.
+   *  Refusal to Yield / Honoured Knights: -1 to wound when S > T). */
+  attackS?: number;
+  targetT?: number;
+  /** The weapon's name, lower-cased (weapon-scoped grants, e.g. Psi-reactive Ammunition). */
+  weaponName?: string;
+  /** The datasheet the weapon is fired from (model-scoped abilities on merged units, e.g.
+   *  Zealot buffs only Teguen's own melee weapon). */
+  weaponSourceDsId?: string;
+  /** The target unit is at-or-below half-strength (Merciless Judgement). */
+  targetBelowHalf?: boolean;
+  /** The target unit is within range of an objective (Loyal to the Cause, Breach and Clear). */
+  targetOnObjective?: boolean;
 }
 
 /** The modifiers an effect can contribute. Offensive and defensive effects use different fields. */
@@ -42,6 +55,12 @@ export interface EffectOutput {
   extraAttacks?: number; // +N to the Attacks characteristic, per firing model (e.g. First Rank Fire!)
   grantPrecision?: boolean; // the bearer's weapons gain [PRECISION] (Epic Challenge)
   grantLethalHits?: boolean; // the bearer's weapons gain [LETHAL HITS] (Dispense Justice)
+  grantPsychic?: boolean; // the bearer's weapons gain [PSYCHIC] (Psi-reactive Ammunition)
+  grantSustained?: number; // the bearer's weapons gain [SUSTAINED HITS N] (Holy Hatred)
+  strengthBonus?: number; // +N to the attack's Strength (Zealot: +3 A and S)
+  rerollOneHit?: boolean; // re-roll ONE failed hit roll per attack sequence (Sanctified Auspexes)
+  apSet?: number; // the attack's AP becomes N if better than its own (Overkill: -4 AP)
+  ignoreBadHitMods?: boolean; // ignore negative BS/hit-roll modifiers (Superior Weapon Support System)
   apImprove?: number; // improve the attack's AP by N (Target Weak Spot: AP -1 → -2)
   // Defensive (the bearer is being attacked)
   toBeHitModifier?: number; // e.g. Stealth -1 (subtracts from the attacker's hit roll)
@@ -50,6 +69,7 @@ export interface EffectOutput {
   invulnFloor?: number; // grant/raise an invuln (e.g. a 4++ from a Displacer Field)
   saveBonus?: number; // +N to the Save characteristic, capped at 3+ (e.g. Take Cover!)
   grantCover?: boolean; // the bearer has the Benefit of Cover (Smoke Grenades enhancement)
+  apWorsen?: number; // incoming attacks lose N AP, floored at AP 0 (Urban Enforcers "-1 AP")
 }
 
 export interface Effect {
@@ -140,6 +160,135 @@ export const EFFECT_REGISTRY: Record<string, Effect> = {
   // Acquire grants the holding unit a 5+ invuln (its +1 OC/Ld are applied via core/orders.ts).
   'mark_eliminate': { id: 'mark_eliminate', name: 'Eliminate At All Costs (+1 to hit)', side: 'defender', output: { toBeHitModifier: 1 } },
   'acquire_buff': { id: 'acquire_buff', name: 'Acquire At All Costs (5++, +1 OC/Ld)', side: 'defender', output: { invulnFloor: 5 } },
+
+  // ── Combat Patrol stratagem building blocks (tools/combatpatrol extracted texts) ──
+  // Superior Weaponry (Inquisitor's Hand): the unit's attacks have +1 AP this phase.
+  'cp:ap_boost': { id: 'cp:ap_boost', name: 'Superior Weaponry (+1 AP)', side: 'attacker', output: { apImprove: 1 } },
+  // Urban Enforcers (Inquisitor's Hand): attacks that target the unit have -1 AP.
+  'cp:ap_shield': { id: 'cp:ap_shield', name: 'Urban Enforcers (-1 AP incoming)', side: 'defender', output: { apWorsen: 1 } },
+  // Refusal to Yield (Crowe's Sanctifiers): ranged attacks with S greater than the unit's T get
+  // -1 to wound. (Honoured Knights uses the same block in melee — bound with the specials pass.)
+  'cp:wound_shield_strong': {
+    id: 'cp:wound_shield_strong', name: 'Refusal to Yield (-1 to wound if S > T)', side: 'defender',
+    appliesTo: (c) => c.weaponType === 'ranged' && (c.attackS ?? 0) > (c.targetT ?? 99),
+    output: { woundModifier: -1 },
+  },
+  // Mission Focus (Vengeful Brethren): +1 to hit ("within range of an objective" is validated
+  // when the stratagem is played, not re-checked per attack — noted simplification).
+  'cp:plus1_hit': { id: 'cp:plus1_hit', name: 'Mission Focus (+1 to hit)', side: 'attacker', output: { hitModifier: 1 } },
+  // Psi-reactive Ammunition (Crowe's Sanctifiers): storm bolters gain [PSYCHIC] — psychic
+  // attacks ignore negative hit modifiers (24.29, combat.ts).
+  'cp:psychic_ammo': {
+    id: 'cp:psychic_ammo', name: 'Psi-reactive Ammunition ([PSYCHIC] storm bolters)', side: 'attacker',
+    appliesTo: (c) => (c.weaponName ?? '').includes('storm bolter'), output: { grantPsychic: true },
+  },
+  // Exigent Assignments (Crowe's Sanctifiers): the next consolidation moves up to D3+3"
+  // (read by engine.resolveFightMove, not the attack pipeline).
+  'cp:consolidate_extended': { id: 'cp:consolidate_extended', name: 'Exigent Assignments (consolidate D3+3")', side: 'attacker', output: {} },
+  // For the Lion (Vengeful Brethren): +1 OC until the end of the turn (read by the OC sums).
+  'cp:oc_plus1': { id: 'cp:oc_plus1', name: 'For the Lion (+1 OC)', side: 'defender', output: {} },
+
+  // ── Combat Patrol per-unit specials (step 4; bound via abilities.cpInnateEffectIds or plays) ──
+  // FOESIGHT (Castellan Crowe): attacks that target a CHARACTER unit can re-roll hit rolls.
+  'cp:foesight': {
+    id: 'cp:foesight', name: 'Foesight (re-roll hits vs CHARACTER)', side: 'attacker',
+    appliesTo: (c) => c.targetKeywords.includes('CHARACTER'), output: { rerollHits: 'fail' },
+  },
+  // FORCE EDGE (Brotherhood Terminators): melee attacks vs non-MONSTER/VEHICLE have +1 AP.
+  'cp:force_edge': {
+    id: 'cp:force_edge', name: 'Force Edge (+1 AP melee)', side: 'attacker',
+    appliesTo: (c) =>
+      c.weaponType === 'melee' && !c.targetKeywords.includes('MONSTER') && !c.targetKeywords.includes('VEHICLE'),
+    output: { apImprove: 1 },
+  },
+  // HOLY HATRED (Preacher Teguen): while attached, the unit's melee attacks have [SUSTAINED HITS 1].
+  'cp:holy_hatred': {
+    id: 'cp:holy_hatred', name: 'Holy Hatred ([SUSTAINED HITS 1] melee)', side: 'attacker',
+    appliesTo: (c) => c.weaponType === 'melee', output: { grantSustained: 1 },
+  },
+  // MERCILESS JUDGEMENT (Vigilant Squad): ranged attacks vs a below-half-strength unit +1 to wound.
+  'cp:merciless_judgement': {
+    id: 'cp:merciless_judgement', name: 'Merciless Judgement (+1 wound vs below half)', side: 'attacker',
+    appliesTo: (c) => c.weaponType === 'ranged' && !!c.targetBelowHalf, output: { woundModifier: 1 },
+  },
+  // LOYAL TO THE CAUSE (Inquisitorial Agents): -1 to wound while within range of an objective.
+  'cp:loyal_to_the_cause': {
+    id: 'cp:loyal_to_the_cause', name: 'Loyal to the Cause (-1 wound on an objective)', side: 'defender',
+    appliesTo: (c) => !!c.targetOnObjective, output: { woundModifier: -1 },
+  },
+  // GRAVIS PROTECTION (Master Zacharial): attacks that target this unit have -1 D.
+  'cp:gravis_protection': { id: 'cp:gravis_protection', name: 'Gravis Protection (-1 Damage)', side: 'defender', output: { damageReduction: 1 } },
+  // Superior Weapon Support System (Commander Cloudspear): ranged attacks ignore BS/hit maluses.
+  'cp:swss': {
+    id: 'cp:swss', name: 'Superior Weapon Support System (ignore hit maluses)', side: 'attacker',
+    appliesTo: (c) => c.weaponType === 'ranged', output: { ignoreBadHitMods: true },
+  },
+  // Breach and Clear (Breacher Team): ranged attacks vs a unit on an objective re-roll wounds.
+  'cp:breach_and_clear': {
+    id: 'cp:breach_and_clear', name: 'Breach and Clear (re-roll wounds vs objective holders)', side: 'attacker',
+    appliesTo: (c) => c.weaponType === 'ranged' && !!c.targetOnObjective, output: { rerollWounds: 'fail' },
+  },
+  // ZEALOT (Preacher Teguen, once per battle): his melee attacks have +3 A and S.
+  'cp:zealot': {
+    id: 'cp:zealot', name: 'Zealot (+3 A and S)', side: 'attacker',
+    appliesTo: (c) => c.weaponType === 'melee' && c.weaponSourceDsId === 'cp-inquisitors-hand-preacher-teguen',
+    output: { extraAttacks: 3, strengthBonus: 3 },
+  },
+  // OVERKILL (Eversor Assassin, once per battle): melee attacks have -4 AP (read: AP becomes -4).
+  'cp:overkill': {
+    id: 'cp:overkill', name: 'Overkill (AP -4 melee)', side: 'attacker',
+    appliesTo: (c) => c.weaponType === 'melee' && c.weaponSourceDsId === 'cp-inquisitors-hand-eversor-assassin',
+    output: { apSet: -4 },
+  },
+  // BLADEGUARD (once per turn): +1 to hit in melee, OR -1 to be hit while in guard.
+  'cp:bladeguard_hit': {
+    id: 'cp:bladeguard_hit', name: 'Bladeguard (+1 to hit melee)', side: 'attacker',
+    appliesTo: (c) => c.weaponType === 'melee', output: { hitModifier: 1 },
+  },
+  'cp:bladeguard_stance': { id: 'cp:bladeguard_stance', name: 'Bladeguard (-1 to be hit)', side: 'defender', output: { toBeHitModifier: -1 } },
+  // Honoured Knights (Vengeful Brethren, patrol rule): defence stance after being charged —
+  // attacks with S greater than the unit's T have -1 to wound (any weapon type).
+  'cp:defence_stance': {
+    id: 'cp:defence_stance', name: 'Defence stance (-1 to wound if S > T)', side: 'defender',
+    appliesTo: (c) => (c.attackS ?? 0) > (c.targetT ?? 99), output: { woundModifier: -1 },
+  },
+  // Guidance of the Ancients (Venerable Dreadnought): after it shoots, one enemy unit it hit
+  // takes +1 to be hit by friendly ranged attacks (simplification: any ranged attacker, and the
+  // mark expires at the enemy's turn start rather than the phase end).
+  'cp:guided_target': {
+    id: 'cp:guided_target', name: 'Guidance of the Ancients (+1 to be hit)', side: 'defender',
+    appliesTo: (c) => c.weaponType === 'ranged', output: { toBeHitModifier: 1 },
+  },
+  // Co-ordinated Eradication (Sudden Dawn Cadre, once per battle per army): SDC attacks against
+  // the marked enemy have +1 AP until the end of the battle (permanent defender-side mark).
+  'cp:eradication_mark': { id: 'cp:eradication_mark', name: 'Co-ordinated Eradication (+1 AP incoming)', side: 'defender', output: { apImprove: 1 } },
+
+  // ── Combat Patrol enhancements + fights-on-death (step 5) ─────────────────────
+  // Determined to the Last (VB stratagem) / Killer Reflexes (IH enhancement): destroyed models
+  // fight on before removal — a MARKER read by the engine's melee resolution, not an attack mod.
+  'cp:fights_on_death': { id: 'cp:fights_on_death', name: 'Fights on death (2+ to fight before removal)', side: 'defender', output: {} },
+  // Sanctified Auspexes (Venerable Dreadnought): ranged attacks re-roll one hit roll.
+  'cp:reroll_one_hit': {
+    id: 'cp:reroll_one_hit', name: 'Sanctified Auspexes (re-roll one hit)', side: 'attacker',
+    appliesTo: (c) => c.weaponType === 'ranged', output: { rerollOneHit: true },
+  },
+  // Purifying Force (Brotherhood Terminators, once per battle per army): [LETHAL HITS] melee.
+  'cp:lethal_melee': {
+    id: 'cp:lethal_melee', name: 'Purifying Force ([LETHAL HITS] melee)', side: 'attacker',
+    appliesTo: (c) => c.weaponType === 'melee', output: { grantLethalHits: true },
+  },
+  // Sanctic Slayers (Teguen enhancement, once per turn): the chosen unit's attacks get +1 to
+  // wound when the target's T is greater than or equal to the attack's S.
+  'cp:wound_boost_weak': {
+    id: 'cp:wound_boost_weak', name: 'Sanctic Slayers (+1 wound when T ≥ S)', side: 'attacker',
+    appliesTo: (c) => (c.targetT ?? 0) >= (c.attackS ?? 999), output: { woundModifier: 1 },
+  },
+  // Proximity Scanners (Devilfish enhancement): disembarked riders' pulse weapons get +1 A.
+  'cp:pulse_bonus': {
+    id: 'cp:pulse_bonus', name: 'Proximity Scanners (+1 A pulse weapons)', side: 'attacker',
+    appliesTo: (c) => !!c.weaponName && (c.weaponName.includes('pulse blaster') || c.weaponName.includes('pulse carbine')),
+    output: { extraAttacks: 1 },
+  },
 };
 
 /** Merge the gathered modifiers for one attack. `attacker`/`defender` are lists of effect ids. */
@@ -162,7 +311,14 @@ export function gatherAttackModifiers(
   invulnFloor?: number;
   grantPrecision: boolean;
   grantLethalHits: boolean;
+  grantPsychic: boolean;
+  grantSustained: number;
+  strengthBonus: number;
+  apSet?: number;
+  ignoreBadHitMods: boolean;
+  rerollOneHit: boolean;
   apImprove: number;
+  apWorsen: number;
   grantCover: boolean;
 } {
   const acc = {
@@ -180,7 +336,14 @@ export function gatherAttackModifiers(
     invulnFloor: undefined as number | undefined,
     grantPrecision: false,
     grantLethalHits: false,
+    grantPsychic: false,
+    grantSustained: 0,
+    strengthBonus: 0,
+    apSet: undefined as number | undefined,
+    ignoreBadHitMods: false,
+    rerollOneHit: false,
     apImprove: 0,
+    apWorsen: 0,
     grantCover: false,
   };
 
@@ -204,7 +367,14 @@ export function gatherAttackModifiers(
     if (out.invulnFloor != null) acc.invulnFloor = Math.min(acc.invulnFloor ?? 7, out.invulnFloor);
     if (out.grantPrecision) acc.grantPrecision = true;
     if (out.grantLethalHits) acc.grantLethalHits = true;
+    if (out.grantPsychic) acc.grantPsychic = true;
+    if (out.grantSustained) acc.grantSustained = Math.max(acc.grantSustained, out.grantSustained);
+    if (out.strengthBonus) acc.strengthBonus += out.strengthBonus;
+    if (out.apSet != null) acc.apSet = Math.min(acc.apSet ?? 0, out.apSet);
+    if (out.ignoreBadHitMods) acc.ignoreBadHitMods = true;
+    if (out.rerollOneHit) acc.rerollOneHit = true;
     if (out.apImprove) acc.apImprove += out.apImprove;
+    if (out.apWorsen) acc.apWorsen += out.apWorsen;
     if (out.grantCover) acc.grantCover = true;
   };
 

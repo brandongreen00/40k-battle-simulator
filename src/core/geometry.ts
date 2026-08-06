@@ -44,9 +44,9 @@ export function baseToBaseGap(a: Vec2, ra: number, b: Vec2, rb: number): number 
 /**
  * Effective circular radius (inches) for a base shape.
  * - circle: exact.
- * - oval: approximated by the average semi-axis. This is a deliberate Phase-0 simplification
- *   (true orientation-aware oval base-to-base arrives with the combat core); it keeps the
- *   measuring board honest enough for the handful of oval bases in the three lists.
+ * - oval/rect: approximated by the average semi-axis / half-extent. This is a deliberate
+ *   Phase-0 simplification (true orientation-aware base-to-base arrives with the combat core);
+ *   it keeps the measuring board honest enough for the handful of non-circular bases.
  */
 export function baseRadius(shape: BaseShape): number {
   if (shape.kind === 'circle') {
@@ -54,7 +54,7 @@ export function baseRadius(shape: BaseShape): number {
     return shape.radius;
   }
   if (shape.rx == null || shape.ry == null) {
-    throw new Error('oval base is missing `rx`/`ry`');
+    throw new Error(`${shape.kind} base is missing \`rx\`/\`ry\``);
   }
   return (shape.rx + shape.ry) / 2;
 }
@@ -67,11 +67,11 @@ export function gapBetweenBases(a: Vec2, sa: BaseShape, b: Vec2, sb: BaseShape):
 /**
  * Do two bases physically overlap? Models may be moved AROUND each other and bases may touch
  * (base-to-base contact is how melee works), but a model can never stand ON TOP of another —
- * `baseToBaseGap` clamps at 0, so overlap needs the raw centre distance. Ovals use their
- * INSCRIBED circle (min semi-axis): base rotation isn't tracked, and the average-radius
- * approximation would falsely flag legal tight oval formations (e.g. Death Riders in a block)
- * as stacked. Conservative: real stacking is always caught, shallow edge-on oval overlap may
- * not be. The tolerance forgives float noise from moves ending exactly at base contact.
+ * `baseToBaseGap` clamps at 0, so overlap needs the raw centre distance. Ovals and rects use
+ * their INSCRIBED circle (min semi-axis / half-extent): base rotation isn't tracked, and the
+ * average-radius approximation would falsely flag legal tight oval formations (e.g. Death
+ * Riders in a block) as stacked. Conservative: real stacking is always caught, shallow edge-on
+ * overlap may not be. The tolerance forgives float noise from moves ending exactly at contact.
  */
 export const OVERLAP_TOLERANCE = 0.01; // inches
 function inscribedRadius(shape: BaseShape): number {
@@ -82,7 +82,7 @@ export function basesOverlap(a: Vec2, sa: BaseShape, b: Vec2, sb: BaseShape, tol
   return dist(a, b) < inscribedRadius(sa) + inscribedRadius(sb) - tol;
 }
 
-/** Half-extents (inches) of a base along x/y — circle is symmetric, oval uses its semi-axes. */
+/** Half-extents (inches) of a base along x/y — circle is symmetric; oval/rect use rx/ry. */
 export function baseHalfExtents(shape: BaseShape): { hx: number; hy: number } {
   if (shape.kind === 'circle') {
     const r = baseRadius(shape);

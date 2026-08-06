@@ -330,6 +330,220 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-08-06] — COMBAT PATROL step 5: enhancement picker + all 8 enhancement bindings,
+  fights-on-death, Combat Squad (owner: "Please do an enhancement picker with the combat patrol
+  enhancements, fights-on-death and combat squad"). Combat Patrol is FEATURE-COMPLETE.** All
+  gates green: `pnpm typecheck`, `pnpm test` (**505 tests**, +5 in a step-5 block), `pnpm build`;
+  AI-vs-AI probes (12 games) end with ZERO rejected intents, both sides deciding an enhancement
+  every game, Earth Caste suppression + Sanctified Auspexes re-rolls firing in real play; an
+  8/8-check Playwright drive (picker → human pick → ⚟ Combat Squad split/undo/re-split → AI
+  seats pick their own card → full game, zero console errors). Doc: **docs/combat_patrol.md §4d**.
+  - **Picker**: new `ChooseCpEnhancement` intent (setup, once per side, decline allowed) +
+    "Patrol enhancement" block in the DeploymentPanel; the pick is stored on
+    `GameState.cpEnhancements` and stamped onto the bearer's unit retroactively or at
+    deploy/reserve time (`cpEnhancementFor`). Curated bearer table in loaders
+    (`patrolEnhancements`, ids `cpenh:<patrol>:<slug>`); the AI picks a passive default per
+    patrol in aiDeployAction.
+  - **The 8 bindings** (via `cpEnhancementSlug`, Leader-merge-aware): Sanctified Auspexes
+    (re-roll ONE failed hit — new `rerollOneHit` output through CombatSituation into an extra
+    die in combat.ts; the one single-die re-roll that needs no player choice, so it IS
+    automated), Purifying Force (Fight-after-charge `UseUnitAbility`, army-once → melee
+    [LETHAL HITS]), Killer Reflexes (always-on fights-on-death), Sanctic Slayers (once/turn
+    `UseUnitAbility`: +1 wound vs T ≥ S for a friendly IH unit), Proximity Scanners (disembark
+    grant: +1 A pulse weapons), Earth Caste Modifications (post-shoot suppression -1 to hit via
+    turnCounter'd `suppressedUntil` + ingress >6" with `cannotCharge`, new `minEnemyDist` on
+    deepStrikeArrivalLegal), Supreme Combatant (collapsed to always-on [LETHAL HITS] —
+    decision), Dutiful Defenders (Heroic Intervention -1 CP once per round — Leap to Defend
+    free, tracked in stratUsed).
+  - **Fights-on-death** (Determined to the Last stratagem — now engine-bound, its §4b text-only
+    note removed — + Killer Reflexes): melee deaths on a covered un-fought unit in the Fight
+    phase roll a D6 — on 2+ the model becomes `ModelInstance.dying` (fights on, cannot soak:
+    casualtyOrder excludes it; an all-dying unit is a no-op target, never a reject). Sweeps
+    remove dying models when the unit has fought (FightUnit / melee Attack / SetUnitStatus
+    hasFought) and at the Fight-phase end (advancePhase), with recordKills at each sweep so the
+    kill ledger + Sanction windows stay honest. Determined has a unit picker in the strat list
+    (CpSpecialStrat unit-only variant); the AI doesn't play it (Killer Reflexes works for the
+    AI automatically).
+  - **Combat Squad**: new `DeclareCombatSquad` intent reusing the transport-split machinery
+    (`DeclaredSplit.transportUnitId` now optional): 5/5 halves with the wargear partitioned as
+    evenly as possible (no steppers — decision), both halves deploy/reserve like normal entries,
+    `isEntryPlaced` both-halves logic + the ⇆ UI expansion work unchanged; "⚟ Combat Squad"
+    button + "squad A/B" labels + ↩ undo in the deployment list. The AI never declares it but
+    deploys human-declared halves (Playwright-verified end-to-end).
+  - **Handoff**: Combat Patrol steps 1–5 all shipped. Remaining nits (§5): Command Re-roll
+    single-die uses text-only; Supreme Combatant fixed to lethal; even-split-only Combat Squad
+    wargear; AI policy knobs (Gate/Determined declined, fixed enhancement picks).
+
+- **[2026-08-06] — COMBAT PATROL step 4: per-unit specials (owner: "please add the per-unit
+  specials").** Every datasheet ability + unit-riding patrol rule of the four patrols is
+  engine-bound except Combat Squad (text-only). All gates green: `pnpm typecheck`, `pnpm test`
+  (**500 tests**, +13 in a new `combat patrol per-unit specials (step 4)` block), `pnpm build`;
+  AI-vs-AI probes (24 games, 6 pairings) end naturally with ZERO rejected intents and the
+  specials firing in real play. Full per-ability table: **docs/combat_patrol.md §4c**.
+  - **Passives** via new `abilities.cpInnateEffectIds` (name-matched, Leader-merge-aware, joins
+    effectsOf): Foesight (re-roll hits vs CHARACTER), Force Edge (+1 AP melee vs non-M/V),
+    Holy Hatred ([SUSTAINED HITS 1] melee while Teguen leads — new `grantSustained` output),
+    Merciless Judgement (+1 wound vs below-half — new `AttackContext.targetBelowHalf`), Loyal to
+    the Cause (-1 wound on an objective — new `targetOnObjective`, computed area-aware in
+    resolveAttack), Gravis Protection (-1 D), Superior Weapon Support System (ignore BS/hit
+    maluses — new `ignoreBadHitMods` through CombatSituation), Breach and Clear (re-roll wounds
+    vs objective holders). Shield Drone = +1 W at every spawn site + defender max-W.
+  - **Actives** via new `UseUnitAbility` intent (once-per-battle/turn via `status.abilityUsed`,
+    army-once via `GameState.cpArmyOnce`; new "Unit abilities" panel block): Zealot (+3 A/S on
+    Teguen's own weapon — new `weaponSourceDsId` ctx + `strengthBonus`), Overkill (AP set to -4 —
+    new `apSet`; "-4 AP" read as AP -4, flagged), Bladeguard (once/turn: +1 hit OR -1 to be hit),
+    Tome Skull (unshock friend / shock enemy ≤6"), Nuncio-Aquila (objective shock, per-objective
+    per-turn), Co-ordinated Eradication (permanent +1 AP mark — new `status.permanentEffects`
+    surviving turn resets), Gate of Infinity (opponent's Fight phase → back to Reserves; size
+    table uncaptured → 1 unit/use once per phase, flagged).
+  - **Auto-triggers**: Honoured Knights (charge ending engaged → VB defence stance: -1 wound when
+    S>T, expires at the unit's turn start = end of the charging turn), Strike from the Warp shock
+    (ingress→charge forces a battle-shock roll, `setUpThisTurn` proxy), Punishing Volley +
+    Guidance of the Ancients (post-ShootUnit hooks; "hit by those attacks" ≈ the main target),
+    Sanctifying Ritual / Objective Secured (auto-secure at own Command end via cpAutoSecure),
+    Grav-Inhibitor Drone (charge rolls vs Pathfinders -2, both first roll and Command Re-roll).
+  - **For the Greater Good**: full Observer/Spotted/Guided flow — new `SpotTarget` intent +
+    `GameState.spotted` (cleared on phase change): Observer forgoes shooting, Guided attacks get
+    +1 BS (`skillDelta`), +[IGNORES COVER] when the Observer has MARKERLIGHT; Target Uploaded
+    lets Pathfinders spot AND shoot their Spotted unit. UI picker + AI (Pathfinders always spot;
+    a weak-EV unit Guides the main volley).
+  - **AI movement fix (root-caused from probes)**: melee-first units (melee threat > ranged)
+    parked at their sidearm's 12" band forever — ZERO charges in 24 CP probe games. Fix in
+    ai/move.ts: their approach goal closes to ~5" and a new charge-payoff position-score term
+    (P(2D6 ≥ gap) × meleeEV × chargeWeight). After: charges land, Zealot/Overkill/Bladeguard/
+    defence stance/Grav-Inhibitor all fire in AI-vs-AI play; the full standard-battle suite is
+    unchanged-green.
+  - **Handoff / next**: patrol enhancements (no CP enhancement picker exists yet) + the
+    fights-on-death pair (Determined to the Last / Killer Reflexes); Combat Squad split;
+    Command Re-roll single-die uses still text-only. AI nits in §5 (Gate declined, Nuncio/SftW
+    shock rare, charge odds ignore the Grav -2).
+
+- **[2026-08-06] — COMBAT PATROL step 3: stratagems in play (owner: "please add those stratagems…
+  ALSO all core stratagems are fair game — with 3 exceptions: No Explosives, No Rapid Ingress,
+  No Crushing Impact").** All gates green: `pnpm typecheck`, `pnpm test` (**487 tests**, +8 in a
+  new `combat patrol stratagems (step 3)` block), `pnpm build`; AI-vs-AI CP probes (8 games,
+  4 pairings) end naturally with ZERO rejected intents and Urban Enforcers firing in real play;
+  a Playwright poll of the live app across a full CP game confirms both patrols' cards + the
+  core set are offered on the right sides/phases, the banned trio NEVER appears, zero console
+  errors. Doc: **docs/combat_patrol.md §4b** (per-card binding table).
+  - **Core set trimmed** (`CP_BANNED_CORE` in stratagems.ts): usableStratagems filters the trio
+    when `battleType: 'combat_patrol'`; the reducer rejects ThrowExplosives/CrushingImpact and
+    the rapidIngress arrival in CP ("not available in Combat Patrol battles"); the AI's
+    Explosives/Rapid Ingress/Crushing Impact plays are gated off in CP.
+  - **Command Re-roll per the owner's card** (one die for everything except charges = 2D6):
+    charge 2D6 re-roll already existed (`ChargeParams.commandReroll`); NEW `RerollAdvance`
+    intent + "↻ Re-roll Advance (1 CP)" button in the Movement panel (legal only before any
+    model has moved), sharing the once-per-phase `rerollUsed` tracker. The single-die
+    hit/save/wound/damage/hazard/attacks uses need an interactive dice layer (dice resolve in
+    one batch) — recorded as text-only in §4b/§5.
+  - **The 12 patrol cards** (`patrolStratagems` in loaders.ts, ids `cp:<patrol>:<slug>`,
+    `detachment` = patrol name so each side is offered only its own three): 11 engine-bound —
+    Exigent Assignments (consolidate D3+3", rng-rolled in resolveFightMove), Refusal to Yield
+    (`cp:wound_shield_strong`: −1 to wound when S>T, new attackS/targetT on AttackContext),
+    Psi-reactive Ammunition (storm bolters gain [PSYCHIC] via new `grantPsychic` — ignores
+    negative hit modifiers, 24.29), Urban Enforcers (`apWorsen` — new EffectOutput, incoming AP
+    floored at 0), Superior Weaponry (+1 AP), Inquisitorial Mandate + Rapid Acquisition
+    (**secured objectives, 14.03**: `cpMissions.securedBy` fallback in cpObjectiveStatuses,
+    pruned when the enemy takes live control), Suppressing Fire (pinned −2" M via
+    turnCounter-based `pinnedUntil`, survives the turn reset), Swift Embarkation (opponent's
+    Fight phase embark ≤6"), For the Lion (+1 OC through every control sum), Mission Focus
+    (+1 to hit; objective-range checked at play time). Determined to the Last = text-only
+    (fights-on-death not automated; noted on the card).
+  - **Wiring**: UseStratagem gained `stratagemId` (once-per-phase tracking for ALL generic
+    plays) + special handlers (secure/pin/embark); the UI's strat list renders `CpSpecialStrat`
+    pickers (unit+objective / unit+transport) for the two special effects; the AI defender
+    plays Refusal to Yield + Urban Enforcers through the aiReactionToShooting seam behind the
+    profile's reaction threshold.
+  - **Handoff / next**: step 4 = per-unit specials bindings (Shield Drone +1W, FTGG, Honoured
+    Knights via the same S>T block in melee, Zealot, Overkill, Gate of Infinity, Co-ordinated
+    Eradication) + the patrol enhancements (Killer Reflexes, Sanctic Slayers) + Determined to
+    the Last's fights-on-death. Known simplifications recorded in docs/combat_patrol.md §4b/§5.
+
+- **[2026-08-06] — COMBAT PATROL step 2: mission scoring (owner: "Please create step 2") + the
+  Devilfish's real hull + the Inquisitor's Hand completed.** All gates green: `pnpm typecheck`,
+  `pnpm test` (**477 tests**, 5 new mission tests incl. a full IH-vs-T'au game asserting mission
+  VP is the ONLY VP source), `pnpm build:cp`; Playwright-verified in the live app (missions panel
+  shows both cards + per-event VP; scoreboard 15:35 exactly equals the mission tallies).
+  - **`src/core/cpmissions.ts` (pure)**: each patrol plays its OWN card, scored at the end of
+    that player's turn + end of battle into `GameState.cpMissions` (and `score`). Implemented
+    from the captured card texts: **Inquisitorial Sanction** (10VP/enemy CHARACTER model killed
+    in this-or-previous turn — rolling `prevTurnKills` window off the kill ledger; round 2+
+    objectives 5+5; end-of-battle tabled-characters 10) and **Expansionary Campaign** (expansion
+    objectives 10+15 rounds 1-2, 5+10 after). **Purification** = partial (only its captured
+    END-OF-BATTLE 5VP/objective block; Sanctification uncaptured → scores nothing, UI says so);
+    **Seize their Strongholds** = uncaptured (scores nothing, UI says so). Stacked card lines
+    score CUMULATIVELY (GW CP convention — decision recorded); patrol↔mission pairing for the
+    two incomplete cards is inferred (flagged for owner confirmation). Control is area-aware via
+    missions11.objectiveStatuses; attacker side survives BeginBattle inside cpMissions.
+  - **Wiring**: initCpMissions at BeginBattle (combat_patrol only); cpMissionsOnTurnEnd after
+    the secondaries hook; cpMissionsOnBattleEnd at the round-5 end; the legacy Pariah primary in
+    runCommandPhase is GATED OFF for combat_patrol (was double-scoring risk). AI plays its card:
+    cpKillBonus (Sanction ×1.5 EV vs CHARACTER units, shoot+melee seams) and cpPositionBonus
+    (Expansionary pull toward expansion objectives, strongest rounds 1-2). GamePanel gained a
+    "Combat Patrol Missions" block (card text on expand, capture-status warnings, VP event log).
+  - **Devilfish hull (owner-measured 17.5×13×7cm)**: new `BaseShape kind 'rect'` (rx/ry =
+    half-extents, axis-aligned like ovals; same avg-radius gap + inscribed-circle overlap
+    approximations; renders as a rect incl. placement ghost) — the Devilfish is a 6.89"×5.12"
+    rectangle now (height noted, not modelled — 2D sim).
+  - **Inquisitor's Hand completed** (owner follow-up screenshots): all 3 stratagems (Urban
+    Enforcers / Superior Weaponry / Inquisitorial Mandate, 1CP each) + both enhancements (Killer
+    Reflexes, Sanctic Slayers) in `cp_patrols.json`; owner-confirmed the patrol has NO faction/
+    detachment rule (gap closed). Owner rulings recorded in the flags files' resolution logs:
+    FOESIGHT + all as-shown stats intentional; Gate of Infinity table gap + map numbering fine.
+  - **MISSION DECK COMPLETED same day** (owner supplied the remaining cards, IMG_0167–0169):
+    **Purification** = the Sanctification objective action (starts in your Shooting phase with
+    16.01 eligibility + once/turn, completes at your NEXT Command phase or battle end, sanctifies
+    if not battle-shocked — new `StartSanctification` intent, `cpMissions.sanctified/sanctifying`
+    state, "⚡ Sanctify" UI picker, AI starts it when the unit's shooting is worth less; probed
+    3–7 sanctifications per AI game) + end-of-battle 5VP/objective + 10VP/sanctified.
+    **Seize their Strongholds** = round 2+ at the END OF YOUR COMMAND PHASE (new
+    cpMissionsOnCommandEnd hook in RunCommandPhase; round-5 rider moves it to turn end):
+    more-objectives 5 + own-home 5 + non-home 5, cumulative. All four cards now 'full'
+    (**480 tests**, +3: Seize windows, Sanctification lifecycle, Crowe's-vs-VB full game).
+  - **Handoff / next**: (a) step 3 = patrol stratagems/enhancements in play (swap the stratagem
+    list per battle type; "secured" objectives 14.03 for Inquisitorial Mandate); (b) per-unit
+    specials bindings (Shield Drone +1W, FTGG, Honoured Knights, Zealot, Overkill, Gate of
+    Infinity…). Known simplification: a pending Sanctification ignores attacks made mid-window
+    (fails only on death/off-board/battle-shock).
+
+- **[2026-08-06] — COMBAT PATROL, step 1 of N (owner: "build out a way for me to play Combat
+  Patrol… first, creating an army and deployment"): the four patrols extracted from the owner's
+  app screenshots, the three 30"×44" CP maps parsed, and a Combat Patrol battle type with the
+  full deployment flow.** All gates green: `pnpm typecheck`, `pnpm test` (**472 tests**, 10 new in
+  `tests/combatpatrol.test.ts` incl. two full AI-vs-AI CP games with ZERO rejected intents),
+  `pnpm build`; a 9/9-check Playwright drive of the real app (battle-type toggle → CP map at
+  30"×44" → patrol pickers → roll-off → AI deployment with forced reserves → zero console
+  errors). Full doc: **`docs/combat_patrol.md`**.
+  - **Patrol data** (57 Drive screenshots → 4 vision-extraction agents using the owner's
+    screenshot→datasheet methodology, transcribe-never-reconstruct): Crowe's Sanctifiers (Grey
+    Knights), Inquisitor's Hand (Agents), Sudden Dawn Cadre (T'au), The Vengeful Brethren (Dark
+    Angels) — 16 datasheets with profiles/weapons/abilities-text/base sizes/keywords, patrol
+    rules + stratagem/enhancement texts, committed as source in `tools/combatpatrol/extracted/`
+    (+ per-patrol `*_flags.md` for the owner's review gate: FOESIGHT likely-typo, Psycannon S8,
+    Bladeguard Sergeant T3 vs squad T4, missing Inquisitor's Hand landing/stratagem pages, …).
+    `pnpm build:cp` → `data/game/cp_datasheets.json` + `cp_patrols.json` + 4 fixed
+    `data/rosters/cp_*.json` (with per-weapon carrier counts parsed from equipment sentences).
+  - **Maps** (no GW PDF exists — measured from the app screenshots at 28.67 px/in): zones by
+    colour-mask tracing, mats by outline/texture detection + printed corner-offsets (which
+    reference the NEAREST edges), dividers by dot-RANSAC, icons by white-shape detection; all
+    validated by 180° symmetry + overlay renders. Every map = the same 10-mat set (2× 11.5×7.5,
+    4× 6×4, 4× 6×2) with dense/light features; 2 home + 2 expansion objectives bound to areas;
+    AB/CD/EF/GH ruin letters (rendered); divider markers stored for the missions step.
+    `tools/layouts_cp/build.py` → `data/layouts_cp/` → new `convertCp` loader + glob.
+  - **Engine/UI**: `NewBattle` takes `battleType: 'combat_patrol'` (stored on GameState; the 11e
+    CA mission layer + Tactical deck are NOT initialised — CP missions are a later step);
+    **Strike from the Warp enforced** (new `Datasheet.cpReserveRound`: DeployUnit rejects on-board
+    setup, arrivals gated to round 2/3 and wholly-within-own-zone, AI mirrors it via
+    wantsReserves + a zone-arrival anchor search); battle-type toggle in the sidebar swaps the
+    map pool (3 CP maps only) and roster pool (4 patrols only, hidden from standard battles);
+    TerrainLayer renders area letters + divider markers; AI Rapid Ingress disabled in CP.
+  - **Handoff / next steps (sequential per the owner)**: (2) CP missions/scoring (cards were
+    partially captured: Inquisitorial Sanction, Expansionary Campaign; the map-choice hook
+    exists); (3) patrol stratagems/enhancements in play (texts ready in cp_patrols.json; swap
+    the stratagem list per battle type); (4) per-unit specials bindings (Shield Drone +1W, For
+    the Greater Good, Honoured Knights, Gate of Infinity, Zealot, Overkill…). Ask the owner for
+    the missing Inquisitor's Hand landing/stratagems/enhancements screenshots.
+
 - **[2026-07-17] — Transport deployment done PROPERLY (owner: "I see no way to do this"), the
   Immolator split rule, and ENHANCEMENTS NOW WORK IN-GAME (owner: "check that all of my
   enhancements are working… you've said this is implemented and it isn't").** All gates green:

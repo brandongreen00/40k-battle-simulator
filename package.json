@@ -17,6 +17,7 @@
     "preview:layouts": "tsx tools/layouts/preview.ts",
     "sim": "tsx tools/sim/run.ts",
     "build:rosters": "tsx tools/rosters/build-prebuilt.ts",
+    "build:cp": "tsx tools/combatpatrol/build.ts",
     "import:roster": "tsx tools/rosters/import-text.ts"
   },
   "pnpm": {
