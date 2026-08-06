@@ -69,8 +69,61 @@ const detachmentStratagems: Stratagem[] = stratRows.map((s) => ({
     : {}),
 }));
 
-/** Core stratagems + every detachment stratagem from the data. */
-export const stratagems: Stratagem[] = [...CORE_STRATAGEMS, ...detachmentStratagems];
+// ── Combat Patrol stratagems (each patrol's three, from tools/combatpatrol) ──
+// detachment = the patrol name (CP rosters carry it), so the standard detachment filter scopes
+// them to their patrol; battleType gating (Core bans) lives in usableStratagems.
+interface CpPatrolRaw {
+  id: string;
+  name: string;
+  faction: string;
+  stratagems: { name: string; cp?: number; when?: string; target?: string; effect?: string }[];
+}
+const cpSlug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+const CP_STRAT_META: Record<string, { phase: string; turn: 'either' | 'your' | 'opponent'; effectId?: string; note?: string }> = {
+  // Crowe's Sanctifiers
+  'Exigent Assignments': { phase: 'Fight phase', turn: 'either', effectId: 'cp:consolidate_extended' },
+  'Refusal to Yield': { phase: 'Shooting phase', turn: 'opponent', effectId: 'cp:wound_shield_strong' },
+  'Psi-reactive Ammunition': { phase: 'Shooting phase', turn: 'your', effectId: 'cp:psychic_ammo' },
+  // Inquisitor's Hand
+  'Urban Enforcers': { phase: 'Shooting or Fight phase', turn: 'either', effectId: 'cp:ap_shield', note: '(Play on your unit when it is targeted with every model within a terrain area.)' },
+  'Superior Weaponry': { phase: 'Shooting or Fight phase', turn: 'either', effectId: 'cp:ap_boost' },
+  'Inquisitorial Mandate': { phase: 'Movement phase', turn: 'your', effectId: 'cp:secure_objective' },
+  // Sudden Dawn Cadre
+  'Suppressing Fire': { phase: 'Shooting phase', turn: 'your', effectId: 'cp:pin' },
+  'Rapid Acquisition': { phase: 'Movement phase', turn: 'your', effectId: 'cp:secure_objective' },
+  'Swift Embarkation': { phase: 'Fight phase', turn: 'opponent', effectId: 'cp:swift_embark' },
+  // The Vengeful Brethren
+  'For the Lion': { phase: 'Command phase', turn: 'either', effectId: 'cp:oc_plus1' },
+  'Mission Focus': { phase: 'Shooting or Fight phase', turn: 'either', effectId: 'cp:plus1_hit', note: '(The "within range of an objective" condition is checked when you play it, not per attack.)' },
+  'Determined to the Last': { phase: 'Fight phase', turn: 'either', note: '(Fights-on-death is not automated yet — resolve manually.)' },
+};
+export const patrolStratagems: Stratagem[] = (cpPatrolsJson as unknown as CpPatrolRaw[]).flatMap((p) =>
+  p.stratagems.map((s) => {
+    const meta = CP_STRAT_META[s.name] ?? { phase: 'Any phase', turn: 'either' as const };
+    return {
+      id: `cp:${p.id}:${cpSlug(s.name)}`,
+      name: s.name,
+      cp: s.cp ?? 1,
+      phase: meta.phase,
+      turn: meta.turn,
+      detachment: p.name,
+      faction: p.faction,
+      type: 'Combat Patrol',
+      text: [
+        s.when ? `When: ${s.when}` : '',
+        s.target ? `Target: ${s.target}` : '',
+        s.effect ? `Effect: ${s.effect}` : '',
+        meta.note ?? '',
+      ]
+        .filter(Boolean)
+        .join(' '),
+      ...(meta.effectId ? { effectId: meta.effectId } : {}),
+    };
+  }),
+);
+
+/** Core stratagems + every detachment stratagem from the data + the Combat Patrol sets. */
+export const stratagems: Stratagem[] = [...CORE_STRATAGEMS, ...detachmentStratagems, ...patrolStratagems];
 
 /** The lookup bundle the pure army engine expects. */
 export const dataIndex: DataIndex = {

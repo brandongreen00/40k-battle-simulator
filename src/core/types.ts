@@ -264,6 +264,9 @@ export interface UnitStatus {
   cannotCharge?: boolean;
   /** Absolute player-turn index the unit last made ranged attacks in (Hidden, 13.09). */
   lastShotOnTurn?: number;
+  /** Pinned (Suppressing Fire): -2" Move while turnCounter < pinnedUntil. Survives the
+   *  per-turn status reset so it covers the pinned unit's own following turn. */
+  pinnedUntil?: number;
   /** Active ability/Order/Stratagem effect ids (see core/effects.ts). Expire at turn reset. */
   activeEffects?: string[];
   // ── Movement-phase activation (transient; set by BeginMove, cleared by EndMove/turn) ──
@@ -477,6 +480,10 @@ export interface CpMissionState {
   /** Pending Sanctification actions — complete at that side's NEXT Command phase (or the end of
    *  the battle, whichever occurs first). */
   sanctifying?: { side: Side; unitId: string; objectiveIdx: number; startedTurnCounter: number }[];
+  /** Objectives secured (14.03, via Inquisitorial Mandate / Rapid Acquisition), index-aligned
+   *  with objectivePoints. A secured objective stays under that side's control while nobody
+   *  live-controls it; cleared when the opponent takes control. */
+  securedBy?: (Side | null)[];
 }
 
 // ── Pre-battle setup / deployment ────────────────────────────────────────────

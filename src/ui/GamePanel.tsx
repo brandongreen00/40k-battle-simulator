@@ -167,8 +167,14 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
 
   // Stratagems usable by `stratSide` right now (Core + that side's detachment, phase/turn-gated).
   const strats = useMemo(
-    () => usableStratagems(stratagems, { phase, isYourTurn: stratSide === state.activePlayer, detachment: detachmentBySide?.[stratSide] }),
-    [phase, stratSide, state.activePlayer, detachmentBySide],
+    () =>
+      usableStratagems(stratagems, {
+        phase,
+        isYourTurn: stratSide === state.activePlayer,
+        detachment: detachmentBySide?.[stratSide],
+        battleType: state.battleType,
+      }),
+    [phase, stratSide, state.activePlayer, detachmentBySide, state.battleType],
   );
 
   return (
@@ -487,6 +493,23 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
                 <button onClick={() => { dispatch({ type: 'CancelMove', unitIds: movingUnits.map((u) => u.id) }); }}>
                   Cancel
                 </button>
+                {(() => {
+                  // Command Re-roll on a fresh Advance roll (before any model has moved).
+                  const adv = movingUnits.find(
+                    (u) =>
+                      u.status.moveMode === 'advance' &&
+                      !u.models.some((m) => m.alive && m.moveStart && (m.pos.x !== m.moveStart.x || m.pos.y !== m.moveStart.y)),
+                  );
+                  if (!adv || state.cp[adv.owner] < 1) return null;
+                  return (
+                    <button
+                      title="Command Re-roll (1 CP): re-roll the Advance D6 before moving"
+                      onClick={() => dispatch({ type: 'RerollAdvance', unitId: adv.id, side: adv.owner })}
+                    >
+                      ↻ Re-roll Advance (1 CP)
+                    </button>
+                  );
+                })()}
               </div>
             </>
           )}
@@ -798,13 +821,19 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
             .filter((st) => !ENGINE_BOUND_STRATS.has(st.id))
             .map((st) => {
             const afford = state.cp[stratSide] >= st.cp;
+            // Combat Patrol stratagems that need their own picks (an objective / a transport).
+            if (st.effectId === 'cp:secure_objective' || st.effectId === 'cp:swift_embark') {
+              return (
+                <CpSpecialStrat key={st.id} st={st} side={stratSide} state={state} dispatch={dispatch} nameOfUnit={nameOfUnit} datasheetsById={datasheetsById} />
+              );
+            }
             return (
               <button
                 key={st.id}
                 className="strat"
                 disabled={!afford}
                 title={st.text}
-                onClick={() => dispatch({ type: 'UseStratagem', name: st.name, side: stratSide, cost: st.cp, ...(st.effectId && targetId ? { targetUnitId: targetId, effectId: st.effectId } : {}) })}
+                onClick={() => dispatch({ type: 'UseStratagem', name: st.name, side: stratSide, cost: st.cp, stratagemId: st.id, ...(st.effectId && targetId ? { targetUnitId: targetId, effectId: st.effectId } : {}) })}
               >
                 <span className="strat-cp">{st.cp}</span>
                 <span className="strat-name">{st.name}</span>
@@ -835,6 +864,78 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
 }
 
 /** 11e Objective Actions: pick a unit + action + target; validity comes from missionflow. */
+/** Combat Patrol stratagems needing their own picks: Inquisitorial Mandate / Rapid Acquisition
+ *  (secure an objective the unit controls) and Swift Embarkation (embark within a transport).
+ *  Validity is enforced by the reducer; the pickers just gather the choices. */
+function CpSpecialStrat({
+  st,
+  side,
+  state,
+  dispatch,
+  nameOfUnit,
+  datasheetsById,
+}: {
+  st: { id: string; name: string; cp: number; effectId?: string; text?: string };
+  side: 'player' | 'ai';
+  state: GameState;
+  dispatch: (i: Intent) => void;
+  nameOfUnit: (id: string) => string;
+  datasheetsById: Map<string, Datasheet>;
+}) {
+  const [unitId, setUnitId] = useState('');
+  const [pick, setPick] = useState('');
+  const mine = state.units.filter((u) => u.owner === side && !u.inReserves && u.models.some((m) => m.alive));
+  const secure = st.effectId === 'cp:secure_objective';
+  const points = objectivePoints(state.layout);
+  const secured = state.cpMissions?.securedBy ?? [];
+  const transports = mine.filter((u) =>
+    datasheetsById.get(u.datasheetId)?.keywords.some((k) => k.toUpperCase() === 'TRANSPORT'),
+  );
+  return (
+    <div className="btnrow" title={st.text}>
+      <span className="strat-cp">{st.cp}</span>
+      <span className="strat-name">{st.name}</span>
+      <select value={unitId} onChange={(e) => setUnitId(e.target.value)}>
+        <option value="">— unit —</option>
+        {mine.map((u) => (
+          <option key={u.id} value={u.id}>{nameOfUnit(u.id)}</option>
+        ))}
+      </select>
+      <select value={pick} onChange={(e) => setPick(e.target.value)}>
+        <option value="">{secure ? '— objective —' : '— transport —'}</option>
+        {secure
+          ? points.map((o, i) =>
+              secured[i] === side ? null : (
+                <option key={i} value={i}>objective {i + 1} ({o.kind})</option>
+              ),
+            )
+          : transports.map((u) => (
+              <option key={u.id} value={u.id}>{nameOfUnit(u.id)}</option>
+            ))}
+      </select>
+      <button
+        disabled={!unitId || pick === '' || state.cp[side] < st.cp}
+        onClick={() => {
+          dispatch({
+            type: 'UseStratagem',
+            name: st.name,
+            side,
+            cost: st.cp,
+            stratagemId: st.id,
+            effectId: st.effectId,
+            targetUnitId: unitId,
+            ...(secure ? { objectiveIdx: Number(pick) } : { transportId: pick }),
+          });
+          setUnitId('');
+          setPick('');
+        }}
+      >
+        Use
+      </button>
+    </div>
+  );
+}
+
 /** Purification's Sanctification action: pick a unit + an unsanctified objective in your
  *  Shooting phase; it completes at your next Command phase (the reducer validates 16.01). */
 function SanctifyBlock({

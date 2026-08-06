@@ -3,8 +3,11 @@ import { describe, it, expect } from 'vitest';
 import type { CpMissionState, GameState, Roster, Side, UnitInstance } from '../src/core/types';
 import { distancePointToPolygon, pointInPolygon } from '../src/core/geometry';
 import { parseTransportCapacity } from '../src/core/transport';
-import { CP_MISSIONS, cpMissionsOnBattleEnd, cpMissionsOnCommandEnd, cpMissionsOnTurnEnd, missionForPatrol, startSanctification } from '../src/core/cpmissions';
-import { createInitialState } from '../src/core/state';
+import { CP_MISSIONS, cpMissionsOnBattleEnd, cpMissionsOnCommandEnd, cpMissionsOnTurnEnd, cpObjectiveStatuses, missionForPatrol, startSanctification } from '../src/core/cpmissions';
+import { createInitialState, reduce } from '../src/core/state';
+import { makeRNG } from '../src/core/rng';
+import { gatherAttackModifiers } from '../src/core/effects';
+import { CP_BANNED_CORE, usableStratagems } from '../src/core/stratagems';
 import { runMatch, type MatchData } from '../src/core/ai/match';
 import {
   datasheets,
@@ -318,6 +321,163 @@ describe('combat patrol missions (core/cpmissions.ts)', () => {
     let s3 = mkState(5, 'player', [...units, { ...crowe, inReserves: true }]);
     s3 = cpMissionsOnBattleEnd(s3, ctx);
     expect(s3.cpMissions!.vp.player).toBe(0);
+  });
+});
+
+describe('combat patrol stratagems (step 3)', () => {
+  const ctx = { datasheets: datasheetsById };
+  const rng = makeRNG(9);
+  let seq = 100;
+  const mkUnit = (owner: Side, datasheetId: string, pos: { x: number; y: number }, count = 1): UnitInstance => ({
+    id: `s${++seq}`,
+    owner,
+    datasheetId,
+    models: Array.from({ length: count }, (_, i) => ({
+      id: `s${seq}m${i}`, unitId: `s${seq}`, pos: { x: pos.x + i * 0.3, y: pos.y }, wounds: 1, alive: true,
+    })),
+    startingModels: count,
+    status: {},
+  });
+  const mkState = (units: UnitInstance[], extra?: Partial<GameState>): GameState => ({
+    ...createInitialState(layoutsCp[0]!),
+    stage: 'battle',
+    mode: 'match',
+    battleType: 'combat_patrol',
+    round: 2,
+    activePlayer: 'player',
+    firstPlayer: 'player',
+    units,
+    cp: { player: 3, ai: 3 },
+    cpMissions: {
+      attacker: 'player',
+      missionId: { player: 'inquisitorial_sanction', ai: 'expansionary_campaign' },
+      vp: { player: 0, ai: 0 },
+      events: [],
+    },
+    ...extra,
+  });
+
+  it('bans Explosives / Rapid Ingress / Crushing Impact from the Core set in CP battles', () => {
+    for (const phase of ['Command phase', 'Movement phase', 'Shooting phase', 'Charge phase', 'Fight phase']) {
+      for (const isYourTurn of [true, false]) {
+        const offered = usableStratagems(stratagems, { phase, isYourTurn, battleType: 'combat_patrol' });
+        expect(offered.some((s) => CP_BANNED_CORE.has(s.id))).toBe(false);
+      }
+    }
+    // Standard battles keep the full core set.
+    const standard = usableStratagems(stratagems, { phase: 'Shooting phase', isYourTurn: true });
+    expect(standard.some((s) => s.id === 'core:explosives')).toBe(true);
+    // The reducer enforces the ban too.
+    const s = mkState([mkUnit('player', 'cp-inquisitors-hand-vigilant-squad', { x: 5, y: 5 }, 5)], { phase: 'Shooting' });
+    const out = reduce(s, { type: 'ThrowExplosives', unitId: s.units[0]!.id, targetUnitId: 'x' }, rng, ctx);
+    expect(out.log[out.log.length - 1]).toContain('not available in Combat Patrol');
+  });
+
+  it("offers each patrol its own three stratagems (and nobody else's)", () => {
+    const all = ['Command phase', 'Movement phase', 'Shooting phase', 'Charge phase', 'Fight phase'].flatMap((phase) =>
+      [true, false].flatMap((isYourTurn) =>
+        usableStratagems(stratagems, { phase, isYourTurn, detachment: "Inquisitor's Hand", battleType: 'combat_patrol' }),
+      ),
+    );
+    const names = new Set(all.map((s) => s.name));
+    expect(names.has('Urban Enforcers')).toBe(true);
+    expect(names.has('Superior Weaponry')).toBe(true);
+    expect(names.has('Inquisitorial Mandate')).toBe(true);
+    expect(names.has('Suppressing Fire')).toBe(false); // T'au card
+    expect(names.has('For the Lion')).toBe(false); // Dark Angels card
+  });
+
+  it('binds the AP and S-vs-T effects', () => {
+    const base = {
+      phase: 'shooting' as const,
+      weaponType: 'ranged' as const,
+      weaponKeywords: { unknown: [] },
+      attackerKeywords: [],
+      targetKeywords: [],
+      gap: 12,
+    };
+    // Superior Weaponry: +1 AP; Urban Enforcers: incoming attacks lose 1 AP.
+    expect(gatherAttackModifiers(base, ['cp:ap_boost'], []).apImprove).toBe(1);
+    expect(gatherAttackModifiers(base, [], ['cp:ap_shield']).apWorsen).toBe(1);
+    // Refusal to Yield: -1 to wound only when the attack's S beats the unit's T.
+    expect(gatherAttackModifiers({ ...base, attackS: 8, targetT: 4 }, [], ['cp:wound_shield_strong']).woundModifier).toBe(-1);
+    expect(gatherAttackModifiers({ ...base, attackS: 4, targetT: 4 }, [], ['cp:wound_shield_strong']).woundModifier).toBe(0);
+    // Psi-reactive Ammunition: [PSYCHIC] granted to storm bolters only.
+    expect(gatherAttackModifiers({ ...base, weaponName: 'storm bolter' }, ['cp:psychic_ammo'], []).grantPsychic).toBe(true);
+    expect(gatherAttackModifiers({ ...base, weaponName: 'incinerator' }, ['cp:psychic_ammo'], []).grantPsychic).toBe(false);
+  });
+
+  it('secures an objective (Rapid Acquisition), holds it while empty, loses it to enemy control', () => {
+    const breachers = 'cp-sudden-dawn-cadre-breacher-team';
+    const unit = mkUnit('ai', breachers, { x: 4, y: 28 }, 5); // on the GH expansion area
+    const ghIdx = layoutsCp[0]!.objectivePoints!.findIndex((o) => o.kind === 'expansion' && o.pos.x < 15);
+    let s = mkState([unit], { phase: 'Movement', activePlayer: 'ai' });
+    s = reduce(
+      s,
+      {
+        type: 'UseStratagem', name: 'Rapid Acquisition', side: 'ai', cost: 1,
+        stratagemId: 'cp:sudden_dawn_cadre:rapid_acquisition', effectId: 'cp:secure_objective',
+        targetUnitId: unit.id, objectiveIdx: ghIdx,
+      },
+      rng,
+      ctx,
+    );
+    expect(s.cpMissions!.securedBy?.[ghIdx]).toBe('ai');
+    expect(s.cp.ai).toBe(2);
+    // The unit leaves — the secured objective still counts as controlled by ai.
+    const empty = { ...s, units: [] };
+    expect(cpObjectiveStatuses(empty, ctx)[ghIdx]!.controller).toBe('ai');
+    // The enemy takes live control — the secured flag is pruned at the next scoring window.
+    const contested = { ...s, units: [mkUnit('player', 'cp-vengeful-brethren-intercessor-squad', { x: 4, y: 28 }, 5)] };
+    const pruned = cpMissionsOnTurnEnd(contested, ctx);
+    expect(pruned.cpMissions!.securedBy?.[ghIdx]).toBeNull();
+  });
+
+  it('Suppressing Fire pins: -2" Move through the enemy turn, expiring at the caster\'s next Command phase', () => {
+    const breachers = mkUnit('ai', 'cp-sudden-dawn-cadre-breacher-team', { x: 20, y: 20 }, 5);
+    let s = mkState([breachers], { phase: 'Shooting', activePlayer: 'player', turnCounter: 0 });
+    s = reduce(
+      s,
+      { type: 'UseStratagem', name: 'Suppressing Fire', side: 'player', cost: 1, stratagemId: 'cp:sudden_dawn_cadre:suppressing_fire', effectId: 'cp:pin', targetUnitId: breachers.id },
+      rng,
+      ctx,
+    );
+    expect(s.units[0]!.status.pinnedUntil).toBe(2);
+    // The enemy's own Movement phase (turnCounter 1): budget = M 6 - 2 = 4.
+    let enemyTurn: GameState = { ...s, phase: 'Movement', activePlayer: 'ai' as Side, turnCounter: 1 };
+    enemyTurn = reduce(enemyTurn, { type: 'BeginMove', unitIds: [breachers.id], mode: 'normal' }, rng, ctx);
+    expect(enemyTurn.units[0]!.status.moveBudget).toBe(4);
+    // After the caster's next Command phase (turnCounter 2) the pin has expired.
+    let later: GameState = { ...s, phase: 'Movement', activePlayer: 'ai' as Side, turnCounter: 2 };
+    later = reduce(later, { type: 'BeginMove', unitIds: [breachers.id], mode: 'normal' }, rng, ctx);
+    expect(later.units[0]!.status.moveBudget).toBe(6);
+  });
+
+  it('Command Re-roll re-rolls the Advance D6 once per phase (1 CP)', () => {
+    const inter = mkUnit('player', 'cp-vengeful-brethren-intercessor-squad', { x: 5, y: 5 }, 5);
+    let s = mkState([inter], { phase: 'Movement', activePlayer: 'player' });
+    s = reduce(s, { type: 'BeginMove', unitIds: [inter.id], mode: 'advance' }, rng, ctx);
+    const first = s.units[0]!.status.moveBudget!;
+    expect(first).toBeGreaterThanOrEqual(7); // M6 + D6
+    s = reduce(s, { type: 'RerollAdvance', unitId: inter.id, side: 'player' }, rng, ctx);
+    expect(s.cp.player).toBe(2);
+    expect(s.units[0]!.status.moveBudget).toBeGreaterThanOrEqual(7);
+    const again = reduce(s, { type: 'RerollAdvance', unitId: inter.id, side: 'player' }, rng, ctx);
+    expect(again.log[again.log.length - 1]).toContain('already used this phase');
+  });
+
+  it('For the Lion grants +1 OC through the objective-control sums', () => {
+    const inter = mkUnit('ai', 'cp-vengeful-brethren-intercessor-squad', { x: 4, y: 28 }, 2); // OC 2 each
+    let s = mkState([inter], { phase: 'Command', activePlayer: 'ai' });
+    const ghIdx = layoutsCp[0]!.objectivePoints!.findIndex((o) => o.kind === 'expansion' && o.pos.x < 15);
+    const before = cpObjectiveStatuses(s, ctx)[ghIdx]!.control.ai;
+    s = reduce(
+      s,
+      { type: 'UseStratagem', name: 'For the Lion', side: 'ai', cost: 1, stratagemId: 'cp:vengeful_brethren:for_the_lion', effectId: 'cp:oc_plus1', targetUnitId: inter.id },
+      rng,
+      ctx,
+    );
+    expect(cpObjectiveStatuses(s, ctx)[ghIdx]!.control.ai).toBe(before + 2); // +1 OC × 2 models
   });
 });
 

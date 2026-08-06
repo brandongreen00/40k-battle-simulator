@@ -22,6 +22,7 @@ import type { AiProfile } from './profile';
 /** Explosives (15.05): a legal, worthwhile grenade throw this phase, or null. Mirrors the
  *  reducer's legality exactly so the emitted intent cannot bounce. */
 function explosivesPlay(state: GameState, side: Side, deps: AiDeps): AiAction | null {
+  if (state.battleType === 'combat_patrol') return null; // Explosives is banned in Combat Patrol
   const { ctx } = deps;
   if (state.cp[side] < 1) return null;
   if (state.stratUsed?.[`${side}:core:explosives`] === `${state.round}:${state.activePlayer}:${state.phase}`) return null;

@@ -57,7 +57,11 @@ export function moveBonusFromOrders(u: UnitInstance): number {
 /** +Objective Control from Orders / detachment buffs (Duty and Honour!, Acquire At All Costs). */
 export function ocBonusFromOrders(u: UnitInstance): number {
   const e = effectsOf(u);
-  return (e.includes('order:duty_and_honour') ? 1 : 0) + (e.includes('acquire_buff') ? 1 : 0);
+  return (
+    (e.includes('order:duty_and_honour') ? 1 : 0) +
+    (e.includes('acquire_buff') ? 1 : 0) +
+    (e.includes('cp:oc_plus1') ? 1 : 0) // For the Lion (Vengeful Brethren)
+  );
 }
 
 /** +Leadership from Orders / detachment buffs (improves the Battle-shock test). */

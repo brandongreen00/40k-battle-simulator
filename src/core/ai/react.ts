@@ -10,6 +10,7 @@
 
 import type { GameState, Side } from '../types';
 import { engagedEnemies, gapBetween, isOnBoard } from '../phases';
+import { pointInPolygon } from '../geometry';
 import { blocksOverwatch } from '../enhancements';
 import { chargePathExists } from '../engine';
 import { meleeEV, shootingEV, unitValue } from './evaluate';
@@ -39,11 +40,40 @@ export function aiReactionToShooting(
   const kw = (ds?.keywords ?? []).map((k) => k.toUpperCase());
   const smoke = kw.includes('SMOKE');
   const infantry = kw.includes('INFANTRY');
-  if (!smoke && !infantry) return [];
 
   const incoming = shootingEV(state, attacker, target, ctx);
   const value = unitValue(target, ctx);
   if (incoming < profile.reactThreshold && incoming < value * 0.4) return [];
+
+  // Combat Patrol reactive stratagems (the patrol sets), before the generic smoke plays.
+  if (state.battleType === 'combat_patrol' && ds) {
+    const play = (stratagemId: string, name: string, effectId: string): AiIntent[] => [
+      {
+        intent: { type: 'UseStratagem', name, side: defendingSide, cost: 1, stratagemId, targetUnitId, effectId },
+        skipIf: (s) =>
+          s.cp[defendingSide] < 1 ||
+          s.stratUsed?.[`${defendingSide}:${stratagemId}`] === `${s.round}:${s.activePlayer}:${s.phase}`,
+      },
+    ];
+    // Refusal to Yield: the Strike Squad shrugs high-Strength fire (-1 to wound when S > T).
+    if (
+      ds.patrol === 'crowes_sanctifiers' &&
+      ds.name.includes('Strike Squad') &&
+      !target.status.activeEffects?.includes('cp:wound_shield_strong')
+    ) {
+      return play('cp:crowes_sanctifiers:refusal_to_yield', 'Refusal to Yield', 'cp:wound_shield_strong');
+    }
+    // Urban Enforcers: an Inquisitor's Hand unit with EVERY model inside one terrain area.
+    if (ds.patrol === 'inquisitors_hand' && !target.status.activeEffects?.includes('cp:ap_shield')) {
+      const alive = target.models.filter((m) => m.alive);
+      const inOneArea = (state.layout.terrainAreas ?? []).some((a) =>
+        alive.every((m) => pointInPolygon(m.pos, a.polygon)),
+      );
+      if (inOneArea) return play('cp:inquisitors_hand:urban_enforcers', 'Urban Enforcers', 'cp:ap_shield');
+    }
+  }
+
+  if (!smoke && !infantry) return [];
 
   const name = smoke ? 'Smokescreen' : 'Go to Ground';
   return [

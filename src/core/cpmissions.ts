@@ -118,10 +118,34 @@ export function initCpMissions(state: GameState, ctx: EngineContext, attacker: S
 
 // ── Scoring helpers ───────────────────────────────────────────────────────────
 
-/** Objectives controlled by `side` right now (area-aware, battle-shock-aware). */
+/** Objective statuses with SECURED objectives applied (14.03, via Inquisitorial Mandate /
+ *  Rapid Acquisition): an objective nobody live-controls stays under the securing side's
+ *  control. Live enemy control beats (and, via pruneSecured, clears) the secured state. */
+export function cpObjectiveStatuses(state: GameState, ctx: EngineContext) {
+  const cp = state.cpMissions;
+  const statuses = objectiveStatuses(state, ctx, cp?.attacker ?? 'player');
+  if (!cp?.securedBy?.some(Boolean)) return statuses;
+  return statuses.map((s, i) => {
+    const secured = cp.securedBy![i];
+    return s.controller == null && secured ? { ...s, controller: secured } : s;
+  });
+}
+
+/** Clear secured flags on objectives the opponent has taken live control of. */
+function pruneSecured(state: GameState, ctx: EngineContext): GameState {
+  const cp = state.cpMissions;
+  if (!cp?.securedBy?.some(Boolean)) return state;
+  const statuses = objectiveStatuses(state, ctx, cp.attacker);
+  const securedBy = cp.securedBy.map((s, i) =>
+    s && statuses[i]?.controller && statuses[i]!.controller !== s ? null : s,
+  );
+  if (securedBy.every((s, i) => s === cp.securedBy![i])) return state;
+  return { ...state, cpMissions: { ...cp, securedBy } };
+}
+
+/** Objectives controlled by `side` right now (area-aware, battle-shock- and secured-aware). */
 function controlledObjectives(state: GameState, ctx: EngineContext, side: Side): { total: number; expansion: number } {
-  const statuses = objectiveStatuses(state, ctx, state.cpMissions?.attacker ?? 'player');
-  const mine = statuses.filter((s) => s.controller === side);
+  const mine = cpObjectiveStatuses(state, ctx).filter((s) => s.controller === side);
   return { total: mine.length, expansion: mine.filter((s) => s.point.kind === 'expansion').length };
 }
 
@@ -254,7 +278,7 @@ function completeSanctifications(state: GameState, side: Side, window: 'command'
 // ── Seize their Strongholds (command-end windows, round-5 turn-end rider) ─────
 
 function scoreSeize(state: GameState, ctx: EngineContext, side: Side): GameState {
-  const statuses = objectiveStatuses(state, ctx, state.cpMissions?.attacker ?? 'player');
+  const statuses = cpObjectiveStatuses(state, ctx);
   const mine = statuses.filter((s) => s.controller === side);
   const theirs = statuses.filter((s) => s.controller === other(side));
   let next = state;
@@ -271,7 +295,7 @@ export function cpMissionsOnCommandEnd(state: GameState, ctx: EngineContext | un
   if (!cp || !ctx || state.stage !== 'battle') return state;
   const side = state.activePlayer;
   // Pending Sanctifications complete at the start of this window, before any scoring.
-  let next = completeSanctifications(state, side, 'command');
+  let next = completeSanctifications(pruneSecured(state, ctx), side, 'command');
   if (cp.missionId[side] === 'seize_their_strongholds' && state.round >= 2 && state.round <= 4) {
     next = scoreSeize(next, ctx, side);
   }
@@ -287,7 +311,7 @@ export function cpMissionsOnTurnEnd(state: GameState, ctx: EngineContext | undef
   const enemy = other(side);
   const mission = CP_MISSIONS[cp.missionId[side]];
 
-  let next = state;
+  let next = pruneSecured(state, ctx);
   if (mission?.id === 'inquisitorial_sanction') {
     // ANY battle round: 10VP for each enemy CHARACTER model destroyed this or the previous turn.
     const slain =
@@ -326,7 +350,7 @@ export function cpMissionsOnTurnEnd(state: GameState, ctx: EngineContext | undef
 export function cpMissionsOnBattleEnd(state: GameState, ctx: EngineContext | undefined): GameState {
   const cp = state.cpMissions;
   if (!cp || !ctx) return state;
-  let next = state;
+  let next = pruneSecured(state, ctx);
   // Pending Sanctifications complete at the end of the battle (whichever occurs first).
   for (const side of ['player', 'ai'] as Side[]) next = completeSanctifications(next, side, 'battle_end');
   for (const side of ['player', 'ai'] as Side[]) {

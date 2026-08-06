@@ -80,9 +80,9 @@ export function aiChargeAction(state: GameState, side: Side, profile: AiProfile,
         intent: { type: 'Charge', chargerUnitId: chargerId, targetUnitIds: [targetId], commandReroll: true },
       },
     ];
-    if (isMV) {
+    if (isMV && state.battleType !== 'combat_patrol') {
       // Crushing Impact (15.06): T dice of mortal wounds is nearly always worth 1 CP after a
-      // successful tank/monster charge. The guard mirrors the reducer's full legality.
+      // successful tank/monster charge (banned in Combat Patrol). Mirrors the reducer's legality.
       intents.push({
         intent: { type: 'CrushingImpact', unitId: chargerId, targetUnitId: targetId },
         skipIf: (s) => {

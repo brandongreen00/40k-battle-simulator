@@ -405,6 +405,9 @@ export function resolveAttack(
     attackerKeywords: aDs.keywords.map((k) => k.toUpperCase()),
     targetKeywords: tDs.keywords.map((k) => k.toUpperCase()),
     gap,
+    attackS: profile.S,
+    targetT: defenderProfileFor(target, ctx).T,
+    weaponName: weaponDef.name.toLowerCase(),
   };
   const mods = gatherAttackModifiers(abilityCtx, effectsOf(attacker, ctx, state), effectsOf(target, ctx, state));
 
@@ -428,12 +431,15 @@ export function resolveAttack(
   }
   // Target Weak Spot (Order): improve the attack's AP (AP is stored ≤ 0 — more negative = better).
   if (mods.apImprove) profile.AP -= mods.apImprove;
+  // Urban Enforcers: incoming attacks lose AP (toward 0, never past it).
+  if (mods.apWorsen) profile.AP = Math.min(0, profile.AP + mods.apWorsen);
 
   const cover =
     (forceCover || mods.grantCover || (!isMelee && unitCoverIn(aPts, target, state, ctx))) && !mods.ignoresCover;
   // Granted weapon abilities (Epic Challenge's [PRECISION], Dispense Justice's [LETHAL HITS]).
   if (mods.grantPrecision && !kw.precision) profile.keywords = { ...profile.keywords, precision: true };
   if (mods.grantLethalHits && !kw.lethalHits) profile.keywords = { ...profile.keywords, lethalHits: true };
+  if (mods.grantPsychic && !kw.psychic) profile.keywords = { ...profile.keywords, psychic: true };
   if (wGrant?.precision && !profile.keywords.precision) profile.keywords = { ...profile.keywords, precision: true };
   // [PRECISION] (24.28): with a visible CHARACTER in the target unit, the attacker may promote
   // that CHARACTER's allocation group to current. The AI/engine always does when it can.
@@ -1487,12 +1493,21 @@ export function resolveFightMove(
   state: GameState,
   params: FightMoveParams,
   ctx: EngineContext,
+  rng?: RNG,
 ): { state: GameState; summary: string } {
   const unit = state.units.find((u) => u.id === params.unitId);
   if (!unit) return { state, summary: 'unit not found' };
   const ds = ctx.datasheets.get(unit.datasheetId);
   if (!ds) return { state, summary: 'datasheet not found' };
   const verb = params.mode === 'pile_in' ? 'piles in' : 'consolidates';
+  // Exigent Assignments (Crowe's Sanctifiers): this consolidation may move up to D3+3".
+  let cap = 3;
+  let capNote = '';
+  if (params.mode === 'consolidate' && unit.status.activeEffects?.includes('cp:consolidate_extended')) {
+    const d3 = rng ? rng.int(1, 3) : 2;
+    cap = 3 + d3;
+    capNote = ` (Exigent Assignments: D3+3 = ${cap}")`;
+  }
 
   // Phase legality (real matches only).
   if (state.mode === 'match' && state.stage === 'battle' && state.phase !== 'Fight') {
@@ -1538,7 +1553,7 @@ export function resolveFightMove(
   } else if (engagedWith.length) {
     goal = engagedWith[0]!; // Ongoing Consolidation: closer to the closest engaged enemy
     modeNote = ' (ongoing)';
-  } else if (enemies.length && enemies[0]!.gap <= 3) {
+  } else if (enemies.length && enemies[0]!.gap <= cap) {
     goal = enemies[0]!; // Engaging Consolidation: must end engaged
     mustEndEngaged = true;
     modeNote = ' (engaging)';
@@ -1554,7 +1569,7 @@ export function resolveFightMove(
         if (!m.alive) continue;
         d = Math.min(d, Math.hypot(m.pos.x - o.x, m.pos.y - o.y));
       }
-      if ((!bestObj || d < bestObj.d) && d > controlR && d - 3 <= controlR + 1) bestObj = { pos: o, d };
+      if ((!bestObj || d < bestObj.d) && d > controlR && d - cap <= controlR + 1) bestObj = { pos: o, d };
     }
     if (!bestObj) return noMove('no eligible consolidation mode — stays put');
     objectiveGoal = bestObj.pos;
@@ -1565,7 +1580,7 @@ export function resolveFightMove(
   let moveDist: number;
   if (goal) {
     dir = closestAxis(unit, goal.unit);
-    moveDist = Math.min(3, Math.max(0, goal.gap)); // up to 3", stopping at base contact
+    moveDist = Math.min(cap, Math.max(0, goal.gap)); // up to the cap, stopping at base contact
   } else {
     // Toward the objective centre, just far enough to be in range.
     const controlR = state.layout.objectiveControlRadiusIn ?? 3;
@@ -1579,7 +1594,7 @@ export function resolveFightMove(
       if (!m.alive) continue;
       need = Math.min(need, Math.hypot(m.pos.x - objectiveGoal!.x, m.pos.y - objectiveGoal!.y) - controlR);
     }
-    moveDist = Math.min(3, Math.max(0, need + 0.1));
+    moveDist = Math.min(cap, Math.max(0, need + 0.1));
   }
 
   // Never end on top of another model's base (a friendly unit can sit between us and the enemy).
@@ -1601,10 +1616,17 @@ export function resolveFightMove(
   }
   const units = state.units.map((u) =>
     u.id === unit.id
-      ? { ...u, models: u.models.map((m) => (m.alive ? { ...m, pos: { x: m.pos.x + clamped.x, y: m.pos.y + clamped.y } } : m)) }
+      ? {
+          ...u,
+          models: u.models.map((m) => (m.alive ? { ...m, pos: { x: m.pos.x + clamped.x, y: m.pos.y + clamped.y } } : m)),
+          // The extended-consolidation grant is spent by this move.
+          ...(cap > 3
+            ? { status: { ...u.status, activeEffects: (u.status.activeEffects ?? []).filter((e) => e !== 'cp:consolidate_extended') } }
+            : {}),
+        }
       : u,
   );
-  const summary = `${ds.name} ${verb}${modeNote} ${moveDist.toFixed(1)}" ${goal ? 'toward the enemy' : 'toward the objective'}`;
+  const summary = `${ds.name} ${verb}${modeNote}${capNote} ${moveDist.toFixed(1)}" ${goal ? 'toward the enemy' : 'toward the objective'}`;
   return { state: { ...state, units, log: [...state.log, summary] }, summary };
 }
 

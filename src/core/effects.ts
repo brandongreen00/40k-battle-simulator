@@ -27,6 +27,12 @@ export interface AttackContext {
   attackerKeywords: string[]; // datasheet unit keywords, upper-cased
   targetKeywords: string[];
   gap: number; // base-to-base, inches
+  /** The attack's Strength and the target's Toughness (S-vs-T-conditional effects, e.g.
+   *  Refusal to Yield / Honoured Knights: -1 to wound when S > T). */
+  attackS?: number;
+  targetT?: number;
+  /** The weapon's name, lower-cased (weapon-scoped grants, e.g. Psi-reactive Ammunition). */
+  weaponName?: string;
 }
 
 /** The modifiers an effect can contribute. Offensive and defensive effects use different fields. */
@@ -42,6 +48,7 @@ export interface EffectOutput {
   extraAttacks?: number; // +N to the Attacks characteristic, per firing model (e.g. First Rank Fire!)
   grantPrecision?: boolean; // the bearer's weapons gain [PRECISION] (Epic Challenge)
   grantLethalHits?: boolean; // the bearer's weapons gain [LETHAL HITS] (Dispense Justice)
+  grantPsychic?: boolean; // the bearer's weapons gain [PSYCHIC] (Psi-reactive Ammunition)
   apImprove?: number; // improve the attack's AP by N (Target Weak Spot: AP -1 → -2)
   // Defensive (the bearer is being attacked)
   toBeHitModifier?: number; // e.g. Stealth -1 (subtracts from the attacker's hit roll)
@@ -50,6 +57,7 @@ export interface EffectOutput {
   invulnFloor?: number; // grant/raise an invuln (e.g. a 4++ from a Displacer Field)
   saveBonus?: number; // +N to the Save characteristic, capped at 3+ (e.g. Take Cover!)
   grantCover?: boolean; // the bearer has the Benefit of Cover (Smoke Grenades enhancement)
+  apWorsen?: number; // incoming attacks lose N AP, floored at AP 0 (Urban Enforcers "-1 AP")
 }
 
 export interface Effect {
@@ -140,6 +148,33 @@ export const EFFECT_REGISTRY: Record<string, Effect> = {
   // Acquire grants the holding unit a 5+ invuln (its +1 OC/Ld are applied via core/orders.ts).
   'mark_eliminate': { id: 'mark_eliminate', name: 'Eliminate At All Costs (+1 to hit)', side: 'defender', output: { toBeHitModifier: 1 } },
   'acquire_buff': { id: 'acquire_buff', name: 'Acquire At All Costs (5++, +1 OC/Ld)', side: 'defender', output: { invulnFloor: 5 } },
+
+  // ── Combat Patrol stratagem building blocks (tools/combatpatrol extracted texts) ──
+  // Superior Weaponry (Inquisitor's Hand): the unit's attacks have +1 AP this phase.
+  'cp:ap_boost': { id: 'cp:ap_boost', name: 'Superior Weaponry (+1 AP)', side: 'attacker', output: { apImprove: 1 } },
+  // Urban Enforcers (Inquisitor's Hand): attacks that target the unit have -1 AP.
+  'cp:ap_shield': { id: 'cp:ap_shield', name: 'Urban Enforcers (-1 AP incoming)', side: 'defender', output: { apWorsen: 1 } },
+  // Refusal to Yield (Crowe's Sanctifiers): ranged attacks with S greater than the unit's T get
+  // -1 to wound. (Honoured Knights uses the same block in melee — bound with the specials pass.)
+  'cp:wound_shield_strong': {
+    id: 'cp:wound_shield_strong', name: 'Refusal to Yield (-1 to wound if S > T)', side: 'defender',
+    appliesTo: (c) => c.weaponType === 'ranged' && (c.attackS ?? 0) > (c.targetT ?? 99),
+    output: { woundModifier: -1 },
+  },
+  // Mission Focus (Vengeful Brethren): +1 to hit ("within range of an objective" is validated
+  // when the stratagem is played, not re-checked per attack — noted simplification).
+  'cp:plus1_hit': { id: 'cp:plus1_hit', name: 'Mission Focus (+1 to hit)', side: 'attacker', output: { hitModifier: 1 } },
+  // Psi-reactive Ammunition (Crowe's Sanctifiers): storm bolters gain [PSYCHIC] — psychic
+  // attacks ignore negative hit modifiers (24.29, combat.ts).
+  'cp:psychic_ammo': {
+    id: 'cp:psychic_ammo', name: 'Psi-reactive Ammunition ([PSYCHIC] storm bolters)', side: 'attacker',
+    appliesTo: (c) => (c.weaponName ?? '').includes('storm bolter'), output: { grantPsychic: true },
+  },
+  // Exigent Assignments (Crowe's Sanctifiers): the next consolidation moves up to D3+3"
+  // (read by engine.resolveFightMove, not the attack pipeline).
+  'cp:consolidate_extended': { id: 'cp:consolidate_extended', name: 'Exigent Assignments (consolidate D3+3")', side: 'attacker', output: {} },
+  // For the Lion (Vengeful Brethren): +1 OC until the end of the turn (read by the OC sums).
+  'cp:oc_plus1': { id: 'cp:oc_plus1', name: 'For the Lion (+1 OC)', side: 'defender', output: {} },
 };
 
 /** Merge the gathered modifiers for one attack. `attacker`/`defender` are lists of effect ids. */
@@ -162,7 +197,9 @@ export function gatherAttackModifiers(
   invulnFloor?: number;
   grantPrecision: boolean;
   grantLethalHits: boolean;
+  grantPsychic: boolean;
   apImprove: number;
+  apWorsen: number;
   grantCover: boolean;
 } {
   const acc = {
@@ -180,7 +217,9 @@ export function gatherAttackModifiers(
     invulnFloor: undefined as number | undefined,
     grantPrecision: false,
     grantLethalHits: false,
+    grantPsychic: false,
     apImprove: 0,
+    apWorsen: 0,
     grantCover: false,
   };
 
@@ -204,7 +243,9 @@ export function gatherAttackModifiers(
     if (out.invulnFloor != null) acc.invulnFloor = Math.min(acc.invulnFloor ?? 7, out.invulnFloor);
     if (out.grantPrecision) acc.grantPrecision = true;
     if (out.grantLethalHits) acc.grantLethalHits = true;
+    if (out.grantPsychic) acc.grantPsychic = true;
     if (out.apImprove) acc.apImprove += out.apImprove;
+    if (out.apWorsen) acc.apWorsen += out.apWorsen;
     if (out.grantCover) acc.grantCover = true;
   };
 

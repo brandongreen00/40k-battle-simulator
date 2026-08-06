@@ -81,12 +81,18 @@ export function turnMatches(turn: StratTurn, isYourTurn: boolean): boolean {
   return turn === 'your' ? isYourTurn : !isYourTurn;
 }
 
+/** Core stratagems NOT available in Combat Patrol battles (owner ruling, 2026-08-06). */
+export const CP_BANNED_CORE = new Set(['core:explosives', 'core:rapid_ingress', 'core:crushing_impact']);
+
 export interface StratagemQuery {
   phase: string;
   /** True when it is `side`'s own turn (drives the your/opponent restriction). */
   isYourTurn: boolean;
-  /** The side's army detachment (limits which detachment stratagems are available). */
+  /** The side's army detachment (limits which detachment stratagems are available). In Combat
+   *  Patrol the detachment is the patrol name, so the patrol's stratagems ride this filter. */
   detachment?: string;
+  /** 'combat_patrol' bans Explosives / Rapid Ingress / Crushing Impact from the Core set. */
+  battleType?: 'standard' | 'combat_patrol';
 }
 
 /**
@@ -95,6 +101,7 @@ export interface StratagemQuery {
  */
 export function usableStratagems(all: Stratagem[], q: StratagemQuery): Stratagem[] {
   return all.filter((s) => {
+    if (q.battleType === 'combat_patrol' && CP_BANNED_CORE.has(s.id)) return false;
     if (s.detachment && s.detachment !== q.detachment) return false;
     if (!phaseMatches(s.phase, q.phase)) return false;
     if (!turnMatches(s.turn, q.isYourTurn)) return false;

@@ -330,6 +330,47 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-08-06] — COMBAT PATROL step 3: stratagems in play (owner: "please add those stratagems…
+  ALSO all core stratagems are fair game — with 3 exceptions: No Explosives, No Rapid Ingress,
+  No Crushing Impact").** All gates green: `pnpm typecheck`, `pnpm test` (**487 tests**, +8 in a
+  new `combat patrol stratagems (step 3)` block), `pnpm build`; AI-vs-AI CP probes (8 games,
+  4 pairings) end naturally with ZERO rejected intents and Urban Enforcers firing in real play;
+  a Playwright poll of the live app across a full CP game confirms both patrols' cards + the
+  core set are offered on the right sides/phases, the banned trio NEVER appears, zero console
+  errors. Doc: **docs/combat_patrol.md §4b** (per-card binding table).
+  - **Core set trimmed** (`CP_BANNED_CORE` in stratagems.ts): usableStratagems filters the trio
+    when `battleType: 'combat_patrol'`; the reducer rejects ThrowExplosives/CrushingImpact and
+    the rapidIngress arrival in CP ("not available in Combat Patrol battles"); the AI's
+    Explosives/Rapid Ingress/Crushing Impact plays are gated off in CP.
+  - **Command Re-roll per the owner's card** (one die for everything except charges = 2D6):
+    charge 2D6 re-roll already existed (`ChargeParams.commandReroll`); NEW `RerollAdvance`
+    intent + "↻ Re-roll Advance (1 CP)" button in the Movement panel (legal only before any
+    model has moved), sharing the once-per-phase `rerollUsed` tracker. The single-die
+    hit/save/wound/damage/hazard/attacks uses need an interactive dice layer (dice resolve in
+    one batch) — recorded as text-only in §4b/§5.
+  - **The 12 patrol cards** (`patrolStratagems` in loaders.ts, ids `cp:<patrol>:<slug>`,
+    `detachment` = patrol name so each side is offered only its own three): 11 engine-bound —
+    Exigent Assignments (consolidate D3+3", rng-rolled in resolveFightMove), Refusal to Yield
+    (`cp:wound_shield_strong`: −1 to wound when S>T, new attackS/targetT on AttackContext),
+    Psi-reactive Ammunition (storm bolters gain [PSYCHIC] via new `grantPsychic` — ignores
+    negative hit modifiers, 24.29), Urban Enforcers (`apWorsen` — new EffectOutput, incoming AP
+    floored at 0), Superior Weaponry (+1 AP), Inquisitorial Mandate + Rapid Acquisition
+    (**secured objectives, 14.03**: `cpMissions.securedBy` fallback in cpObjectiveStatuses,
+    pruned when the enemy takes live control), Suppressing Fire (pinned −2" M via
+    turnCounter-based `pinnedUntil`, survives the turn reset), Swift Embarkation (opponent's
+    Fight phase embark ≤6"), For the Lion (+1 OC through every control sum), Mission Focus
+    (+1 to hit; objective-range checked at play time). Determined to the Last = text-only
+    (fights-on-death not automated; noted on the card).
+  - **Wiring**: UseStratagem gained `stratagemId` (once-per-phase tracking for ALL generic
+    plays) + special handlers (secure/pin/embark); the UI's strat list renders `CpSpecialStrat`
+    pickers (unit+objective / unit+transport) for the two special effects; the AI defender
+    plays Refusal to Yield + Urban Enforcers through the aiReactionToShooting seam behind the
+    profile's reaction threshold.
+  - **Handoff / next**: step 4 = per-unit specials bindings (Shield Drone +1W, FTGG, Honoured
+    Knights via the same S>T block in melee, Zealot, Overkill, Gate of Infinity, Co-ordinated
+    Eradication) + the patrol enhancements (Killer Reflexes, Sanctic Slayers) + Determined to
+    the Last's fights-on-death. Known simplifications recorded in docs/combat_patrol.md §4b/§5.
+
 - **[2026-08-06] — COMBAT PATROL step 2: mission scoring (owner: "Please create step 2") + the
   Devilfish's real hull + the Inquisitor's Hand completed.** All gates green: `pnpm typecheck`,
   `pnpm test` (**477 tests**, 5 new mission tests incl. a full IH-vs-T'au game asserting mission

@@ -1,10 +1,11 @@
 # Combat Patrol (11e) — data, maps, and battle mode
 
-> Status after step 2 (2026-08-06): **army selection, deployment AND mission
-> scoring work end-to-end.** The four patrol lists and the three 30"×44" maps are
-> in the app; a Combat Patrol battle runs the full setup flow, the five phases,
-> and scores each side's own patrol mission card (§4a). The patrols'
-> *stratagems/enhancements in play* and the per-unit *special abilities* are
+> Status after step 3 (2026-08-06): **army selection, deployment, mission
+> scoring AND stratagems work end-to-end.** The four patrol lists and the three
+> 30"×44" maps are in the app; a Combat Patrol battle runs the full setup flow,
+> the five phases, scores each side's own patrol mission card (§4a), and plays
+> each patrol's three stratagems plus the owner-trimmed core set (§4b). The
+> patrols' *enhancements in play* and the per-unit *special abilities* are
 > later steps (see §5).
 
 ## 1. Sources
@@ -142,17 +143,65 @@ AI game). Seize their Strongholds rides the AI's normal objective play.
 Humans get a "⚡ Sanctify" unit+objective picker in the missions panel during
 their Shooting phase.
 
+## 4b. Stratagems in play (step 3, 2026-08-06)
+
+**Core set (owner-ruled):** every core stratagem is fair game in Combat Patrol
+**except Explosives, Rapid Ingress and Crushing Impact** (`CP_BANNED_CORE` in
+`stratagems.ts`). `usableStratagems` filters them out when
+`battleType: 'combat_patrol'`, the reducer rejects the banned intents outright
+("not available in Combat Patrol battles"), and the AI's Explosives /
+Rapid Ingress / Crushing Impact plays are gated off in CP.
+
+**Command Re-roll (owner's card text):** 1 CP to re-roll an advance, charge,
+damage, hazard, hit, save, wound, or number-of-attacks roll — ONE die, except
+charge rolls which re-roll both (2D6). Engine bindings: **charge** (the
+existing 2D6 re-roll via `ChargeParams.commandReroll`) and **advance** (new
+`RerollAdvance` intent + a "↻ Re-roll Advance (1 CP)" button in the Movement
+panel, legal only before any model has moved). Both share the once-per-phase
+`rerollUsed` tracker. The single-die re-rolls (hit/save/wound/damage/hazard/
+attacks) need an interactive dice layer the app doesn't have — dice resolve in
+one batch — so those uses stay **text-only** for now (recorded gap).
+
+**The 12 patrol cards** (`patrolStratagems` in `loaders.ts`, ids
+`cp:<patrol>:<slug>`, offered only to the side playing that patrol via the
+detachment filter; all engine-bound unless noted):
+
+| Patrol | Card (1 CP each) | Binding |
+|---|---|---|
+| Crowe's Sanctifiers | Exigent Assignments | `cp:consolidate_extended` — that unit's Consolidate this phase is 3+D3" |
+| | Refusal to Yield | `cp:wound_shield_strong` — −1 to wound vs the unit when the attack's S > its T (ranged) |
+| | Psi-reactive Ammunition | `cp:psychic_ammo` — storm bolters gain [PSYCHIC] (ignores negative hit modifiers, 24.29) |
+| Inquisitor's Hand | Urban Enforcers | `cp:ap_shield` — incoming AP worsened by 1 while the unit is wholly within a terrain area (area check at play time) |
+| | Superior Weaponry | `cp:ap_boost` — the unit's attacks improve AP by 1 |
+| | Inquisitorial Mandate | `cp:secure_objective` — "secure" a controlled objective (14.03): it stays yours while uncontested, pruned when the enemy takes live control |
+| Sudden Dawn Cadre | Suppressing Fire | `cp:pin` — the target is pinned: −2" Move through its next Movement phase (`pinnedUntil`, survives the turn reset) |
+| | Rapid Acquisition | `cp:secure_objective` (same secured-objective engine as Mandate) |
+| | Swift Embarkation | `cp:swift_embark` — in the opponent's Fight phase an unengaged unit within 6" of the Devilfish embarks |
+| The Vengeful Brethren | For the Lion | `cp:oc_plus1` — +1 OC per model (flows through every objective-control sum) |
+| | Mission Focus | `cp:plus1_hit` — +1 to hit (objective-range condition checked at play time, noted on the card) |
+| | Determined to the Last | **text-only**: fights-on-death is not automated — resolve manually (noted on the card) |
+
+**UI**: the Stratagems block lists Core + the side's patrol cards for the
+current phase; Inquisitorial Mandate / Rapid Acquisition get a unit + objective
+picker and Swift Embarkation a unit + transport picker (`CpSpecialStrat`).
+**AI**: the defender plays Refusal to Yield (Strike Squad under real fire) and
+Urban Enforcers (unit wholly inside a terrain area) through the same reactive
+seam as Smokescreen/Go to Ground, gated by the profile's reaction threshold —
+probed AI-vs-AI: Urban Enforcers fires in real games with zero rejected
+intents; Refusal to Yield verified at the seam (it emits whenever the incoming
+fire clears the threshold).
+
 ## 5. Not yet implemented (honest gaps → next steps)
 
-1. **Patrol stratagems/enhancements in play** — texts are extracted into
-   `cp_patrols.json`; no engine bindings yet. Core 11e stratagems still apply in
-   CP battles except AI Rapid Ingress (disabled); a later step should swap the
-   whole stratagem list per battle type (incl. "secured" objectives for
-   Inquisitorial Mandate, 14.03).
+1. **Patrol enhancements in play** — texts are extracted into `cp_patrols.json`
+   (Killer Reflexes, Sanctic Slayers, …); no engine bindings yet.
 2. **Per-unit specials** — abilities ride on the datasheets as text; none are
    bound to effects yet (Shield Drone, For the Greater Good, Honoured Knights,
    Zealot, Overkill, Gate of Infinity teleport, Co-ordinated Eradication, …).
+   Determined to the Last's fights-on-death belongs to this pass too.
 3. **Leaders**: only Preacher Teguen has a Leader rule (→ Inquisitorial Agents);
    the pairing works in Declare Battle Formations.
 4. Drone tokens (T'au) are modelled as ability text only (Shield Drone's +1 W is
    not applied yet — it belongs with the specials pass).
+5. **Command Re-roll single-die uses** (hit/save/wound/damage/hazard/attacks)
+   are text-only — see §4b.
