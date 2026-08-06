@@ -1122,10 +1122,10 @@ export function runCommandPhase(state: GameState, ctx: EngineContext, rng: RNG):
 
   // Primary VP: 11e mission games score via missions11.ts (Command-end + turn-end windows).
   // Legacy layouts (no mission state) keep the old Pariah-style hold-objectives scoring so the
-  // 10e maps stay playable.
+  // 10e maps stay playable. Combat Patrol battles score ONLY their mission cards (cpmissions.ts).
   const stateForScore = { ...state, units };
   let score = state.score;
-  if (!state.missions && state.round >= 2) {
+  if (!state.missions && state.battleType !== 'combat_patrol' && state.round >= 2) {
     const { controlled } = objectiveControl(stateForScore, ctx);
     const gained = scorePrimary(controlled[side], state.score[side]);
     if (gained > 0) {

@@ -30,6 +30,7 @@ import { eligibleToShoot } from './phases';
 import { pointLosBlocked } from './visibility';
 import { initSecondaries, recordKills, secondariesOnTurnEnd, secondariesOnTurnStart, secondaryCard } from './secondaries';
 import { initMissions, missionsOnBattleEnd, missionsOnCommandEnd, missionsOnTurnEnd, missionsOnTurnStart, startAction, type StartActionParams } from './missionflow';
+import { cpMissionsOnBattleEnd, cpMissionsOnTurnEnd, initCpMissions } from './cpmissions';
 import type { DispositionId } from './missions11';
 import { canAttach, leaderJoinPositions } from './leaders';
 import { unitScoutDistance } from './abilities';
@@ -393,6 +394,7 @@ function advancePhase(state: GameState, ctx?: EngineContext): GameState {
   state = enforceEndOfTurnCoherency(state, ctx);
   state = missionsOnTurnEnd(state, ctx);
   state = secondariesOnTurnEnd(state, ctx);
+  state = cpMissionsOnTurnEnd(state, ctx);
   // 23.02: at the end of your opponent's turn, your AIRCRAFT on the battlefield return to
   // Strategic Reserves. The turn ending belongs to `activePlayer`, so the OTHER side's aircraft
   // leave now.
@@ -442,8 +444,9 @@ function advancePhase(state: GameState, ctx?: EngineContext): GameState {
     }
   }
   if (state.round >= 5) {
-    // End of the battle: END OF BATTLE mission scoring + Battle Ready VP (missions11).
-    const finished = missionsOnBattleEnd({ ...state, ended: true }, ctx);
+    // End of the battle: END OF BATTLE mission scoring + Battle Ready VP (missions11), or the
+    // Combat Patrol cards' END OF BATTLE blocks.
+    const finished = cpMissionsOnBattleEnd(missionsOnBattleEnd({ ...state, ended: true }, ctx), ctx);
     return { ...finished, turnKills: [], log: [...finished.log, '— battle ends (round 5 complete) —'] };
   }
   const round = state.round + 1;
@@ -1332,7 +1335,8 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
 
     case 'BeginBattle': {
       const first = state.setup?.firstTurn ?? state.firstPlayer;
-      return {
+      const attacker = state.setup?.attacker ?? first;
+      let next: GameState = {
         ...state,
         stage: 'battle',
         setup: undefined,
@@ -1350,6 +1354,9 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         })),
         log: [...state.log, `— Battle begins — ${first} takes the first turn (round 1) —`],
       };
+      // Combat Patrol: each side now plays its patrol's own mission card.
+      if (state.battleType === 'combat_patrol' && ctx) next = initCpMissions(next, ctx, attacker);
+      return next;
     }
 
     // ── Movement ───────────────────────────────────────────────────────────────

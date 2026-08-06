@@ -20,6 +20,7 @@ import { objectiveControl } from '../engine';
 import { unitScoutDistance } from '../abilities';
 import { firingDeckX } from '../transport';
 import { secondaryPositionBonus } from '../secondaries';
+import { cpPositionBonus } from '../cpmissions';
 import { missionPositionBonus } from './missionplay';
 import { shootingEV, unitThreat, unitValue, unitGap, unitOC, maxWeaponRange, meleeEV } from './evaluate';
 import { homeGarrisonId, unitRolePlan, type RolePlan } from './roles';
@@ -120,6 +121,8 @@ function positionScore(
 
   // Active Tactical Missions: standing where a card scores (enemy DZ, outpost/NML markers…).
   score += secondaryPositionBonus(state, unit.owner, at, ctx);
+  // Combat Patrol missions: Expansionary Campaign pays for the expansion objectives early.
+  score += cpPositionBonus(state, unit.owner, at);
   // The PRIMARY mission: standing where the side's disposition pays VP (enemy home for
   // Outmanoeuvre, centrals for Immovable Object, quarters for Reconnaissance Sweep…).
   score += missionPositionBonus(state, unit.owner, at, ctx) * 1.5 * profile.objective;

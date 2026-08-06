@@ -12,6 +12,7 @@ import { gapBetweenBases } from '../geometry';
 import { pointLosBlocked } from '../visibility';
 import { weaponEV } from './evaluate';
 import { secondaryKillBonus } from '../secondaries';
+import { cpKillBonus } from '../cpmissions';
 import { bestMissionAction } from './missionplay';
 import { shootingEV, unitThreat, unitValue } from './evaluate';
 import { unitRolePlan } from './roles';
@@ -94,8 +95,9 @@ export function aiShootingAction(state: GameState, side: Side, profile: AiProfil
       if (plan.characterHunter > 1 && ctx.datasheets.get(t.datasheetId)?.keywords.some((k) => k.toLowerCase() === 'character')) {
         ev *= plan.characterHunter;
       }
-      // Active Tactical Missions (Assassination / Bring It Down) pay extra for this kill.
-      ev *= secondaryKillBonus(state, side, t, ctx);
+      // Active Tactical Missions (Assassination / Bring It Down) pay extra for this kill —
+      // and so does a Combat Patrol mission (Inquisitorial Sanction: CHARACTER kills).
+      ev *= secondaryKillBonus(state, side, t, ctx) * cpKillBonus(state, side, t, ctx);
       if (ev <= 0) continue;
       const tValue = unitValue(t, ctx);
       let score = ev * profile.damage;
@@ -152,7 +154,7 @@ export function aiShootingAction(state: GameState, side: Side, profile: AiProfil
         let alt: { id: string; ev: number } | null = null;
         for (const t of targets) {
           if (t.id === best.target) continue;
-          const ev = weaponEV(state, shooter, w, t, ctx) * secondaryKillBonus(state, side, t, ctx);
+          const ev = weaponEV(state, shooter, w, t, ctx) * secondaryKillBonus(state, side, t, ctx) * cpKillBonus(state, side, t, ctx);
           if (!alt || ev > alt.ev) alt = { id: t.id, ev };
         }
         if (alt && alt.ev > evMain * 1.3 + 5) splitTargets[`${w.sourceDsId}|${w.weapon.name}`] = alt.id;

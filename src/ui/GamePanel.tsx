@@ -14,6 +14,7 @@ import { disembarkMode, embarkOptions } from '../core/transport';
 import { ordersAvailableTo, unitIsOfficer } from '../core/orders';
 import { secondaryCard } from '../core/secondaries';
 import { dispositionName, MISSION_NAMES, PRIMARY_CAP, actionsForSide, objectivePoints } from '../core/missions11';
+import { CP_MISSIONS } from '../core/cpmissions';
 import { canStartAction, SECONDARY_ACTIONS } from '../core/missionflow';
 import { usableStratagems } from '../core/stratagems';
 import { stratagems } from '../data/loaders';
@@ -229,6 +230,39 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
           </div>
         ))}
       </div>
+
+      {/* Combat Patrol missions: each side plays its patrol's own card. */}
+      {inMatch && state.cpMissions && (
+        <div className="phase-block">
+          <h3>Combat Patrol Missions</h3>
+          {(['player', 'ai'] as const).map((s) => {
+            const def = CP_MISSIONS[state.cpMissions!.missionId[s]];
+            const events = state.cpMissions!.events.filter((e) => e.side === s);
+            return (
+              <div key={s} className="order-officer">
+                <strong style={{ color: OWNER_COLOR[s].fill }}>{s}</strong>{' '}
+                <details style={{ display: 'inline-block' }}>
+                  <summary>
+                    <strong>{def?.name ?? '(unknown mission)'}</strong>
+                    {def?.captured === 'partial' && <span className="warn"> · ⚠ partially captured</span>}
+                    {def?.captured === 'none' && <span className="warn"> · ✖ card not captured (scores nothing)</span>}
+                    <span className="muted"> · {state.cpMissions!.vp[s]} mission VP</span>
+                  </summary>
+                  <p className="hint">{def?.text}</p>
+                  {def?.note && <p className="muted">{def.note}</p>}
+                  {events.length > 0 && (
+                    <ul className="hint">
+                      {events.slice(-6).map((e, i) => (
+                        <li key={i}>R{e.round}: +{e.vp} — {e.label}</li>
+                      ))}
+                    </ul>
+                  )}
+                </details>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* 11e Primary Missions: each side's disposition, mission and primary VP. */}
       {inMatch && state.missions && (

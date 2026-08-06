@@ -330,6 +330,43 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-08-06] — COMBAT PATROL step 2: mission scoring (owner: "Please create step 2") + the
+  Devilfish's real hull + the Inquisitor's Hand completed.** All gates green: `pnpm typecheck`,
+  `pnpm test` (**477 tests**, 5 new mission tests incl. a full IH-vs-T'au game asserting mission
+  VP is the ONLY VP source), `pnpm build:cp`; Playwright-verified in the live app (missions panel
+  shows both cards + per-event VP; scoreboard 15:35 exactly equals the mission tallies).
+  - **`src/core/cpmissions.ts` (pure)**: each patrol plays its OWN card, scored at the end of
+    that player's turn + end of battle into `GameState.cpMissions` (and `score`). Implemented
+    from the captured card texts: **Inquisitorial Sanction** (10VP/enemy CHARACTER model killed
+    in this-or-previous turn — rolling `prevTurnKills` window off the kill ledger; round 2+
+    objectives 5+5; end-of-battle tabled-characters 10) and **Expansionary Campaign** (expansion
+    objectives 10+15 rounds 1-2, 5+10 after). **Purification** = partial (only its captured
+    END-OF-BATTLE 5VP/objective block; Sanctification uncaptured → scores nothing, UI says so);
+    **Seize their Strongholds** = uncaptured (scores nothing, UI says so). Stacked card lines
+    score CUMULATIVELY (GW CP convention — decision recorded); patrol↔mission pairing for the
+    two incomplete cards is inferred (flagged for owner confirmation). Control is area-aware via
+    missions11.objectiveStatuses; attacker side survives BeginBattle inside cpMissions.
+  - **Wiring**: initCpMissions at BeginBattle (combat_patrol only); cpMissionsOnTurnEnd after
+    the secondaries hook; cpMissionsOnBattleEnd at the round-5 end; the legacy Pariah primary in
+    runCommandPhase is GATED OFF for combat_patrol (was double-scoring risk). AI plays its card:
+    cpKillBonus (Sanction ×1.5 EV vs CHARACTER units, shoot+melee seams) and cpPositionBonus
+    (Expansionary pull toward expansion objectives, strongest rounds 1-2). GamePanel gained a
+    "Combat Patrol Missions" block (card text on expand, capture-status warnings, VP event log).
+  - **Devilfish hull (owner-measured 17.5×13×7cm)**: new `BaseShape kind 'rect'` (rx/ry =
+    half-extents, axis-aligned like ovals; same avg-radius gap + inscribed-circle overlap
+    approximations; renders as a rect incl. placement ghost) — the Devilfish is a 6.89"×5.12"
+    rectangle now (height noted, not modelled — 2D sim).
+  - **Inquisitor's Hand completed** (owner follow-up screenshots): all 3 stratagems (Urban
+    Enforcers / Superior Weaponry / Inquisitorial Mandate, 1CP each) + both enhancements (Killer
+    Reflexes, Sanctic Slayers) in `cp_patrols.json`; owner-confirmed the patrol has NO faction/
+    detachment rule (gap closed). Owner rulings recorded in the flags files' resolution logs:
+    FOESIGHT + all as-shown stats intentional; Gate of Infinity table gap + map numbering fine.
+  - **Handoff / next**: (a) screenshot the full *Purification* card (incl. Sanctification) and
+    *Seize their Strongholds* + confirm which patrol owns each — scoring then slots into the
+    registry; (b) step 3 = patrol stratagems/enhancements in play (swap the stratagem list per
+    battle type; "secured" objectives 14.03 for Inquisitorial Mandate); (c) per-unit specials
+    bindings (Shield Drone +1W, FTGG, Honoured Knights, Zealot, Overkill, Gate of Infinity…).
+
 - **[2026-08-06] — COMBAT PATROL, step 1 of N (owner: "build out a way for me to play Combat
   Patrol… first, creating an army and deployment"): the four patrols extracted from the owner's
   app screenshots, the three 30"×44" CP maps parsed, and a Combat Patrol battle type with the

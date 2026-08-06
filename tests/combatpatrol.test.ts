@@ -1,8 +1,10 @@
 // Combat Patrol: the four extracted patrols, the three 30"×44" maps, and the deployment flow.
 import { describe, it, expect } from 'vitest';
-import type { Roster } from '../src/core/types';
+import type { CpMissionState, GameState, Roster, Side, UnitInstance } from '../src/core/types';
 import { distancePointToPolygon, pointInPolygon } from '../src/core/geometry';
 import { parseTransportCapacity } from '../src/core/transport';
+import { CP_MISSIONS, cpMissionsOnBattleEnd, cpMissionsOnTurnEnd, missionForPatrol } from '../src/core/cpmissions';
+import { createInitialState } from '../src/core/state';
 import { runMatch, type MatchData } from '../src/core/ai/match';
 import {
   datasheets,
@@ -160,6 +162,101 @@ describe('combat patrol rosters (data/rosters/cp_*.json)', () => {
   });
 });
 
+describe('combat patrol missions (core/cpmissions.ts)', () => {
+  const ctx = { datasheets: datasheetsById };
+  let seq = 0;
+  const mkUnit = (owner: Side, datasheetId: string, pos: { x: number; y: number }, count = 1): UnitInstance => ({
+    id: `t${++seq}`,
+    owner,
+    datasheetId,
+    models: Array.from({ length: count }, (_, i) => ({
+      id: `t${seq}m${i}`, unitId: `t${seq}`, pos: { x: pos.x + i * 0.2, y: pos.y }, wounds: 1, alive: true,
+    })),
+    startingModels: count,
+    status: {},
+  });
+  const mkState = (round: number, active: Side, units: UnitInstance[], cpOverrides?: Partial<CpMissionState>): GameState => ({
+    ...createInitialState(layoutsCp[0]!),
+    stage: 'battle',
+    mode: 'match',
+    battleType: 'combat_patrol',
+    round,
+    activePlayer: active,
+    firstPlayer: 'player',
+    units,
+    cpMissions: {
+      attacker: 'player',
+      missionId: { player: 'inquisitorial_sanction', ai: 'expansionary_campaign' },
+      vp: { player: 0, ai: 0 },
+      events: [],
+      ...cpOverrides,
+    },
+  });
+
+  it('maps every patrol to a mission card', () => {
+    for (const pid of ['crowes_sanctifiers', 'inquisitors_hand', 'sudden_dawn_cadre', 'vengeful_brethren']) {
+      expect(missionForPatrol(pid), pid).toBeTruthy();
+    }
+    expect(CP_MISSIONS['inquisitorial_sanction']!.captured).toBe('full');
+    expect(CP_MISSIONS['expansionary_campaign']!.captured).toBe('full');
+    expect(CP_MISSIONS['purification']!.captured).toBe('partial');
+    expect(CP_MISSIONS['seize_their_strongholds']!.captured).toBe('none');
+  });
+
+  it('Inquisitorial Sanction: 10VP per enemy CHARACTER model this + previous turn, objectives from round 2', () => {
+    // On map 1: GH area (1,26)-(7,30) holds an expansion objective; CD (2.5,2.5)-(14,10) the red home.
+    const vigilants = 'cp-inquisitors-hand-vigilant-squad';
+    const units = [mkUnit('player', vigilants, { x: 4, y: 28 }, 5), mkUnit('player', vigilants, { x: 7, y: 6 }, 5)];
+    // Round 1: objectives do NOT score yet; a character killed this turn + one the previous turn do.
+    const kill = { side: 'ai' as Side, datasheetIds: ['x'], maxWounds: 4, onObjective: false, charactersSlain: 1 };
+    let s = mkState(1, 'player', units);
+    s = { ...s, turnKills: [kill], cpMissions: { ...s.cpMissions!, prevTurnKills: [kill] } };
+    s = cpMissionsOnTurnEnd(s, ctx);
+    expect(s.cpMissions!.vp.player).toBe(20);
+    // Round 2: controlling two objectives scores both lines (5+5), cumulative.
+    let s2 = mkState(2, 'player', units);
+    s2 = cpMissionsOnTurnEnd(s2, ctx);
+    expect(s2.cpMissions!.vp.player).toBe(10);
+    expect(s2.score.player).toBe(10);
+    // The kill window rotated: this turn's ledger became prevTurnKills.
+    expect(s2.cpMissions!.prevTurnKills).toEqual([]);
+  });
+
+  it('Expansionary Campaign: expansion objectives pay 10/15 in rounds 1-2, then 5/10', () => {
+    const breachers = 'cp-sudden-dawn-cadre-breacher-team';
+    // Both expansion objectives on map 1: GH area and AB area (23,14)-(29,18).
+    const both = [mkUnit('ai', breachers, { x: 4, y: 28 }, 5), mkUnit('ai', breachers, { x: 26, y: 16 }, 5)];
+    let s = mkState(2, 'ai', both);
+    s = cpMissionsOnTurnEnd(s, ctx);
+    expect(s.cpMissions!.vp.ai).toBe(25); // 10 (one or more) + 15 (two or more)
+    let s2 = mkState(3, 'ai', both);
+    s2 = cpMissionsOnTurnEnd(s2, ctx);
+    expect(s2.cpMissions!.vp.ai).toBe(15); // 5 + 10
+    // Holding only one expansion in round 1 pays 10.
+    let s3 = mkState(1, 'ai', [both[0]!]);
+    s3 = cpMissionsOnTurnEnd(s3, ctx);
+    expect(s3.cpMissions!.vp.ai).toBe(10);
+  });
+
+  it('end of battle: Purification pays 5VP per controlled objective; Sanction 10VP for a tabled character roster', () => {
+    const strike = 'cp-crowes-sanctifiers-strike-squad';
+    const units = [mkUnit('player', strike, { x: 4, y: 28 }, 5), mkUnit('player', strike, { x: 26, y: 16 }, 5)];
+    let s = mkState(5, 'player', units, { missionId: { player: 'purification', ai: 'seize_their_strongholds' } });
+    s = cpMissionsOnBattleEnd(s, ctx);
+    expect(s.cpMissions!.vp.player).toBe(10); // two objectives controlled × 5
+    expect(s.cpMissions!.vp.ai).toBe(0); // uncaptured card scores nothing
+    // Sanction end-of-battle: no enemy CHARACTER model alive anywhere → +10.
+    let s2 = mkState(5, 'player', units); // enemy has no units at all
+    s2 = cpMissionsOnBattleEnd(s2, ctx);
+    expect(s2.cpMissions!.vp.player).toBe(10);
+    // With an enemy character alive (even in reserves), the 10VP is withheld.
+    const crowe = mkUnit('ai', 'cp-crowes-sanctifiers-castellan-crowe', { x: 0, y: 0 });
+    let s3 = mkState(5, 'player', [...units, { ...crowe, inReserves: true }]);
+    s3 = cpMissionsOnBattleEnd(s3, ctx);
+    expect(s3.cpMissions!.vp.player).toBe(0);
+  });
+});
+
 describe('combat patrol battles (deployment + full game through the real reducer)', () => {
   const crowes = cpRosters.find((r) => r.name === "Crowe's Sanctifiers")! as Roster;
   const brethren = cpRosters.find((r) => r.name === 'The Vengeful Brethren')! as Roster;
@@ -216,6 +313,37 @@ describe('combat patrol battles (deployment + full game through the real reducer
     expect(result.ended).toBe(true);
     expect(result.rejectedLog).toEqual([]);
     expect(result.forcedAdvances).toBe(0);
+  });
+
+  it('scores ONLY the patrol mission cards in a full game (Inquisitor\'s Hand vs Sudden Dawn Cadre)', () => {
+    const inqs = cpRosters.find((r) => r.name === "Inquisitor's Hand")! as Roster;
+    let finalState: GameState | null = null;
+    const result = runMatch(
+      {
+        layout: layoutsCp[1]!,
+        rosters: { player: inqs, ai: tau },
+        profiles: { player: 'balanced', ai: 'balanced' },
+        battleType: 'combat_patrol',
+        seed: 5,
+        observe: (s) => { finalState = s; },
+      },
+      data,
+    );
+    expect(result.ended).toBe(true);
+    expect(result.rejectedLog).toEqual([]);
+    const s = finalState! as GameState;
+    // Each side plays its own patrol's card.
+    expect(s.cpMissions?.missionId).toEqual({ player: 'inquisitorial_sanction', ai: 'expansionary_campaign' });
+    // Mission VP is the ONLY VP source in Combat Patrol: the scoreboard equals the mission tally,
+    // the events sum to it, and the legacy Pariah primary never fired.
+    expect(result.score).toEqual(s.cpMissions!.vp);
+    for (const side of ['player', 'ai'] as const) {
+      const sum = s.cpMissions!.events.filter((e) => e.side === side).reduce((a, e) => a + e.vp, 0);
+      expect(sum).toBe(s.cpMissions!.vp[side]);
+    }
+    expect(result.log.some((l) => l.includes('Primary VP'))).toBe(false);
+    // A full game between two objective-playing patrols produces mission VP.
+    expect(result.score.player + result.score.ai).toBeGreaterThan(0);
   });
 
   it('deploys every non-reserve unit wholly inside its own zone (checked mid-setup)', () => {

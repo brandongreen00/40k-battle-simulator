@@ -453,6 +453,27 @@ export interface MissionState {
   securedBy?: (Side | null)[];
 }
 
+/** One Combat Patrol mission scoring event (for the panel + logs). */
+export interface CpMissionEvent {
+  round: number;
+  turn: Side;
+  side: Side;
+  label: string;
+  vp: number;
+}
+
+/** Combat Patrol mission state: each side plays its own patrol's card (core/cpmissions.ts). */
+export interface CpMissionState {
+  /** Attacker side (setup is cleared at BeginBattle; home-objective ownership needs it). */
+  attacker: Side;
+  missionId: Record<Side, string>;
+  /** Mission VP per side (also added into `score` — CP has no other VP source). */
+  vp: Record<Side, number>;
+  events: CpMissionEvent[];
+  /** Kill ledger of the PREVIOUS player turn ("destroyed in this or the previous turn"). */
+  prevTurnKills?: KillRecord[];
+}
+
 // ── Pre-battle setup / deployment ────────────────────────────────────────────
 export type Stage = 'setup' | 'battle' | 'done';
 
@@ -564,6 +585,8 @@ export interface GameState {
   activeActions?: ActiveAction[];
   /** Units destroyed during the CURRENT turn (secondary scoring); reset at every turn end. */
   turnKills?: KillRecord[];
+  /** Combat Patrol mission state (battleType 'combat_patrol' only; set at BeginBattle). */
+  cpMissions?: CpMissionState;
   /** Objective control snapshot taken at the start of the active player's turn
    *  (Storm Hostile Objective). Index-aligned with `layout.objectives`. */
   controlAtTurnStart?: (Side | null)[];

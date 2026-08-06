@@ -98,3 +98,6 @@ rows + both melee rows, both mission cards' scoring lines.
 - **2026-08-06 (owner):** all transcribed-as-shown anomalies confirmed intentional (items 7–12).
 - Transcription note on Sanctic Slayers: the card reads "attacks that target a unit with a T
   greater than or equal to your attack's S have +1 to wound rolls" — transcribed verbatim.
+- **2026-08-06 (owner):** "We don't have a faction rule for the Inquisitorial Agents" — the
+  patrol has NO detachment/faction rule, so the missing landing page holds no rules content
+  (item 3's ASSIGNED AGENTS text covered by this ruling). Gap closed.

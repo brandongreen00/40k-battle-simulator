@@ -1,11 +1,11 @@
 # Combat Patrol (11e) — data, maps, and battle mode
 
-> Status after step 1 (2026-08-06): **army selection + deployment work end-to-end.**
-> The four patrol lists and the three 30"×44" maps are in the app; a Combat Patrol
-> battle runs through the existing setup/deployment flow (roll-off, alternating
-> placement, leaders, reserves, first-turn roll) and on into the five phases.
-> CP-specific *missions/scoring*, the patrols' *stratagems/enhancements in play*,
-> and the per-unit *special abilities* are later steps (see §5).
+> Status after step 2 (2026-08-06): **army selection, deployment AND mission
+> scoring work end-to-end.** The four patrol lists and the three 30"×44" maps are
+> in the app; a Combat Patrol battle runs the full setup flow, the five phases,
+> and scores each side's own patrol mission card (§4a). The patrols'
+> *stratagems/enhancements in play* and the per-unit *special abilities* are
+> later steps (see §5).
 
 ## 1. Sources
 
@@ -23,7 +23,7 @@
 | Patrol | Faction | Units | Notes |
 |---|---|---|---|
 | Crowe's Sanctifiers | Grey Knights | Strike Squad ×10, Castellan Crowe, Venerable Dreadnought, Brotherhood Terminator Squad ×5 | Strike from the Warp: Terminators/Dreadnought **must start in Strategic Reserves** (arrive round 2/3) — enforced in-game |
-| Inquisitor's Hand | Agents of the Imperium | Preacher Teguen, Vigilant Squad ×10, Eversor Assassin, Inquisitorial Agents ×6 | Stratagems + enhancements captured from follow-up screenshots (2026-08-06); **only the patrol landing page is still missing** (detachment-rule card, Force Disposition) |
+| Inquisitor's Hand | Agents of the Imperium | Preacher Teguen, Vigilant Squad ×10, Eversor Assassin, Inquisitorial Agents ×6 | Stratagems + enhancements captured 2026-08-06; owner-confirmed the patrol has **no faction/detachment rule**, so nothing is missing |
 | Sudden Dawn Cadre | T'au Empire | Pathfinder Team ×10, Breacher Team ×10, Devilfish, Commander Cloudspear | Devilfish transports 12 INFANTRY (embark/disembark work via the existing transport engine) |
 | The Vengeful Brethren | Dark Angels | Intercessor Squad ×10, Master Zacharial, Hellblaster Squad ×5, Bladeguard Veteran Squad ×3 | Bladeguard **Sergeant is T3 while Veterans are T4** — crop-verified, transcribed as shown |
 
@@ -115,15 +115,43 @@ a patrol per side → **⚔ New Combat Patrol battle**. The normal setup flow ru
 - The AI plays both sides if asked (tests pin full AI-vs-AI CP games at zero
   rejected intents on maps 1 and 3).
 
+## 4a. Missions & scoring (step 2)
+
+Each patrol plays its **own** mission card (`src/core/cpmissions.ts`), scored at
+the end of that player's turn and at the end of the battle; mission VP is the
+only VP source in a Combat Patrol battle (the 11e Chapter Approved primary, the
+Tactical deck and the legacy Pariah scoring are all off). The game panel shows
+both cards, their capture status, and a per-event VP log.
+
+| Patrol | Mission | Captured | Scoring implemented |
+|---|---|---|---|
+| Inquisitor's Hand | Inquisitorial Sanction | full | 10VP per enemy CHARACTER model destroyed in this/previous turn (end of your turn, any round); round 2+: control 1+ objectives 5VP, control 2+ another 5VP; end of battle: all enemy CHARACTERs destroyed 10VP |
+| Sudden Dawn Cadre | Expansionary Campaign | full | end of your turn — rounds 1–2: control 1+ expansion objectives 10VP, 2+ another 15VP; rounds 3–5: 5VP / another 10VP |
+| Crowe's Sanctifiers | Purification | **partial** | only the END OF BATTLE block was captured: 5VP per objective controlled (the "10VP per objective sanctified" mechanic is uncaptured and scores nothing) |
+| The Vengeful Brethren | Seize their Strongholds | **none** | card contents never captured — scores nothing, and the panel says so |
+
+Interpretation (recorded): the cards' stacked lines score **cumulatively**
+(every satisfied line pays — GW's Combat Patrol card convention), so e.g.
+holding both expansion objectives in round 1 pays 10+15=25VP. Patrol↔mission
+pairing for Purification / Seize their Strongholds is inferred (theme + which
+battle-setup screen showed which card) — flag open for owner confirmation.
+
+The AI plays its card: Inquisitorial Sanction boosts CHARACTER-kill EV, and
+Expansionary Campaign pulls units toward the expansion objectives (strongest in
+rounds 1–2).
+
 ## 5. Not yet implemented (honest gaps → next steps)
 
-1. **CP missions/scoring** — the mission cards (map choice at battle start is in;
-   the deck, twists, and VP schedules are not). The divider markers' meaning
-   lands here too.
+1. **The two incomplete mission cards** — screenshot the full *Purification*
+   card (incl. the Sanctification mechanic/twist selector) and *Seize their
+   Strongholds*, and confirm which patrol owns each; then their scoring slots
+   into the existing registry. The divider markers' meaning likely lands with
+   the sanctification/mission actions too.
 2. **Patrol stratagems/enhancements in play** — texts are extracted into
    `cp_patrols.json`; no engine bindings yet. Core 11e stratagems still apply in
    CP battles except AI Rapid Ingress (disabled); a later step should swap the
-   whole stratagem list per battle type.
+   whole stratagem list per battle type (incl. "secured" objectives for
+   Inquisitorial Mandate, 14.03).
 3. **Per-unit specials** — abilities ride on the datasheets as text; none are
    bound to effects yet (Shield Drone, For the Greater Good, Honoured Knights,
    Zealot, Overkill, Gate of Infinity teleport, Co-ordinated Eradication, …).
