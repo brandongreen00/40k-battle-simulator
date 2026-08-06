@@ -169,10 +169,11 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
   const inSetup = state.stage === 'setup';
   const inMatch = state.mode === 'match';
 
-  // On phones the two side panels become tabs under the board ("Units & map" / "Game").
-  // Auto-follow the flow: roll-off & battle → Game; deployment placement & sandbox → Units.
+  // On phones the app becomes three full-height pages behind a bottom nav: the Board, the
+  // Units/tools panel, and the Game panel. Auto-follow the flow: roll-off & battle → Play;
+  // deployment & sandbox → Units; arming a placement ghost → Board (that's where you drop it).
   // (flowKey is derived below once the deployment bookkeeping exists; the effect lives with it.)
-  const [mTab, setMTab] = useState<'tools' | 'game'>('tools');
+  const [mTab, setMTab] = useState<'board' | 'tools' | 'game'>('tools');
 
   // Battle type: a standard (11e Chapter Approved) battle, or Combat Patrol (fixed patrol
   // lists on the three 30"×44" CP maps). Drives which maps and rosters are offered.
@@ -461,6 +462,14 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
   useEffect(() => {
     setMTab(flowKey === 'deploy' || flowKey === 'sandbox' ? 'tools' : 'game');
   }, [flowKey]);
+  // Arming any placement ghost (deploy drop, Deep Strike arrival, disembark) jumps to the Board
+  // page — that is where the ghost is dropped; resolving it returns to the flow's home page.
+  const placingActive = !!placing;
+  useEffect(() => {
+    if (placingActive) setMTab('board');
+    else setMTab(flowKey === 'deploy' || flowKey === 'sandbox' ? 'tools' : 'game');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [placingActive]);
 
   if (!layout) return <div className="app-shell">No layout found in data/layouts.</div>;
 
@@ -709,13 +718,19 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
 
   return (
     <div className="layout" data-mtab={mTab}>
-      {/* Mobile-only tab bar: switches which panel shows under the board. */}
+      {/* Mobile-only bottom nav: three full-height pages (Board / Units / Play). */}
       <div className="m-tabs" role="tablist">
+        <button role="tab" aria-selected={mTab === 'board'} className={mTab === 'board' ? 'on' : ''} onClick={() => setMTab('board')}>
+          <span className="m-ico" aria-hidden>🗺️</span>
+          <span>Board</span>
+        </button>
         <button role="tab" aria-selected={mTab === 'tools'} className={mTab === 'tools' ? 'on' : ''} onClick={() => setMTab('tools')}>
-          {inSetup ? 'Deploy units' : 'Units & map'}
+          <span className="m-ico" aria-hidden>📋</span>
+          <span>{inSetup ? 'Deploy' : 'Units'}</span>
         </button>
         <button role="tab" aria-selected={mTab === 'game'} className={mTab === 'game' ? 'on' : ''} onClick={() => setMTab('game')}>
-          {inSetup ? 'Setup & dice' : 'Game'}
+          <span className="m-ico" aria-hidden>⚔️</span>
+          <span>{inSetup ? 'Setup' : 'Play'}</span>
         </button>
       </div>
       <aside className="sidebar">
@@ -1073,6 +1088,42 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
           }
           fx={fx}
         />
+        {/* Mobile-only: drive the Movement phase right on the Board page — selecting and
+            dragging happen here, so starting and confirming the move should too (no tab-flip). */}
+        {inMatch && !inSetup && !state.ended && (() => {
+          const side = state.activePlayer;
+          if (aiSeats[side].enabled) return null;
+          const movers = state.units.filter((u) => u.owner === side && u.status.moveBudget != null);
+          if (movers.length > 0) {
+            const ids = movers.map((u) => u.id);
+            return (
+              <div className="m-movebar m-only">
+                <span className="m-movelabel">
+                  {movers.length} unit{movers.length > 1 ? 's' : ''} moving — drag, then confirm
+                </span>
+                <button className="ok" onClick={() => dispatch({ type: 'EndMove', unitIds: ids })}>✓ Confirm</button>
+                <button onClick={() => dispatch({ type: 'CancelMove', unitIds: ids })}>✕ Cancel</button>
+              </div>
+            );
+          }
+          // Selected but not yet activated: offer Move/Advance here in the Movement phase.
+          if (state.phase !== 'Movement') return null;
+          const selectable = selectedUnitIds.filter((id) => {
+            const u = state.units.find((x) => x.id === id);
+            return u && u.owner === side && !u.inReserves && !u.status.moved && !u.status.advanced &&
+              !u.status.fellBack && !u.status.remainedStationary && u.models.some((m) => m.alive);
+          });
+          if (selectable.length === 0) return null;
+          return (
+            <div className="m-movebar m-only">
+              <span className="m-movelabel">
+                {selectable.length} unit{selectable.length > 1 ? 's' : ''} selected
+              </span>
+              <button className="ok" onClick={() => dispatch({ type: 'BeginMove', unitIds: selectable, mode: 'normal' })}>Move</button>
+              <button onClick={() => dispatch({ type: 'BeginMove', unitIds: selectable, mode: 'advance' })}>Advance</button>
+            </div>
+          );
+        })()}
       </main>
 
       <aside className="gamerail">
