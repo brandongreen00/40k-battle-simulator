@@ -330,6 +330,44 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-08-06] — COMBAT PATROL, step 1 of N (owner: "build out a way for me to play Combat
+  Patrol… first, creating an army and deployment"): the four patrols extracted from the owner's
+  app screenshots, the three 30"×44" CP maps parsed, and a Combat Patrol battle type with the
+  full deployment flow.** All gates green: `pnpm typecheck`, `pnpm test` (**472 tests**, 10 new in
+  `tests/combatpatrol.test.ts` incl. two full AI-vs-AI CP games with ZERO rejected intents),
+  `pnpm build`; a 9/9-check Playwright drive of the real app (battle-type toggle → CP map at
+  30"×44" → patrol pickers → roll-off → AI deployment with forced reserves → zero console
+  errors). Full doc: **`docs/combat_patrol.md`**.
+  - **Patrol data** (57 Drive screenshots → 4 vision-extraction agents using the owner's
+    screenshot→datasheet methodology, transcribe-never-reconstruct): Crowe's Sanctifiers (Grey
+    Knights), Inquisitor's Hand (Agents), Sudden Dawn Cadre (T'au), The Vengeful Brethren (Dark
+    Angels) — 16 datasheets with profiles/weapons/abilities-text/base sizes/keywords, patrol
+    rules + stratagem/enhancement texts, committed as source in `tools/combatpatrol/extracted/`
+    (+ per-patrol `*_flags.md` for the owner's review gate: FOESIGHT likely-typo, Psycannon S8,
+    Bladeguard Sergeant T3 vs squad T4, missing Inquisitor's Hand landing/stratagem pages, …).
+    `pnpm build:cp` → `data/game/cp_datasheets.json` + `cp_patrols.json` + 4 fixed
+    `data/rosters/cp_*.json` (with per-weapon carrier counts parsed from equipment sentences).
+  - **Maps** (no GW PDF exists — measured from the app screenshots at 28.67 px/in): zones by
+    colour-mask tracing, mats by outline/texture detection + printed corner-offsets (which
+    reference the NEAREST edges), dividers by dot-RANSAC, icons by white-shape detection; all
+    validated by 180° symmetry + overlay renders. Every map = the same 10-mat set (2× 11.5×7.5,
+    4× 6×4, 4× 6×2) with dense/light features; 2 home + 2 expansion objectives bound to areas;
+    AB/CD/EF/GH ruin letters (rendered); divider markers stored for the missions step.
+    `tools/layouts_cp/build.py` → `data/layouts_cp/` → new `convertCp` loader + glob.
+  - **Engine/UI**: `NewBattle` takes `battleType: 'combat_patrol'` (stored on GameState; the 11e
+    CA mission layer + Tactical deck are NOT initialised — CP missions are a later step);
+    **Strike from the Warp enforced** (new `Datasheet.cpReserveRound`: DeployUnit rejects on-board
+    setup, arrivals gated to round 2/3 and wholly-within-own-zone, AI mirrors it via
+    wantsReserves + a zone-arrival anchor search); battle-type toggle in the sidebar swaps the
+    map pool (3 CP maps only) and roster pool (4 patrols only, hidden from standard battles);
+    TerrainLayer renders area letters + divider markers; AI Rapid Ingress disabled in CP.
+  - **Handoff / next steps (sequential per the owner)**: (2) CP missions/scoring (cards were
+    partially captured: Inquisitorial Sanction, Expansionary Campaign; the map-choice hook
+    exists); (3) patrol stratagems/enhancements in play (texts ready in cp_patrols.json; swap
+    the stratagem list per battle type); (4) per-unit specials bindings (Shield Drone +1W, For
+    the Greater Good, Honoured Knights, Gate of Infinity, Zealot, Overkill…). Ask the owner for
+    the missing Inquisitor's Hand landing/stratagems/enhancements screenshots.
+
 - **[2026-07-17] — Transport deployment done PROPERLY (owner: "I see no way to do this"), the
   Immolator split rule, and ENHANCEMENTS NOW WORK IN-GAME (owner: "check that all of my
   enhancements are working… you've said this is implemented and it isn't").** All gates green:
