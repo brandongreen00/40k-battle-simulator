@@ -356,6 +356,34 @@ ability-system design that these stages depend on.
   - **Handoff**: this PR and the mobile-UI PR (#20) both touch `ListBuilder.tsx` — whichever
     merges second needs a trivial rebase (the changes are in different regions).
 
+- **[2026-08-06] — MOBILE-NATIVE UI REDESIGN (owner: "Make this entire UI, when opened on a
+  mobile, look like a mobile native app… no text that goes off screen to the left. I want a FULL
+  UI redesign.").** Phones (and touch landscape) now get a native app shell; desktop is
+  untouched. All gates green: `pnpm typecheck`, `pnpm test` (505), `pnpm build`; an iPhone-13
+  touch walkthrough (CP battle: roll-off → touch deployment through the new auto-jump flow →
+  full AI game) passes with ZERO horizontal-overflow elements sampled every 1.2s across the
+  whole game, zero console errors; desktop 3-column layout + landscape-phone shell verified.
+  - **App shell**: fixed-height `100dvh` app — compact top bar (safe-area-inset-top), pages that
+    scroll INTERNALLY, and a native bottom tab bar (icons + labels, safe-area-inset-bottom).
+    The page itself never scrolls, so nothing can be dragged off screen. The viewport meta is
+    now app-style (`maximum-scale=1, user-scalable=no`): on iOS a page-level pinch zoom plus
+    sticky bars is exactly what strands text off screen to the left — the board keeps its own
+    pinch-zoom instead. Media query covers `(max-width: 880px)` OR coarse-pointer landscape
+    (`max-height: 520px`), so landscape phones no longer get the desktop squeeze.
+  - **Three full-height pages** on the board view (Board 🗺 / Units 📋 / Play ⚔ — bottom nav
+    replaces the old sticky top tabs + 40vh board): the board fills its whole page; Units and
+    Play are card-styled scrolling panels (sidebar sections/dep-steps as rounded cards, native
+    section headers, 44px touch targets, 15px inputs). List Builder gets the same treatment
+    (My list 📜 / Add ➕ / Setup ⚙ + points chip).
+  - **Flow**: arming ANY placement ghost (deploy, Deep Strike, disembark) auto-jumps to the
+    Board page and returns after the drop; a mobile-only action bar on the Board page drives
+    the Movement phase in place — Move/Advance for the selected units, then drag + ✓ Confirm /
+    ✕ Cancel — no more tab-flipping mid-activation.
+  - **Overflow guards**: `overflow-x: clip` on every page, `min-width: 0` + `overflow-wrap`
+    on unit rows, selects capped at 100%, `word-break` in the dice log, wrapping button rows.
+  - Files: index.html (viewport/theme metas), styles.css (mobile block rewritten as the app
+    shell), MeasuringBoard.tsx (3-tab nav, auto-jump, move bar), ListBuilder.tsx (nav icons).
+
 - **[2026-08-06] — COMBAT PATROL step 5: enhancement picker + all 8 enhancement bindings,
   fights-on-death, Combat Squad (owner: "Please do an enhancement picker with the combat patrol
   enhancements, fights-on-death and combat squad"). Combat Patrol is FEATURE-COMPLETE.** All

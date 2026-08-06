@@ -135,16 +135,19 @@ export function ListBuilder({ onOpenInBoard }: Props) {
 
   return (
     <div className="lb-layout" data-mtab={mTab}>
-      {/* Mobile-only tab bar with a live points chip. */}
+      {/* Mobile-only bottom nav with a live points chip. */}
       <div className="m-tabs" role="tablist">
         <button role="tab" aria-selected={mTab === 'list'} className={mTab === 'list' ? 'on' : ''} onClick={() => setMTab('list')}>
-          My list
+          <span className="m-ico" aria-hidden>📜</span>
+          <span>My list</span>
         </button>
         <button role="tab" aria-selected={mTab === 'catalog'} className={mTab === 'catalog' ? 'on' : ''} onClick={() => setMTab('catalog')}>
-          Add units
+          <span className="m-ico" aria-hidden>➕</span>
+          <span>Add units</span>
         </button>
         <button role="tab" aria-selected={mTab === 'setup'} className={mTab === 'setup' ? 'on' : ''} onClick={() => setMTab('setup')}>
-          Setup
+          <span className="m-ico" aria-hidden>⚙️</span>
+          <span>Setup</span>
         </button>
         <span className={`m-points${over ? ' over' : ''}`}>{points}/{limit}</span>
       </div>
