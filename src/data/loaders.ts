@@ -6,11 +6,18 @@ import type { DataIndex } from '../core/army';
 import { deployAbilityFromKeywords, type DeployAbility } from '../core/deployment';
 import { CORE_STRATAGEMS, DETACHMENT_STRAT_EFFECTS, parseTurn, type Stratagem } from '../core/stratagems';
 import datasheetsJson from '../../data/game/datasheets.json';
+import cpDatasheetsJson from '../../data/game/cp_datasheets.json';
+import cpPatrolsJson from '../../data/game/cp_patrols.json';
 import enhancementsJson from '../../data/game/enhancements.json';
 import abilitiesJson from '../../data/game/abilities.json';
 import stratagemsJson from '../../data/game/stratagems.json';
 
-export const datasheets = datasheetsJson as unknown as Datasheet[];
+// The Combat Patrol datasheets (tools/combatpatrol) join the Wahapedia-converted ones — every
+// engine path looks units up through this one list/map.
+export const datasheets = [
+  ...(datasheetsJson as unknown as Datasheet[]),
+  ...(cpDatasheetsJson as unknown as Datasheet[]),
+];
 
 export const datasheetsById: Map<string, Datasheet> = new Map(
   datasheets.map((d) => [d.id, d]),
@@ -228,5 +235,55 @@ export function layoutsForPairing(a: string, b: string): Layout[] {
   });
 }
 
-/** 11e Event Companion layouts first, then the legacy 10e maps. */
-export const layouts: Layout[] = [...layouts11, ...legacyLayouts];
+// ── Combat Patrol maps (data/layouts_cp, produced by tools/layouts_cp) ──
+// Same raw shape as the Event Companion files plus `name`/`dividerMarkers`; no pairing.
+interface CpRaw extends Omit<Ec11Raw, 'players' | 'page' | 'layoutLetter'> {
+  name: string;
+  dividerMarkers?: { pos: number[] }[];
+  terrainAreas: (Ec11Raw['terrainAreas'][number] & { letter?: string })[];
+}
+
+function convertCp(raw: CpRaw): Layout {
+  const base = convertEc11({ ...raw, page: 0, layoutLetter: '', players: [] });
+  const { pairing: _pairing, ...rest } = base;
+  return {
+    ...rest,
+    name: raw.name,
+    deployment: 'Combat Patrol',
+    deploymentId: raw.id,
+    combatPatrol: true,
+    // Preserve the printed ruin letters (AB/CD/EF/GH) the CP missions reference.
+    terrainAreas: rest.terrainAreas?.map((a, i) => {
+      const letter = raw.terrainAreas[i]?.letter;
+      return letter ? { ...a, letter } : a;
+    }),
+    ...(raw.dividerMarkers?.length ? { dividerMarkers: raw.dividerMarkers.map((m) => v(m.pos)) } : {}),
+  };
+}
+
+const cpModules = import.meta.glob<{ default: CpRaw }>('../../data/layouts_cp/cp*.json', {
+  eager: true,
+});
+export const layoutsCp: Layout[] = Object.values(cpModules)
+  .map((m) => convertCp(m.default))
+  .sort((a, b) => a.id.localeCompare(b.id));
+
+// ── Combat Patrol rosters + patrol meta ──
+export interface PatrolMeta {
+  id: string;
+  name: string;
+  faction: string;
+  rules: { name: string; text: string }[];
+  enhancements: { name: string; text: string }[];
+  stratagems: { name: string; cp?: number; when?: string; target?: string; effect?: string; restrictions?: string }[];
+  forceDispositions: string[];
+}
+export const patrols = cpPatrolsJson as unknown as PatrolMeta[];
+
+/** The fixed Combat Patrol lists (the only rosters offered in a Combat Patrol battle). */
+export function combatPatrolRosters(all: Roster[]): Roster[] {
+  return all.filter((r) => r.combatPatrol);
+}
+
+/** 11e Event Companion layouts first, then Combat Patrol maps, then the legacy 10e maps. */
+export const layouts: Layout[] = [...layouts11, ...layoutsCp, ...legacyLayouts];

@@ -80,6 +80,7 @@ export function aiReactionToPhaseEnd(
     const myTurnPassedThisRound = defendingSide === state.firstPlayer;
     if (
       state.round === 3 &&
+      state.battleType !== 'combat_patrol' && // CP plays its own stratagem cards, not the core set
       myTurnPassedThisRound &&
       state.stratUsed?.[`${defendingSide}:core:rapid_ingress`] !== `${state.round}:${state.activePlayer}:${state.phase}`
     ) {

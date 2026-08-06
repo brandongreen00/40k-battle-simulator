@@ -75,6 +75,11 @@ export interface Datasheet {
   /** Transport capacity rules text, verbatim from the data (e.g. "This model has a transport
    *  capacity of 12 Astra Militarum Infantry models. …"). Parsed by core/transport.ts. */
   transport?: string;
+  /** Combat Patrol: the unit MUST start in Strategic Reserves and cannot arrive before this
+   *  battle round; it arrives wholly within its own deployment zone (e.g. Strike from the Warp). */
+  cpReserveRound?: number;
+  /** The Combat Patrol this datasheet belongs to (CP datasheets are patrol-specific). */
+  patrol?: string;
 }
 
 /** A datasheet ability — a Core/Faction ability (resolved from the catalog) or a unit-specific
@@ -125,6 +130,8 @@ export interface Roster {
   note?: string;
   /** True for non-canonical demo rosters used only to exercise the board. */
   sample?: boolean;
+  /** True for the fixed Combat Patrol lists (played only in Combat Patrol battles). */
+  combatPatrol?: boolean;
   /** 11e recommendation: the Force Disposition this list plays best + the AI profile for it. */
   recommended?: { disposition: string; profile: string };
 }
@@ -161,6 +168,8 @@ export interface TerrainArea {
   id: string;
   polygon: Vec2[];
   features: TerrainFeature[];
+  /** Printed component letters on the Combat Patrol maps (AB/CD/EF/GH ruin labels). */
+  letter?: string;
   /** Areas sharing a groupId count as ONE terrain area (the layouts' "single terrain area"
    *  eye markers merge adjacent footprints). Absent = the area stands alone. */
   groupId?: string;
@@ -204,6 +213,11 @@ export interface Layout {
   attackerEdge?: 'top' | 'bottom' | 'left' | 'right';
   /** The Force Disposition pairing this layout is recommended for, plus its A/B/C letter. */
   pairing?: { dispositions: [string, string]; missions: [string, string]; letter: string };
+  /** True for the Combat Patrol maps (30"×44"; picked in Combat Patrol battles). */
+  combatPatrol?: boolean;
+  /** Paired attacker/defender mission-marker points printed on the territory divider of the
+   *  Combat Patrol maps (semantics arrive with the CP mission deck; rendered for reference). */
+  dividerMarkers?: Vec2[];
 }
 
 // ── Live game state (skeleton; grows in later stages) ────────────────────────
@@ -524,6 +538,9 @@ export interface GameState {
   /** 'sandbox' = the free measuring board (no rules guards); 'match' = a real battle started via
    *  NewBattle — phase/once-per-turn guards apply and sandbox controls are hidden. */
   mode: 'sandbox' | 'match';
+  /** 'combat_patrol' = a Combat Patrol battle (fixed patrol lists, 30"×44" maps, CP missions —
+   *  the 11e Chapter Approved mission layer is skipped). Absent/'standard' = a normal battle. */
+  battleType?: 'standard' | 'combat_patrol';
   /** The active player has already run their Command phase this turn (match-mode guard). */
   commandRun?: boolean;
   /** Core Stratagem "Command Re-roll" usage: side → phase key (`round:turn:phase`) it was last

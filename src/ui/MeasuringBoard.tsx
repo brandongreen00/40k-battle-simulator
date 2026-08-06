@@ -172,15 +172,22 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
   // (flowKey is derived below once the deployment bookkeeping exists; the effect lives with it.)
   const [mTab, setMTab] = useState<'tools' | 'game'>('tools');
 
+  // Battle type: a standard (11e Chapter Approved) battle, or Combat Patrol (fixed patrol
+  // lists on the three 30"×44" CP maps). Drives which maps and rosters are offered.
+  const [battleType, setBattleType] = useState<'standard' | 'combat_patrol'>('standard');
+
   // Group the layouts by deployment for the map picker (8 terrain layouts per deployment).
+  // Combat Patrol maps live in their own picker mode, not the standard groups.
   const layoutGroups = useMemo(() => {
     const groups = new Map<string, typeof layouts>();
     for (const l of layouts) {
+      if (l.combatPatrol) continue;
       if (!groups.has(l.deployment)) groups.set(l.deployment, []);
       groups.get(l.deployment)!.push(l);
     }
     return [...groups.entries()];
   }, []);
+  const cpLayouts = useMemo(() => layouts.filter((l) => l.combatPatrol), []);
 
   // Lists saved in the List Builder (localStorage) — so they survive a refresh and can be picked
   // when starting a game, not just the one handed over this session via "Open in board".
@@ -193,11 +200,35 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
     }
     return [...byName.values()];
   }, [extraRosters, savedRosters]);
-  const firstWithUnits = allRosters.find((r) => r.units.length > 0) ?? allRosters[0];
+  // In a Combat Patrol battle only the fixed patrol lists are offered; in a standard battle
+  // they are hidden (a 4-unit patrol is not a legal 1000pt list). Mid-match the battle type
+  // comes from the game state (it survives a reload; the local toggle does not).
+  const effectiveBattleType = state.mode === 'match' ? (state.battleType ?? 'standard') : battleType;
+  const pickableRosters = useMemo(
+    () => allRosters.filter((r) => (effectiveBattleType === 'combat_patrol' ? r.combatPatrol : !r.combatPatrol)),
+    [allRosters, effectiveBattleType],
+  );
+  const firstWithUnits = allRosters.find((r) => !r.combatPatrol && r.units.length > 0) ?? allRosters[0];
   const [rosterNameBySide, setRosterNameBySide] = useState<Record<Side, string>>({
     player: initialRosterName ?? firstWithUnits?.name ?? '',
     ai: firstWithUnits?.name ?? '',
   });
+  // Switching battle type swaps the map and both armies to matching picks.
+  const switchBattleType = (t: 'standard' | 'combat_patrol') => {
+    if (t === battleType) return;
+    setBattleType(t);
+    const pool = allRosters.filter((r) => (t === 'combat_patrol' ? r.combatPatrol : !r.combatPatrol && r.units.length > 0));
+    const first = pool[0]?.name ?? '';
+    const second = pool[1]?.name ?? first;
+    setRosterNameBySide({ player: first, ai: second });
+    if (t === 'combat_patrol') {
+      if (!state.layout.combatPatrol && cpLayouts[0]) dispatch({ type: 'SetLayout', layout: cpLayouts[0] });
+    } else if (state.layout.combatPatrol) {
+      const rec = layoutsForPairing(dispositions.player, dispositions.ai);
+      const back = rec[0] ?? layouts.find((l) => !l.combatPatrol);
+      if (back) dispatch({ type: 'SetLayout', layout: back });
+    }
+  };
   const [owner, setOwner] = useState<Side>('player'); // sandbox spawn-as
   // 11e Force Dispositions: each side picks a card; the pairing fixes both Primary Missions and
   // restricts the battle to the pairing's three recommended layouts (A/B/C).
@@ -695,15 +726,34 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
                 if (!window.confirm('Abandon the battle in progress and start a new one?')) return;
               }
               setPlacing(null);
-              dispatch({ type: 'NewBattle', dispositions });
+              // Restarting mid-setup keeps the running battle's type (it survives a reload).
+              dispatch({ type: 'NewBattle', dispositions, battleType: effectiveBattleType });
             }}
           >
-            {inSetup ? '↻ Restart deployment' : '⚔ New battle'}
+            {inSetup ? '↻ Restart deployment' : battleType === 'combat_patrol' ? '⚔ New Combat Patrol battle' : '⚔ New battle'}
           </button>
         </div>
 
         <section>
           {!inMatch && (
+            <div className="field">
+              <span>Battle type</span>
+              <div className="seg">
+                {(['standard', 'combat_patrol'] as const).map((t) => (
+                  <button key={t} className={battleType === t ? 'seg-on' : ''} onClick={() => switchBattleType(t)}>
+                    {t === 'standard' ? 'Standard' : 'Combat Patrol'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {!inMatch && battleType === 'combat_patrol' && (
+            <p className="hint">
+              Combat Patrol: each side plays one of the four fixed patrols on one of the three
+              30"×44" maps. Pick the map and both patrols, then start the battle.
+            </p>
+          )}
+          {!inMatch && battleType === 'standard' && (
             <div className="dispositions">
               <h2>Force Dispositions (11e)</h2>
               {(['player', 'ai'] as const).map((side) => (
@@ -731,18 +781,28 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
               title={inMatch && !inSetup ? 'Changing the map resets the board — finish or abandon the battle first' : undefined}
               onChange={(e) => { const next = layouts.find((l) => l.id === e.target.value); if (next) dispatch({ type: 'SetLayout', layout: next }); }}
             >
-              {recommendedLayouts.length > 0 && (
-                <optgroup label={`Recommended for this pairing (A/B/C)`}>
-                  {recommendedLayouts.map((l) => (
-                    <option key={`rec-${l.id}`} value={l.id}>Layout {l.pairing?.letter ?? '?'} — {l.deployment}</option>
+              {battleType === 'combat_patrol' ? (
+                <optgroup label="Combat Patrol maps (30″×44″)">
+                  {cpLayouts.map((l) => (
+                    <option key={l.id} value={l.id}>{l.name ?? l.id}</option>
                   ))}
                 </optgroup>
+              ) : (
+                <>
+                  {recommendedLayouts.length > 0 && (
+                    <optgroup label={`Recommended for this pairing (A/B/C)`}>
+                      {recommendedLayouts.map((l) => (
+                        <option key={`rec-${l.id}`} value={l.id}>Layout {l.pairing?.letter ?? '?'} — {l.deployment}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {layoutGroups.map(([deployment, group]) => (
+                    <optgroup key={deployment} label={deployment}>
+                      {group.map((l) => <option key={l.id} value={l.id}>{l.name?.split('·').pop()?.trim() ?? l.id}</option>)}
+                    </optgroup>
+                  ))}
+                </>
               )}
-              {layoutGroups.map(([deployment, group]) => (
-                <optgroup key={deployment} label={deployment}>
-                  {group.map((l) => <option key={l.id} value={l.id}>{l.name?.split('·').pop()?.trim() ?? l.id}</option>)}
-                </optgroup>
-              ))}
             </select>
           </label>
 
@@ -1016,7 +1076,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
             state={state}
             dispatch={dispatch}
             datasheetsById={datasheetsById}
-            rosters={allRosters}
+            rosters={pickableRosters}
             rosterName={rosterNameBySide}
             setRosterName={setRosterName}
             remaining={remaining}

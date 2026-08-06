@@ -132,7 +132,7 @@ export type Intent =
   // ── Pre-battle setup / deployment (Stage: setup) ──────────────────────────────
   /** Start a new battle: clear the board and enter deployment at the roll-off step.
    *  `dispositions` selects each side's Force Disposition (11e missions; defaults apply). */
-  | { type: 'NewBattle'; dispositions?: Record<Side, DispositionId> }
+  | { type: 'NewBattle'; dispositions?: Record<Side, DispositionId>; battleType?: 'standard' | 'combat_patrol' }
   /** Roll off to determine Attacker (winner) and Defender; Defender then deploys first. */
   | { type: 'RollRoles' }
   /** Manually set the Attacker (the other side is Defender). Defender deploys first. */
@@ -705,15 +705,22 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
     // ── Pre-battle setup / deployment ──────────────────────────────────────────
     case 'NewBattle': {
       const dispositions = intent.dispositions ?? { player: 'take_and_hold' as DispositionId, ai: 'take_and_hold' as DispositionId };
+      const battleType = intent.battleType ?? 'standard';
       return {
         ...createInitialState(state.layout),
         stage: 'setup',
         mode: 'match',
+        battleType,
         setup: { step: 'roll_roles', dispositions },
         // Each side shuffles its own Tactical Mission deck now (seeded — games stay reproducible).
-        secondaries: initSecondaries(rng),
+        // Combat Patrol plays its own mission cards (later stage) — no Tactical deck.
+        ...(battleType === 'combat_patrol' ? {} : { secondaries: initSecondaries(rng) }),
         turnKills: [],
-        log: ['— Deployment — roll off to determine Attacker and Defender —'],
+        log: [
+          battleType === 'combat_patrol'
+            ? '— Combat Patrol — roll off to determine Attacker and Defender —'
+            : '— Deployment — roll off to determine Attacker and Defender —',
+        ],
       };
     }
 
@@ -736,7 +743,8 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         log: [...state.log, `Roll-off: player ${ro.player}, ai ${ro.ai} → ${attacker} is Attacker; ${defender} deploys first`],
       };
       const dispositions = state.setup?.dispositions as Record<Side, DispositionId> | undefined;
-      if (dispositions && next.layout.terrainAreas) {
+      // Combat Patrol battles play the CP mission cards (a later stage), not the 11e CA deck.
+      if (dispositions && next.layout.terrainAreas && state.battleType !== 'combat_patrol') {
         next = initMissions(next, ctx, dispositions, attacker);
       }
       return next;
@@ -753,7 +761,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         log: [...state.log, `${attacker} is Attacker; ${defender} deploys first`],
       };
       const dispositions = state.setup?.dispositions as Record<Side, DispositionId> | undefined;
-      if (dispositions && next.layout.terrainAreas) {
+      if (dispositions && next.layout.terrainAreas && state.battleType !== 'combat_patrol') {
         next = initMissions(next, ctx, dispositions, attacker);
       }
       return next;
@@ -763,6 +771,14 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       // Aircraft must start in Strategic Reserves (23.01).
       if (state.mode === 'match' && ctx && isAircraft(ctx.datasheets.get(intent.datasheetId))) {
         return { ...state, log: [...state.log, 'Deployment rejected: AIRCRAFT must start in Strategic Reserves'] };
+      }
+      // Combat Patrol: some units MUST start in Strategic Reserves (e.g. Strike from the Warp).
+      const cpRound = state.battleType === 'combat_patrol' ? ctx?.datasheets.get(intent.datasheetId)?.cpReserveRound : undefined;
+      if (state.mode === 'match' && cpRound) {
+        return {
+          ...state,
+          log: [...state.log, `Deployment rejected: this unit must start in Strategic Reserves (arrives battle round ${cpRound})`],
+        };
       }
       // Start the battle embarked within a friendly transport (18.01) — capacity-checked; the
       // models are placeholders off the board until the unit disembarks.
@@ -1549,14 +1565,30 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
           : ds
             ? deployAbilityFromKeywords(ds.keywords, (ds.abilities ?? []).map((a) => a.name))
             : 'standard');
-      // Priority-drop Beacon: the bearer's unit may Deep Strike from the FIRST battle round.
-      const effectiveRound = allowsRound1DeepStrike(unit) ? Math.max(state.round, 2) : state.round;
-      const check = deepStrikeArrivalLegal(
-        formationWorld(opts), shape, enemies, effectiveRound,
-        occupiedBases(state, ctx, [unit.id]),
-        { deepStrike: ability === 'deep_strike', layout: state.layout, side: unit.owner },
-      );
-      if (!check.legal) return { ...state, log: [...state.log, `Reserves arrival rejected: ${check.reason}`] };
+      // Combat Patrol mandatory reserves (e.g. Strike from the Warp): the unit cannot arrive
+      // before its stated battle round and must be set up wholly within its own deployment zone.
+      const cpRound = state.battleType === 'combat_patrol' ? ds?.cpReserveRound : undefined;
+      if (cpRound) {
+        if (state.round < cpRound) {
+          return { ...state, log: [...state.log, `Reserves arrival rejected: cannot arrive before battle round ${cpRound}`] };
+        }
+        const zoneCheck = checkUnitDeployment(
+          formationWorld(opts), shape, state.layout, unit.owner, 'standard', [],
+          occupiedBases(state, ctx, [unit.id]),
+        );
+        if (!zoneCheck.legal) {
+          return { ...state, log: [...state.log, `Reserves arrival rejected: must arrive wholly within your deployment zone (${zoneCheck.reason})`] };
+        }
+      } else {
+        // Priority-drop Beacon: the bearer's unit may Deep Strike from the FIRST battle round.
+        const effectiveRound = allowsRound1DeepStrike(unit) ? Math.max(state.round, 2) : state.round;
+        const check = deepStrikeArrivalLegal(
+          formationWorld(opts), shape, enemies, effectiveRound,
+          occupiedBases(state, ctx, [unit.id]),
+          { deepStrike: ability === 'deep_strike', layout: state.layout, side: unit.owner },
+        );
+        if (!check.legal) return { ...state, log: [...state.log, `Reserves arrival rejected: ${check.reason}`] };
+      }
       const newModels = layoutModels(opts, state.layout).map((m, i) => ({
         ...m,
         wounds: unit.models[i]?.wounds ?? m.wounds,

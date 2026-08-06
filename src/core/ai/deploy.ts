@@ -295,6 +295,8 @@ function wantsReserves(state: GameState, side: Side, entry: DeployEntry, ability
   // AIRCRAFT must start in Strategic Reserves (23.01) — the reducer enforces it, so this is
   // not profile-gated.
   if (isAircraft(entry.ds)) return true;
+  // Combat Patrol mandatory reserves (Strike from the Warp) — the reducer enforces it too.
+  if (state.battleType === 'combat_patrol' && entry.ds.cpReserveRound) return true;
   if (!profile.useReserves) return false;
   // Lone Operative characters that ALSO have Deep Strike (the Callidus has Infiltrators too, so
   // her classified ability is 'infiltrators') survive by arriving from Reserves on round 2 —

@@ -13,7 +13,7 @@ import type { EngineContext } from '../engine';
 import { aliveModels, isOnBoard, engagedEnemies, pendingScoutUnits, reservesArrivable, unitCentroid, ENGAGEMENT_RANGE } from '../phases';
 import { checkCoherency } from '../coherency';
 import { anyOverlap, clampDeltaAvoidingOverlap, occupiedBases, unitBases, unitOverlaps } from '../collision';
-import { deepStrikeArrivalLegal, zoneFor } from '../deployment';
+import { checkUnitDeployment, deepStrikeArrivalLegal, zoneFor } from '../deployment';
 import { formationPositions } from '../formation';
 import { gapBetweenBases, dist, baseRadius } from '../geometry';
 import { objectiveControl } from '../engine';
@@ -279,6 +279,12 @@ export function findArrivalAnchor(state: GameState, unit: UnitInstance, deps: Ai
   const { ctx } = deps;
   const ds = ctx.datasheets.get(unit.datasheetId);
   if (!ds) return null;
+  // Combat Patrol mandatory reserves: not before the stated round, and the unit arrives wholly
+  // within its own deployment zone — mirror the reducer's exact check.
+  if (state.battleType === 'combat_patrol' && ds.cpReserveRound) {
+    if (state.round < ds.cpReserveRound) return null;
+    return findZoneArrivalAnchor(state, unit, deps);
+  }
   const deepStrike = arrivalAbility(unit, deps) === 'deep_strike';
   const enemies: { pos: Vec2; shape: typeof ds.baseShape }[] = [];
   for (const e of state.units) {
@@ -305,6 +311,35 @@ export function findArrivalAnchor(state: GameState, unit: UnitInstance, deps: Ai
         const positions = formationPositions({ anchor, count: unit.models.length, baseShape: ds.baseShape, formation: 'block', rotation: 0 });
         if (!deepStrikeArrivalLegal(positions, ds.baseShape, enemies, state.round, occupied, legalOpts).legal) continue;
         if (positions.some((p) => p.x < r || p.y < r || p.x > W - r || p.y > H - r)) continue;
+        if (!best || -objDist > best.score) best = { anchor, score: -objDist };
+      }
+    }
+    if (best) return best.anchor;
+  }
+  return null;
+}
+
+/** Combat Patrol reserves arrival: the best legal anchor wholly within the unit's own
+ *  deployment zone (closest to an objective), validated with the reducer's exact check. */
+function findZoneArrivalAnchor(state: GameState, unit: UnitInstance, deps: AiDeps): Vec2 | null {
+  const { ctx } = deps;
+  const ds = ctx.datasheets.get(unit.datasheetId);
+  if (!ds) return null;
+  const zone = zoneFor(state.layout, unit.owner);
+  if (zone.length === 0) return null;
+  const xs = zone.map((p) => p.x);
+  const ys = zone.map((p) => p.y);
+  const occupied = occupiedBases(state, ctx, [unit.id]);
+  const targets = [...state.layout.objectives, { x: state.layout.boardWidth / 2, y: state.layout.boardHeight / 2 }];
+  for (const step of [2, 1, 0.5]) {
+    let best: { anchor: Vec2; score: number } | null = null;
+    for (let x = Math.min(...xs); x <= Math.max(...xs); x += step) {
+      for (let y = Math.min(...ys); y <= Math.max(...ys); y += step) {
+        const anchor = { x, y };
+        const objDist = Math.min(...targets.map((o) => dist(anchor, o)));
+        if (best && objDist >= -best.score) continue;
+        const positions = formationPositions({ anchor, count: unit.models.length, baseShape: ds.baseShape, formation: 'block', rotation: 0 });
+        if (!checkUnitDeployment(positions, ds.baseShape, state.layout, unit.owner, 'standard', [], occupied).legal) continue;
         if (!best || -objDist > best.score) best = { anchor, score: -objDist };
       }
     }
