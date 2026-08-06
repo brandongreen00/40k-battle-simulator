@@ -1,13 +1,13 @@
 # Combat Patrol (11e) — data, maps, and battle mode
 
-> Status after step 4 (2026-08-06): **army selection, deployment, mission
-> scoring, stratagems AND per-unit specials work end-to-end.** The four patrol
-> lists and the three 30"×44" maps are in the app; a Combat Patrol battle runs
-> the full setup flow, the five phases, scores each side's own patrol mission
-> card (§4a), plays each patrol's three stratagems plus the owner-trimmed core
-> set (§4b), and binds the datasheets' special abilities and the unit-riding
-> patrol rules (§4c). The patrols' *enhancements in play* are the remaining
-> step (see §5).
+> Status after step 5 (2026-08-06): **Combat Patrol is feature-complete.** The
+> four patrol lists and the three 30"×44" maps are in the app; a battle runs
+> the full setup flow (incl. the one-per-patrol enhancement pick and Combat
+> Squad splits), the five phases, scores each side's own patrol mission card
+> (§4a), plays each patrol's three stratagems plus the owner-trimmed core set
+> (§4b), binds the datasheets' special abilities and unit-riding patrol rules
+> (§4c), and binds all eight patrol enhancements plus the fights-on-death
+> mechanic (§4d). Remaining nits in §5.
 
 ## 1. Sources
 
@@ -242,19 +242,53 @@ term in the position score (P(2D6 ≥ gap) × melee EV). Before the fix, ZERO
 charges occurred across 24 AI-vs-AI CP probe games; after it, charges land
 and the melee specials fire in real play, still with zero rejected intents.
 
+## 4d. Enhancements, fights-on-death and Combat Squad (step 5, 2026-08-06)
+
+**Enhancement picker**: a "Patrol enhancement" block in the Deployment panel
+(once Attacker/Defender is set) offers each side its patrol's two cards (or
+"No enhancement"), once per side (`ChooseCpEnhancement`). The pick is stamped
+onto the bearer's unit — retroactively if it is already deployed, otherwise
+when the bearer is placed. The AI picks a curated passive default per patrol
+(Sanctified Auspexes / Killer Reflexes / Earth Caste Modifications / Supreme
+Combatant).
+
+| Enhancement (bearer) | Binding |
+|---|---|
+| Sanctified Auspexes (Venerable Dreadnought) | ranged attacks re-roll ONE failed hit roll per weapon sequence (an extra die in the hit pool — the one place a single-die re-roll IS automated) |
+| Purifying Force (Brotherhood Terminators) | `UseUnitAbility` in the Fight phase after a charge (once per battle per army): melee attacks gain [LETHAL HITS] |
+| Killer Reflexes (Eversor Assassin) | always-on **fights-on-death** (see below) |
+| Sanctic Slayers (Preacher Teguen) | `UseUnitAbility` once per turn: a friendly IH unit's attacks get +1 to wound vs targets with T ≥ the attack's S (rides through the Leader merge) |
+| Proximity Scanners (Devilfish) | units disembarking from it get +1 A on pulse blasters/carbines that turn |
+| Earth Caste Modifications (Cloudspear) | after it shoots, the target is suppressed (-1 to hit) until the start of the bearer's next turn (survives the turn reset, like pinned); its ingress may arrive >6" from enemies (instead of >8") at the cost of charging |
+| Supreme Combatant (Master Zacharial) | the card's [LETHAL HITS]-or-[SUSTAINED HITS 1] pick is collapsed to always-on [LETHAL HITS] (decision) |
+| Dutiful Defenders (Bladeguard) | Heroic Intervention targeting them costs 1 less CP (once per battle round per army) — Leap to Defend becomes free |
+
+**Fights-on-death** (Determined to the Last stratagem + Killer Reflexes): in
+the Fight phase, when a model of a covered un-fought unit is destroyed, it
+stays on a 2+ as a `dying` model — it still fights, cannot soak further
+damage, and is removed when its unit has fought or the phase ends (kills
+recorded at removal). Determined to the Last is now playable from the
+stratagem list with a unit picker; the AI does not play it (Killer Reflexes,
+being always-on, works for the AI automatically).
+
+**Combat Squad** (Strike Squad): a "⚟ Combat Squad" button on the deployment
+row splits the 10 into two units of five at Declare Battle Formations
+(`DeclareCombatSquad`, reusing the transport-split entry machinery — halves
+deploy/reserve like any unit, the entry counts as placed only when both are
+down, ↩ undoes it). The wargear partitions as evenly as possible
+(simplification: no manual steppers — 8 storm bolters split 4/4). The AI never
+declares the split (policy), but correctly deploys human-declared halves.
+
 ## 5. Not yet implemented (honest gaps → next steps)
 
-1. **Patrol enhancements in play** — texts are extracted into `cp_patrols.json`
-   (Killer Reflexes, Sanctic Slayers, Proximity Scanners, Earth Caste
-   Modifications, Supreme Combatant, Dutiful Defenders, Sanctified Auspexes,
-   Purifying Force); no engine bindings, and no CP enhancement picker exists in
-   the battle flow yet. Determined to the Last / Killer Reflexes fights-on-death
-   also belongs here.
-2. **Combat Squad** (Strike Squad 5/5 split) is text-only — see §4c.
-3. **Leaders**: only Preacher Teguen has a Leader rule (→ Inquisitorial Agents);
-   the pairing works in Declare Battle Formations.
-4. **Command Re-roll single-die uses** (hit/save/wound/damage/hazard/attacks)
-   are text-only — see §4b.
-5. AI nits: Gate of Infinity declined (policy knob); Nuncio-Aquila and the
-   Strike-from-the-Warp shock are rare in AI-vs-AI play (spatially conditioned);
+1. **Command Re-roll single-die uses** (hit/save/wound/damage/hazard/attacks)
+   are text-only — see §4b. (Sanctified Auspexes' own one-die re-roll IS
+   automated, since it needs no player choice.)
+2. **Supreme Combatant** is fixed to [LETHAL HITS]; Combat Squad wargear splits
+   evenly with no manual choice — both are one-line extensions if wanted.
+3. AI nits: Gate of Infinity and Determined to the Last are not played by the
+   AI (policy knobs); it always picks the same curated enhancement per patrol;
+   Nuncio-Aquila / Strike-from-the-Warp shock are rare in AI-vs-AI play;
    the AI's charge-odds model ignores the Grav-Inhibitor -2.
+4. **Leaders**: only Preacher Teguen has a Leader rule (→ Inquisitorial Agents);
+   the pairing works in Declare Battle Formations.

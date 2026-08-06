@@ -237,6 +237,9 @@ export interface ModelInstance {
   moveStart?: Vec2;
   /** Datasheet override for this model (a merged Leader's model uses its own profile/weapons). */
   datasheetId?: string;
+  /** Fights-on-death (Determined to the Last / Killer Reflexes): destroyed but not yet removed —
+   *  the model still fights; it is removed when its unit has fought or the Fight phase ends. */
+  dying?: boolean;
 }
 
 /** Per-unit, per-turn activation + status flags. Reset at the points the rules dictate. */
@@ -267,6 +270,9 @@ export interface UnitStatus {
   /** Pinned (Suppressing Fire): -2" Move while turnCounter < pinnedUntil. Survives the
    *  per-turn status reset so it covers the pinned unit's own following turn. */
   pinnedUntil?: number;
+  /** Suppressed (Earth Caste Modifications): -1 to hit while turnCounter < suppressedUntil.
+   *  Survives the per-turn status reset (it must cover the suppressed unit's own turn). */
+  suppressedUntil?: number;
   /** Active ability/Order/Stratagem effect ids (see core/effects.ts). Expire at turn reset. */
   activeEffects?: string[];
   /** Effect ids that never expire (e.g. Co-ordinated Eradication's until-end-of-battle mark).
@@ -525,15 +531,17 @@ export interface SplitGroup {
   wargear?: Record<string, number>;
 }
 
-/** A unit split declared at Declare Battle Formations by a transport's split rule. The roster
+/** A unit split declared at Declare Battle Formations. Via a transport's split rule the roster
  *  entry `entryKey` becomes two half-units keyed `${entryKey}#a` (which must start the battle
- *  embarked within `transportUnitId`) and `${entryKey}#b` (deployed like any other unit). */
+ *  embarked within `transportUnitId`) and `${entryKey}#b` (deployed like any other unit).
+ *  A COMBAT SQUAD split has no transport — both halves deploy like any other unit. */
 export interface DeclaredSplit {
   side: Side;
   entryKey: string; // roster entry key of the split unit ("side:index")
   dsId: string;
-  transportUnitId: string; // the transport whose rule performed the split (carries group A)
-  groups: [SplitGroup, SplitGroup]; // [riders, on-foot]
+  /** The transport whose rule performed the split (carries group A). Absent for Combat Squad. */
+  transportUnitId?: string;
+  groups: [SplitGroup, SplitGroup]; // [riders, on-foot] — or the two Combat Squads
 }
 
 /** Warrant of Trade (Rogue Trader): after both armies have deployed, redeploy up to D3 IMPERIUM
@@ -602,6 +610,9 @@ export interface GameState {
   spotted?: Record<string, { by: string; markerlight: boolean; pathfinder?: boolean }>;
   /** Once-per-battle-per-ARMY ability plays (e.g. Co-ordinated Eradication), keyed `side:slug`. */
   cpArmyOnce?: Partial<Record<string, boolean>>;
+  /** Combat Patrol enhancement choice per side (`cpenh:<patrol>:<slug>` + the bearer datasheet;
+   *  id null = declined). Stamped onto the bearer's unit when it deploys. */
+  cpEnhancements?: Partial<Record<Side, { id: string | null; targetDsId?: string }>>;
   /** Tactical (Secondary) Missions — per-side deck/hand/VP (match mode only). */
   secondaries?: Record<Side, SecondarySideState>;
   /** 11e Chapter Approved mission state (dispositions, primaries, markers, actions). */

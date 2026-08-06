@@ -165,10 +165,27 @@ export function cpInnateEffectIds(unit: UnitInstance, ctx: EngineContext): strin
   if (has('gravis protection')) out.push('cp:gravis_protection');
   if (has('superior weapon support system')) out.push('cp:swss');
   if (has('breach and clear')) out.push('cp:breach_and_clear');
+  // Passive Combat Patrol enhancements (the picked one is stamped as `cpenh:<patrol>:<slug>`).
+  const enh = cpEnhancementSlug(unit);
+  if (enh === 'killer_reflexes') out.push('cp:fights_on_death');
+  if (enh === 'sanctified_auspexes') out.push('cp:reroll_one_hit');
+  // Supreme Combatant: [LETHAL HITS] or [SUSTAINED HITS 1] per attack — collapsed to the
+  // always-on [LETHAL HITS] pick (decision recorded in docs/combat_patrol.md).
+  if (enh === 'supreme_combatant') out.push('lethal_hits_granted');
   return out;
 }
 
 /** Shield Drone (T'au): +1 to the bearer's Wounds characteristic. */
 export function abilityWoundBonus(ds: Datasheet | undefined): number {
   return hasAbility(ds, 'Shield Drone') ? 1 : 0;
+}
+
+/** The unit's Combat Patrol enhancement slug (from `cpenh:<patrol>:<slug>` ids), checking the
+ *  unit itself and any merged Leader (Sanctic Slayers rides on Teguen through the merge). */
+export function cpEnhancementSlug(unit: UnitInstance): string | null {
+  const ids = [unit.enhancementId, ...(unit.attachedLeaders ?? []).map((l) => l.enhancementId)];
+  for (const id of ids) {
+    if (id?.startsWith('cpenh:')) return id.split(':')[2] ?? null;
+  }
+  return null;
 }

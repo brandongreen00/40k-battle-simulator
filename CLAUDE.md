@@ -330,6 +330,50 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-08-06] — COMBAT PATROL step 5: enhancement picker + all 8 enhancement bindings,
+  fights-on-death, Combat Squad (owner: "Please do an enhancement picker with the combat patrol
+  enhancements, fights-on-death and combat squad"). Combat Patrol is FEATURE-COMPLETE.** All
+  gates green: `pnpm typecheck`, `pnpm test` (**505 tests**, +5 in a step-5 block), `pnpm build`;
+  AI-vs-AI probes (12 games) end with ZERO rejected intents, both sides deciding an enhancement
+  every game, Earth Caste suppression + Sanctified Auspexes re-rolls firing in real play; an
+  8/8-check Playwright drive (picker → human pick → ⚟ Combat Squad split/undo/re-split → AI
+  seats pick their own card → full game, zero console errors). Doc: **docs/combat_patrol.md §4d**.
+  - **Picker**: new `ChooseCpEnhancement` intent (setup, once per side, decline allowed) +
+    "Patrol enhancement" block in the DeploymentPanel; the pick is stored on
+    `GameState.cpEnhancements` and stamped onto the bearer's unit retroactively or at
+    deploy/reserve time (`cpEnhancementFor`). Curated bearer table in loaders
+    (`patrolEnhancements`, ids `cpenh:<patrol>:<slug>`); the AI picks a passive default per
+    patrol in aiDeployAction.
+  - **The 8 bindings** (via `cpEnhancementSlug`, Leader-merge-aware): Sanctified Auspexes
+    (re-roll ONE failed hit — new `rerollOneHit` output through CombatSituation into an extra
+    die in combat.ts; the one single-die re-roll that needs no player choice, so it IS
+    automated), Purifying Force (Fight-after-charge `UseUnitAbility`, army-once → melee
+    [LETHAL HITS]), Killer Reflexes (always-on fights-on-death), Sanctic Slayers (once/turn
+    `UseUnitAbility`: +1 wound vs T ≥ S for a friendly IH unit), Proximity Scanners (disembark
+    grant: +1 A pulse weapons), Earth Caste Modifications (post-shoot suppression -1 to hit via
+    turnCounter'd `suppressedUntil` + ingress >6" with `cannotCharge`, new `minEnemyDist` on
+    deepStrikeArrivalLegal), Supreme Combatant (collapsed to always-on [LETHAL HITS] —
+    decision), Dutiful Defenders (Heroic Intervention -1 CP once per round — Leap to Defend
+    free, tracked in stratUsed).
+  - **Fights-on-death** (Determined to the Last stratagem — now engine-bound, its §4b text-only
+    note removed — + Killer Reflexes): melee deaths on a covered un-fought unit in the Fight
+    phase roll a D6 — on 2+ the model becomes `ModelInstance.dying` (fights on, cannot soak:
+    casualtyOrder excludes it; an all-dying unit is a no-op target, never a reject). Sweeps
+    remove dying models when the unit has fought (FightUnit / melee Attack / SetUnitStatus
+    hasFought) and at the Fight-phase end (advancePhase), with recordKills at each sweep so the
+    kill ledger + Sanction windows stay honest. Determined has a unit picker in the strat list
+    (CpSpecialStrat unit-only variant); the AI doesn't play it (Killer Reflexes works for the
+    AI automatically).
+  - **Combat Squad**: new `DeclareCombatSquad` intent reusing the transport-split machinery
+    (`DeclaredSplit.transportUnitId` now optional): 5/5 halves with the wargear partitioned as
+    evenly as possible (no steppers — decision), both halves deploy/reserve like normal entries,
+    `isEntryPlaced` both-halves logic + the ⇆ UI expansion work unchanged; "⚟ Combat Squad"
+    button + "squad A/B" labels + ↩ undo in the deployment list. The AI never declares it but
+    deploys human-declared halves (Playwright-verified end-to-end).
+  - **Handoff**: Combat Patrol steps 1–5 all shipped. Remaining nits (§5): Command Re-roll
+    single-die uses text-only; Supreme Combatant fixed to lethal; even-split-only Combat Squad
+    wargear; AI policy knobs (Gate/Determined declined, fixed enhancement picks).
+
 - **[2026-08-06] — COMBAT PATROL step 4: per-unit specials (owner: "please add the per-unit
   specials").** Every datasheet ability + unit-riding patrol rule of the four patrols is
   engine-bound except Combat Squad (text-only). All gates green: `pnpm typecheck`, `pnpm test`

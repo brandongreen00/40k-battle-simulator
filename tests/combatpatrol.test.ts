@@ -8,6 +8,7 @@ import { createInitialState, reduce } from '../src/core/state';
 import { makeRNG } from '../src/core/rng';
 import { gatherAttackModifiers } from '../src/core/effects';
 import { cpInnateEffectIds } from '../src/core/abilities';
+import { isEntryPlaced } from '../src/core/deployment';
 import { CP_BANNED_CORE, usableStratagems } from '../src/core/stratagems';
 import { runMatch, type MatchData } from '../src/core/ai/match';
 import {
@@ -739,6 +740,243 @@ describe('combat patrol per-unit specials (step 4)', () => {
     s2 = reduce(s2, { type: 'UseUnitAbility', unitId: vigilants.id, ability: 'nuncio_aquila', objectiveIdx: ghIdx }, rng, ctx);
     expect(s2.log.join('\n')).toContain('NUNCIO-AQUILA');
     expect(s2.log.join('\n')).toContain('Nuncio-Aquila:');
+  });
+});
+
+describe('combat patrol enhancements, fights-on-death and Combat Squad (step 5)', () => {
+  const ctx = { datasheets: datasheetsById };
+  const rng = makeRNG(23);
+  let seq = 700;
+  const mkUnit = (owner: Side, datasheetId: string, pos: { x: number; y: number }, count = 1, extra?: Partial<UnitInstance>): UnitInstance => {
+    const w = datasheetsById.get(datasheetId)?.models[0]?.W ?? 1;
+    return {
+      id: `e${++seq}`,
+      owner,
+      datasheetId,
+      models: Array.from({ length: count }, (_, i) => ({
+        id: `e${seq}m${i}`, unitId: `e${seq}`, pos: { x: pos.x + (i % 5) * 0.6, y: pos.y + Math.floor(i / 5) * 0.6 }, wounds: w, alive: true,
+      })),
+      startingModels: count,
+      status: {},
+      ...extra,
+    };
+  };
+  const mkState = (units: UnitInstance[], extra?: Partial<GameState>): GameState => ({
+    ...createInitialState(layoutsCp[0]!),
+    stage: 'battle',
+    mode: 'match',
+    battleType: 'combat_patrol',
+    round: 2,
+    activePlayer: 'player',
+    firstPlayer: 'player',
+    units,
+    cp: { player: 3, ai: 3 },
+    cpMissions: {
+      attacker: 'player',
+      missionId: { player: 'inquisitorial_sanction', ai: 'expansionary_campaign' },
+      vp: { player: 0, ai: 0 },
+      events: [],
+    },
+    ...extra,
+  });
+  const mkSetupState = (units: UnitInstance[] = []): GameState => ({
+    ...createInitialState(layoutsCp[0]!),
+    stage: 'setup',
+    mode: 'match',
+    battleType: 'combat_patrol',
+    units,
+    setup: { step: 'deploy', attacker: 'player', defender: 'ai', toDeploy: 'ai' },
+  });
+  const base = {
+    phase: 'shooting' as const,
+    weaponType: 'ranged' as const,
+    weaponKeywords: { unknown: [] },
+    attackerKeywords: [],
+    targetKeywords: [],
+    gap: 12,
+  };
+
+  it('ChooseCpEnhancement: once per side, stamped retroactively and at deploy time', () => {
+    const eversor = mkUnit('player', 'cp-inquisitors-hand-eversor-assassin', { x: 5, y: 5 });
+    let s = mkSetupState([eversor]);
+    s = reduce(
+      s,
+      { type: 'ChooseCpEnhancement', side: 'player', enhancementId: 'cpenh:inquisitors_hand:killer_reflexes', targetDsId: 'cp-inquisitors-hand-eversor-assassin' },
+      rng,
+      ctx,
+    );
+    // Retroactive stamp: the Eversor was already down.
+    expect(s.units[0]!.enhancementId).toBe('cpenh:inquisitors_hand:killer_reflexes');
+    const again = reduce(s, { type: 'ChooseCpEnhancement', side: 'player', enhancementId: null }, rng, ctx);
+    expect(again.log[again.log.length - 1]).toContain('already decided');
+    // Deploy-time stamp: pick first, then place the bearer in Reserves.
+    let s2 = mkSetupState([]);
+    s2 = reduce(
+      s2,
+      { type: 'ChooseCpEnhancement', side: 'ai', enhancementId: 'cpenh:sudden_dawn_cadre:earth_caste_modifications', targetDsId: 'cp-sudden-dawn-cadre-commander-cloudspear' },
+      rng,
+      ctx,
+    );
+    const ds = datasheetsById.get('cp-sudden-dawn-cadre-commander-cloudspear')!;
+    s2 = reduce(
+      s2,
+      {
+        type: 'PlaceInReserves', unitId: 'cs9', owner: 'ai', datasheetId: ds.id,
+        baseShape: ds.baseShape, modelCount: 1, wounds: ds.models[0]!.W,
+      },
+      rng,
+      ctx,
+    );
+    expect(s2.units.find((u) => u.id === 'cs9')!.enhancementId).toBe('cpenh:sudden_dawn_cadre:earth_caste_modifications');
+    // Enhancement effects flow: Killer Reflexes = fights-on-death; Supreme Combatant = lethal.
+    expect(cpInnateEffectIds(s.units[0]!, ctx)).toContain('cp:fights_on_death');
+    const zach = mkUnit('ai', 'cp-vengeful-brethren-master-zacharial', { x: 5, y: 5 }, 1, { enhancementId: 'cpenh:vengeful_brethren:supreme_combatant' });
+    expect(cpInnateEffectIds(zach, ctx)).toContain('lethal_hits_granted');
+    const dread = mkUnit('ai', 'cp-crowes-sanctifiers-venerable-dreadnought', { x: 5, y: 5 }, 1, { enhancementId: 'cpenh:crowes_sanctifiers:sanctified_auspexes' });
+    expect(cpInnateEffectIds(dread, ctx)).toContain('cp:reroll_one_hit');
+    expect(gatherAttackModifiers(base, ['cp:reroll_one_hit'], []).rerollOneHit).toBe(true);
+  });
+
+  it('fights-on-death: destroyed models stay on a 2+, fight, and are removed afterwards', () => {
+    // 10 Strike Squad falchions into 3 Bladeguard with Determined to the Last active.
+    const strike = mkUnit('ai', 'cp-crowes-sanctifiers-strike-squad', { x: 15, y: 22 }, 10);
+    const bladeguard = mkUnit('player', 'cp-vengeful-brethren-bladeguard-veteran-squad', { x: 15, y: 23.5 }, 3, {
+      status: { activeEffects: ['cp:fights_on_death'] },
+    });
+    let s = mkState([strike, bladeguard], { phase: 'Fight', activePlayer: 'ai' });
+    s = reduce(s, { type: 'FightUnit', attackerUnitId: strike.id, targetUnitId: bladeguard.id }, rng, ctx);
+    const bg = s.units.find((u) => u.id === bladeguard.id)!;
+    const dead = bg.models.filter((m) => !m.alive).length;
+    const dying = bg.models.filter((m) => m.alive && m.dying).length;
+    if (dead + dying > 0) {
+      expect(s.log.join('\n')).toContain('Fights on death');
+      expect(dying).toBeGreaterThan(0); // 5/6 per model — with this seed at least one stays
+    }
+    if (dying > 0) {
+      // The dying models swing back, then are removed when the unit has fought.
+      const fought = reduce(s, { type: 'FightUnit', attackerUnitId: bladeguard.id, targetUnitId: strike.id }, rng, ctx);
+      const bgAfter = fought.units.find((u) => u.id === bladeguard.id)!;
+      expect(bgAfter.models.some((m) => m.alive && m.dying)).toBe(false);
+      expect(fought.log.join('\n')).toContain('dying model(s) removed');
+      // Or they are removed at the end of the Fight phase.
+      const phaseEnd = reduce(s, { type: 'AdvancePhase' }, rng, ctx);
+      expect(phaseEnd.units.find((u) => u.id === bladeguard.id)!.models.some((m) => m.alive && m.dying)).toBe(false);
+    }
+  });
+
+  it('Proximity Scanners and Earth Caste Modifications bind', () => {
+    // Proximity Scanners: riders disembarking from the enhanced Devilfish get +1 A pulse guns.
+    const devilfish = mkUnit('player', 'cp-sudden-dawn-cadre-devilfish', { x: 15, y: 22 }, 1, { enhancementId: 'cpenh:sudden_dawn_cadre:proximity_scanners' });
+    const riders = mkUnit('player', 'cp-sudden-dawn-cadre-breacher-team', { x: 0, y: 0 }, 5, { inReserves: true, embarkedIn: devilfish.id });
+    let s = mkState([devilfish, riders], { phase: 'Movement' });
+    s = reduce(s, { type: 'DisembarkUnit', unitId: riders.id, anchor: { x: 15, y: 18 } }, rng, ctx);
+    expect(s.units.find((u) => u.id === riders.id)!.status.activeEffects).toContain('cp:pulse_bonus');
+    expect(gatherAttackModifiers({ ...base, weaponName: 'pulse blaster' }, ['cp:pulse_bonus'], []).extraAttacks).toBe(1);
+    expect(gatherAttackModifiers({ ...base, weaponName: 'rail rifle' }, ['cp:pulse_bonus'], []).extraAttacks).toBe(0);
+    // Earth Caste: after Cloudspear shoots, the target is suppressed (-1 to hit) through its turn.
+    const cloudspear = mkUnit('ai', 'cp-sudden-dawn-cadre-commander-cloudspear', { x: 26, y: 16 }, 1, { enhancementId: 'cpenh:sudden_dawn_cadre:earth_caste_modifications' });
+    const target = mkUnit('player', 'cp-vengeful-brethren-intercessor-squad', { x: 26, y: 24 }, 5);
+    let s2 = mkState([cloudspear, target], { phase: 'Shooting', activePlayer: 'ai', turnCounter: 4 });
+    s2 = reduce(s2, { type: 'ShootUnit', attackerUnitId: cloudspear.id, targetUnitId: target.id }, rng, ctx);
+    expect(s2.log.join('\n')).not.toContain('Shooting rejected');
+    expect(s2.units.find((u) => u.id === target.id)!.status.suppressedUntil).toBe(6);
+    // Earth Caste ingress: Cloudspear may arrive >6" from enemies (instead of >8").
+    const arriving = mkUnit('ai', 'cp-sudden-dawn-cadre-commander-cloudspear', { x: 0, y: 0 }, 1, { inReserves: true, enhancementId: 'cpenh:sudden_dawn_cadre:earth_caste_modifications' });
+    const enemy = mkUnit('player', 'cp-vengeful-brethren-intercessor-squad', { x: 15, y: 22 }, 5);
+    const s3 = mkState([arriving, enemy], { phase: 'Movement', activePlayer: 'ai', round: 2 });
+    const arrived = reduce(
+      s3,
+      { type: 'ArriveFromReserves', unitId: arriving.id, anchor: { x: 15, y: 13.2 }, ability: 'deep_strike' },
+      rng,
+      ctx,
+    );
+    const u = arrived.units.find((x) => x.id === arriving.id)!;
+    expect(u.inReserves).toBe(false); // ~7" out: legal only via Earth Caste
+    expect(u.status.cannotCharge).toBe(true);
+    // Without the enhancement the same spot is rejected (>8" required).
+    const plain = mkUnit('ai', 'cp-sudden-dawn-cadre-commander-cloudspear', { x: 0, y: 0 }, 1, { inReserves: true });
+    const s4 = mkState([plain, enemy], { phase: 'Movement', activePlayer: 'ai', round: 2 });
+    const refused = reduce(
+      s4,
+      { type: 'ArriveFromReserves', unitId: plain.id, anchor: { x: 15, y: 13.2 }, ability: 'deep_strike' },
+      rng,
+      ctx,
+    );
+    expect(refused.units.find((x) => x.id === plain.id)!.inReserves).toBe(true);
+  });
+
+  it('Sanctic Slayers and Purifying Force are ability plays; Dutiful Defenders discounts Heroic Intervention', () => {
+    const teguen = mkUnit('player', 'cp-inquisitors-hand-preacher-teguen', { x: 5, y: 5 }, 1, { enhancementId: 'cpenh:inquisitors_hand:sanctic_slayers' });
+    const vigilants = mkUnit('player', 'cp-inquisitors-hand-vigilant-squad', { x: 7, y: 5 }, 10);
+    let s = mkState([teguen, vigilants], { phase: 'Fight' });
+    s = reduce(s, { type: 'UseUnitAbility', unitId: teguen.id, ability: 'sanctic_slayers', targetUnitId: vigilants.id }, rng, ctx);
+    expect(s.units.find((u) => u.id === vigilants.id)!.status.activeEffects).toContain('cp:wound_boost_weak');
+    const again = reduce(s, { type: 'UseUnitAbility', unitId: teguen.id, ability: 'sanctic_slayers', targetUnitId: vigilants.id }, rng, ctx);
+    expect(again.log[again.log.length - 1]).toContain('once per turn');
+    expect(gatherAttackModifiers({ ...base, attackS: 3, targetT: 4 }, ['cp:wound_boost_weak'], []).woundModifier).toBe(1);
+    expect(gatherAttackModifiers({ ...base, attackS: 5, targetT: 4 }, ['cp:wound_boost_weak'], []).woundModifier).toBe(0);
+    // Purifying Force: after a charge, once per battle per army.
+    const termies = mkUnit('ai', 'cp-crowes-sanctifiers-brotherhood-terminator-squad', { x: 15, y: 22 }, 5, {
+      status: { charged: true }, enhancementId: 'cpenh:crowes_sanctifiers:purifying_force',
+    });
+    let s2 = mkState([termies], { phase: 'Fight', activePlayer: 'ai' });
+    s2 = reduce(s2, { type: 'UseUnitAbility', unitId: termies.id, ability: 'purifying_force' }, rng, ctx);
+    expect(s2.units[0]!.status.activeEffects).toContain('cp:lethal_melee');
+    expect(gatherAttackModifiers({ ...base, phase: 'fight', weaponType: 'melee' }, ['cp:lethal_melee'], []).grantLethalHits).toBe(true);
+    const again2 = reduce(s2, { type: 'UseUnitAbility', unitId: termies.id, ability: 'purifying_force' }, rng, ctx);
+    expect(again2.log[again2.log.length - 1]).toContain('once per battle per army');
+    // Dutiful Defenders: a Leap to Defend Heroic Intervention costs 0 CP for the bearer.
+    const bladeguard = mkUnit('player', 'cp-vengeful-brethren-bladeguard-veteran-squad', { x: 15, y: 26 }, 3, { enhancementId: 'cpenh:vengeful_brethren:dutiful_defenders' });
+    const charger = mkUnit('ai', 'cp-sudden-dawn-cadre-breacher-team', { x: 15, y: 22 }, 5, { status: { charged: true } });
+    const s3 = mkState([bladeguard, charger], { phase: 'Charge', activePlayer: 'ai' });
+    const out = reduce(s3, { type: 'Charge', chargerUnitId: bladeguard.id, targetUnitIds: [charger.id], heroic: 'leap_to_defend' }, rng, ctx);
+    expect(out.log.join('\n')).toContain('Dutiful Defenders: -1 CP');
+    expect(out.cp.player).toBe(3); // 1 CP - 1 discount = free
+  });
+
+  it('COMBAT SQUAD splits the Strike Squad into two deployable fives', () => {
+    const strike = cpDatasheets.find((d) => d.id === 'cp-crowes-sanctifiers-strike-squad')!;
+    const roster = cpRosters.find((r) => r.name === "Crowe's Sanctifiers")!;
+    const entry = roster.units.find((u) => u.datasheetId === strike.id)!;
+    let s = mkSetupState([]);
+    s = reduce(
+      s,
+      {
+        type: 'DeclareCombatSquad', side: 'ai', entryKey: 'ai:0', datasheetId: strike.id,
+        modelCount: 10, ...(entry.wargearCounts ? { totalWargear: entry.wargearCounts } : {}),
+      },
+      rng,
+      ctx,
+    );
+    const split = s.setup!.splits?.find((x) => x.entryKey === 'ai:0');
+    expect(split).toBeTruthy();
+    expect(split!.transportUnitId).toBeUndefined();
+    expect(split!.groups.map((g) => g.count)).toEqual([5, 5]);
+    // The wargear divides evenly: every item's halves sum to the original count.
+    for (const [item, n] of Object.entries(entry.wargearCounts ?? {})) {
+      expect((split!.groups[0].wargear?.[item] ?? 0) + (split!.groups[1].wargear?.[item] ?? 0)).toBe(n);
+    }
+    // The entry counts as placed only when BOTH halves are down.
+    expect(isEntryPlaced(s, 'ai:0')).toBe(false);
+    for (const half of ['a', 'b'] as const) {
+      const g = split!.groups[half === 'a' ? 0 : 1];
+      s = reduce(
+        s,
+        {
+          type: 'PlaceInReserves', unitId: `ai:0#${half}`, owner: 'ai', datasheetId: strike.id,
+          baseShape: strike.baseShape, modelCount: g.count, wounds: strike.models[0]!.W,
+          ...(g.wargear ? { wargear: g.wargear } : {}),
+        },
+        rng,
+        ctx,
+      );
+    }
+    expect(isEntryPlaced(s, 'ai:0')).toBe(true);
+    // A second declaration and a non-COMBAT-SQUAD unit are rejected.
+    const dup = reduce(s, { type: 'DeclareCombatSquad', side: 'ai', entryKey: 'ai:0', datasheetId: strike.id, modelCount: 10 }, rng, ctx);
+    expect(dup.log[dup.log.length - 1]).toContain('already');
+    const wrong = reduce(mkSetupState([]), { type: 'DeclareCombatSquad', side: 'ai', entryKey: 'ai:1', datasheetId: 'cp-crowes-sanctifiers-castellan-crowe', modelCount: 10 }, rng, ctx);
+    expect(wrong.log[wrong.log.length - 1]).toContain('no COMBAT SQUAD ability');
   });
 });
 

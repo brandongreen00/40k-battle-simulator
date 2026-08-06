@@ -58,6 +58,7 @@ export interface EffectOutput {
   grantPsychic?: boolean; // the bearer's weapons gain [PSYCHIC] (Psi-reactive Ammunition)
   grantSustained?: number; // the bearer's weapons gain [SUSTAINED HITS N] (Holy Hatred)
   strengthBonus?: number; // +N to the attack's Strength (Zealot: +3 A and S)
+  rerollOneHit?: boolean; // re-roll ONE failed hit roll per attack sequence (Sanctified Auspexes)
   apSet?: number; // the attack's AP becomes N if better than its own (Overkill: -4 AP)
   ignoreBadHitMods?: boolean; // ignore negative BS/hit-roll modifiers (Superior Weapon Support System)
   apImprove?: number; // improve the attack's AP by N (Target Weak Spot: AP -1 → -2)
@@ -261,6 +262,33 @@ export const EFFECT_REGISTRY: Record<string, Effect> = {
   // Co-ordinated Eradication (Sudden Dawn Cadre, once per battle per army): SDC attacks against
   // the marked enemy have +1 AP until the end of the battle (permanent defender-side mark).
   'cp:eradication_mark': { id: 'cp:eradication_mark', name: 'Co-ordinated Eradication (+1 AP incoming)', side: 'defender', output: { apImprove: 1 } },
+
+  // ── Combat Patrol enhancements + fights-on-death (step 5) ─────────────────────
+  // Determined to the Last (VB stratagem) / Killer Reflexes (IH enhancement): destroyed models
+  // fight on before removal — a MARKER read by the engine's melee resolution, not an attack mod.
+  'cp:fights_on_death': { id: 'cp:fights_on_death', name: 'Fights on death (2+ to fight before removal)', side: 'defender', output: {} },
+  // Sanctified Auspexes (Venerable Dreadnought): ranged attacks re-roll one hit roll.
+  'cp:reroll_one_hit': {
+    id: 'cp:reroll_one_hit', name: 'Sanctified Auspexes (re-roll one hit)', side: 'attacker',
+    appliesTo: (c) => c.weaponType === 'ranged', output: { rerollOneHit: true },
+  },
+  // Purifying Force (Brotherhood Terminators, once per battle per army): [LETHAL HITS] melee.
+  'cp:lethal_melee': {
+    id: 'cp:lethal_melee', name: 'Purifying Force ([LETHAL HITS] melee)', side: 'attacker',
+    appliesTo: (c) => c.weaponType === 'melee', output: { grantLethalHits: true },
+  },
+  // Sanctic Slayers (Teguen enhancement, once per turn): the chosen unit's attacks get +1 to
+  // wound when the target's T is greater than or equal to the attack's S.
+  'cp:wound_boost_weak': {
+    id: 'cp:wound_boost_weak', name: 'Sanctic Slayers (+1 wound when T ≥ S)', side: 'attacker',
+    appliesTo: (c) => (c.targetT ?? 0) >= (c.attackS ?? 999), output: { woundModifier: 1 },
+  },
+  // Proximity Scanners (Devilfish enhancement): disembarked riders' pulse weapons get +1 A.
+  'cp:pulse_bonus': {
+    id: 'cp:pulse_bonus', name: 'Proximity Scanners (+1 A pulse weapons)', side: 'attacker',
+    appliesTo: (c) => !!c.weaponName && (c.weaponName.includes('pulse blaster') || c.weaponName.includes('pulse carbine')),
+    output: { extraAttacks: 1 },
+  },
 };
 
 /** Merge the gathered modifiers for one attack. `attacker`/`defender` are lists of effect ids. */
@@ -288,6 +316,7 @@ export function gatherAttackModifiers(
   strengthBonus: number;
   apSet?: number;
   ignoreBadHitMods: boolean;
+  rerollOneHit: boolean;
   apImprove: number;
   apWorsen: number;
   grantCover: boolean;
@@ -312,6 +341,7 @@ export function gatherAttackModifiers(
     strengthBonus: 0,
     apSet: undefined as number | undefined,
     ignoreBadHitMods: false,
+    rerollOneHit: false,
     apImprove: 0,
     apWorsen: 0,
     grantCover: false,
@@ -342,6 +372,7 @@ export function gatherAttackModifiers(
     if (out.strengthBonus) acc.strengthBonus += out.strengthBonus;
     if (out.apSet != null) acc.apSet = Math.min(acc.apSet ?? 0, out.apSet);
     if (out.ignoreBadHitMods) acc.ignoreBadHitMods = true;
+    if (out.rerollOneHit) acc.rerollOneHit = true;
     if (out.apImprove) acc.apImprove += out.apImprove;
     if (out.apWorsen) acc.apWorsen += out.apWorsen;
     if (out.grantCover) acc.grantCover = true;

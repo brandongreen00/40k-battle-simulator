@@ -355,6 +355,29 @@ export function aiDeployAction(state: GameState, side: Side, profile: AiProfile,
     };
   }
 
+  // Combat Patrol: pick the patrol's enhancement before deploying (one per side). Curated
+  // passive picks — the AI prefers always-on/auto-trigger value over activation-dependent cards.
+  if (state.battleType === 'combat_patrol' && !state.cpEnhancements?.[side]) {
+    const AI_CP_ENH: Record<string, { id: string; targetDsId: string }> = {
+      "Crowe's Sanctifiers": { id: 'cpenh:crowes_sanctifiers:sanctified_auspexes', targetDsId: 'cp-crowes-sanctifiers-venerable-dreadnought' },
+      "Inquisitor's Hand": { id: 'cpenh:inquisitors_hand:killer_reflexes', targetDsId: 'cp-inquisitors-hand-eversor-assassin' },
+      'Sudden Dawn Cadre': { id: 'cpenh:sudden_dawn_cadre:earth_caste_modifications', targetDsId: 'cp-sudden-dawn-cadre-commander-cloudspear' },
+      'The Vengeful Brethren': { id: 'cpenh:vengeful_brethren:supreme_combatant', targetDsId: 'cp-vengeful-brethren-master-zacharial' },
+    };
+    const pick = AI_CP_ENH[deps.rosters[side]?.detachment ?? ''];
+    return {
+      intents: [
+        {
+          intent: pick
+            ? { type: 'ChooseCpEnhancement', side, enhancementId: pick.id, targetDsId: pick.targetDsId }
+            : { type: 'ChooseCpEnhancement', side, enhancementId: null },
+          skipIf: (s) => !!s.cpEnhancements?.[side],
+        },
+      ],
+      note: `${side} picks its patrol enhancement`,
+    };
+  }
+
   // Declare Battle Formations before the side's first drop.
   const formations = desiredFormations(state, side, deps);
   if (formations.length > 0) {

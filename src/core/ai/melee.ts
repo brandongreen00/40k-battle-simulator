@@ -14,7 +14,7 @@ import { availableUnitWeapons, chargePathExists, objectiveControl } from '../eng
 import { chargeProb, meleeEV, unitGap, unitValue } from './evaluate';
 import { secondaryKillBonus } from '../secondaries';
 import { cpKillBonus } from '../cpmissions';
-import { unitHasAbilityStarting } from '../abilities';
+import { cpEnhancementSlug, unitHasAbilityStarting } from '../abilities';
 import { unitRolePlan } from './roles';
 import type { AiAction, AiDeps, AiIntent } from './types';
 import type { AiProfile } from './profile';
@@ -144,6 +144,28 @@ export function aiFightAction(state: GameState, side: Side, profile: AiProfile, 
       }
       if (unitHasAbilityStarting(unit, ctx, 'bladeguard') && used['bladeguard'] !== (state.turnCounter ?? 0)) {
         intents.push({ intent: { type: 'UseUnitAbility', unitId, ability: 'bladeguard_hit' } });
+      }
+      // Purifying Force (enhancement, once per battle per army): [LETHAL HITS] after a charge.
+      if (cpEnhancementSlug(unit) === 'purifying_force' && unit.status.charged && !state.cpArmyOnce?.[`${side}:purifying_force`]) {
+        intents.push({ intent: { type: 'UseUnitAbility', unitId, ability: 'purifying_force' } });
+      }
+      // Sanctic Slayers (Teguen's enhancement, once per turn): +1 to wound for this IH activation.
+      if (ctx.datasheets.get(unit.datasheetId)?.patrol === 'inquisitors_hand') {
+        const bearer = state.units.find(
+          (b) =>
+            b.owner === side && isOnBoard(b) && cpEnhancementSlug(b) === 'sanctic_slayers' &&
+            b.status.abilityUsed?.['sanctic_slayers'] !== (state.turnCounter ?? 0),
+        );
+        if (bearer) {
+          const bearerId = bearer.id;
+          intents.push({
+            intent: { type: 'UseUnitAbility', unitId: bearerId, ability: 'sanctic_slayers', targetUnitId: unitId },
+            skipIf: (s) => {
+              const b = s.units.find((x) => x.id === bearerId);
+              return !b || !b.models.some((m) => m.alive) || b.status.abilityUsed?.['sanctic_slayers'] === (s.turnCounter ?? 0);
+            },
+          });
+        }
       }
     }
     // Epic Challenge (15.03): when our CHARACTER fights a unit that is hiding a CHARACTER inside

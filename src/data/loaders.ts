@@ -95,7 +95,7 @@ const CP_STRAT_META: Record<string, { phase: string; turn: 'either' | 'your' | '
   // The Vengeful Brethren
   'For the Lion': { phase: 'Command phase', turn: 'either', effectId: 'cp:oc_plus1' },
   'Mission Focus': { phase: 'Shooting or Fight phase', turn: 'either', effectId: 'cp:plus1_hit', note: '(The "within range of an objective" condition is checked when you play it, not per attack.)' },
-  'Determined to the Last': { phase: 'Fight phase', turn: 'either', note: '(Fights-on-death is not automated yet — resolve manually.)' },
+  'Determined to the Last': { phase: 'Fight phase', turn: 'either', effectId: 'cp:fights_on_death', note: '(Play on the Bladeguard when an enemy targets them in melee — destroyed models fight on a 2+ before they are removed.)' },
 };
 export const patrolStratagems: Stratagem[] = (cpPatrolsJson as unknown as CpPatrolRaw[]).flatMap((p) =>
   p.stratagems.map((s) => {
@@ -124,6 +124,40 @@ export const patrolStratagems: Stratagem[] = (cpPatrolsJson as unknown as CpPatr
 
 /** Core stratagems + every detachment stratagem from the data + the Combat Patrol sets. */
 export const stratagems: Stratagem[] = [...CORE_STRATAGEMS, ...detachmentStratagems, ...patrolStratagems];
+
+// ── Combat Patrol enhancements (each patrol's two, from tools/combatpatrol) ──
+// The bearer datasheet is curated per card ("EVERSOR ASSASSIN model only", …); the reducer
+// stamps the enhancement onto the matching unit when it deploys (see ChooseCpEnhancement).
+const CP_ENH_TARGET: Record<string, string> = {
+  'Sanctified Auspexes': 'cp-crowes-sanctifiers-venerable-dreadnought',
+  'Purifying Force': 'cp-crowes-sanctifiers-brotherhood-terminator-squad',
+  'Killer Reflexes': 'cp-inquisitors-hand-eversor-assassin',
+  'Sanctic Slayers': 'cp-inquisitors-hand-preacher-teguen',
+  'Proximity Scanners': 'cp-sudden-dawn-cadre-devilfish',
+  'Earth Caste Modifications': 'cp-sudden-dawn-cadre-commander-cloudspear',
+  'Supreme Combatant': 'cp-vengeful-brethren-master-zacharial',
+  'Dutiful Defenders': 'cp-vengeful-brethren-bladeguard-veteran-squad',
+};
+export interface CpEnhancement {
+  id: string; // `cpenh:<patrol>:<slug>` — becomes the unit's enhancementId
+  name: string;
+  text: string;
+  patrol: string; // patrol id, e.g. 'inquisitors_hand'
+  patrolName: string;
+  targetDsId: string;
+}
+export const patrolEnhancements: CpEnhancement[] = (cpPatrolsJson as unknown as (CpPatrolRaw & {
+  enhancements?: { name: string; text?: string }[];
+})[]).flatMap((p) =>
+  (p.enhancements ?? []).map((e) => ({
+    id: `cpenh:${p.id}:${cpSlug(e.name)}`,
+    name: e.name,
+    text: e.text ?? '',
+    patrol: p.id,
+    patrolName: p.name,
+    targetDsId: CP_ENH_TARGET[e.name] ?? '',
+  })),
+);
 
 /** The lookup bundle the pure army engine expects. */
 export const dataIndex: DataIndex = {

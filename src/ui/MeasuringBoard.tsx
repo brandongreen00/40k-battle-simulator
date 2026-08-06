@@ -49,6 +49,8 @@ interface DeployEntry {
   ds: Datasheet;
   /** Set when this entry is one half of a declared transport split ('a' rides, 'b' walks). */
   half?: 'a' | 'b';
+  /** The split is a COMBAT SQUAD (no transport — both halves deploy normally). */
+  combatSquad?: boolean;
 }
 
 /** Draft of a transport split being edited (before DeclareSplit is dispatched). */
@@ -418,6 +420,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
           unit: { ...e.unit, modelCount: s.groups[gi]!.count, wargearCounts: s.groups[gi]!.wargear },
           ds: e.ds,
           half,
+          ...(s.transportUnitId ? {} : { combatSquad: true }),
         }));
       });
   };
@@ -924,9 +927,30 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName }: Props) 
                             onClick={() => (splitting?.entryKey === e.key ? setSplitting(null) : beginSplit(e, splitBuses[0]!.id))}
                           >⇆ Split</button>
                         )}
+                        {!e.half && e.unit.modelCount === 10 &&
+                          (e.ds.abilities ?? []).some((a) => a.name.toLowerCase().startsWith('combat squad')) && (
+                            <button
+                              className="reserve-btn"
+                              title="COMBAT SQUAD: split into two units of five (wargear divides as evenly as possible)"
+                              onClick={() =>
+                                dispatch({
+                                  type: 'DeclareCombatSquad', side: sideToPlace, entryKey: e.key,
+                                  datasheetId: e.ds.id, modelCount: e.unit.modelCount,
+                                  ...(e.unit.wargearCounts ? { totalWargear: e.unit.wargearCounts } : {}),
+                                })
+                              }
+                            >⚟ Combat Squad</button>
+                          )}
+                        {e.combatSquad && e.half === 'a' && (
+                          <button
+                            className="reserve-btn"
+                            title="Undo the Combat Squad split (both halves return to the pool as one unit)"
+                            onClick={() => dispatch({ type: 'ClearSplit', entryKey: e.key.replace(/#a$/, '') })}
+                          >↩</button>
+                        )}
                       </>
                     )}
-                    <span className="unit-name">{e.ds.name}{pair ? ' ⚑' : ''}{e.half === 'a' ? ' · riders' : e.half === 'b' ? ' · on foot' : ''}</span>
+                    <span className="unit-name">{e.ds.name}{pair ? ' ⚑' : ''}{e.combatSquad ? (e.half === 'a' ? ' · squad A' : ' · squad B') : e.half === 'a' ? ' · riders' : e.half === 'b' ? ' · on foot' : ''}</span>
                     <span className="unit-meta">
                       ×{e.unit.modelCount}
                       {deployAbilityForDatasheet(e.ds) !== 'standard' ? ` · ${deployAbilityForDatasheet(e.ds) === 'infiltrators' ? 'Infiltrators' : 'Deep Strike'}` : ''}

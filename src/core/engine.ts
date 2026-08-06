@@ -19,7 +19,7 @@ import { controlOfObjective, scorePrimary, type OcModel } from './objectives';
 import { battleShockTest } from './battleshock';
 import { rollCharge } from './movement';
 import { gatherAttackModifiers, type AttackContext } from './effects';
-import { abilityWoundBonus, cpInnateEffectIds, hasAbility, hasLoneOperative, ignoresLoneOperative, innateEffectIds } from './abilities';
+import { abilityWoundBonus, cpEnhancementSlug, cpInnateEffectIds, hasAbility, hasLoneOperative, ignoresLoneOperative, innateEffectIds } from './abilities';
 import { atOrBelowHalfStrength } from './battleshock';
 import {
   enhancementEffectIds, enhancementLdBonus, enhancementOcBonus, enhancementWeaponGrantFor,
@@ -150,11 +150,35 @@ function effectsOf(unit: UnitInstance, ctx?: EngineContext, state?: GameState): 
   return [
     ...(unit.status.activeEffects ?? []),
     ...(unit.status.permanentEffects ?? []),
+    // Suppressed (Earth Caste Modifications): the unit's attacks take -1 to hit while it lasts.
+    ...(unit.status.suppressedUntil != null && (state?.turnCounter ?? 0) < unit.status.suppressedUntil
+      ? ['stunned']
+      : []),
     ...(INNATE_ABILITY_EFFECTS[unit.datasheetId] ?? []),
     ...(ctx ? innateEffectIds(ctx.datasheets.get(unit.datasheetId)) : []),
     ...(ctx ? cpInnateEffectIds(unit, ctx) : []),
     ...enhancementEffectIds(unit, ctx, state),
   ];
+}
+
+/** Does fights-on-death (Determined to the Last / Killer Reflexes) cover this unit right now? */
+function hasFightsOnDeath(unit: UnitInstance, ctx: EngineContext, state: GameState): boolean {
+  return effectsOf(unit, ctx, state).includes('cp:fights_on_death');
+}
+
+/** Remove a unit's `dying` models (fights-on-death expired: the unit has fought, or the Fight
+ *  phase ended). Returns the state unchanged when there is nothing to sweep. */
+export function sweepDyingModels(state: GameState, unitIds: string[] | 'all', _ctx?: EngineContext): GameState {
+  const match = (u: UnitInstance) => unitIds === 'all' || unitIds.includes(u.id);
+  let swept = 0;
+  const units = state.units.map((u) => {
+    if (!match(u) || !u.models.some((m) => m.dying && m.alive)) return u;
+    const n = u.models.filter((m) => m.dying && m.alive).length;
+    swept += n;
+    return { ...u, models: u.models.map((m) => (m.dying && m.alive ? { ...m, alive: false, dying: undefined } : m)) };
+  });
+  if (swept === 0) return state;
+  return { ...state, units, log: [...state.log, `${swept} dying model(s) removed (fights-on-death expired)`] };
 }
 
 /** Any alive model of `unit` within range of an objective (11e: area-bound objectives count the
@@ -245,7 +269,8 @@ function casualtyOrder(target: UnitInstance, ctx: EngineContext, attackerCentroi
   const dist = (m: ModelInstance) => Math.hypot(m.pos.x - attackerCentroid.x, m.pos.y - attackerCentroid.y);
   const preferGear = target.allocation !== 'bodies_first';
 
-  const remaining = target.models.filter((m) => m.alive);
+  // Dying models (fights-on-death) are already destroyed — they cannot soak further damage.
+  const remaining = target.models.filter((m) => m.alive && !m.dying);
   const order: ModelInstance[] = [];
   while (remaining.length > 0) {
     // Candidates: the preferred pool while any of it remains, then the rest; furthest first.
@@ -530,11 +555,17 @@ export function resolveAttack(
     damageReduction: mods.damageReduction,
     extraAttacks: mods.extraAttacks + (wGrant?.extraAttacks ?? 0),
     ignoreBadHitMods: mods.ignoreBadHitMods || undefined,
+    rerollOneHit: mods.rerollOneHit || undefined,
   };
 
   // Allocate damage in casualty order (owner removes from the back, keeping the unit coherent;
   // defensive-wargear bearers still soak first) instead of stripping the formation's front rows.
   const allocation = casualtyOrder(target, ctx, aliveUnitCentroid(attacker));
+  if (allocation.length === 0) {
+    // Every remaining model is already dying (fights-on-death) — the attack achieves nothing.
+    const noop = `${aDs.name} attacks ${tDs.name}: every remaining model is already dying — no effect`;
+    return { state: { ...state, log: [...state.log, noop] }, summary: noop };
+  }
   const defender = defenderProfileFor(target, ctx, allocation);
   if (mods.fnp != null) defender.fnp = mods.fnp;
   if (mods.invulnFloor != null) defender.invuln = Math.min(defender.invuln ?? 7, mods.invulnFloor);
@@ -585,12 +616,29 @@ export function resolveAttack(
     const m = allocation[k];
     if (m) updatedById.set(m.id, dm);
   });
-  const newTargetModels = target.models.map((m) => {
+  let newTargetModels = target.models.map((m) => {
     const updated = updatedById.get(m.id);
     if (!updated) return m;
     const wounds = updated.wounds;
     return { ...m, wounds, alive: wounds > 0 };
   });
+
+  // Fights-on-death (Determined to the Last / Killer Reflexes): in the Fight phase, a destroyed
+  // model of an un-fought covered unit stays on a 2+ — it fights, then is removed (the sweep
+  // happens when its unit has fought or the phase ends).
+  const fodLog: string[] = [];
+  if (isMelee && !target.status.hasFought && hasFightsOnDeath(target, ctx, state)) {
+    newTargetModels = newTargetModels.map((m, i) => {
+      if (m.alive || !target.models[i]?.alive || target.models[i]?.dying) return m;
+      const roll = rng.roll(1)[0]!;
+      if (roll >= 2) {
+        fodLog.push(`  Fights on death: a destroyed model stays to fight (rolled ${roll})`);
+        return { ...m, alive: true, wounds: 0, dying: true };
+      }
+      fodLog.push(`  Fights on death: rolled ${roll} — the model is removed`);
+      return m;
+    });
+  }
 
   const newUnits = state.units.map((u) => {
     if (u.id === target.id) return { ...u, models: newTargetModels };
@@ -615,7 +663,7 @@ export function resolveAttack(
     `${result.damageDealt} damage, ${result.modelsSlain} slain`;
 
   return {
-    state: { ...state, units: newUnits, log: [...state.log, summary, ...result.log.map((l) => `  ${l.step}: ${l.detail}`), ...hazardLog] },
+    state: { ...state, units: newUnits, log: [...state.log, summary, ...result.log.map((l) => `  ${l.step}: ${l.detail}`), ...hazardLog, ...fodLog] },
     summary,
   };
 }
@@ -1314,6 +1362,7 @@ export function resolveCharge(
 
   // Heroic Intervention (15.11) eligibility + CP (match mode).
   let heroicCp = 0;
+  let dutifulDiscount = false;
   const stratKey = `${charger.owner}:core:heroic_intervention`;
   const phaseKeyNow = `${state.round}:${state.activePlayer}:${state.phase}`;
   if (params.heroic && state.mode === 'match') {
@@ -1332,6 +1381,15 @@ export function resolveCharge(
     );
     if (engagedNow) return reject('the unit must be unengaged');
     heroicCp = params.heroic === 'into_the_fray' ? 2 : 1;
+    // Dutiful Defenders (VB enhancement, once per battle round per army): a Heroic Intervention
+    // targeting the bearer costs 1 less CP.
+    if (
+      cpEnhancementSlug(charger) === 'dutiful_defenders' &&
+      state.stratUsed?.[`${charger.owner}:cp:dutiful_defenders`] !== String(state.round)
+    ) {
+      heroicCp -= 1;
+      dutifulDiscount = true;
+    }
     if (state.cp[charger.owner] < heroicCp) return reject(`needs ${heroicCp} CP`);
     if (state.stratUsed?.[stratKey] === phaseKeyNow) return reject('already used this phase');
   }
@@ -1402,11 +1460,15 @@ export function resolveCharge(
   let rerollUsed = state.rerollUsed;
   let stratUsed = state.stratUsed;
   const extraLog: string[] = [];
-  if (heroicCp > 0) {
+  if (params.heroic && state.mode === 'match') {
     cp = { ...cp, [charger.owner]: cp[charger.owner] - heroicCp };
     stratUsed = { ...(stratUsed ?? {}), [stratKey]: phaseKeyNow };
+    if (dutifulDiscount) {
+      stratUsed = { ...stratUsed, [`${charger.owner}:cp:dutiful_defenders`]: String(state.round) };
+    }
     extraLog.push(
-      `${charger.owner} spends ${heroicCp} CP on Heroic Intervention (${params.heroic === 'into_the_fray' ? 'Into the Fray' : 'Leap to Defend'})`,
+      `${charger.owner} spends ${heroicCp} CP on Heroic Intervention (${params.heroic === 'into_the_fray' ? 'Into the Fray' : 'Leap to Defend'})` +
+        (dutifulDiscount ? ' — Dutiful Defenders: -1 CP' : ''),
     );
   }
   if (!result && params.commandReroll && state.mode === 'match') {

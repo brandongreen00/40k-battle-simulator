@@ -821,8 +821,9 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
             .filter((st) => !ENGINE_BOUND_STRATS.has(st.id))
             .map((st) => {
             const afford = state.cp[stratSide] >= st.cp;
-            // Combat Patrol stratagems that need their own picks (an objective / a transport).
-            if (st.effectId === 'cp:secure_objective' || st.effectId === 'cp:swift_embark') {
+            // Combat Patrol stratagems that need their own picks (an objective / a transport /
+            // one of your own units for Determined to the Last).
+            if (st.effectId === 'cp:secure_objective' || st.effectId === 'cp:swift_embark' || st.effectId === 'cp:fights_on_death') {
               return (
                 <CpSpecialStrat key={st.id} st={st} side={stratSide} state={state} dispatch={dispatch} nameOfUnit={nameOfUnit} datasheetsById={datasheetsById} />
               );
@@ -890,6 +891,7 @@ function CpSpecialStrat({
   const [pick, setPick] = useState('');
   const mine = state.units.filter((u) => u.owner === side && !u.inReserves && u.models.some((m) => m.alive));
   const secure = st.effectId === 'cp:secure_objective';
+  const unitOnly = st.effectId === 'cp:fights_on_death';
   const points = objectivePoints(state.layout);
   const secured = state.cpMissions?.securedBy ?? [];
   const transports = mine.filter((u) =>
@@ -905,20 +907,22 @@ function CpSpecialStrat({
           <option key={u.id} value={u.id}>{nameOfUnit(u.id)}</option>
         ))}
       </select>
-      <select value={pick} onChange={(e) => setPick(e.target.value)}>
-        <option value="">{secure ? '— objective —' : '— transport —'}</option>
-        {secure
-          ? points.map((o, i) =>
-              secured[i] === side ? null : (
-                <option key={i} value={i}>objective {i + 1} ({o.kind})</option>
-              ),
-            )
-          : transports.map((u) => (
-              <option key={u.id} value={u.id}>{nameOfUnit(u.id)}</option>
-            ))}
-      </select>
+      {!unitOnly && (
+        <select value={pick} onChange={(e) => setPick(e.target.value)}>
+          <option value="">{secure ? '— objective —' : '— transport —'}</option>
+          {secure
+            ? points.map((o, i) =>
+                secured[i] === side ? null : (
+                  <option key={i} value={i}>objective {i + 1} ({o.kind})</option>
+                ),
+              )
+            : transports.map((u) => (
+                <option key={u.id} value={u.id}>{nameOfUnit(u.id)}</option>
+              ))}
+        </select>
+      )}
       <button
-        disabled={!unitId || pick === '' || state.cp[side] < st.cp}
+        disabled={!unitId || (!unitOnly && pick === '') || state.cp[side] < st.cp}
         onClick={() => {
           dispatch({
             type: 'UseStratagem',
@@ -928,7 +932,7 @@ function CpSpecialStrat({
             stratagemId: st.id,
             effectId: st.effectId,
             targetUnitId: unitId,
-            ...(secure ? { objectiveIdx: Number(pick) } : { transportId: pick }),
+            ...(unitOnly ? {} : secure ? { objectiveIdx: Number(pick) } : { transportId: pick }),
           });
           setUnitId('');
           setPick('');
@@ -1006,7 +1010,15 @@ function CpUnitAbilities({
     const name = `${nameOfUnit(u.id)} (${side})`;
     const play = (ability: string, extra?: Partial<Extract<Intent, { type: 'UseUnitAbility' }>>) =>
       dispatch({ type: 'UseUnitAbility', unitId: u.id, ability, ...extra });
+    const enhSlug = [u.enhancementId, ...(u.attachedLeaders ?? []).map((l) => l.enhancementId)]
+      .find((id) => id?.startsWith('cpenh:'))
+      ?.split(':')[2];
     if (state.phase === 'Fight') {
+      if (enhSlug === 'purifying_force' && u.status.charged && !state.cpArmyOnce?.[`${side}:purifying_force`]) {
+        rows.push(
+          <CpAbilityRow key={`${u.id}:pf`} label={`${name} — Purifying Force ([LETHAL HITS], once per battle)`} onUse={() => play('purifying_force')} />,
+        );
+      }
       if (hasAb(u, 'zealot') && used['zealot'] == null) {
         rows.push(<CpAbilityRow key={`${u.id}:z`} label={`${name} — Zealot (+3 A/S, once per battle)`} onUse={() => play('zealot')} />);
       }
@@ -1035,6 +1047,20 @@ function CpUnitAbilities({
           needsPick
           options={points.map((o, i) => ({ value: String(i), text: `objective ${i + 1} (${o.kind})` }))}
           onUse={(pick) => play('nuncio_aquila', { objectiveIdx: Number(pick) })}
+        />,
+      );
+    }
+    if (enhSlug === 'sanctic_slayers' && (state.phase === 'Shooting' || state.phase === 'Fight') && used['sanctic_slayers'] !== turnNow) {
+      rows.push(
+        <CpAbilityRow
+          key={`${u.id}:ss`}
+          label={`${name} — Sanctic Slayers (once per turn)`}
+          hint="A friendly Inquisitor's Hand unit's attacks get +1 to wound against targets whose T is greater than or equal to the attack's S."
+          needsPick
+          options={onBoard
+            .filter((t) => t.owner === side && datasheetsById.get(t.datasheetId)?.patrol === 'inquisitors_hand')
+            .map((t) => ({ value: t.id, text: nameOfUnit(t.id) }))}
+          onUse={(pick) => play('sanctic_slayers', { targetUnitId: pick })}
         />,
       );
     }
