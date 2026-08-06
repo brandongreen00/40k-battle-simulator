@@ -846,6 +846,10 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
 
       <StratagemPlays state={state} dispatch={dispatch} ctx={ctx} nameOfUnit={nameOfUnit} onBeginArrival={onBeginArrival} />
 
+      {state.battleType === 'combat_patrol' && (
+        <CpUnitAbilities state={state} dispatch={dispatch} nameOfUnit={nameOfUnit} datasheetsById={datasheetsById} />
+      )}
+
       {/* Dice log */}
       <h3>Dice log</h3>
       <div className="dicelog">
@@ -933,6 +937,158 @@ function CpSpecialStrat({
         Use
       </button>
     </div>
+  );
+}
+
+/** One Combat Patrol ability play: a button, optionally with a target/objective picker. The
+ *  reducer enforces the real legality — pickers just gather the choice. */
+function CpAbilityRow({
+  label,
+  needsPick,
+  options,
+  onUse,
+  hint,
+}: {
+  label: string;
+  needsPick?: boolean;
+  options?: { value: string; text: string }[];
+  onUse: (pick: string) => void;
+  hint?: string;
+}) {
+  const [pick, setPick] = useState('');
+  return (
+    <div className="btnrow" title={hint}>
+      <span className="strat-name">{label}</span>
+      {needsPick && (
+        <select value={pick} onChange={(e) => setPick(e.target.value)}>
+          <option value="">— pick —</option>
+          {(options ?? []).map((o) => (
+            <option key={o.value} value={o.value}>{o.text}</option>
+          ))}
+        </select>
+      )}
+      <button disabled={needsPick && pick === ''} onClick={() => { onUse(pick); setPick(''); }}>
+        Use
+      </button>
+    </div>
+  );
+}
+
+/** Combat Patrol per-unit specials with a play window in the current phase: Zealot, Overkill,
+ *  Bladeguard, Tome Skull, Nuncio-Aquila, Co-ordinated Eradication, Gate of Infinity, and the
+ *  T'au For the Greater Good spotting step. */
+function CpUnitAbilities({
+  state,
+  dispatch,
+  nameOfUnit,
+  datasheetsById,
+}: {
+  state: GameState;
+  dispatch: (i: Intent) => void;
+  nameOfUnit: (id: string) => string;
+  datasheetsById: Map<string, Datasheet>;
+}) {
+  const turnNow = state.turnCounter ?? 0;
+  const hasAb = (u: UnitInstance, prefix: string): boolean => {
+    const ids = [u.datasheetId, ...(u.attachedLeaders ?? []).map((l) => l.datasheetId)];
+    return ids.some((id) =>
+      (datasheetsById.get(id)?.abilities ?? []).some((a) => a.name.toLowerCase().startsWith(prefix)),
+    );
+  };
+  const onBoard = state.units.filter((u) => !u.inReserves && u.models.some((m) => m.alive));
+  const enemiesOf = (side: Side) => onBoard.filter((u) => u.owner !== side);
+  const points = objectivePoints(state.layout);
+  const rows: ReactNode[] = [];
+
+  for (const u of onBoard) {
+    const side = u.owner;
+    const used = u.status.abilityUsed ?? {};
+    const name = `${nameOfUnit(u.id)} (${side})`;
+    const play = (ability: string, extra?: Partial<Extract<Intent, { type: 'UseUnitAbility' }>>) =>
+      dispatch({ type: 'UseUnitAbility', unitId: u.id, ability, ...extra });
+    if (state.phase === 'Fight') {
+      if (hasAb(u, 'zealot') && used['zealot'] == null) {
+        rows.push(<CpAbilityRow key={`${u.id}:z`} label={`${name} — Zealot (+3 A/S, once per battle)`} onUse={() => play('zealot')} />);
+      }
+      if (hasAb(u, 'overkill') && used['overkill'] == null) {
+        rows.push(<CpAbilityRow key={`${u.id}:o`} label={`${name} — Overkill (AP -4, once per battle)`} onUse={() => play('overkill')} />);
+      }
+      if (hasAb(u, 'bladeguard') && used['bladeguard'] !== turnNow) {
+        rows.push(<CpAbilityRow key={`${u.id}:bh`} label={`${name} — Bladeguard: +1 to hit`} onUse={() => play('bladeguard_hit')} />);
+        rows.push(<CpAbilityRow key={`${u.id}:bs`} label={`${name} — Bladeguard: -1 to be hit`} onUse={() => play('bladeguard_stance')} />);
+      }
+      if (
+        datasheetsById.get(u.datasheetId)?.patrol === 'crowes_sanctifiers' &&
+        state.activePlayer !== side
+      ) {
+        rows.push(
+          <CpAbilityRow key={`${u.id}:g`} label={`${name} — Gate of Infinity (to Reserves)`} hint="At the end of your opponent's Fight phase, an unengaged unit returns to Strategic Reserves." onUse={() => play('gate_of_infinity')} />,
+        );
+      }
+    }
+    if (state.phase === 'Command' && hasAb(u, 'nuncio-aquila')) {
+      rows.push(
+        <CpAbilityRow
+          key={`${u.id}:n`}
+          label={`${name} — Nuncio-Aquila`}
+          hint='Select an objective within 6": enemy INFANTRY within its range make a battle-shock roll.'
+          needsPick
+          options={points.map((o, i) => ({ value: String(i), text: `objective ${i + 1} (${o.kind})` }))}
+          onUse={(pick) => play('nuncio_aquila', { objectiveIdx: Number(pick) })}
+        />,
+      );
+    }
+    if (hasAb(u, 'tome skull') && used['tome_skull'] == null) {
+      rows.push(
+        <CpAbilityRow
+          key={`${u.id}:t`}
+          label={`${name} — Tome Skull (once per battle)`}
+          hint='Select a unit within 6": a battle-shocked friend recovers, or an enemy makes a battle-shock roll.'
+          needsPick
+          options={onBoard.filter((t) => t.id !== u.id).map((t) => ({ value: t.id, text: `${nameOfUnit(t.id)} (${t.owner})` }))}
+          onUse={(pick) => play('tome_skull', { targetUnitId: pick })}
+        />,
+      );
+    }
+    if (state.phase === 'Shooting' && state.activePlayer === side) {
+      if (
+        datasheetsById.get(u.datasheetId)?.patrol === 'sudden_dawn_cadre' &&
+        !state.cpArmyOnce?.[`${side}:coordinated_eradication`] &&
+        !rows.some((r) => (r as { key?: string | null }).key === `erad:${side}`)
+      ) {
+        rows.push(
+          <CpAbilityRow
+            key={`erad:${side}`}
+            label={`${side} — Co-ordinated Eradication (once per battle)`}
+            hint="Mark one enemy unit: Sudden Dawn Cadre attacks against it have +1 AP for the rest of the battle."
+            needsPick
+            options={enemiesOf(side).map((t) => ({ value: t.id, text: nameOfUnit(t.id) }))}
+            onUse={(pick) => play('coordinated_eradication', { targetUnitId: pick })}
+          />,
+        );
+      }
+      const isFtgg = (datasheetsById.get(u.datasheetId)?.abilities ?? []).some((a) => a.name.toLowerCase().startsWith('for the greater good'));
+      if (isFtgg && !u.status.hasShot && !Object.values(state.spotted ?? {}).some((s) => s.by === u.id)) {
+        rows.push(
+          <CpAbilityRow
+            key={`${u.id}:s`}
+            label={`${name} — Spot a target (FTGG)`}
+            hint="The Observer marks one visible enemy as Spotted (+1 BS for Guided friends). A non-Pathfinder Observer forgoes its own shooting."
+            needsPick
+            options={enemiesOf(side).filter((t) => !state.spotted?.[t.id]).map((t) => ({ value: t.id, text: nameOfUnit(t.id) }))}
+            onUse={(pick) => dispatch({ type: 'SpotTarget', unitId: u.id, targetUnitId: pick })}
+          />,
+        );
+      }
+    }
+  }
+
+  if (rows.length === 0) return null;
+  return (
+    <>
+      <h3>Unit abilities</h3>
+      {rows}
+    </>
   );
 }
 

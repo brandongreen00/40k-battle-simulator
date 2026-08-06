@@ -7,6 +7,7 @@ import { CP_MISSIONS, cpMissionsOnBattleEnd, cpMissionsOnCommandEnd, cpMissionsO
 import { createInitialState, reduce } from '../src/core/state';
 import { makeRNG } from '../src/core/rng';
 import { gatherAttackModifiers } from '../src/core/effects';
+import { cpInnateEffectIds } from '../src/core/abilities';
 import { CP_BANNED_CORE, usableStratagems } from '../src/core/stratagems';
 import { runMatch, type MatchData } from '../src/core/ai/match';
 import {
@@ -478,6 +479,266 @@ describe('combat patrol stratagems (step 3)', () => {
       ctx,
     );
     expect(cpObjectiveStatuses(s, ctx)[ghIdx]!.control.ai).toBe(before + 2); // +1 OC × 2 models
+  });
+});
+
+describe('combat patrol per-unit specials (step 4)', () => {
+  const ctx = { datasheets: datasheetsById };
+  const rng = makeRNG(17);
+  let seq = 500;
+  const mkUnit = (owner: Side, datasheetId: string, pos: { x: number; y: number }, count = 1, wounds?: number): UnitInstance => {
+    const w = wounds ?? datasheetsById.get(datasheetId)?.models[0]?.W ?? 1;
+    return {
+      id: `q${++seq}`,
+      owner,
+      datasheetId,
+      models: Array.from({ length: count }, (_, i) => ({
+        id: `q${seq}m${i}`, unitId: `q${seq}`, pos: { x: pos.x + (i % 5) * 0.6, y: pos.y + Math.floor(i / 5) * 0.6 }, wounds: w, alive: true,
+      })),
+      startingModels: count,
+      status: {},
+    };
+  };
+  const mkState = (units: UnitInstance[], extra?: Partial<GameState>): GameState => ({
+    ...createInitialState(layoutsCp[0]!),
+    stage: 'battle',
+    mode: 'match',
+    battleType: 'combat_patrol',
+    round: 2,
+    activePlayer: 'player',
+    firstPlayer: 'player',
+    units,
+    cp: { player: 3, ai: 3 },
+    cpMissions: {
+      attacker: 'player',
+      missionId: { player: 'inquisitorial_sanction', ai: 'expansionary_campaign' },
+      vp: { player: 0, ai: 0 },
+      events: [],
+    },
+    ...extra,
+  });
+  const base = {
+    phase: 'shooting' as const,
+    weaponType: 'ranged' as const,
+    weaponKeywords: { unknown: [] },
+    attackerKeywords: [],
+    targetKeywords: [],
+    gap: 12,
+  };
+
+  it('binds the passive attack-pipeline specials', () => {
+    // FOESIGHT: re-roll hits vs CHARACTER only.
+    expect(gatherAttackModifiers({ ...base, targetKeywords: ['CHARACTER'] }, ['cp:foesight'], []).rerollHits).toBe('fail');
+    expect(gatherAttackModifiers(base, ['cp:foesight'], []).rerollHits).toBe('none');
+    // FORCE EDGE: +1 AP melee vs non-MONSTER/VEHICLE.
+    const melee = { ...base, phase: 'fight' as const, weaponType: 'melee' as const, gap: 1 };
+    expect(gatherAttackModifiers(melee, ['cp:force_edge'], []).apImprove).toBe(1);
+    expect(gatherAttackModifiers({ ...melee, targetKeywords: ['VEHICLE'] }, ['cp:force_edge'], []).apImprove).toBe(0);
+    // HOLY HATRED: [SUSTAINED HITS 1] on melee only.
+    expect(gatherAttackModifiers(melee, ['cp:holy_hatred'], []).grantSustained).toBe(1);
+    expect(gatherAttackModifiers(base, ['cp:holy_hatred'], []).grantSustained).toBe(0);
+    // MERCILESS JUDGEMENT / LOYAL TO THE CAUSE / GRAVIS PROTECTION / SWSS / Breach and Clear.
+    expect(gatherAttackModifiers({ ...base, targetBelowHalf: true }, ['cp:merciless_judgement'], []).woundModifier).toBe(1);
+    expect(gatherAttackModifiers(base, ['cp:merciless_judgement'], []).woundModifier).toBe(0);
+    expect(gatherAttackModifiers({ ...base, targetOnObjective: true }, [], ['cp:loyal_to_the_cause']).woundModifier).toBe(-1);
+    expect(gatherAttackModifiers(base, [], ['cp:gravis_protection']).damageReduction).toBe(1);
+    expect(gatherAttackModifiers(base, ['cp:swss'], []).ignoreBadHitMods).toBe(true);
+    expect(gatherAttackModifiers({ ...base, targetOnObjective: true }, ['cp:breach_and_clear'], []).rerollWounds).toBe('fail');
+    // ZEALOT: only Teguen's own melee weapon; OVERKILL: AP set to -4; defence stance: S>T only.
+    const teguenMelee = { ...melee, weaponSourceDsId: 'cp-inquisitors-hand-preacher-teguen' };
+    expect(gatherAttackModifiers(teguenMelee, ['cp:zealot'], []).extraAttacks).toBe(3);
+    expect(gatherAttackModifiers(teguenMelee, ['cp:zealot'], []).strengthBonus).toBe(3);
+    expect(gatherAttackModifiers(melee, ['cp:zealot'], []).extraAttacks).toBe(0);
+    expect(gatherAttackModifiers({ ...melee, weaponSourceDsId: 'cp-inquisitors-hand-eversor-assassin' }, ['cp:overkill'], []).apSet).toBe(-4);
+    expect(gatherAttackModifiers({ ...melee, attackS: 8, targetT: 4 }, [], ['cp:defence_stance']).woundModifier).toBe(-1);
+    expect(gatherAttackModifiers({ ...melee, attackS: 4, targetT: 4 }, [], ['cp:defence_stance']).woundModifier).toBe(0);
+  });
+
+  it('collects innate specials per unit, seeing through the Leader merge (Holy Hatred)', () => {
+    const cloudspear = mkUnit('player', 'cp-sudden-dawn-cadre-commander-cloudspear', { x: 5, y: 5 });
+    expect(cpInnateEffectIds(cloudspear, ctx)).toContain('cp:swss');
+    const teguen = mkUnit('player', 'cp-inquisitors-hand-preacher-teguen', { x: 5, y: 5 });
+    expect(cpInnateEffectIds(teguen, ctx)).not.toContain('cp:holy_hatred'); // not attached
+    const merged: UnitInstance = {
+      ...mkUnit('player', 'cp-inquisitors-hand-inquisitorial-agents', { x: 5, y: 5 }, 6),
+      attachedLeaders: [{ unitId: 'L1', datasheetId: 'cp-inquisitors-hand-preacher-teguen', modelCount: 1, wounds: 3 }],
+    };
+    expect(cpInnateEffectIds(merged, ctx)).toContain('cp:holy_hatred');
+    const zach = mkUnit('ai', 'cp-vengeful-brethren-master-zacharial', { x: 5, y: 5 });
+    expect(cpInnateEffectIds(zach, ctx)).toContain('cp:gravis_protection');
+  });
+
+  it('Shield Drone gives Commander Cloudspear +1 W at spawn', () => {
+    const ds = datasheetsById.get('cp-sudden-dawn-cadre-commander-cloudspear')!;
+    let s = mkState([]);
+    s = reduce(
+      s,
+      {
+        type: 'SpawnUnit', unitId: 'cs1', owner: 'player', datasheetId: ds.id,
+        baseShape: ds.baseShape, modelCount: 1, wounds: ds.models[0]!.W, anchor: { x: 10, y: 10 },
+      },
+      rng,
+      ctx,
+    );
+    expect(s.units[0]!.models[0]!.wounds).toBe(ds.models[0]!.W + 1); // 6 → 7
+  });
+
+  it('Zealot and Overkill are once-per-battle ability plays', () => {
+    const merged: UnitInstance = {
+      ...mkUnit('player', 'cp-inquisitors-hand-inquisitorial-agents', { x: 5, y: 5 }, 6),
+      attachedLeaders: [{ unitId: 'L1', datasheetId: 'cp-inquisitors-hand-preacher-teguen', modelCount: 1, wounds: 3 }],
+    };
+    let s = mkState([merged], { phase: 'Fight' });
+    s = reduce(s, { type: 'UseUnitAbility', unitId: merged.id, ability: 'zealot' }, rng, ctx);
+    expect(s.units[0]!.status.activeEffects).toContain('cp:zealot');
+    const again = reduce(s, { type: 'UseUnitAbility', unitId: merged.id, ability: 'zealot' }, rng, ctx);
+    expect(again.log[again.log.length - 1]).toContain('once per battle');
+    // Overkill on the Eversor.
+    const eversor = mkUnit('ai', 'cp-inquisitors-hand-eversor-assassin', { x: 8, y: 8 });
+    let s2 = mkState([eversor], { phase: 'Fight', activePlayer: 'ai' });
+    s2 = reduce(s2, { type: 'UseUnitAbility', unitId: eversor.id, ability: 'overkill' }, rng, ctx);
+    expect(s2.units[0]!.status.activeEffects).toContain('cp:overkill');
+    // Wrong unit is rejected.
+    const wrong = reduce(mkState([mkUnit('player', 'cp-sudden-dawn-cadre-breacher-team', { x: 5, y: 5 }, 5)], { phase: 'Fight' }), { type: 'UseUnitAbility', unitId: `q${seq}`, ability: 'zealot' }, rng, ctx);
+    expect(wrong.log[wrong.log.length - 1]).toContain('does not have Zealot');
+  });
+
+  it('Grav-Inhibitor Drone subtracts 2" from charges declared against the Pathfinders', () => {
+    const chargers = mkUnit('ai', 'cp-vengeful-brethren-intercessor-squad', { x: 15, y: 18 }, 5);
+    const pathfinders = mkUnit('player', 'cp-sudden-dawn-cadre-pathfinder-team', { x: 15, y: 24 }, 10);
+    const s = mkState([chargers, pathfinders], { phase: 'Charge', activePlayer: 'ai' });
+    const out = reduce(s, { type: 'Charge', chargerUnitId: chargers.id, targetUnitIds: [pathfinders.id] }, rng, ctx);
+    expect(out.log.join('\n')).toContain('Grav-Inhibitor Drone: -2"');
+  });
+
+  it('Honoured Knights: a charge ending engaged puts the Vengeful Brethren into defence stance', () => {
+    const chargers = mkUnit('ai', 'cp-sudden-dawn-cadre-breacher-team', { x: 15, y: 20 }, 5);
+    const bladeguard = mkUnit('player', 'cp-vengeful-brethren-bladeguard-veteran-squad', { x: 15, y: 22 }, 3);
+    const s = mkState([chargers, bladeguard], { phase: 'Charge', activePlayer: 'ai' });
+    const out = reduce(s, { type: 'Charge', chargerUnitId: chargers.id, targetUnitIds: [bladeguard.id] }, rng, ctx);
+    const bg = out.units.find((u) => u.id === bladeguard.id)!;
+    if (out.log.join('\n').includes('SUCCESS')) {
+      expect(bg.status.activeEffects).toContain('cp:defence_stance');
+      expect(out.log.join('\n')).toContain('defence stance');
+    }
+    // Strike from the Warp: an ingress-then-charge forces a battle-shock roll on the enemy.
+    const strike = { ...mkUnit('ai', 'cp-crowes-sanctifiers-strike-squad', { x: 15, y: 20 }, 5), status: { setUpThisTurn: true } };
+    const marines = mkUnit('player', 'cp-vengeful-brethren-intercessor-squad', { x: 15, y: 22 }, 5);
+    const s2 = mkState([strike, marines], { phase: 'Charge', activePlayer: 'ai' });
+    const out2 = reduce(s2, { type: 'Charge', chargerUnitId: strike.id, targetUnitIds: [marines.id] }, rng, ctx);
+    if (out2.log.join('\n').includes('SUCCESS')) {
+      expect(out2.log.join('\n')).toContain('Strike from the Warp');
+    }
+  });
+
+  it('For the Greater Good: spotting, Observer forgoing, Target Uploaded, and the Guided bonus', () => {
+    const breachers = mkUnit('player', 'cp-sudden-dawn-cadre-breacher-team', { x: 15, y: 22 }, 5);
+    const pathfinders = mkUnit('player', 'cp-sudden-dawn-cadre-pathfinder-team', { x: 13, y: 22 }, 10);
+    const enemy = mkUnit('ai', 'cp-vengeful-brethren-intercessor-squad', { x: 15, y: 17 }, 5);
+    const enemy2 = mkUnit('ai', 'cp-vengeful-brethren-hellblaster-squad', { x: 13, y: 17 }, 5);
+    let s = mkState([breachers, pathfinders, enemy, enemy2], { phase: 'Shooting' });
+    // A non-Pathfinder Observer marks a target and forgoes its shooting.
+    s = reduce(s, { type: 'SpotTarget', unitId: breachers.id, targetUnitId: enemy.id }, rng, ctx);
+    expect(s.spotted?.[enemy.id]?.by).toBe(breachers.id);
+    expect(s.units.find((u) => u.id === breachers.id)!.status.hasShot).toBe(true);
+    // The same enemy cannot be Spotted twice.
+    const dup = reduce(s, { type: 'SpotTarget', unitId: pathfinders.id, targetUnitId: enemy.id }, rng, ctx);
+    expect(dup.log[dup.log.length - 1]).toContain('already Spotted');
+    // Pathfinders (Target Uploaded + MARKERLIGHT) spot without forgoing their shooting.
+    s = reduce(s, { type: 'SpotTarget', unitId: pathfinders.id, targetUnitId: enemy2.id }, rng, ctx);
+    expect(s.spotted?.[enemy2.id]).toMatchObject({ by: pathfinders.id, markerlight: true, pathfinder: true });
+    expect(s.units.find((u) => u.id === pathfinders.id)!.status.hasShot).toBeFalsy();
+    // Their volley against their own Spotted unit is Guided (+1 BS, log-visible).
+    const shot = reduce(s, { type: 'ShootUnit', attackerUnitId: pathfinders.id, targetUnitId: enemy2.id }, rng, ctx);
+    expect(shot.log.join('\n')).toContain('Guided: +1 BS');
+    // Spotted marks clear when the phase advances.
+    const advanced = reduce(shot, { type: 'AdvancePhase' }, rng, ctx);
+    expect(advanced.spotted).toBeUndefined();
+  });
+
+  it('Punishing Volley and Guidance of the Ancients fire after the volley', () => {
+    // (26,16)→(26,24) is a clear firing lane on map 1.
+    const hellblasters = mkUnit('player', 'cp-vengeful-brethren-hellblaster-squad', { x: 26, y: 16 }, 5);
+    const target = mkUnit('ai', 'cp-sudden-dawn-cadre-breacher-team', { x: 26, y: 24 }, 10);
+    let s = mkState([hellblasters, target], { phase: 'Shooting' });
+    s = reduce(s, { type: 'ShootUnit', attackerUnitId: hellblasters.id, targetUnitId: target.id }, rng, ctx);
+    expect(s.log.join('\n')).not.toContain('Shooting rejected');
+    if (s.units.find((u) => u.id === target.id)!.models.some((m) => m.alive)) {
+      expect(s.log.join('\n')).toContain('Punishing Volley');
+    }
+    const dread = mkUnit('player', 'cp-crowes-sanctifiers-venerable-dreadnought', { x: 26, y: 16 });
+    const target2 = mkUnit('ai', 'cp-vengeful-brethren-intercessor-squad', { x: 26, y: 24 }, 10);
+    let s2 = mkState([dread, target2], { phase: 'Shooting' });
+    s2 = reduce(s2, { type: 'ShootUnit', attackerUnitId: dread.id, targetUnitId: target2.id }, rng, ctx);
+    expect(s2.log.join('\n')).not.toContain('Shooting rejected');
+    if (s2.units.find((u) => u.id === target2.id)!.models.some((m) => m.alive)) {
+      expect(s2.units.find((u) => u.id === target2.id)!.status.activeEffects).toContain('cp:guided_target');
+    }
+  });
+
+  it('auto-secures objectives at Command end (Sanctifying Ritual / Objective Secured)', () => {
+    const ghIdx = layoutsCp[0]!.objectivePoints!.findIndex((o) => o.kind === 'expansion' && o.pos.x < 15);
+    const intercessors = mkUnit('player', 'cp-vengeful-brethren-intercessor-squad', { x: 4, y: 28 }, 5);
+    let s = mkState([intercessors], { phase: 'Command' });
+    s = cpMissionsOnCommandEnd(s, ctx);
+    expect(s.cpMissions!.securedBy?.[ghIdx]).toBe('player');
+    expect(s.log.join('\n')).toContain('secures objective');
+  });
+
+  it('Rapid Disembark: the Devilfish lets riders set up wholly within 6"', () => {
+    const devilfish = mkUnit('player', 'cp-sudden-dawn-cadre-devilfish', { x: 15, y: 22 });
+    const riders: UnitInstance = {
+      ...mkUnit('player', 'cp-sudden-dawn-cadre-breacher-team', { x: 0, y: 0 }, 5),
+      inReserves: true,
+      embarkedIn: devilfish.id,
+    };
+    const s = mkState([devilfish, riders], { phase: 'Movement' });
+    const out = reduce(s, { type: 'DisembarkUnit', unitId: riders.id, anchor: { x: 15, y: 17 } }, rng, ctx);
+    expect(out.log[out.log.length - 1]).toContain('disembarks (tactical)');
+  });
+
+  it('Gate of Infinity pulls an unengaged Grey Knights unit back to Reserves, once per phase', () => {
+    const strike = mkUnit('ai', 'cp-crowes-sanctifiers-strike-squad', { x: 15, y: 22 }, 5);
+    const crowe = mkUnit('ai', 'cp-crowes-sanctifiers-castellan-crowe', { x: 10, y: 22 });
+    let s = mkState([strike, crowe], { phase: 'Fight', activePlayer: 'player' });
+    s = reduce(s, { type: 'UseUnitAbility', unitId: strike.id, ability: 'gate_of_infinity' }, rng, ctx);
+    expect(s.units.find((u) => u.id === strike.id)!.inReserves).toBe(true);
+    const again = reduce(s, { type: 'UseUnitAbility', unitId: crowe.id, ability: 'gate_of_infinity' }, rng, ctx);
+    expect(again.log[again.log.length - 1]).toContain('already used this phase');
+    // Not usable in the unit's own Fight phase.
+    const ownTurn = reduce(mkState([mkUnit('ai', 'cp-crowes-sanctifiers-castellan-crowe', { x: 10, y: 22 })], { phase: 'Fight', activePlayer: 'ai' }), { type: 'UseUnitAbility', unitId: `q${seq}`, ability: 'gate_of_infinity' }, rng, ctx);
+    expect(ownTurn.log[ownTurn.log.length - 1]).toContain("OPPONENT's Fight phase");
+  });
+
+  it('Co-ordinated Eradication marks an enemy for the rest of the battle (army once)', () => {
+    const breachers = mkUnit('player', 'cp-sudden-dawn-cadre-breacher-team', { x: 15, y: 22 }, 5);
+    const mark = mkUnit('ai', 'cp-vengeful-brethren-hellblaster-squad', { x: 15, y: 16 }, 5);
+    let s = mkState([breachers, mark], { phase: 'Shooting' });
+    s = reduce(s, { type: 'UseUnitAbility', unitId: breachers.id, ability: 'coordinated_eradication', targetUnitId: mark.id }, rng, ctx);
+    expect(s.units.find((u) => u.id === mark.id)!.status.permanentEffects).toContain('cp:eradication_mark');
+    expect(s.cpArmyOnce?.['player:coordinated_eradication']).toBe(true);
+    const again = reduce(s, { type: 'UseUnitAbility', unitId: breachers.id, ability: 'coordinated_eradication', targetUnitId: mark.id }, rng, ctx);
+    expect(again.log[again.log.length - 1]).toContain('once per battle per army');
+    // The mark is a defender-side +1 AP for incoming fire.
+    expect(gatherAttackModifiers(base, [], ['cp:eradication_mark']).apImprove).toBe(1);
+  });
+
+  it('Tome Skull recovers a shocked friend or shocks an enemy; Nuncio-Aquila shocks objective holders', () => {
+    const agents = mkUnit('player', 'cp-inquisitors-hand-inquisitorial-agents', { x: 15, y: 22 }, 6);
+    const friend = { ...mkUnit('player', 'cp-inquisitors-hand-vigilant-squad', { x: 15, y: 24 }, 10), status: { battleShocked: true } };
+    let s = mkState([agents, friend], { phase: 'Movement' });
+    s = reduce(s, { type: 'UseUnitAbility', unitId: agents.id, ability: 'tome_skull', targetUnitId: friend.id }, rng, ctx);
+    expect(s.units.find((u) => u.id === friend.id)!.status.battleShocked).toBe(false);
+    const again = reduce(s, { type: 'UseUnitAbility', unitId: agents.id, ability: 'tome_skull', targetUnitId: friend.id }, rng, ctx);
+    expect(again.log[again.log.length - 1]).toContain('once per battle');
+    // Nuncio-Aquila: enemy INFANTRY within range of a nearby objective take a battle-shock roll.
+    const ghIdx = layoutsCp[0]!.objectivePoints!.findIndex((o) => o.kind === 'expansion' && o.pos.x < 15);
+    const vigilants = mkUnit('player', 'cp-inquisitors-hand-vigilant-squad', { x: 6, y: 28 }, 10);
+    const holders = mkUnit('ai', 'cp-sudden-dawn-cadre-breacher-team', { x: 4, y: 28 }, 5);
+    let s2 = mkState([vigilants, holders], { phase: 'Command' });
+    s2 = reduce(s2, { type: 'UseUnitAbility', unitId: vigilants.id, ability: 'nuncio_aquila', objectiveIdx: ghIdx }, rng, ctx);
+    expect(s2.log.join('\n')).toContain('NUNCIO-AQUILA');
+    expect(s2.log.join('\n')).toContain('Nuncio-Aquila:');
   });
 });
 

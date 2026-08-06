@@ -14,6 +14,7 @@ import { availableUnitWeapons, chargePathExists, objectiveControl } from '../eng
 import { chargeProb, meleeEV, unitGap, unitValue } from './evaluate';
 import { secondaryKillBonus } from '../secondaries';
 import { cpKillBonus } from '../cpmissions';
+import { unitHasAbilityStarting } from '../abilities';
 import { unitRolePlan } from './roles';
 import type { AiAction, AiDeps, AiIntent } from './types';
 import type { AiProfile } from './profile';
@@ -132,6 +133,19 @@ export function aiFightAction(state: GameState, side: Side, profile: AiProfile, 
   const hasMelee = availableUnitWeapons(unit, ctx).some((w) => w.weapon.type === 'melee');
   if (target && hasMelee) {
     const targetId = target.id;
+    // Combat Patrol per-unit specials: free once-per-battle/turn melee buffs on this activation.
+    if (state.battleType === 'combat_patrol') {
+      const used = unit.status.abilityUsed ?? {};
+      if (unitHasAbilityStarting(unit, ctx, 'zealot') && used['zealot'] == null) {
+        intents.push({ intent: { type: 'UseUnitAbility', unitId, ability: 'zealot' } });
+      }
+      if (unitHasAbilityStarting(unit, ctx, 'overkill') && used['overkill'] == null) {
+        intents.push({ intent: { type: 'UseUnitAbility', unitId, ability: 'overkill' } });
+      }
+      if (unitHasAbilityStarting(unit, ctx, 'bladeguard') && used['bladeguard'] !== (state.turnCounter ?? 0)) {
+        intents.push({ intent: { type: 'UseUnitAbility', unitId, ability: 'bladeguard_hit' } });
+      }
+    }
     // Epic Challenge (15.03): when our CHARACTER fights a unit that is hiding a CHARACTER inside
     // a squad, 1 CP of [PRECISION] lets the melee wounds go straight for that character.
     const isChar = (dsId: string) => ctx.datasheets.get(dsId)?.keywords.some((k) => k.toLowerCase() === 'character');

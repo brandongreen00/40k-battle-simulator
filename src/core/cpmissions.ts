@@ -296,9 +296,46 @@ export function cpMissionsOnCommandEnd(state: GameState, ctx: EngineContext | un
   const side = state.activePlayer;
   // Pending Sanctifications complete at the start of this window, before any scoring.
   let next = completeSanctifications(pruneSecured(state, ctx), side, 'command');
+  // SANCTIFYING RITUAL (Strike Squad) / OBJECTIVE SECURED (Intercessors): at the end of your
+  // Command phase, an objective the unit is controlling becomes secured (14.03).
+  next = cpAutoSecure(next, ctx, side);
   if (cp.missionId[side] === 'seize_their_strongholds' && state.round >= 2 && state.round <= 4) {
     next = scoreSeize(next, ctx, side);
   }
+  return next;
+}
+
+/** End-of-Command auto-secures from datasheet abilities (Sanctifying Ritual / Objective Secured):
+ *  every objective such a unit is controlling becomes secured by its side. */
+function cpAutoSecure(state: GameState, ctx: EngineContext, side: Side): GameState {
+  const cp = state.cpMissions;
+  if (!cp) return state;
+  const holders = state.units.filter((u) => {
+    if (u.owner !== side || u.inReserves || !u.models.some((m) => m.alive)) return false;
+    const names = (ctx.datasheets.get(u.datasheetId)?.abilities ?? []).map((a) => a.name.toLowerCase());
+    return names.some((n) => n.startsWith('sanctifying ritual') || n.startsWith('objective secured'));
+  });
+  if (holders.length === 0) return state;
+  const objs = objectivePoints(state.layout);
+  const statuses = cpObjectiveStatuses(state, ctx);
+  let next = state;
+  objs.forEach((o, idx) => {
+    if (statuses[idx]?.controller !== side) return;
+    if (next.cpMissions?.securedBy?.[idx] === side) return;
+    const holderOn = holders.some((u) => {
+      const shape = ctx.datasheets.get(u.datasheetId)?.baseShape;
+      const radius = shape ? baseRadius(shape) : 0.63;
+      return u.models.some((m) => m.alive && withinObjectiveRange(m.pos, radius, o, state.layout));
+    });
+    if (!holderOn) return;
+    const securedBy = [...(next.cpMissions!.securedBy ?? objs.map(() => null))];
+    securedBy[idx] = side;
+    next = {
+      ...next,
+      cpMissions: { ...next.cpMissions!, securedBy },
+      log: [...next.log, `${side} secures objective ${idx + 1} (Sanctifying Ritual / Objective Secured)`],
+    };
+  });
   return next;
 }
 

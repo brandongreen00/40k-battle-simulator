@@ -1,12 +1,13 @@
 # Combat Patrol (11e) — data, maps, and battle mode
 
-> Status after step 3 (2026-08-06): **army selection, deployment, mission
-> scoring AND stratagems work end-to-end.** The four patrol lists and the three
-> 30"×44" maps are in the app; a Combat Patrol battle runs the full setup flow,
-> the five phases, scores each side's own patrol mission card (§4a), and plays
-> each patrol's three stratagems plus the owner-trimmed core set (§4b). The
-> patrols' *enhancements in play* and the per-unit *special abilities* are
-> later steps (see §5).
+> Status after step 4 (2026-08-06): **army selection, deployment, mission
+> scoring, stratagems AND per-unit specials work end-to-end.** The four patrol
+> lists and the three 30"×44" maps are in the app; a Combat Patrol battle runs
+> the full setup flow, the five phases, scores each side's own patrol mission
+> card (§4a), plays each patrol's three stratagems plus the owner-trimmed core
+> set (§4b), and binds the datasheets' special abilities and the unit-riding
+> patrol rules (§4c). The patrols' *enhancements in play* are the remaining
+> step (see §5).
 
 ## 1. Sources
 
@@ -191,17 +192,69 @@ probed AI-vs-AI: Urban Enforcers fires in real games with zero rejected
 intents; Refusal to Yield verified at the seam (it emits whenever the incoming
 fire clears the threshold).
 
+## 4c. Per-unit specials in play (step 4, 2026-08-06)
+
+Every datasheet ability and unit-riding patrol rule is engine-bound unless
+noted. Passives bind through `abilities.cpInnateEffectIds` (name-matched into
+`EFFECT_REGISTRY`, Leader-merge-aware); the player-triggered ones are
+`UseUnitAbility` / `SpotTarget` intents with once-per-battle/turn tracking
+(`UnitStatus.abilityUsed`, `GameState.cpArmyOnce`), surfaced in a new
+**Unit abilities** panel block and played by the AI.
+
+| Patrol | Ability | Binding |
+|---|---|---|
+| Crowe's Sanctifiers | Gate of Infinity | `UseUnitAbility` in the opponent's Fight phase: an unengaged unit returns to Strategic Reserves (re-enters via the normal arrival flow). Battle-size table uncaptured → **one unit per use, once per phase** (flagged decision). AI declines (policy knob) |
+| | Strike from the Warp (shock rider) | a charge ending engaged after an ingress move this turn forces one engaged enemy to make a battle-shock roll (proxied by `setUpThisTurn`) |
+| | Sanctifying Ritual | auto-secures every objective the unit controls at the end of its own Command phase (14.03 `securedBy`) |
+| | Foesight (Crowe) | re-roll hit rolls vs CHARACTER units |
+| | Guidance of the Ancients (Dreadnought) | after its volley, the main target is marked: ranged attacks against it get +1 to hit. Simplifications: any friendly ranged attacker (not GK-scoped), mark expires at the target's turn start (not the phase end) |
+| | Force Edge (Terminators) | +1 AP melee vs non-MONSTER/VEHICLE |
+| | Combat Squad | **text-only** — the Declare Battle Formations 5/5 split is not automated (the transport-split machinery could be generalised later) |
+| Inquisitor's Hand | Assigned Agents | no-op in CP (the soup-attachment faction rule has nothing to attach to) |
+| | Zealot (Teguen, once/battle) | +3 A and S on Teguen's own melee weapon (`weaponSourceDsId`-scoped) |
+| | Holy Hatred (Teguen) | [SUSTAINED HITS 1] on the unit's melee while he leads (Leader-merge-aware) |
+| | Merciless Judgement (Vigilants) | +1 to wound (ranged) vs below-half-strength units |
+| | Nuncio-Aquila (Vigilants) | Command phase: pick an objective within 6" — enemy non-M/V units in its range make battle-shock rolls (once per objective per turn) |
+| | Overkill (Eversor, once/battle) | melee attacks at **AP -4** (the card's "-4 AP" read as the AP becoming -4 — flagged) |
+| | Tome Skull (Agents, once/battle) | within 6": a battle-shocked friend recovers, or an enemy makes a battle-shock roll |
+| | Loyal to the Cause (Agents) | -1 to wound while the unit is within range of an objective |
+| Sudden Dawn Cadre | Drones / Shield Drone | Commander Cloudspear gets +1 W at spawn (and in the damage pipeline's max-W) |
+| | For the Greater Good | full Observer/Spotted/Guided flow: `SpotTarget` intent in your Shooting phase (Observer forgoes shooting), Guided attacks vs Spotted get +1 BS, +[IGNORES COVER] when the Observer has MARKERLIGHT; marks clear at phase end. UI picker + AI plays it (Pathfinders always; a weak-EV unit Guides the main volley) |
+| | Target Uploaded (Pathfinders) | they spot WITHOUT forgoing shooting, and their attacks vs their own Spotted unit get +1 BS + [IGNORES COVER] |
+| | Grav-Inhibitor Drone (Pathfinders) | charges declared against them get -2 to the roll |
+| | Breach and Clear (Breachers) | re-roll wounds (ranged) vs units within range of an objective |
+| | Rapid Disembark (Devilfish) | rapid/tactical disembark set-up distance becomes 6" |
+| | Superior Weapon Support System (Cloudspear) | ranged attacks ignore negative BS/hit-roll modifiers |
+| | Co-ordinated Eradication (patrol rule, once/battle/army) | mark one enemy: SDC attacks against it have +1 AP until the end of the battle (`permanentEffects`). AI marks the highest-value enemy in rounds 1–2 |
+| The Vengeful Brethren | Honoured Knights (patrol rule) | automatic: a charge ending engaged puts engaged VB units in defence stance until end of turn (-1 to wound when S > T, any weapon) |
+| | Objective Secured (Intercessors) | auto-secures at the end of its own Command phase (same engine as Sanctifying Ritual) |
+| | Gravis Protection (Zacharial) | incoming attacks at -1 Damage |
+| | Punishing Volley (Hellblasters) | after their volley, the target makes a battle-shock roll ("hit by those attacks" proxied by the main target) |
+| | Bladeguard (once/turn) | Fight phase pick: +1 to hit in melee OR -1 to be hit until end of turn |
+| | Deathwing / Ravenwing / Unforgiven / Oath of Moment | no-op bookkeeping in CP (chapter keyword rules; Oath's text is uncaptured — it references the codex) |
+
+**AI**: fights play Zealot/Overkill/Bladeguard(+1 to hit) on the activation;
+Command plays Tome Skull and Nuncio-Aquila; Shooting plays Co-ordinated
+Eradication and the FTGG spotting step. **AI movement fix shipped with this
+step**: melee-first units (melee threat > ranged threat) now close to CHARGE
+range instead of parking at their sidearm's 12" band — a new charge-payoff
+term in the position score (P(2D6 ≥ gap) × melee EV). Before the fix, ZERO
+charges occurred across 24 AI-vs-AI CP probe games; after it, charges land
+and the melee specials fire in real play, still with zero rejected intents.
+
 ## 5. Not yet implemented (honest gaps → next steps)
 
 1. **Patrol enhancements in play** — texts are extracted into `cp_patrols.json`
-   (Killer Reflexes, Sanctic Slayers, …); no engine bindings yet.
-2. **Per-unit specials** — abilities ride on the datasheets as text; none are
-   bound to effects yet (Shield Drone, For the Greater Good, Honoured Knights,
-   Zealot, Overkill, Gate of Infinity teleport, Co-ordinated Eradication, …).
-   Determined to the Last's fights-on-death belongs to this pass too.
+   (Killer Reflexes, Sanctic Slayers, Proximity Scanners, Earth Caste
+   Modifications, Supreme Combatant, Dutiful Defenders, Sanctified Auspexes,
+   Purifying Force); no engine bindings, and no CP enhancement picker exists in
+   the battle flow yet. Determined to the Last / Killer Reflexes fights-on-death
+   also belongs here.
+2. **Combat Squad** (Strike Squad 5/5 split) is text-only — see §4c.
 3. **Leaders**: only Preacher Teguen has a Leader rule (→ Inquisitorial Agents);
    the pairing works in Declare Battle Formations.
-4. Drone tokens (T'au) are modelled as ability text only (Shield Drone's +1 W is
-   not applied yet — it belongs with the specials pass).
-5. **Command Re-roll single-die uses** (hit/save/wound/damage/hazard/attacks)
+4. **Command Re-roll single-die uses** (hit/save/wound/damage/hazard/attacks)
    are text-only — see §4b.
+5. AI nits: Gate of Infinity declined (policy knob); Nuncio-Aquila and the
+   Strike-from-the-Warp shock are rare in AI-vs-AI play (spatially conditioned);
+   the AI's charge-odds model ignores the Grav-Inhibitor -2.

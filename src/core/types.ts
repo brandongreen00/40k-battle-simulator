@@ -269,6 +269,13 @@ export interface UnitStatus {
   pinnedUntil?: number;
   /** Active ability/Order/Stratagem effect ids (see core/effects.ts). Expire at turn reset. */
   activeEffects?: string[];
+  /** Effect ids that never expire (e.g. Co-ordinated Eradication's until-end-of-battle mark).
+   *  Survives the per-turn status reset. */
+  permanentEffects?: string[];
+  /** Datasheet-ability plays this unit has made: slug → turnCounter of use. Once-per-battle
+   *  abilities check for the key; once-per-turn abilities compare the value. Survives the
+   *  per-turn status reset. */
+  abilityUsed?: Record<string, number>;
   // ── Movement-phase activation (transient; set by BeginMove, cleared by EndMove/turn) ──
   /** The move mode chosen for the current activation. Undefined when not moving. */
   moveMode?: import('./movement').MoveMode;
@@ -589,6 +596,12 @@ export interface GameState {
   fightNext?: string;
   /** Insane Bravery (15.04) is once per BATTLE per side. */
   insaneBraveryUsed?: Partial<Record<Side, boolean>>;
+  /** For the Greater Good (T'au): enemy unit id → its Observer this Shooting phase. Cleared on
+   *  every phase change. `pathfinder` = the Observer has Target Uploaded (may still shoot its
+   *  Spotted unit, with +1 BS and [IGNORES COVER]). */
+  spotted?: Record<string, { by: string; markerlight: boolean; pathfinder?: boolean }>;
+  /** Once-per-battle-per-ARMY ability plays (e.g. Co-ordinated Eradication), keyed `side:slug`. */
+  cpArmyOnce?: Partial<Record<string, boolean>>;
   /** Tactical (Secondary) Missions — per-side deck/hand/VP (match mode only). */
   secondaries?: Record<Side, SecondarySideState>;
   /** 11e Chapter Approved mission state (dispositions, primaries, markers, actions). */

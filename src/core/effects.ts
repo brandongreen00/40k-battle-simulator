@@ -33,6 +33,13 @@ export interface AttackContext {
   targetT?: number;
   /** The weapon's name, lower-cased (weapon-scoped grants, e.g. Psi-reactive Ammunition). */
   weaponName?: string;
+  /** The datasheet the weapon is fired from (model-scoped abilities on merged units, e.g.
+   *  Zealot buffs only Teguen's own melee weapon). */
+  weaponSourceDsId?: string;
+  /** The target unit is at-or-below half-strength (Merciless Judgement). */
+  targetBelowHalf?: boolean;
+  /** The target unit is within range of an objective (Loyal to the Cause, Breach and Clear). */
+  targetOnObjective?: boolean;
 }
 
 /** The modifiers an effect can contribute. Offensive and defensive effects use different fields. */
@@ -49,6 +56,10 @@ export interface EffectOutput {
   grantPrecision?: boolean; // the bearer's weapons gain [PRECISION] (Epic Challenge)
   grantLethalHits?: boolean; // the bearer's weapons gain [LETHAL HITS] (Dispense Justice)
   grantPsychic?: boolean; // the bearer's weapons gain [PSYCHIC] (Psi-reactive Ammunition)
+  grantSustained?: number; // the bearer's weapons gain [SUSTAINED HITS N] (Holy Hatred)
+  strengthBonus?: number; // +N to the attack's Strength (Zealot: +3 A and S)
+  apSet?: number; // the attack's AP becomes N if better than its own (Overkill: -4 AP)
+  ignoreBadHitMods?: boolean; // ignore negative BS/hit-roll modifiers (Superior Weapon Support System)
   apImprove?: number; // improve the attack's AP by N (Target Weak Spot: AP -1 → -2)
   // Defensive (the bearer is being attacked)
   toBeHitModifier?: number; // e.g. Stealth -1 (subtracts from the attacker's hit roll)
@@ -175,6 +186,81 @@ export const EFFECT_REGISTRY: Record<string, Effect> = {
   'cp:consolidate_extended': { id: 'cp:consolidate_extended', name: 'Exigent Assignments (consolidate D3+3")', side: 'attacker', output: {} },
   // For the Lion (Vengeful Brethren): +1 OC until the end of the turn (read by the OC sums).
   'cp:oc_plus1': { id: 'cp:oc_plus1', name: 'For the Lion (+1 OC)', side: 'defender', output: {} },
+
+  // ── Combat Patrol per-unit specials (step 4; bound via abilities.cpInnateEffectIds or plays) ──
+  // FOESIGHT (Castellan Crowe): attacks that target a CHARACTER unit can re-roll hit rolls.
+  'cp:foesight': {
+    id: 'cp:foesight', name: 'Foesight (re-roll hits vs CHARACTER)', side: 'attacker',
+    appliesTo: (c) => c.targetKeywords.includes('CHARACTER'), output: { rerollHits: 'fail' },
+  },
+  // FORCE EDGE (Brotherhood Terminators): melee attacks vs non-MONSTER/VEHICLE have +1 AP.
+  'cp:force_edge': {
+    id: 'cp:force_edge', name: 'Force Edge (+1 AP melee)', side: 'attacker',
+    appliesTo: (c) =>
+      c.weaponType === 'melee' && !c.targetKeywords.includes('MONSTER') && !c.targetKeywords.includes('VEHICLE'),
+    output: { apImprove: 1 },
+  },
+  // HOLY HATRED (Preacher Teguen): while attached, the unit's melee attacks have [SUSTAINED HITS 1].
+  'cp:holy_hatred': {
+    id: 'cp:holy_hatred', name: 'Holy Hatred ([SUSTAINED HITS 1] melee)', side: 'attacker',
+    appliesTo: (c) => c.weaponType === 'melee', output: { grantSustained: 1 },
+  },
+  // MERCILESS JUDGEMENT (Vigilant Squad): ranged attacks vs a below-half-strength unit +1 to wound.
+  'cp:merciless_judgement': {
+    id: 'cp:merciless_judgement', name: 'Merciless Judgement (+1 wound vs below half)', side: 'attacker',
+    appliesTo: (c) => c.weaponType === 'ranged' && !!c.targetBelowHalf, output: { woundModifier: 1 },
+  },
+  // LOYAL TO THE CAUSE (Inquisitorial Agents): -1 to wound while within range of an objective.
+  'cp:loyal_to_the_cause': {
+    id: 'cp:loyal_to_the_cause', name: 'Loyal to the Cause (-1 wound on an objective)', side: 'defender',
+    appliesTo: (c) => !!c.targetOnObjective, output: { woundModifier: -1 },
+  },
+  // GRAVIS PROTECTION (Master Zacharial): attacks that target this unit have -1 D.
+  'cp:gravis_protection': { id: 'cp:gravis_protection', name: 'Gravis Protection (-1 Damage)', side: 'defender', output: { damageReduction: 1 } },
+  // Superior Weapon Support System (Commander Cloudspear): ranged attacks ignore BS/hit maluses.
+  'cp:swss': {
+    id: 'cp:swss', name: 'Superior Weapon Support System (ignore hit maluses)', side: 'attacker',
+    appliesTo: (c) => c.weaponType === 'ranged', output: { ignoreBadHitMods: true },
+  },
+  // Breach and Clear (Breacher Team): ranged attacks vs a unit on an objective re-roll wounds.
+  'cp:breach_and_clear': {
+    id: 'cp:breach_and_clear', name: 'Breach and Clear (re-roll wounds vs objective holders)', side: 'attacker',
+    appliesTo: (c) => c.weaponType === 'ranged' && !!c.targetOnObjective, output: { rerollWounds: 'fail' },
+  },
+  // ZEALOT (Preacher Teguen, once per battle): his melee attacks have +3 A and S.
+  'cp:zealot': {
+    id: 'cp:zealot', name: 'Zealot (+3 A and S)', side: 'attacker',
+    appliesTo: (c) => c.weaponType === 'melee' && c.weaponSourceDsId === 'cp-inquisitors-hand-preacher-teguen',
+    output: { extraAttacks: 3, strengthBonus: 3 },
+  },
+  // OVERKILL (Eversor Assassin, once per battle): melee attacks have -4 AP (read: AP becomes -4).
+  'cp:overkill': {
+    id: 'cp:overkill', name: 'Overkill (AP -4 melee)', side: 'attacker',
+    appliesTo: (c) => c.weaponType === 'melee' && c.weaponSourceDsId === 'cp-inquisitors-hand-eversor-assassin',
+    output: { apSet: -4 },
+  },
+  // BLADEGUARD (once per turn): +1 to hit in melee, OR -1 to be hit while in guard.
+  'cp:bladeguard_hit': {
+    id: 'cp:bladeguard_hit', name: 'Bladeguard (+1 to hit melee)', side: 'attacker',
+    appliesTo: (c) => c.weaponType === 'melee', output: { hitModifier: 1 },
+  },
+  'cp:bladeguard_stance': { id: 'cp:bladeguard_stance', name: 'Bladeguard (-1 to be hit)', side: 'defender', output: { toBeHitModifier: -1 } },
+  // Honoured Knights (Vengeful Brethren, patrol rule): defence stance after being charged —
+  // attacks with S greater than the unit's T have -1 to wound (any weapon type).
+  'cp:defence_stance': {
+    id: 'cp:defence_stance', name: 'Defence stance (-1 to wound if S > T)', side: 'defender',
+    appliesTo: (c) => (c.attackS ?? 0) > (c.targetT ?? 99), output: { woundModifier: -1 },
+  },
+  // Guidance of the Ancients (Venerable Dreadnought): after it shoots, one enemy unit it hit
+  // takes +1 to be hit by friendly ranged attacks (simplification: any ranged attacker, and the
+  // mark expires at the enemy's turn start rather than the phase end).
+  'cp:guided_target': {
+    id: 'cp:guided_target', name: 'Guidance of the Ancients (+1 to be hit)', side: 'defender',
+    appliesTo: (c) => c.weaponType === 'ranged', output: { toBeHitModifier: 1 },
+  },
+  // Co-ordinated Eradication (Sudden Dawn Cadre, once per battle per army): SDC attacks against
+  // the marked enemy have +1 AP until the end of the battle (permanent defender-side mark).
+  'cp:eradication_mark': { id: 'cp:eradication_mark', name: 'Co-ordinated Eradication (+1 AP incoming)', side: 'defender', output: { apImprove: 1 } },
 };
 
 /** Merge the gathered modifiers for one attack. `attacker`/`defender` are lists of effect ids. */
@@ -198,6 +284,10 @@ export function gatherAttackModifiers(
   grantPrecision: boolean;
   grantLethalHits: boolean;
   grantPsychic: boolean;
+  grantSustained: number;
+  strengthBonus: number;
+  apSet?: number;
+  ignoreBadHitMods: boolean;
   apImprove: number;
   apWorsen: number;
   grantCover: boolean;
@@ -218,6 +308,10 @@ export function gatherAttackModifiers(
     grantPrecision: false,
     grantLethalHits: false,
     grantPsychic: false,
+    grantSustained: 0,
+    strengthBonus: 0,
+    apSet: undefined as number | undefined,
+    ignoreBadHitMods: false,
     apImprove: 0,
     apWorsen: 0,
     grantCover: false,
@@ -244,6 +338,10 @@ export function gatherAttackModifiers(
     if (out.grantPrecision) acc.grantPrecision = true;
     if (out.grantLethalHits) acc.grantLethalHits = true;
     if (out.grantPsychic) acc.grantPsychic = true;
+    if (out.grantSustained) acc.grantSustained = Math.max(acc.grantSustained, out.grantSustained);
+    if (out.strengthBonus) acc.strengthBonus += out.strengthBonus;
+    if (out.apSet != null) acc.apSet = Math.min(acc.apSet ?? 0, out.apSet);
+    if (out.ignoreBadHitMods) acc.ignoreBadHitMods = true;
     if (out.apImprove) acc.apImprove += out.apImprove;
     if (out.apWorsen) acc.apWorsen += out.apWorsen;
     if (out.grantCover) acc.grantCover = true;

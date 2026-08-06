@@ -88,6 +88,8 @@ export interface CombatSituation {
   rerollWounds?: Reroll;
   damageReduction?: number; // -X to Damage per wound (floored at 1)
   extraAttacks?: number; // +N to the Attacks characteristic per firing model
+  /** Ignore negative BS and hit-roll modifiers (Superior Weapon Support System). */
+  ignoreBadHitMods?: boolean;
 }
 
 // ── Outputs ──────────────────────────────────────────────────────────────────
@@ -292,6 +294,11 @@ export function resolveAttacks(
     let hitMod = clampMod(situation.hitModifier) + (kw.heavy && situation.stationary ? 1 : 0);
     let reroll = situation.rerollHits ?? 'none';
     if (kw.psychic) hitMod = Math.max(hitMod, 0); // may ignore negative modifiers
+    if (situation.ignoreBadHitMods) {
+      // Superior Weapon Support System: ignore modifiers that worsen BS or the hit roll.
+      skill = Math.min(skill, weapon.skill);
+      hitMod = Math.max(hitMod, 0);
+    }
     let critHitOn = clampThreshold(situation.critHitOn ?? 6);
     if (kw.conversion && situation.longRange) critHitOn = Math.min(critHitOn, 5);
     if (situation.snapShooting) {

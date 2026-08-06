@@ -22,7 +22,7 @@ import { firingDeckX } from '../transport';
 import { secondaryPositionBonus } from '../secondaries';
 import { cpPositionBonus } from '../cpmissions';
 import { missionPositionBonus } from './missionplay';
-import { shootingEV, unitThreat, unitValue, unitGap, unitOC, maxWeaponRange, meleeEV } from './evaluate';
+import { chargeProb, shootingEV, unitThreat, unitValue, unitGap, unitOC, maxWeaponRange, meleeEV } from './evaluate';
 import { homeGarrisonId, unitRolePlan, type RolePlan } from './roles';
 import type { AiAction, AiDeps } from './types';
 import type { AiProfile } from './profile';
@@ -138,6 +138,22 @@ function positionScore(
   }
   score += bestEV * profile.damage;
 
+  // Melee payoff: a sword-first unit values standing where a charge can LAND next Charge phase.
+  // P(2D6 ≥ gap) shapes the reward, so 6" out scores far better than the 12"-sidearm band a
+  // pistol-carrying assault squad used to park in (where a charge needs boxcars).
+  if (plan.chargeWeight > 0 && unitThreat(unit, ctx, 'melee') > unitThreat(unit, ctx, 'ranged')) {
+    let bestCharge = 0;
+    for (const e of enemies) {
+      const ev = meleeEV(unit, e, ctx, true);
+      if (ev <= 0) continue;
+      let g = Infinity;
+      for (const m of e.models) if (m.alive) g = Math.min(g, dist(m.pos, at));
+      g = Math.max(0, g - 1.5); // centroid-to-model → rough base-to-base
+      bestCharge = Math.max(bestCharge, ev * chargeProb(g));
+    }
+    score += bestCharge * profile.damage * plan.chargeWeight;
+  }
+
   // Role standoff: closing inside the role's keep-away band is penalised (a sniper that CAN
   // shoot from 36" should not be standing at 10").
   if (plan.standoff > 0 && enemies.length) {
@@ -213,7 +229,12 @@ export function planMove(
     // Close to weapons range (or to melee), but no closer than the ROLE's keep-away band
     // (profile standoff acts as a floor for cagey personalities).
     const standoff = Math.max(plan.standoff, plan.role === 'assault' || plan.role === 'assassin' ? 0 : Math.min(profile.standoff, 12), 0);
-    const closeBy = Math.max(0, Math.min(gap - standoff, gap - (range > 0 ? range * 0.6 : 1)));
+    // A unit whose melee threat beats its guns wants CHARGE range, not its pistols' range band —
+    // otherwise a 12" sidearm keeps a sword squad parked at 12" forever (2D6 needs boxcars).
+    const meleeFirst = plan.chargeWeight > 0 && unitThreat(unit, ctx, 'melee') > unitThreat(unit, ctx, 'ranged');
+    const closeBy = meleeFirst
+      ? Math.max(0, gap - Math.max(standoff, 5))
+      : Math.max(0, Math.min(gap - standoff, gap - (range > 0 ? range * 0.6 : 1)));
     if (closeBy > 0.5) goals.push({ goal: { x: centroid.x + (towards.x / len) * closeBy, y: centroid.y + (towards.y / len) * closeBy }, advanceOk: range === 0 });
     // And the kite-away option for soft shooters.
     goals.push({ goal: { x: centroid.x - (towards.x / len) * M, y: centroid.y - (towards.y / len) * M }, advanceOk: false });

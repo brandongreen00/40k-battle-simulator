@@ -330,6 +330,50 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-08-06] — COMBAT PATROL step 4: per-unit specials (owner: "please add the per-unit
+  specials").** Every datasheet ability + unit-riding patrol rule of the four patrols is
+  engine-bound except Combat Squad (text-only). All gates green: `pnpm typecheck`, `pnpm test`
+  (**500 tests**, +13 in a new `combat patrol per-unit specials (step 4)` block), `pnpm build`;
+  AI-vs-AI probes (24 games, 6 pairings) end naturally with ZERO rejected intents and the
+  specials firing in real play. Full per-ability table: **docs/combat_patrol.md §4c**.
+  - **Passives** via new `abilities.cpInnateEffectIds` (name-matched, Leader-merge-aware, joins
+    effectsOf): Foesight (re-roll hits vs CHARACTER), Force Edge (+1 AP melee vs non-M/V),
+    Holy Hatred ([SUSTAINED HITS 1] melee while Teguen leads — new `grantSustained` output),
+    Merciless Judgement (+1 wound vs below-half — new `AttackContext.targetBelowHalf`), Loyal to
+    the Cause (-1 wound on an objective — new `targetOnObjective`, computed area-aware in
+    resolveAttack), Gravis Protection (-1 D), Superior Weapon Support System (ignore BS/hit
+    maluses — new `ignoreBadHitMods` through CombatSituation), Breach and Clear (re-roll wounds
+    vs objective holders). Shield Drone = +1 W at every spawn site + defender max-W.
+  - **Actives** via new `UseUnitAbility` intent (once-per-battle/turn via `status.abilityUsed`,
+    army-once via `GameState.cpArmyOnce`; new "Unit abilities" panel block): Zealot (+3 A/S on
+    Teguen's own weapon — new `weaponSourceDsId` ctx + `strengthBonus`), Overkill (AP set to -4 —
+    new `apSet`; "-4 AP" read as AP -4, flagged), Bladeguard (once/turn: +1 hit OR -1 to be hit),
+    Tome Skull (unshock friend / shock enemy ≤6"), Nuncio-Aquila (objective shock, per-objective
+    per-turn), Co-ordinated Eradication (permanent +1 AP mark — new `status.permanentEffects`
+    surviving turn resets), Gate of Infinity (opponent's Fight phase → back to Reserves; size
+    table uncaptured → 1 unit/use once per phase, flagged).
+  - **Auto-triggers**: Honoured Knights (charge ending engaged → VB defence stance: -1 wound when
+    S>T, expires at the unit's turn start = end of the charging turn), Strike from the Warp shock
+    (ingress→charge forces a battle-shock roll, `setUpThisTurn` proxy), Punishing Volley +
+    Guidance of the Ancients (post-ShootUnit hooks; "hit by those attacks" ≈ the main target),
+    Sanctifying Ritual / Objective Secured (auto-secure at own Command end via cpAutoSecure),
+    Grav-Inhibitor Drone (charge rolls vs Pathfinders -2, both first roll and Command Re-roll).
+  - **For the Greater Good**: full Observer/Spotted/Guided flow — new `SpotTarget` intent +
+    `GameState.spotted` (cleared on phase change): Observer forgoes shooting, Guided attacks get
+    +1 BS (`skillDelta`), +[IGNORES COVER] when the Observer has MARKERLIGHT; Target Uploaded
+    lets Pathfinders spot AND shoot their Spotted unit. UI picker + AI (Pathfinders always spot;
+    a weak-EV unit Guides the main volley).
+  - **AI movement fix (root-caused from probes)**: melee-first units (melee threat > ranged)
+    parked at their sidearm's 12" band forever — ZERO charges in 24 CP probe games. Fix in
+    ai/move.ts: their approach goal closes to ~5" and a new charge-payoff position-score term
+    (P(2D6 ≥ gap) × meleeEV × chargeWeight). After: charges land, Zealot/Overkill/Bladeguard/
+    defence stance/Grav-Inhibitor all fire in AI-vs-AI play; the full standard-battle suite is
+    unchanged-green.
+  - **Handoff / next**: patrol enhancements (no CP enhancement picker exists yet) + the
+    fights-on-death pair (Determined to the Last / Killer Reflexes); Combat Squad split;
+    Command Re-roll single-die uses still text-only. AI nits in §5 (Gate declined, Nuncio/SftW
+    shock rare, charge odds ignore the Grav -2).
+
 - **[2026-08-06] — COMBAT PATROL step 3: stratagems in play (owner: "please add those stratagems…
   ALSO all core stratagems are fair game — with 3 exceptions: No Explosives, No Rapid Ingress,
   No Crushing Impact").** All gates green: `pnpm typecheck`, `pnpm test` (**487 tests**, +8 in a

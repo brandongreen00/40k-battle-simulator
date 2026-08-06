@@ -129,3 +129,46 @@ export function innateEffectIds(ds: Datasheet | undefined): string[] {
   }
   return out;
 }
+
+/** Ability-name prefix match across the unit's datasheets (primary + merged Leaders) — CP
+ *  ability names carry suffixes like "FOESIGHT (PSYCHIC)". */
+export function unitHasAbilityStarting(unit: UnitInstance, ctx: EngineContext, prefix: string): boolean {
+  const sheets = [
+    ctx.datasheets.get(unit.datasheetId),
+    ...(unit.attachedLeaders ?? []).map((l) => ctx.datasheets.get(l.datasheetId)),
+  ];
+  const want = prefix.toLowerCase();
+  return sheets.some((ds) => abilityNames(ds).some((n) => n.toLowerCase().startsWith(want)));
+}
+
+/** Does any of the unit's datasheets carry the named ability (prefix match)? */
+export function hasAbilityStarting(ds: Datasheet | undefined, prefix: string): boolean {
+  const want = prefix.toLowerCase();
+  return abilityNames(ds).some((n) => n.toLowerCase().startsWith(want));
+}
+
+/**
+ * Combat Patrol per-unit specials: always-on EFFECT_REGISTRY bindings implied by the unit's
+ * ability list (incl. merged Leaders' abilities where the rule is unit-scoped). The gated
+ * conditions (target CHARACTER / S vs T / on an objective / below half) live on the effects'
+ * `appliesTo` — this function only answers "does the unit carry the rule".
+ */
+export function cpInnateEffectIds(unit: UnitInstance, ctx: EngineContext): string[] {
+  const out: string[] = [];
+  const has = (prefix: string) => unitHasAbilityStarting(unit, ctx, prefix);
+  if (has('foesight')) out.push('cp:foesight');
+  if (has('force edge')) out.push('cp:force_edge');
+  // Holy Hatred: "If this is an Attached unit" — only while Teguen leads.
+  if (has('holy hatred') && (unit.attachedLeaders ?? []).length > 0) out.push('cp:holy_hatred');
+  if (has('merciless judgement')) out.push('cp:merciless_judgement');
+  if (has('loyal to the cause')) out.push('cp:loyal_to_the_cause');
+  if (has('gravis protection')) out.push('cp:gravis_protection');
+  if (has('superior weapon support system')) out.push('cp:swss');
+  if (has('breach and clear')) out.push('cp:breach_and_clear');
+  return out;
+}
+
+/** Shield Drone (T'au): +1 to the bearer's Wounds characteristic. */
+export function abilityWoundBonus(ds: Datasheet | undefined): number {
+  return hasAbility(ds, 'Shield Drone') ? 1 : 0;
+}
