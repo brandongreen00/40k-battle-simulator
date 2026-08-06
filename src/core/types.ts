@@ -10,7 +10,9 @@ export interface Vec2 {
 
 /** Model base footprint. Circle uses `radius`; oval uses `rx`/`ry` (semi-axes). Inches. */
 export interface BaseShape {
-  kind: 'circle' | 'oval';
+  /** 'rect' = a rectangular hull footprint (rx/ry are the HALF-extents along x/y, axis-aligned —
+   *  base rotation isn't tracked, same as ovals). Used for hull-measured vehicles. */
+  kind: 'circle' | 'oval' | 'rect';
   radius?: number; // circle, inches
   rx?: number; // oval semi-axis along x, inches
   ry?: number; // oval semi-axis along y, inches

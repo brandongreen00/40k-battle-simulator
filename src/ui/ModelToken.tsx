@@ -14,7 +14,7 @@ interface Props {
   onPointerDown: (modelId: string, e: PointerEvent<SVGElement>) => void;
 }
 
-/** A single model rendered as its base (circle or oval) at the correct physical size. */
+/** A single model rendered as its base (circle, oval or rect hull) at the correct size. */
 export function ModelToken({ model, shape, owner, selected, boardHeight, hitBoostPx = 0, onPointerDown }: Props) {
   const color = OWNER_COLOR[owner];
   const cx = pxX(model.pos.x);
@@ -38,6 +38,15 @@ export function ModelToken({ model, shape, owner, selected, boardHeight, hitBoos
     <g>
       {shape.kind === 'circle' ? (
         <circle cx={cx} cy={cy} r={pxLen(shape.radius!)} {...common} />
+      ) : shape.kind === 'rect' ? (
+        <rect
+          x={cx - pxLen(shape.rx!)}
+          y={cy - pxLen(shape.ry!)}
+          width={pxLen(shape.rx!) * 2}
+          height={pxLen(shape.ry!) * 2}
+          rx={2}
+          {...common}
+        />
       ) : (
         <ellipse cx={cx} cy={cy} rx={pxLen(shape.rx!)} ry={pxLen(shape.ry!)} {...common} />
       )}

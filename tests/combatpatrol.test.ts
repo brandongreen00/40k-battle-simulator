@@ -116,10 +116,12 @@ describe('combat patrol datasheets (data/game/cp_datasheets.json)', () => {
     expect(byName("Crowe's Sanctifiers Strike Squad").baseShape).toEqual({ kind: 'circle', radius: 0.6299 });
     expect(byName('Sanctifiers Castellan Crowe').models[0]!.invuln).toBe(4);
     expect(byName("Crowe's Sanctifiers Venerable Dreadnought").models[0]!.invuln).toBeUndefined();
-    // Devilfish: "transport capacity of 12 Infantry models".
+    // Devilfish: "transport capacity of 12 Infantry models"; hull is the owner-measured
+    // 17.5cm × 13cm rectangle (6.89" × 5.12"), stored as half-extents.
     const devilfish = byName('Sudden Dawn Cadre Devilfish');
     const cap = parseTransportCapacity(devilfish.transport!);
     expect(cap?.capacity).toBe(12);
+    expect(devilfish.baseShape).toEqual({ kind: 'rect', rx: 3.4449, ry: 2.5591 });
     // Preacher Teguen attaches to the Inquisitorial Agents.
     const teguen = byName('Preacher Teguen');
     expect(teguen.canLead).toEqual(['cp-inquisitors-hand-inquisitorial-agents']);

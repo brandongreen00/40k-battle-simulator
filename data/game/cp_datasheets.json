@@ -1229,9 +1229,9 @@
    }
   ],
   "baseShape": {
-   "kind": "oval",
-   "rx": 2.3622,
-   "ry": 1.2795
+   "kind": "rect",
+   "rx": 3.4449,
+   "ry": 2.5591
   },
   "keywords": [
    "DEDICATED TRANSPORT",

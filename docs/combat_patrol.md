@@ -55,8 +55,10 @@ attacks at the real bearers, e.g. 8 Storm Bolters in the 10-strong Strike Squad)
 - Torrent/"-" BS → `skill 0` (same as the Wahapedia-converted data).
 - Mixed-base squads take the rank-and-file base (Vigilants 28.5mm — the 25mm is
   the lone Cyber-Mastiff; Agents 25mm — the 32mm is the Gun Servitor). The
-  Devilfish ("Large Flying Base") uses a Chimera-sized hull oval as a rendering
-  approximation.
+  Devilfish ("Large Flying Base") uses the owner-measured hull **rectangle**:
+  17.5cm × 13cm (6.89" × 5.12"; 7cm tall incl. antenna — height not modelled,
+  the sim is 2D). Rect bases are axis-aligned (rotation untracked, like ovals)
+  and use the same gap/overlap approximations.
 - Patrol/faction ability TEXT rides on every unit's `abilities`; none of the CP
   units has Deep Strike/Infiltrators/Scouts, so deployment abilities are standard
   (+ the mandatory-reserves rule below).

@@ -75,10 +75,20 @@ const parseInches = (s: string | undefined): number => {
   return m ? parseFloat(m[1]!) : 0;
 };
 const MM_TO_IN = 1 / 25.4;
+// Owner-measured hull footprints for vehicles whose datasheet says "Large Flying Base" etc.
+// The Devilfish: burst-cannon tip to thrusters 17.5cm, width 13cm (height 7cm incl. antenna —
+// not modelled; the sim is 2D). Stored as a rect with HALF-extents in inches.
+const HULL_FOOTPRINTS: Record<string, { kind: 'rect'; rx: number; ry: number }> = {
+  'Sudden Dawn Cadre Devilfish': { kind: 'rect', rx: round4((17.5 / 2.54) / 2), ry: round4((13 / 2.54) / 2) },
+};
+function round4(v: number): number {
+  return Math.round(v * 10000) / 10000;
+}
 // One shape per datasheet — for mixed-base squads we take the most numerous models' base
-// (noted in docs/combat_patrol.md). "Large Flying Base" vehicles get a hull-footprint
-// approximation, the same convention the 10e ingest used for "Use model" vehicles.
-function baseShape(unit: XUnit): { kind: 'circle'; radius: number } | { kind: 'oval'; rx: number; ry: number } {
+// (noted in docs/combat_patrol.md). Hull-measured vehicles use the curated footprints above.
+function baseShape(unit: XUnit): { kind: 'circle'; radius: number } | { kind: 'oval' | 'rect'; rx: number; ry: number } {
+  const measured = HULL_FOOTPRINTS[unit.name];
+  if (measured) return measured;
   const size = unit.composition?.baseSize ?? '';
   if (/large flying base/i.test(size)) return { kind: 'oval', rx: 2.3622, ry: 1.2795 }; // ≈ Chimera hull
   const sizes = [...size.matchAll(/([\d.]+)\s*mm/g)].map((m) => parseFloat(m[1]!));
