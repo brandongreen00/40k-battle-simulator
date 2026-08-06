@@ -1230,8 +1230,9 @@ button.remove {
   color: var(--accent);
 }
 
-/* Mobile-only panel tabs (hidden on desktop) */
-.m-tabs {
+/* Mobile-only chrome (bottom nav, move bar) — hidden on desktop */
+.m-tabs,
+.m-only {
   display: none;
 }
 
@@ -1245,54 +1246,98 @@ body {
   overscroll-behavior-y: none;
 }
 
-/* ══════════════════════ Phone layout (portrait-first) ═════════════════════════ */
-@media (max-width: 880px) {
-  :root {
-    --navh: 44px;
+/* ═══════════════════ Phone layout: native app shell ═══════════════════════════
+   The app becomes a fixed-height shell — a compact top bar, full-height PAGES that
+   scroll internally, and a native bottom tab bar. The page itself never scrolls
+   (and never scrolls horizontally), so no text can end up off screen.
+   Applies to narrow screens AND touch devices in landscape (short + coarse). */
+@media (max-width: 880px), ((pointer: coarse) and (max-height: 520px)) {
+  /* ── App shell ── */
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+  body {
+    font-size: 15px;
+  }
+  .app {
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
   }
   .topnav {
+    position: static;
+    flex: none;
     gap: 8px;
-    padding: 6px 10px;
-    min-height: var(--navh);
+    padding: calc(6px + env(safe-area-inset-top)) 12px 6px;
   }
   .topnav .brand {
     font-size: 13px;
+    white-space: nowrap;
   }
   .topnav nav {
     flex: 1;
   }
   .topnav nav button {
     flex: 1;
-    min-height: 32px;
+    min-height: 34px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+  .app .layout,
+  .app .lb-layout {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    overflow-x: clip;
   }
 
+  /* ── Bottom navigation (native tab bar) ── */
   .m-tabs {
     display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 10px;
-    background: var(--panel);
-    border-bottom: 1px solid var(--line);
+    order: 99;
+    flex: none;
+    align-items: stretch;
+    gap: 4px;
+    padding: 4px 8px calc(4px + env(safe-area-inset-bottom));
+    background: #10131a;
+    border-top: 1px solid var(--line);
   }
   .m-tabs button {
     flex: 1;
-    min-height: 40px;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    background: #1b1f27;
-    color: var(--text);
-    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    min-height: 52px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .m-tabs button .m-ico {
+    font-size: 20px;
+    line-height: 1.15;
   }
   .m-tabs button.on {
-    border-color: var(--accent);
     color: var(--accent);
+    background: rgba(253, 224, 71, 0.08);
     font-weight: 600;
   }
   .m-tabs .m-points {
+    align-self: center;
     font-family: monospace;
     font-size: 12px;
     color: var(--muted);
-    padding: 0 4px;
+    padding: 0 6px;
     white-space: nowrap;
   }
   .m-tabs .m-points.over {
@@ -1300,96 +1345,139 @@ body {
     font-weight: 700;
   }
 
-  /* ── Measuring board: tabs + board pinned on top, one panel below (tab-switched) ── */
-  .layout {
-    flex-direction: column;
-    min-height: 0;
-  }
-  /* The tab bar is part of the sticky stack (above the board) — scrolling a long panel must
-     never take the Units/Game switch off screen. --mtabsh keeps the board's sticky offset in
-     sync with the bar's real height (40px buttons + 8px×2 padding + 1px border). */
-  .layout .m-tabs {
-    order: 1;
-    position: sticky;
-    top: var(--navh);
-    z-index: 6;
-    --mtabsh: 57px;
-  }
-  .layout .board-main {
-    order: 2;
-    position: sticky;
-    top: calc(var(--navh) + 57px);
-    z-index: 5;
-    background: var(--bg);
-    padding: 8px;
-    overflow: visible;
-    border-bottom: 1px solid var(--line);
-  }
-  /* The 11e Event Companion maps are PORTRAIT (44"×60"): unconstrained, a vertical board fills
-     the whole phone screen and the sticky pin buries every panel underneath it. Cap the board's
-     height so the tabs + panels always keep real estate; pinch-zoom covers the detail work. */
-  .layout .board-main svg {
-    display: block;
-    width: auto;
-    height: auto;
-    max-width: 100%;
-    max-height: 40vh;
-    margin: 0 auto;
-  }
-  .layout .board-wrap {
-    max-width: 100%;
-  }
+  /* ── Measuring board: three full-height pages (Board / Units / Play) ── */
   .layout .sidebar,
-  .layout .gamerail {
-    order: 3;
+  .layout .gamerail,
+  .layout .board-main {
+    order: 1;
     width: 100%;
-    flex: none;
+    flex: 1;
+    min-height: 0;
     max-height: none;
-    border-left: none;
-    border-right: none;
-    padding: 12px;
+    border: none;
+    padding: 14px 14px 24px;
+    overflow-y: auto;
+    overflow-x: clip;
+    -webkit-overflow-scrolling: touch;
   }
-  .layout[data-mtab='game'] .sidebar {
+  .layout .sidebar {
+    background: var(--bg);
+  }
+  .layout[data-mtab='board'] .sidebar,
+  .layout[data-mtab='board'] .gamerail {
     display: none;
   }
+  .layout[data-mtab='tools'] .board-main,
   .layout[data-mtab='tools'] .gamerail {
     display: none;
   }
-  .board-hud {
-    font-size: 10.5px;
-    padding: 4px 8px;
-    margin-bottom: 6px;
-    line-height: 1.45;
+  .layout[data-mtab='game'] .board-main,
+  .layout[data-mtab='game'] .sidebar {
+    display: none;
   }
 
-  /* ── List builder: three stacked panes behind tabs ── */
-  .lb-layout {
+  /* Board page: HUD on top, the board fills the middle, controls underneath. */
+  .layout .board-main {
+    display: flex;
     flex-direction: column;
+    padding: 10px 10px 12px;
+    overflow-y: hidden;
+  }
+  .layout .board-wrap {
+    flex: 1;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
+    max-width: none;
   }
-  .lb-layout .m-tabs {
-    order: 1;
-    position: sticky;
-    top: var(--navh);
-    z-index: 5;
+  .layout .board-stage {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: none;
   }
-  .lb-layout .sidebar {
-    order: 2;
-    width: 100%;
+  .layout .board-main svg.board-svg {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    border-radius: 8px;
+  }
+  .board-hud {
     flex: none;
+    font-size: 11px;
+    padding: 6px 9px;
+    margin-bottom: 8px;
+    line-height: 1.4;
+    border-radius: 8px;
+  }
+  .board-bar {
+    flex: none;
+  }
+
+  /* Confirm/cancel an open Movement activation without leaving the Board page. */
+  .m-only {
+    display: flex;
+  }
+  .m-movebar {
+    flex: none;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .m-movebar .m-movelabel {
+    flex: 1;
+    min-width: 0;
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+  .m-movebar button {
+    min-height: 44px;
+    padding: 0 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    background: #232936;
+    color: var(--text);
+    border: 1px solid var(--line);
+  }
+  .m-movebar button.ok {
+    background: var(--accent);
+    color: #14161a;
+    border-color: var(--accent);
+  }
+
+  /* ── List builder: three full-height pages (My list / Add units / Setup) ── */
+  .lb-layout .sidebar {
+    order: 1;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
     max-height: none;
-    border-right: none;
+    border: none;
+    padding: 14px 14px 24px;
+    overflow-y: auto;
+    overflow-x: clip;
   }
   .lb-main {
-    order: 2;
+    order: 1;
+    flex: 1;
+    min-height: 0;
+    display: flex;
     flex-direction: column;
   }
   .lb-main .catalog,
   .lb-main .lb-list {
     width: 100%;
-    flex: none;
+    flex: 1;
+    min-height: 0;
     max-height: none;
-    border-right: none;
+    border: none;
+    overflow-y: auto;
+    overflow-x: clip;
+    padding-bottom: 24px;
   }
   .lb-layout[data-mtab='list'] .sidebar,
   .lb-layout[data-mtab='list'] .catalog {
@@ -1407,39 +1495,90 @@ body {
     overflow-y: visible;
   }
 
+  /* ── Native styling: cards, section headers, larger type ── */
+  .layout .sidebar > section,
+  .dispositions,
+  .dep-step {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px;
+    margin: 0 0 12px;
+  }
+  .sidebar h2,
+  .game-panel h3 {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .game-panel h3 {
+    margin: 20px 0 8px;
+  }
+  .sidebar-head .newbattle {
+    width: 100%;
+    min-height: 44px;
+    border-radius: 10px;
+    font-size: 14px;
+  }
+
   /* ── Touch-sized controls ── */
   .btnrow button,
   .game-panel .strat,
   .spawn,
   .reserve-btn,
   .arrive,
-  .m-tabs button,
-  .actions button {
-    min-height: 42px;
+  .actions button,
+  .seg button {
+    min-height: 44px;
+    border-radius: 10px;
+  }
+  .btnrow button,
+  .seg button {
+    font-size: 13.5px;
   }
   .field select,
   .field input,
   .search,
   .import-text {
-    min-height: 42px;
+    min-height: 44px;
     font-size: 15px; /* ≥15px stops iOS zooming the page when a field focuses */
+    border-radius: 10px;
   }
   .unit-list li {
-    min-height: 44px;
+    min-height: 48px;
+    font-size: 13.5px;
   }
   .catalog-item {
-    min-height: 44px;
+    min-height: 48px;
   }
   .lu-step {
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
   }
   .gamerail,
   .sidebar {
     font-size: 14px;
   }
+
+  /* ── Overflow guards: nothing may push the page sideways ── */
+  select,
+  .embark-select {
+    max-width: 100%;
+    min-width: 0;
+  }
+  .unit-list .unit-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
   .dicelog {
-    max-height: 200px;
+    max-height: 240px;
+    word-break: break-word;
+  }
+  .btnrow,
+  .board-bar,
+  .board-togglebar {
+    flex-wrap: wrap;
   }
 }
 
