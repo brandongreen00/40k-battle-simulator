@@ -163,6 +163,7 @@ export const patrolEnhancements: CpEnhancement[] = (cpPatrolsJson as unknown as 
 export const dataIndex: DataIndex = {
   datasheets: datasheetsById,
   enhancements: enhancementsById,
+  cpEnhancements: patrolEnhancements,
 };
 
 /** Distinct detachment names available for a faction (from the enhancement catalog). */

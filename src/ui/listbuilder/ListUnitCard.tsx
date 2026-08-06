@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { Datasheet, Enhancement } from '../../core/types';
 import { isCharacter, isEpicHero, type ArmyList, type ListUnit } from '../../core/army';
 import { groupFits, wargearOptionGroups } from '../../core/wargear';
-import { getDatasheet } from '../../data/loaders';
+import { getDatasheet, type CpEnhancement } from '../../data/loaders';
 
 interface Props {
   unit: ListUnit;
@@ -10,6 +10,8 @@ interface Props {
   list: ArmyList;
   points: number;
   enhancements: Enhancement[];
+  /** Combat Patrol only: the patrol enhancement(s) printed for THIS unit's datasheet. */
+  cpEnhancements?: CpEnhancement[];
   hasError: boolean;
   onModelCount: (uid: string, n: number) => void;
   onEnhancement: (uid: string, id?: string) => void;
@@ -24,7 +26,11 @@ export function ListUnitCard(props: Props) {
   const [open, setOpen] = useState(false);
 
   const character = isCharacter(ds);
-  const canEnhance = character && !isEpicHero(ds);
+  // Combat Patrol enhancements are printed for a specific unit (Character or not) — the select
+  // appears exactly on the bearers; the standard Character rule applies to normal lists only.
+  const cpEnh = props.cpEnhancements ?? [];
+  const canEnhance = list.combatPatrol ? cpEnh.length > 0 : character && !isEpicHero(ds);
+  const cpPicked = cpEnh.find((e) => e.id === unit.enhancementId);
 
   // Bodyguard units already in the list that this leader can attach to.
   const attachTargets = list.units
@@ -96,6 +102,11 @@ export function ListUnitCard(props: Props) {
             onChange={(e) => props.onEnhancement(unit.uid, e.target.value || undefined)}
           >
             <option value="">— none —</option>
+            {cpEnh.map((e) => (
+              <option key={e.id} value={e.id} title={e.text}>
+                {e.name}
+              </option>
+            ))}
             {enhancements.map((e) => (
               <option key={e.id} value={e.id}>
                 {e.name} (+{e.cost})
@@ -104,6 +115,7 @@ export function ListUnitCard(props: Props) {
           </select>
         </label>
       )}
+      {cpPicked && cpPicked.text && <p className="lu-note">{cpPicked.text}</p>}
 
       {open && (
         <div className="lu-options">

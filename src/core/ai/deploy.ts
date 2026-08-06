@@ -355,9 +355,21 @@ export function aiDeployAction(state: GameState, side: Side, profile: AiProfile,
     };
   }
 
-  // Combat Patrol: pick the patrol's enhancement before deploying (one per side). Curated
-  // passive picks — the AI prefers always-on/auto-trigger value over activation-dependent cards.
+  // Combat Patrol: pick the patrol's enhancement before deploying (one per side). A pick made
+  // in the List Builder rides on the roster — honour it over the AI's own preference.
   if (state.battleType === 'combat_patrol' && !state.cpEnhancements?.[side]) {
+    const carried = deps.rosters[side]?.units.find((u) => u.enhancementId?.startsWith('cpenh:'));
+    if (carried) {
+      return {
+        intents: [
+          {
+            intent: { type: 'ChooseCpEnhancement', side, enhancementId: carried.enhancementId!, targetDsId: carried.datasheetId },
+            skipIf: (s) => !!s.cpEnhancements?.[side],
+          },
+        ],
+        note: `${side} takes its list's enhancement`,
+      };
+    }
     const AI_CP_ENH: Record<string, { id: string; targetDsId: string }> = {
       "Crowe's Sanctifiers": { id: 'cpenh:crowes_sanctifiers:sanctified_auspexes', targetDsId: 'cp-crowes-sanctifiers-venerable-dreadnought' },
       "Inquisitor's Hand": { id: 'cpenh:inquisitors_hand:killer_reflexes', targetDsId: 'cp-inquisitors-hand-eversor-assassin' },

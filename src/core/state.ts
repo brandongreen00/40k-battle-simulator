@@ -956,8 +956,9 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         if (!transport || !ctx) {
           return { ...state, log: [...state.log, 'Deployment rejected: transport not found'] };
         }
+        const carry = absorbCpEnhancementCarry(state, intent.owner, intent.datasheetId, intent.enhancementId);
         const models = layoutModels(
-          { ...intent, wounds: intent.wounds + enhancementWoundBonus(intent.enhancementId, intent.modelCount) + (ctx ? abilityWoundBonus(ctx.datasheets.get(intent.datasheetId)) : 0), anchor: { x: 0, y: 0 } },
+          { ...intent, wounds: intent.wounds + enhancementWoundBonus(carry.enhancementId, intent.modelCount) + (ctx ? abilityWoundBonus(ctx.datasheets.get(intent.datasheetId)) : 0), anchor: { x: 0, y: 0 } },
           state.layout,
         );
         const unit: UnitInstance = {
@@ -965,17 +966,17 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
           models, startingModels: models.length, status: {},
           inReserves: true, embarkedIn: transport.id,
           ...(intent.wargear ? { wargearCounts: intent.wargear } : {}),
-          ...(intent.enhancementId ? { enhancementId: intent.enhancementId } : cpEnhancementFor(state, intent.owner, intent.datasheetId) ? { enhancementId: cpEnhancementFor(state, intent.owner, intent.datasheetId)! } : {}),
+          ...(carry.enhancementId ? { enhancementId: carry.enhancementId } : cpEnhancementFor(state, intent.owner, intent.datasheetId) ? { enhancementId: cpEnhancementFor(state, intent.owner, intent.datasheetId)! } : {}),
         };
         const check = canEmbark(state, unit, transport, ctx);
         if (!check.ok) {
           return { ...state, log: [...state.log, `Deployment rejected: ${check.reason}`] };
         }
-        const setup = state.setup ? { ...state.setup, toDeploy: otherSide(intent.owner) } : state.setup;
+        const setup = carry.state.setup ? { ...carry.state.setup, toDeploy: otherSide(intent.owner) } : carry.state.setup;
         const tName = ctx.datasheets.get(transport.datasheetId)?.name ?? transport.id;
         return {
-          ...state, units: [...state.units, unit], setup,
-          log: [...state.log, `${intent.owner} deploys a unit embarked within ${tName}`],
+          ...carry.state, units: [...carry.state.units, unit], setup,
+          log: [...carry.state.log, `${intent.owner} deploys a unit embarked within ${tName}`],
         };
       }
       const ability = intent.ability ?? 'standard';
@@ -988,8 +989,9 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       if (!check.legal) {
         return { ...state, log: [...state.log, `Deployment rejected (${intent.owner}): ${check.reason}`] };
       }
+      const carry = absorbCpEnhancementCarry(state, intent.owner, intent.datasheetId, intent.enhancementId);
       const models = layoutModels(
-        { ...intent, wounds: intent.wounds + enhancementWoundBonus(intent.enhancementId, intent.modelCount) + (ctx ? abilityWoundBonus(ctx.datasheets.get(intent.datasheetId)) : 0) },
+        { ...intent, wounds: intent.wounds + enhancementWoundBonus(carry.enhancementId, intent.modelCount) + (ctx ? abilityWoundBonus(ctx.datasheets.get(intent.datasheetId)) : 0) },
         state.layout,
       );
       const grantAb = grantedDeployAbility(state, intent.unitId);
@@ -997,17 +999,18 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         id: intent.unitId, owner: intent.owner, datasheetId: intent.datasheetId,
         models, startingModels: models.length, status: {},
         ...(intent.wargear ? { wargearCounts: intent.wargear } : {}),
-        ...(intent.enhancementId ? { enhancementId: intent.enhancementId } : cpEnhancementFor(state, intent.owner, intent.datasheetId) ? { enhancementId: cpEnhancementFor(state, intent.owner, intent.datasheetId)! } : {}),
+        ...(carry.enhancementId ? { enhancementId: carry.enhancementId } : cpEnhancementFor(state, intent.owner, intent.datasheetId) ? { enhancementId: cpEnhancementFor(state, intent.owner, intent.datasheetId)! } : {}),
         ...(grantAb ? { deployGrant: grantAb } : {}),
       };
-      const setup = state.setup ? { ...state.setup, toDeploy: otherSide(intent.owner) } : state.setup;
-      return { ...state, units: [...state.units, unit], setup, log: [...state.log, `${intent.owner} deploys a unit (${models.length} models)`] };
+      const setup = carry.state.setup ? { ...carry.state.setup, toDeploy: otherSide(intent.owner) } : carry.state.setup;
+      return { ...carry.state, units: [...carry.state.units, unit], setup, log: [...carry.state.log, `${intent.owner} deploys a unit (${models.length} models)`] };
     }
 
     case 'PlaceInReserves': {
       // Off-board until it arrives; lay the models out at the origin as placeholders.
+      const carry = absorbCpEnhancementCarry(state, intent.owner, intent.datasheetId, intent.enhancementId);
       const models = layoutModels(
-        { ...intent, wounds: intent.wounds + enhancementWoundBonus(intent.enhancementId, intent.modelCount) + (ctx ? abilityWoundBonus(ctx.datasheets.get(intent.datasheetId)) : 0), anchor: { x: 0, y: 0 } },
+        { ...intent, wounds: intent.wounds + enhancementWoundBonus(carry.enhancementId, intent.modelCount) + (ctx ? abilityWoundBonus(ctx.datasheets.get(intent.datasheetId)) : 0), anchor: { x: 0, y: 0 } },
         state.layout,
       );
       // The Declare Battle Formations grant (Combat Landers' Deep Strike) must survive into the
@@ -1017,11 +1020,11 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         id: intent.unitId, owner: intent.owner, datasheetId: intent.datasheetId,
         models, startingModels: models.length, status: {}, inReserves: true,
         ...(intent.wargear ? { wargearCounts: intent.wargear } : {}),
-        ...(intent.enhancementId ? { enhancementId: intent.enhancementId } : cpEnhancementFor(state, intent.owner, intent.datasheetId) ? { enhancementId: cpEnhancementFor(state, intent.owner, intent.datasheetId)! } : {}),
+        ...(carry.enhancementId ? { enhancementId: carry.enhancementId } : cpEnhancementFor(state, intent.owner, intent.datasheetId) ? { enhancementId: cpEnhancementFor(state, intent.owner, intent.datasheetId)! } : {}),
         ...(grantAb ? { deployGrant: grantAb } : {}),
       };
-      const setup = state.setup ? { ...state.setup, toDeploy: otherSide(intent.owner) } : state.setup;
-      return { ...state, units: [...state.units, unit], setup, log: [...state.log, `${intent.owner} places a unit in Reserves`] };
+      const setup = carry.state.setup ? { ...carry.state.setup, toDeploy: otherSide(intent.owner) } : carry.state.setup;
+      return { ...carry.state, units: [...carry.state.units, unit], setup, log: [...carry.state.log, `${intent.owner} places a unit in Reserves`] };
     }
 
     case 'AttachLeader': {
@@ -2530,6 +2533,41 @@ function addEffect(status: UnitInstance['status'], effectId: string): UnitInstan
   const current = status.activeEffects ?? [];
   if (current.includes(effectId)) return status;
   return { ...status, activeEffects: [...current, effectId] };
+}
+
+/** A `cpenh:` enhancement carried on the roster (a List Builder pick) decides the side's
+ *  one-per-patrol choice when its bearer is placed; if the side has already decided otherwise
+ *  (deployment picker / another carried pick), the carried enhancement is dropped. Returns the
+ *  effective enhancement for the placing unit plus the (possibly updated) state. */
+function absorbCpEnhancementCarry(
+  state: GameState,
+  owner: Side,
+  datasheetId: string,
+  enhancementId: string | undefined,
+): { state: GameState; enhancementId: string | undefined } {
+  if (!enhancementId?.startsWith('cpenh:') || state.battleType !== 'combat_patrol') {
+    return { state, enhancementId };
+  }
+  const label = enhancementId.split(':')[2]?.replace(/_/g, ' ') ?? enhancementId;
+  const decided = state.cpEnhancements?.[owner];
+  if (!decided) {
+    return {
+      enhancementId,
+      state: {
+        ...state,
+        cpEnhancements: { ...(state.cpEnhancements ?? {}), [owner]: { id: enhancementId, targetDsId: datasheetId } },
+        log: [...state.log, `${owner}'s list carries the ${label} enhancement`],
+      },
+    };
+  }
+  if (decided.id === enhancementId) return { state, enhancementId };
+  return {
+    enhancementId: undefined,
+    state: {
+      ...state,
+      log: [...state.log, `${owner} already decided an enhancement — the list's ${label} is dropped (one per patrol)`],
+    },
+  };
 }
 
 /** The side's chosen Combat Patrol enhancement id, when this datasheet is its bearer and no
