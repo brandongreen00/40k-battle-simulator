@@ -2,10 +2,12 @@ import { useMemo, useState } from 'react';
 import type { Datasheet, Roster } from '../../core/types';
 import {
   addUnit,
+  addUnitWithCount,
   BATTLE_SIZES,
   createArmyList,
   enhancementCost,
   listPoints,
+  patrolArmyList,
   removeUnit,
   setAttachedTo,
   setEnhancement,
@@ -25,6 +27,7 @@ import {
   enhancements,
   enhancementsForDetachment,
   getDatasheet,
+  rosters,
 } from '../../data/loaders';
 import { checkDetachmentPoints, detachmentPoints } from '../../core/detachments';
 import { Catalog } from './Catalog';
@@ -68,10 +71,37 @@ export function ListBuilder({ onOpenInBoard }: Props) {
   const errorUids = new Set(violations.filter((v) => v.severity === 'error' && v.uid).map((v) => v.uid));
   const detachEnhancements = enhancementsForDetachment(list.detachment);
 
+  // The four boxed Combat Patrols (fixed lists) — offered as the "faction" when the battle
+  // size is Combat Patrol.
+  const cpPatrols = useMemo(() => rosters.filter((r) => r.combatPatrol), []);
+  const isCP = list.battleSize === 'Combat Patrol';
+  const ask = (msg: string) => typeof confirm !== 'function' || confirm(msg);
+
   // ── settings handlers ──
   function setFaction(faction: string) {
-    if (list.units.length > 0 && !confirm('Switching faction clears the current list. Continue?')) return;
+    if (list.units.length > 0 && !ask('Switching faction clears the current list. Continue?')) return;
     setList(createArmyList(faction, detachmentsForFaction(faction)[0] ?? '', list.battleSize, list.name));
+  }
+  function loadPatrol(name: string) {
+    const roster = cpPatrols.find((r) => r.name === name);
+    if (!roster) return;
+    if (list.units.length > 0 && list.detachment !== roster.detachment && !ask(`Load the fixed ${roster.name} patrol? The current list is replaced.`)) return;
+    setList(patrolArmyList(roster, dataIndex));
+  }
+  function setBattleSize(size: BattleSize) {
+    if (size === list.battleSize) return;
+    if (size === 'Combat Patrol') {
+      // Combat Patrol = one of the four fixed boxes, not a 500pt build.
+      if (list.units.length > 0 && !ask('Combat Patrol uses one of the four fixed patrol boxes — switching clears the current list. Continue?')) return;
+      setList({ name: list.name, faction: '', detachment: '', battleSize: 'Combat Patrol', combatPatrol: true, units: [] });
+      return;
+    }
+    if (list.combatPatrol) {
+      if (list.units.length > 0 && !ask('Leaving Combat Patrol clears the fixed patrol list. Continue?')) return;
+      setList(createArmyList('AM', detachmentsForFaction('AM')[0] ?? '', size, list.name));
+      return;
+    }
+    setList({ ...list, battleSize: size });
   }
   function setDetachment(detachment: string) {
     // enhancements are detachment-scoped; clear them so none are left stranded
@@ -125,18 +155,31 @@ export function ListBuilder({ onOpenInBoard }: Props) {
         </label>
         <label className="field">
           <span>Faction</span>
-          <select value={list.faction} onChange={(e) => setFaction(e.target.value)}>
-            {FACTIONS.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.name}
-              </option>
-            ))}
-          </select>
+          {isCP ? (
+            // Combat Patrol: the "faction" is one of the four boxed patrols — picking one loads
+            // its fixed list (units, sizes and wargear come from the box).
+            <select value={cpPatrols.find((r) => r.detachment === list.detachment)?.name ?? ''} onChange={(e) => loadPatrol(e.target.value)}>
+              <option value="">— pick a Combat Patrol —</option>
+              {cpPatrols.map((r) => (
+                <option key={r.name} value={r.name}>
+                  {r.name} — {r.faction}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <select value={list.faction} onChange={(e) => setFaction(e.target.value)}>
+              {FACTIONS.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.name}
+                </option>
+              ))}
+            </select>
+          )}
         </label>
         <label className="field">
           <span>
             Detachment
-            {list.detachment && (() => {
+            {list.detachment && !isCP && (() => {
               const dp = checkDetachmentPoints(list.detachment, list.faction, BATTLE_SIZES[list.battleSize].points);
               return (
                 <span className="muted" title="Detachment Points (11e): 2 DP budget at 1000 pts, 3 DP at 2000. A lone detachment over budget is legal per GW's stated intent.">
@@ -145,18 +188,25 @@ export function ListBuilder({ onOpenInBoard }: Props) {
               );
             })()}
           </span>
-          <select value={list.detachment} onChange={(e) => setDetachment(e.target.value)}>
-            <option value="">— select —</option>
-            {detachmentsForFaction(list.faction).map((d) => (
-              <option key={d} value={d}>
-                {d} ({detachmentPoints(d, list.faction)} DP)
-              </option>
-            ))}
-          </select>
+          {isCP ? (
+            // A patrol IS its detachment — nothing to choose.
+            <select value={list.detachment} disabled>
+              <option value={list.detachment}>{list.detachment || '— pick a Combat Patrol above —'}</option>
+            </select>
+          ) : (
+            <select value={list.detachment} onChange={(e) => setDetachment(e.target.value)}>
+              <option value="">— select —</option>
+              {detachmentsForFaction(list.faction).map((d) => (
+                <option key={d} value={d}>
+                  {d} ({detachmentPoints(d, list.faction)} DP)
+                </option>
+              ))}
+            </select>
+          )}
         </label>
         <label className="field">
           <span>Battle size</span>
-          <select value={list.battleSize} onChange={(e) => setList({ ...list, battleSize: e.target.value as BattleSize })}>
+          <select value={list.battleSize} onChange={(e) => setBattleSize(e.target.value as BattleSize)}>
             {(Object.keys(BATTLE_SIZES) as BattleSize[]).map((b) => (
               <option key={b} value={b}>
                 {b} ({BATTLE_SIZES[b].points} pts)
@@ -164,6 +214,12 @@ export function ListBuilder({ onOpenInBoard }: Props) {
             ))}
           </select>
         </label>
+        {isCP && (
+          <p className="hint">
+            Combat Patrol plays one of the four fixed boxes — picking a patrol loads its exact
+            units and wargear. Open it in the board and start a Combat Patrol battle.
+          </p>
+        )}
 
         <div className={`points-bar${over ? ' over' : ''}`}>
           <div className="points-fill" style={{ width: `${Math.min(100, (points / limit) * 100)}%` }} />
@@ -228,7 +284,17 @@ export function ListBuilder({ onOpenInBoard }: Props) {
       </aside>
 
       <main className="lb-main">
-        <Catalog faction={list.faction} onAdd={(ds: Datasheet) => setList(addUnit(list, ds))} />
+        <Catalog
+          faction={list.faction}
+          onAdd={(ds: Datasheet) => {
+            if (!list.combatPatrol) return setList(addUnit(list, ds));
+            // Re-adding a removed patrol unit restores its FIXED size and wargear from the box.
+            const src = cpPatrols
+              .find((r) => r.detachment === list.detachment)
+              ?.units.find((u) => u.datasheetId === ds.id);
+            setList(addUnitWithCount(list, ds, src?.modelCount ?? 1, src?.wargearCounts));
+          }}
+        />
 
         <div className="lb-list">
           <h2>
