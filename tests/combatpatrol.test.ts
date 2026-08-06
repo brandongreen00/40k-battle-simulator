@@ -837,6 +837,45 @@ describe('combat patrol enhancements, fights-on-death and Combat Squad (step 5)'
     expect(gatherAttackModifiers(base, ['cp:reroll_one_hit'], []).rerollOneHit).toBe(true);
   });
 
+  it('a roster-carried enhancement (List Builder pick) decides the side at placement; a second is dropped', () => {
+    const termDs = datasheetsById.get('cp-crowes-sanctifiers-brotherhood-terminator-squad')!;
+    let s = mkSetupState([]);
+    s = reduce(
+      s,
+      {
+        type: 'PlaceInReserves', unitId: 't1', owner: 'player', datasheetId: termDs.id,
+        baseShape: termDs.baseShape, modelCount: 5, wounds: termDs.models[0]!.W,
+        enhancementId: 'cpenh:crowes_sanctifiers:purifying_force',
+      },
+      rng,
+      ctx,
+    );
+    expect(s.cpEnhancements?.player?.id).toBe('cpenh:crowes_sanctifiers:purifying_force');
+    expect(s.units.find((u) => u.id === 't1')!.enhancementId).toBe('cpenh:crowes_sanctifiers:purifying_force');
+    // The deployment picker can no longer stack a second pick…
+    const again = reduce(
+      s,
+      { type: 'ChooseCpEnhancement', side: 'player', enhancementId: 'cpenh:crowes_sanctifiers:sanctified_auspexes', targetDsId: 'cp-crowes-sanctifiers-venerable-dreadnought' },
+      rng,
+      ctx,
+    );
+    expect(again.log[again.log.length - 1]).toContain('already decided');
+    // …and a different carried pick on a later unit is dropped (one per patrol).
+    const dreadDs = datasheetsById.get('cp-crowes-sanctifiers-venerable-dreadnought')!;
+    s = reduce(
+      s,
+      {
+        type: 'PlaceInReserves', unitId: 'd1', owner: 'player', datasheetId: dreadDs.id,
+        baseShape: dreadDs.baseShape, modelCount: 1, wounds: dreadDs.models[0]!.W,
+        enhancementId: 'cpenh:crowes_sanctifiers:sanctified_auspexes',
+      },
+      rng,
+      ctx,
+    );
+    expect(s.units.find((u) => u.id === 'd1')!.enhancementId).toBeUndefined();
+    expect(s.log[s.log.length - 2]).toContain('is dropped');
+  });
+
   it('fights-on-death: destroyed models stay on a 2+, fight, and are removed afterwards', () => {
     // 10 Strike Squad falchions into 3 Bladeguard with Determined to the Last active.
     const strike = mkUnit('ai', 'cp-crowes-sanctifiers-strike-squad', { x: 15, y: 22 }, 10);

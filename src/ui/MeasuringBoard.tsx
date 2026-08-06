@@ -329,6 +329,22 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName, initialSt
   );
   aiDepsRef.current = aiDeps;
 
+  // A patrol enhancement picked in the List Builder rides on the roster — register it as the
+  // side's one-per-patrol decision up front, so the deployment picker shows it as decided
+  // instead of asking again (and an AI seat doesn't stack its own default on top).
+  useEffect(() => {
+    if (state.mode !== 'match' || state.battleType !== 'combat_patrol') return;
+    if (state.stage !== 'setup' || !state.setup?.attacker) return;
+    for (const side of ['player', 'ai'] as const) {
+      if (state.cpEnhancements?.[side]) continue;
+      const carried = rosterFor(side)?.units.find((u) => u.enhancementId?.startsWith('cpenh:'));
+      if (carried) {
+        dispatch({ type: 'ChooseCpEnhancement', side, enhancementId: carried.enhancementId!, targetDsId: carried.datasheetId });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.battleType, state.stage, state.setup?.attacker, state.cpEnhancements, rosterNameBySide]);
+
   /** Take one AI action if the game is waiting on an AI seat. Returns true when something ran.
    *  An AI volley aimed at a HUMAN-owned unit is intercepted: the intent is held in `incoming`
    *  and the defender chooses casualty allocation (and reactions) before the dice roll. */

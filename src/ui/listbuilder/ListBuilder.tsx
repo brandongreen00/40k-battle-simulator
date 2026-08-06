@@ -27,6 +27,7 @@ import {
   enhancements,
   enhancementsForDetachment,
   getDatasheet,
+  patrolEnhancements,
   rosters,
 } from '../../data/loaders';
 import { checkDetachmentPoints, detachmentPoints } from '../../core/detachments';
@@ -75,6 +76,9 @@ export function ListBuilder({ onOpenInBoard }: Props) {
   // size is Combat Patrol.
   const cpPatrols = useMemo(() => rosters.filter((r) => r.combatPatrol), []);
   const isCP = list.battleSize === 'Combat Patrol';
+  // The loaded patrol's two enhancements — each is printed for one specific unit, and the
+  // rule is pick ONE per battle (validate flags a second pick).
+  const cpEnhOptions = isCP ? patrolEnhancements.filter((e) => e.patrolName === list.detachment) : [];
   const ask = (msg: string) => typeof confirm !== 'function' || confirm(msg);
 
   // ── settings handlers ──
@@ -220,7 +224,9 @@ export function ListBuilder({ onOpenInBoard }: Props) {
         {isCP && (
           <p className="hint">
             Combat Patrol plays one of the four fixed boxes — picking a patrol loads its exact
-            units and wargear. Open it in the board and start a Combat Patrol battle.
+            units and wargear. You may take ONE of the patrol's two enhancements: the Enhancement
+            picker appears on the unit each card is printed for. Open it in the board and start a
+            Combat Patrol battle.
           </p>
         )}
 
@@ -316,6 +322,7 @@ export function ListBuilder({ onOpenInBoard }: Props) {
                 list={list}
                 points={pts}
                 enhancements={detachEnhancements}
+                cpEnhancements={cpEnhOptions.filter((e) => e.targetDsId === u.datasheetId)}
                 hasError={errorUids.has(u.uid)}
                 onModelCount={(uid, n) => setList(setModelCount(list, uid, n))}
                 onEnhancement={(uid, id) => setList(setEnhancement(list, uid, id))}

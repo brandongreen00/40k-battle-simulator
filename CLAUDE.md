@@ -330,7 +330,31 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
-- **[2026-08-06] — List Builder: Combat Patrol picking (owner, with screenshot: "I can't pick
+- **[2026-08-06] — List Builder: patrol ENHANCEMENTS pickable on the imported Combat Patrols
+  (owner, with screenshot of an empty Enhancement select: "I don't have the ability to put my 2
+  enhancements on any of the imported Combat patrols"). Separate PR off main.** All gates green:
+  `pnpm typecheck`, `pnpm test` (**521 tests**, +3: pure validate cases, a jsdom picker drive,
+  a reducer carry test), `pnpm build`; a Playwright drive of the exact flow (pick Purifying
+  Force on the Terminator card → Open in board → CP battle → the deployment panel shows the
+  pick as DECIDED, no re-ask) passes 7/7 with zero console errors.
+  - **Root cause**: the card's Enhancement select rendered only for Characters and only listed
+    `enhancementsForDetachment` (the Wahapedia catalog — empty for the four patrols); the two
+    patrol cards live in `patrolEnhancements`, wired only to the in-game deployment picker. Half
+    the bearers aren't Characters at all (Terminator/Bladeguard squads, the Devilfish).
+  - **List Builder**: `DataIndex.cpEnhancements` (loaders feed `patrolEnhancements` in);
+    `ListUnitCard` gets `cpEnhancements` = the card(s) printed for THIS unit's datasheet — in CP
+    mode the select appears exactly on the bearers (Character or not) and the picked card's rule
+    text renders as a tap-friendly note. `validate`'s CP branch now checks: patrol-scoped id,
+    printed bearer (`belongs on <unit>`), and ONE enhancement per battle. Hint text updated.
+  - **Engine (the carry)**: new `absorbCpEnhancementCarry` in state.ts — a roster-carried
+    `cpenh:` id (a List Builder pick) DECIDES `state.cpEnhancements[side]` when its bearer is
+    placed (DeployUnit both paths + PlaceInReserves); a second, different carried pick is
+    dropped with a log line (one per patrol). `ChooseCpEnhancement` then rejects re-picks as
+    before. A MeasuringBoard effect registers a carried pick right after the roll-off so the
+    deployment panel shows it as decided instead of asking again; `aiDeployAction` honours a
+    carried pick over its curated default (so handing your list to an AI seat keeps YOUR pick).
+  - **Decisions**: picks are final once decided (panel pick beats a later-deploying carried
+    bearer — the carry is dropped, logged); UndeployUnit does not revert a decided pick.
   combat patrols. Please add it so that when 'combat patrol' is selected, the 4 armies … are
   available from the faction and detachment menus"). Separate PR off main.** All gates green:
   `pnpm typecheck`, `pnpm test` (**508 tests**, +3 in `tests/cpListBuilder.test.tsx`), `pnpm build`;

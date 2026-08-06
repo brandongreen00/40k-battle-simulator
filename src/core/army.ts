@@ -50,9 +50,19 @@ export interface ArmyList {
   combatPatrol?: boolean;
 }
 
+/** A Combat Patrol enhancement (two per patrol, each printed for one bearer datasheet). */
+export interface CpEnhancementInfo {
+  id: string; // `cpenh:<patrol>:<slug>`
+  name: string;
+  targetDsId: string;
+  patrolName: string;
+}
+
 export interface DataIndex {
   datasheets: Map<string, Datasheet>;
   enhancements: Map<string, Enhancement>;
+  /** The Combat Patrol enhancement catalog, for fixed-box lists. */
+  cpEnhancements?: CpEnhancementInfo[];
 }
 
 // ── keyword predicates ───────────────────────────────────────────────────────
@@ -187,6 +197,25 @@ export function validate(list: ArmyList, ix: DataIndex): Violation[] {
   if (list.combatPatrol) {
     const v: Violation[] = [];
     if (!list.detachment) v.push({ severity: 'error', message: 'Pick one of the four Combat Patrols.' });
+    // The one pre-battle enhancement: either of the patrol's two, on its printed bearer.
+    const catalog = (ix.cpEnhancements ?? []).filter((e) => e.patrolName === list.detachment);
+    const picked = list.units.filter((u) => u.enhancementId);
+    for (const u of picked) {
+      const ds = ix.datasheets.get(u.datasheetId);
+      const enh = catalog.find((e) => e.id === u.enhancementId);
+      if (!enh) {
+        v.push({ severity: 'error', uid: u.uid, message: `${ds?.name ?? u.datasheetId}: not a ${list.detachment} enhancement.` });
+      } else if (enh.targetDsId !== u.datasheetId) {
+        v.push({
+          severity: 'error',
+          uid: u.uid,
+          message: `${enh.name} belongs on ${ix.datasheets.get(enh.targetDsId)?.name ?? enh.targetDsId}.`,
+        });
+      }
+    }
+    if (picked.length > 1) {
+      v.push({ severity: 'error', message: `One patrol enhancement per battle — ${picked.length} selected.` });
+    }
     return v;
   }
   const v: Violation[] = [];
