@@ -80,3 +80,7 @@ All flagged values were transcribed exactly as displayed; nothing was reconstruc
   Co-ordinated Eradication text, For the Greater Good full text, "Sha'sui" bar + composition line.
 
 No OCR values remain uncertain beyond the items listed above.
+
+## Resolution log
+
+- **2026-08-06 (owner):** all transcribed-as-shown values confirmed intentional. Accepted.

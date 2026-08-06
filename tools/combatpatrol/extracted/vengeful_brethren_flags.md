@@ -72,3 +72,8 @@ All values below were transcribed from the screenshots only; nothing was filled 
 ## OCR-ambiguous values
 
 None remaining — every stat that was small or seam-adjacent was re-read from an upscaled crop.
+
+## Resolution log
+
+- **2026-08-06 (owner):** all transcribed-as-shown stats confirmed intentional (incl. the
+  Bladeguard Sergeant T3 vs squad T4). Accepted, never re-litigate.

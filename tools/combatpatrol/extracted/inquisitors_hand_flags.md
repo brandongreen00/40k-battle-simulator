@@ -86,3 +86,15 @@ Earlier targeted verifications (all matched the JSON): Teguen stats + Zealot/Hol
 Teguen ranged/melee rows, Eversor stats + both weapon rows + Overkill text, all five Vigilant
 weapon rows + both melee rows, Cyber-Mastiff/Proctor stat rows, Agents stats + all four ranged
 rows + both melee rows, both mission cards' scoring lines.
+
+## Resolution log
+
+- **2026-08-06 (owner):** supplied follow-up screenshots IMG_0164–0166 — the STRATAGEMS page
+  (Urban Enforcers 1CP / Superior Weaponry 1CP / Inquisitorial Mandate 1CP, all three cards
+  captured expanded) and the ENHANCEMENTS page (Killer Reflexes, Sanctic Slayers). Items 1–2
+  are now only PARTIALLY open: **the patrol landing page is still missing** (the patrol's
+  detachment-rule card, its DP cost, the roster list and the Force Disposition), and the
+  ASSIGNED AGENTS faction ability text (item 3) remains uncaptured.
+- **2026-08-06 (owner):** all transcribed-as-shown anomalies confirmed intentional (items 7–12).
+- Transcription note on Sanctic Slayers: the card reads "attacks that target a unit with a T
+  greater than or equal to your attack's S have +1 to wound rolls" — transcribed verbatim.

@@ -87,6 +87,11 @@ describe('combat patrol datasheets (data/game/cp_datasheets.json)', () => {
     expect(cpDatasheets).toHaveLength(16);
     expect(new Set(cpDatasheets.map((d) => d.patrol)).size).toBe(4);
     expect(patrols).toHaveLength(4);
+    // Every patrol's stratagem/enhancement texts are captured for the later steps.
+    for (const p of patrols) {
+      expect(p.stratagems, p.id).toHaveLength(3);
+      expect(p.enhancements, p.id).toHaveLength(2);
+    }
   });
 
   it('keeps the transcribed anomalies (never "corrected" from prior-edition memory)', () => {

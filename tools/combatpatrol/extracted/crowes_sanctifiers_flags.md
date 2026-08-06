@@ -84,3 +84,12 @@ spot-check, plus explicit data gaps and verified-absent notes.
 - **Strike Squad Psycannon + Nemesis Force Weapon** (IMG_4456 crops): 24"/3/3+/8/-1/2 PSYCHIC
   and Melee/3/3+/6/-2/2 PSYCHIC — match JSON.
 - **FOESIGHT pill + ability text** (IMG_4464 3x crop): matches JSON verbatim.
+
+## Resolution log
+
+- **2026-08-06 (owner):** "FOESIGHT" is **intentional** (item 6) — do not normalize to Foresight.
+- **2026-08-06 (owner):** all transcribed-as-shown stats confirmed intentional (items 7–13:
+  Psycannon S8, NFW A3 vs A4, Dreadnought CHARACTER/SMOKE/T9/W8/no invuln, LD 6+, Crowe 2+
+  skills, EXPLOSIVES keyword). Accepted, never re-litigate.
+- **2026-08-06 (owner):** the missing Gate of Infinity battle-size table (item 1) is accepted
+  as a source gap ("that's fine").

@@ -71,8 +71,42 @@
     "text": "[Combat Patrol mission card shown under 'OPPONENT'S MISSION' on the Battle Setup screen — belongs to the opposing patrol, identity not shown.] FIRST TO SECOND BATTLE ROUND — When: End of your turn. You control two or more expansion objectives: 15VP. You control one or more expansion objectives: 10VP. THIRD BATTLE ROUND ONWARDS — When: End of your turn. You control one or more expansion objectives: 5VP. You control two or more expansion objectives: 10VP. (A collapsed 'Lore' accordion was not expanded.)"
    }
   ],
-  "enhancements": [],
-  "stratagems": [],
+  "enhancements": [
+   {
+    "name": "Killer Reflexes",
+    "text": "INQUISITOR'S HAND EVERSOR ASSASSIN model only. In the Fight phase, when this model is destroyed, if this unit has not been selected to fight this phase, roll one D6: on a 2+, do not remove this model from the battlefield. When this unit has fought, or at the end of the phase (whichever comes first), this model is removed from the battlefield."
+   },
+   {
+    "name": "Sanctic Slayers",
+    "text": "INQUISITOR'S HAND MINISTORUM PRIEST model only. (Once per turn, per unit) When a friendly INQUISITOR'S HAND unit is selected to attack you can use this ability. If you do, that unit's attacks that target a unit with a T greater than or equal to your attack's S have +1 to wound rolls."
+   }
+  ],
+  "stratagems": [
+   {
+    "name": "Urban Enforcers",
+    "cp": 1,
+    "when": "Your opponent's Shooting phase or the Fight phase, when an enemy unit targets a friendly INQUISITOR'S HAND unit with every model within a terrain area.",
+    "target": "That INQUISITOR'S HAND unit.",
+    "effect": "Attacks that target your unit have -1 AP.",
+    "restrictions": ""
+   },
+   {
+    "name": "Superior Weaponry",
+    "cp": 1,
+    "when": "Your Shooting phase or the Fight phase, when a friendly INQUISITOR'S HAND unit (excluding EVERSOR ASSASSIN units) is selected to attack.",
+    "target": "That INQUISITOR'S HAND unit.",
+    "effect": "Your unit's attacks have +1 AP.",
+    "restrictions": ""
+   },
+   {
+    "name": "Inquisitorial Mandate",
+    "cp": 1,
+    "when": "End of your Movement phase.",
+    "target": "One friendly INQUISITOR'S HAND unit (excluding EVERSOR ASSASSIN units).",
+    "effect": "Select one objective your unit is controlling. That objective is secured.",
+    "restrictions": ""
+   }
+  ],
   "forceDispositions": []
  },
  {

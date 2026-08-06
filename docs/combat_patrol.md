@@ -23,7 +23,7 @@
 | Patrol | Faction | Units | Notes |
 |---|---|---|---|
 | Crowe's Sanctifiers | Grey Knights | Strike Squad ×10, Castellan Crowe, Venerable Dreadnought, Brotherhood Terminator Squad ×5 | Strike from the Warp: Terminators/Dreadnought **must start in Strategic Reserves** (arrive round 2/3) — enforced in-game |
-| Inquisitor's Hand | Agents of the Imperium | Preacher Teguen, Vigilant Squad ×10, Eversor Assassin, Inquisitorial Agents ×6 | **Screenshot set had no landing/stratagems/enhancements pages** — datasheets only (see flags) |
+| Inquisitor's Hand | Agents of the Imperium | Preacher Teguen, Vigilant Squad ×10, Eversor Assassin, Inquisitorial Agents ×6 | Stratagems + enhancements captured from follow-up screenshots (2026-08-06); **only the patrol landing page is still missing** (detachment-rule card, Force Disposition) |
 | Sudden Dawn Cadre | T'au Empire | Pathfinder Team ×10, Breacher Team ×10, Devilfish, Commander Cloudspear | Devilfish transports 12 INFANTRY (embark/disembark work via the existing transport engine) |
 | The Vengeful Brethren | Dark Angels | Intercessor Squad ×10, Master Zacharial, Hellblaster Squad ×5, Bladeguard Veteran Squad ×3 | Bladeguard **Sergeant is T3 while Veterans are T4** — crop-verified, transcribed as shown |
 
@@ -33,18 +33,19 @@ attacks at the real bearers, e.g. 8 Storm Bolters in the 10-strong Strike Squad)
 
 **Regenerate** with `pnpm build:cp` (reads `tools/combatpatrol/extracted/*.json`).
 
-### Extraction flags you may want to spot-check (full lists in `tools/combatpatrol/extracted/*_flags.md`)
+### Extraction flags (full lists + resolution logs in `tools/combatpatrol/extracted/*_flags.md`)
 
-- "FOESIGHT (PSYCHIC)" on Castellan Crowe is likely a Warhammer-app typo for
-  FORESIGHT — transcribed as shown; a one-line data edit once you confirm.
-- Psycannon S8, Nemesis Force Weapon A3 (Strike Squad) vs A4 (Terminators),
-  Executioner Pistol A4 + SUSTAINED HITS 3 at BS 2+, "BLAST 1" parameterised tag,
-  Teguen's Zealot "+3 A and S" — all crop-verified, transcribed as shown.
-- Gate of Infinity's battle-size table is **not rendered by the app** (genuine
-  data gap in the source); the text references it.
-- The Inquisitor's Hand capture is missing its patrol landing page, stratagems
-  and enhancements pages — supply screenshots later and re-run the extraction
-  for that patrol to fill `cp_patrols.json`.
+**Owner-confirmed 2026-08-06** (accepted, never re-litigate): "FOESIGHT" is
+intentional (not a typo); all transcribed-as-shown stats are intentional
+(Psycannon S8, NFW A3 vs A4, Bladeguard Sergeant T3 vs squad T4, Eversor pistol
+A4 + Sustained Hits 3 at 2+, "BLAST 1", Zealot "+3 A and S", …); the missing
+Gate of Infinity battle-size table is an accepted source gap; map numbering 1–3
+is fine.
+
+Still open:
+- **Inquisitor's Hand landing page** (its detachment-rule card + DP cost, roster
+  list, Force Disposition) and the ASSIGNED AGENTS faction-ability text — the
+  only pages of that patrol never captured.
 - Mission cards seen in the captures ("Inquisitorial Sanction", "Expansionary
   Campaign", plus collapsed "Seize their Strongholds"/"Purification") are stored
   in `cp_patrols.json` rules text for the missions step.

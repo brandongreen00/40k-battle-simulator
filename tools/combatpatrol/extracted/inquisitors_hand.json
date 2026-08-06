@@ -1,194 +1,590 @@
 {
-  "id": "inquisitors_hand",
-  "name": "Inquisitor's Hand",
-  "faction": "Agents of the Imperium",
-  "patrolRules": [
-    {
-      "name": "Inquisitorial Sanction",
-      "text": "[Combat Patrol mission card shown under 'YOUR MISSION' on the Battle Setup screen — not a patrol ability card.] ANY BATTLE ROUND — When: End of your turn. For each enemy CHARACTER model destroyed in this or the previous turn: 10VP. SECOND BATTLE ROUND ONWARDS — When: End of your turn. You control two or more objectives: 5VP. You control one or more objectives: 5VP. END OF THE BATTLE — All enemy CHARACTER models are destroyed: 10VP. (A collapsed 'Lore' accordion was not expanded.)"
-    },
-    {
-      "name": "Expansionary Campaign",
-      "text": "[Combat Patrol mission card shown under 'OPPONENT'S MISSION' on the Battle Setup screen — belongs to the opposing patrol, identity not shown.] FIRST TO SECOND BATTLE ROUND — When: End of your turn. You control two or more expansion objectives: 15VP. You control one or more expansion objectives: 10VP. THIRD BATTLE ROUND ONWARDS — When: End of your turn. You control one or more expansion objectives: 5VP. You control two or more expansion objectives: 10VP. (A collapsed 'Lore' accordion was not expanded.)"
-    }
-  ],
-  "enhancements": [],
-  "stratagems": [],
-  "forceDispositions": [],
-  "rosterList": [],
-  "units": [
-    {
-      "name": "Preacher Teguen",
-      "profiles": [
-        { "name": "Preacher Teguen", "M": "6\"", "T": 3, "SV": "6+", "W": 3, "LD": "7+", "OC": 1 }
-      ],
-      "invuln": "4+",
-      "invulnNote": null,
-      "rangedWeapons": [
-        { "name": "Zealot's Vindictor", "profileOf": null, "range": "12\"", "A": "D6", "BS": "-", "S": 5, "AP": 0, "D": "1", "tags": ["IGNORES COVER", "TORRENT"] }
-      ],
-      "meleeWeapons": [
-        { "name": "Zealot's Vindictor", "range": "Melee", "A": "3", "WS": "4+", "S": 5, "AP": -1, "D": "2", "tags": [] }
-      ],
-      "factionAbilities": ["ASSIGNED AGENTS"],
-      "datasheetAbilities": [
-        { "name": "ZEALOT (ONCE PER BATTLE PER UNIT)", "text": "When this unit is selected to fight, you can use this ability. If you do, this model's melee attacks have +3 A and S." },
-        { "name": "HOLY HATRED", "text": "If this is an Attached unit, this unit's melee attacks have [SUSTAINED HITS 1]." }
-      ],
-      "wargearAbilities": [],
-      "composition": {
-        "bullets": ["1 Preacher Teguen model"],
-        "equipment": ["This model is equipped with: 1 Zealot's Vindictor."],
-        "notes": "Model table: Preacher Teguen x1.",
-        "baseSize": "32mm"
-      },
-      "leaderAttach": "This model can be attached to the following units: INQUISITOR'S HAND INQUISITORIAL AGENTS",
-      "transport": null,
-      "keywords": ["CHARACTER", "IMPERIUM", "INFANTRY", "INQUISITOR'S HAND", "MINISTORUM PRIEST", "ORDO HERETICUS"],
-      "factionKeywords": ["AGENTS OF THE IMPERIUM"]
-    },
-    {
-      "name": "Inquisitor's Hand Vigilant Squad",
-      "profiles": [
-        { "name": "Cyber-Mastiff", "M": "6\"", "T": 3, "SV": "4+", "W": 1, "LD": "7+", "OC": 2 },
-        { "name": "Proctor-Vigilant", "M": "6\"", "T": 3, "SV": "4+", "W": 1, "LD": "7+", "OC": 2 },
-        { "name": "Vigilant with Combat Shotgun, Shotpistol and Gun Stocks", "M": "6\"", "T": 3, "SV": "4+", "W": 1, "LD": "7+", "OC": 2 },
-        { "name": "Vigilant with Grenade Launcher, Shotpistol and Gun Stocks", "M": "6\"", "T": 3, "SV": "4+", "W": 1, "LD": "7+", "OC": 2 },
-        { "name": "Vigilant with Shotpistol, Webber and Gun Stocks", "M": "6\"", "T": 3, "SV": "4+", "W": 1, "LD": "7+", "OC": 2 }
-      ],
-      "invuln": null,
-      "invulnNote": null,
-      "rangedWeapons": [
-        { "name": "Combat Shotgun", "profileOf": null, "range": "18\"", "A": "2", "BS": "4+", "S": 4, "AP": 0, "D": "1", "tags": [] },
-        { "name": "Grenade Launcher - Frag", "profileOf": "Grenade Launcher", "range": "24\"", "A": "D3", "BS": "4+", "S": 4, "AP": 0, "D": "1", "tags": ["BLAST 1"] },
-        { "name": "Grenade Launcher - Krak", "profileOf": "Grenade Launcher", "range": "24\"", "A": "1", "BS": "4+", "S": 9, "AP": -2, "D": "D3", "tags": [] },
-        { "name": "Shotpistol", "profileOf": null, "range": "12\"", "A": "1", "BS": "4+", "S": 4, "AP": 0, "D": "1", "tags": ["CLOSE-QUARTERS"] },
-        { "name": "Webber", "profileOf": null, "range": "12\"", "A": "D6", "BS": "3+", "S": 2, "AP": 0, "D": "1", "tags": ["ASSAULT", "DEVASTATING WOUNDS"] }
-      ],
-      "meleeWeapons": [
-        { "name": "Gun Stocks", "range": "Melee", "A": "2", "WS": "4+", "S": 3, "AP": 0, "D": "1", "tags": [] },
-        { "name": "Mechanical Bite", "range": "Melee", "A": "3", "WS": "4+", "S": 4, "AP": 0, "D": "1", "tags": [] }
-      ],
-      "factionAbilities": ["ASSIGNED AGENTS"],
-      "datasheetAbilities": [
-        { "name": "NUNCIO-AQUILA", "text": "At the start of the Command phase, you can use this ability. If you do, select one objective within 6\" of this model that has not been selected for this ability this turn. Enemy units (excluding MONSTER/VEHICLE units) within range of that objective must make a battle-shock roll." },
-        { "name": "MERCILESS JUDGEMENT", "text": "This unit's ranged attacks that target a unit below half-strength have +1 to wound rolls." }
-      ],
-      "wargearAbilities": [],
-      "composition": {
-        "bullets": [
-          "1 Cyber-Mastiff model",
-          "1 Proctor-Vigilant model",
-          "1 Vigilant with Grenade Launcher, Shotpistol and Gun Stocks model",
-          "1 Vigilant with Shotpistol, Webber and Gun Stocks model",
-          "6 Vigilant with Combat Shotgun, Shotpistol and Gun Stocks models"
-        ],
-        "equipment": [
-          "The Cyber-Mastiff is equipped with: 1 Mechanical Bite.",
-          "The Proctor-Vigilant is equipped with: 1 Combat Shotgun; 1 Gun Stocks; Nuncio-Aquila; 1 Shotpistol.",
-          "The Vigilant with Grenade Launcher, Shotpistol and Gun Stocks is equipped with: 1 Grenade Launcher - Frag; 1 Gun Stocks; 1 Shotpistol.",
-          "The Vigilant with Shotpistol, Webber and Gun Stocks is equipped with: 1 Gun Stocks; 1 Shotpistol; 1 Webber.",
-          "Every Vigilant with Combat Shotgun, Shotpistol and Gun Stocks is equipped with: 1 Combat Shotgun; 1 Gun Stocks; 1 Shotpistol."
-        ],
-        "notes": "Model table: Cyber-Mastiff x1, Proctor-Vigilant x1, Vigilant with Combat Shotgun/Shotpistol/Gun Stocks x6, Vigilant with Grenade Launcher/Shotpistol/Gun Stocks x1, Vigilant with Shotpistol/Webber/Gun Stocks x1. Multi-profile weapon footnote (marker on both Grenade Launcher rows): 'Before selecting targets with this weapon, select one of its profiles to make attacks with.'",
-        "baseSize": "25mm, 28.5mm"
-      },
-      "leaderAttach": null,
-      "transport": null,
-      "keywords": ["ADEPTUS ARBITES", "BATTLELINE", "EXPLOSIVES", "IMPERIUM", "INFANTRY", "INQUISITOR'S HAND", "RETINUE"],
-      "factionKeywords": ["AGENTS OF THE IMPERIUM"]
-    },
-    {
-      "name": "Inquisitor's Hand Eversor Assassin",
-      "profiles": [
-        { "name": "Eversor Assassin", "M": "9\"", "T": 4, "SV": "6+", "W": 4, "LD": "6+", "OC": 1 }
-      ],
-      "invuln": "4+",
-      "invulnNote": null,
-      "rangedWeapons": [
-        { "name": "Executioner Pistol", "profileOf": null, "range": "12\"", "A": "4", "BS": "2+", "S": 4, "AP": 0, "D": "1", "tags": ["ANTI-INFANTRY 3+", "CLOSE-QUARTERS", "PRECISION", "SUSTAINED HITS 3"] }
-      ],
-      "meleeWeapons": [
-        { "name": "Power Sword and Neuro-Gauntlet", "range": "Melee", "A": "6", "WS": "2+", "S": 5, "AP": -2, "D": "2", "tags": ["ANTI-INFANTRY 3+", "PRECISION", "SUSTAINED HITS 3"] }
-      ],
-      "factionAbilities": ["ASSIGNED AGENTS"],
-      "datasheetAbilities": [
-        { "name": "OVERKILL (ONCE PER BATTLE PER UNIT)", "text": "When this unit is selected to attack, you can use this ability. If you do, this unit's melee attacks have -4 AP." }
-      ],
-      "wargearAbilities": [],
-      "composition": {
-        "bullets": ["1 Eversor Assassin model"],
-        "equipment": ["This model is equipped with: 1 Executioner Pistol; 1 Power Sword and Neuro-Gauntlet."],
-        "notes": "Model table: Eversor Assassin x1. No LEADER section on this datasheet.",
-        "baseSize": "32mm"
-      },
-      "leaderAttach": null,
-      "transport": null,
-      "keywords": ["CHARACTER", "EPIC HERO", "EVERSOR ASSASSIN", "EXPLOSIVES", "IMPERIUM", "INFANTRY", "INQUISITOR'S HAND", "OFFICIO ASSASSINORUM"],
-      "factionKeywords": ["AGENTS OF THE IMPERIUM"]
-    },
-    {
-      "name": "Inquisitor's Hand Inquisitorial Agents",
-      "profiles": [
-        { "name": "Inquisitorial Agent with Agent's Firearm, Agent's Implement and Mystic Stave", "M": "6\"", "T": 3, "SV": "5+", "W": 1, "LD": "7+", "OC": 1 },
-        { "name": "Inquisitorial Agent with Agent's Firearm and Agent's Implement", "M": "6\"", "T": 3, "SV": "5+", "W": 1, "LD": "7+", "OC": 1 },
-        { "name": "Gun Servitor", "M": "6\"", "T": 3, "SV": "5+", "W": 1, "LD": "7+", "OC": 1 },
-        { "name": "Inquisitorial Agent with Agent's Firearm, Plasma Pistol and Agent's Implement", "M": "6\"", "T": 3, "SV": "5+", "W": 1, "LD": "7+", "OC": 1 }
-      ],
-      "invuln": null,
-      "invulnNote": null,
-      "rangedWeapons": [
-        { "name": "Agent's Firearm", "profileOf": null, "range": "12\"", "A": "1", "BS": "3+", "S": 4, "AP": -1, "D": "1", "tags": ["CLOSE-QUARTERS"] },
-        { "name": "Heavy Bolter", "profileOf": null, "range": "36\"", "A": "3", "BS": "4+", "S": 5, "AP": -1, "D": "2", "tags": ["HEAVY", "SUSTAINED HITS 1"] },
-        { "name": "Plasma Pistol - Standard", "profileOf": "Plasma Pistol", "range": "12\"", "A": "1", "BS": "3+", "S": 7, "AP": -2, "D": "1", "tags": ["CLOSE-QUARTERS"] },
-        { "name": "Plasma Pistol - Supercharge", "profileOf": "Plasma Pistol", "range": "12\"", "A": "1", "BS": "3+", "S": 8, "AP": -3, "D": "2", "tags": ["CLOSE-QUARTERS", "HAZARDOUS"] }
-      ],
-      "meleeWeapons": [
-        { "name": "Agent's Implement", "range": "Melee", "A": "3", "WS": "3+", "S": 3, "AP": 0, "D": "1", "tags": [] },
-        { "name": "Mystic Stave", "range": "Melee", "A": "2", "WS": "3+", "S": 5, "AP": -1, "D": "D3", "tags": ["ANTI-INFANTRY 4+", "PSYCHIC"] }
-      ],
-      "factionAbilities": ["ASSIGNED AGENTS"],
-      "datasheetAbilities": [
-        { "name": "TOME SKULL (ONCE PER BATTLE PER UNIT)", "text": "At the start of any phase, you can select one friendly battle-shocked AGENTS OF THE IMPERIUM unit within 6\" of this unit or one enemy within 6\" of this unit. If you select a friendly unit, that unit is no longer battle-shocked. If you select an enemy unit, that unit must make a battle-shock roll." },
-        { "name": "LOYAL TO THE CAUSE", "text": "When an enemy unit targets this unit, if this unit is within range of an objective, attacks that target this unit have -1 to wound rolls." }
-      ],
-      "wargearAbilities": [],
-      "composition": {
-        "bullets": [
-          "1 Gun Servitor model",
-          "1 Inquisitorial Agent with Agent's Firearm, Agent's Implement and Mystic Stave model",
-          "1 Inquisitorial Agent with Agent's Firearm, Plasma Pistol and Agent's Implement model",
-          "3 Inquisitorial Agent with Agent's Firearm and Agent's Implement models"
-        ],
-        "equipment": [
-          "The Gun Servitor is equipped with: 1 Agent's Implement; 1 Heavy Bolter.",
-          "The Inquisitorial Agent with Agent's Firearm, Agent's Implement and Mystic Stave is equipped with: 1 Agent's Firearm; 1 Agent's Implement; 1 Mystic Stave; Tome Skull.",
-          "The Inquisitorial Agent with Agent's Firearm, Plasma Pistol and Agent's Implement is equipped with: 1 Agent's Firearm; 1 Agent's Implement; 1 Plasma Pistol - Standard.",
-          "Every Inquisitorial Agent with Agent's Firearm and Agent's Implement is equipped with: 1 Agent's Firearm; 1 Agent's Implement."
-        ],
-        "notes": "Model table: Inquisitorial Agent with Agent's Firearm, Agent's Implement and Mystic Stave x1; Inquisitorial Agent with Agent's Firearm and Agent's Implement x3; Gun Servitor x1; Inquisitorial Agent with Agent's Firearm, Plasma Pistol and Agent's Implement x1. Multi-profile weapon footnote (marker on both Plasma Pistol rows): 'Before selecting targets with this weapon, select one of its profiles to make attacks with.'",
-        "baseSize": "25mm, 32mm"
-      },
-      "leaderAttach": null,
-      "transport": null,
-      "keywords": ["EXPLOSIVES", "IMPERIUM", "INFANTRY", "INQUISITOR'S HAND", "RETINUE"],
-      "factionKeywords": ["AGENTS OF THE IMPERIUM"]
-    }
-  ],
-  "sourceImages": {
-    "IMG_4409.PNG": "Preacher Teguen datasheet, top: photo, stat plaque (6\"/3/6+/3/7+/1), Invulnerable Save 4+, ranged + melee Zealot's Vindictor, start of Abilities.",
-    "IMG_4410.PNG": "Preacher Teguen datasheet, bottom: melee row (overlap), Abilities (Zealot, Holy Hatred), Leader, Unit Composition, Base Size 32mm, Keywords.",
-    "IMG_4411.PNG": "Inquisitor's Hand Vigilant Squad, top: photo and the five model profiles (all 6\"/3/4+/1/7+/2).",
-    "IMG_4412.PNG": "Vigilant Squad ranged weapons (Combat Shotgun, Grenade Launcher Frag/Krak, Shotpistol, Webber), multi-profile footnote, melee (Gun Stocks, Mechanical Bite), start of Abilities.",
-    "IMG_4413.PNG": "Vigilant Squad Abilities (Nuncio-Aquila, Merciless Judgement), Unit Composition with equipment sentences and model table, Base Size 25mm/28.5mm.",
-    "IMG_4414.PNG": "Vigilant Squad (overlaps 4413): Abilities, Unit Composition, Base Size, Keywords.",
-    "IMG_4415.PNG": "Inquisitor's Hand Eversor Assassin, top: photo, stats (9\"/4/6+/4/6+/1), Invulnerable Save 4+, Executioner Pistol, Power Sword and Neuro-Gauntlet, start of Abilities.",
-    "IMG_4416.PNG": "Eversor Assassin, bottom (overlaps 4415): melee row, Abilities (Overkill), Unit Composition, Base Size 32mm, Keywords.",
-    "IMG_4417.PNG": "Inquisitor's Hand Inquisitorial Agents, top: photo and four model profiles (all 6\"/3/5+/1/7+/1), start of Ranged Weapons.",
-    "IMG_4418.PNG": "Inquisitorial Agents ranged weapons (Agent's Firearm, Heavy Bolter, Plasma Pistol Standard/Supercharge), melee (Agent's Implement, Mystic Stave), start of Abilities.",
-    "IMG_4419.PNG": "Inquisitorial Agents Abilities (Tome Skull, Loyal to the Cause), Unit Composition, model table, Base Size 25mm/32mm.",
-    "IMG_4420.PNG": "Inquisitorial Agents (overlaps 4419): Abilities, Unit Composition, Base Size, Keywords.",
-    "IMG_4421.PNG": "Combat Patrol Battle Setup screen: YOUR MISSION 'Inquisitorial Sanction' card expanded (scoring blocks), OPPONENT'S MISSION 'Expansionary Campaign' collapsed.",
-    "IMG_4422.PNG": "Combat Patrol Battle Setup screen: OPPONENT'S MISSION 'Expansionary Campaign' card expanded (scoring blocks), 'Inquisitorial Sanction' collapsed."
+ "id": "inquisitors_hand",
+ "name": "Inquisitor's Hand",
+ "faction": "Agents of the Imperium",
+ "patrolRules": [
+  {
+   "name": "Inquisitorial Sanction",
+   "text": "[Combat Patrol mission card shown under 'YOUR MISSION' on the Battle Setup screen — not a patrol ability card.] ANY BATTLE ROUND — When: End of your turn. For each enemy CHARACTER model destroyed in this or the previous turn: 10VP. SECOND BATTLE ROUND ONWARDS — When: End of your turn. You control two or more objectives: 5VP. You control one or more objectives: 5VP. END OF THE BATTLE — All enemy CHARACTER models are destroyed: 10VP. (A collapsed 'Lore' accordion was not expanded.)"
+  },
+  {
+   "name": "Expansionary Campaign",
+   "text": "[Combat Patrol mission card shown under 'OPPONENT'S MISSION' on the Battle Setup screen — belongs to the opposing patrol, identity not shown.] FIRST TO SECOND BATTLE ROUND — When: End of your turn. You control two or more expansion objectives: 15VP. You control one or more expansion objectives: 10VP. THIRD BATTLE ROUND ONWARDS — When: End of your turn. You control one or more expansion objectives: 5VP. You control two or more expansion objectives: 10VP. (A collapsed 'Lore' accordion was not expanded.)"
   }
+ ],
+ "enhancements": [
+  {
+   "name": "Killer Reflexes",
+   "text": "INQUISITOR'S HAND EVERSOR ASSASSIN model only. In the Fight phase, when this model is destroyed, if this unit has not been selected to fight this phase, roll one D6: on a 2+, do not remove this model from the battlefield. When this unit has fought, or at the end of the phase (whichever comes first), this model is removed from the battlefield."
+  },
+  {
+   "name": "Sanctic Slayers",
+   "text": "INQUISITOR'S HAND MINISTORUM PRIEST model only. (Once per turn, per unit) When a friendly INQUISITOR'S HAND unit is selected to attack you can use this ability. If you do, that unit's attacks that target a unit with a T greater than or equal to your attack's S have +1 to wound rolls."
+  }
+ ],
+ "stratagems": [
+  {
+   "name": "Urban Enforcers",
+   "cp": 1,
+   "when": "Your opponent's Shooting phase or the Fight phase, when an enemy unit targets a friendly INQUISITOR'S HAND unit with every model within a terrain area.",
+   "target": "That INQUISITOR'S HAND unit.",
+   "effect": "Attacks that target your unit have -1 AP.",
+   "restrictions": ""
+  },
+  {
+   "name": "Superior Weaponry",
+   "cp": 1,
+   "when": "Your Shooting phase or the Fight phase, when a friendly INQUISITOR'S HAND unit (excluding EVERSOR ASSASSIN units) is selected to attack.",
+   "target": "That INQUISITOR'S HAND unit.",
+   "effect": "Your unit's attacks have +1 AP.",
+   "restrictions": ""
+  },
+  {
+   "name": "Inquisitorial Mandate",
+   "cp": 1,
+   "when": "End of your Movement phase.",
+   "target": "One friendly INQUISITOR'S HAND unit (excluding EVERSOR ASSASSIN units).",
+   "effect": "Select one objective your unit is controlling. That objective is secured.",
+   "restrictions": ""
+  }
+ ],
+ "forceDispositions": [],
+ "rosterList": [],
+ "units": [
+  {
+   "name": "Preacher Teguen",
+   "profiles": [
+    {
+     "name": "Preacher Teguen",
+     "M": "6\"",
+     "T": 3,
+     "SV": "6+",
+     "W": 3,
+     "LD": "7+",
+     "OC": 1
+    }
+   ],
+   "invuln": "4+",
+   "invulnNote": null,
+   "rangedWeapons": [
+    {
+     "name": "Zealot's Vindictor",
+     "profileOf": null,
+     "range": "12\"",
+     "A": "D6",
+     "BS": "-",
+     "S": 5,
+     "AP": 0,
+     "D": "1",
+     "tags": [
+      "IGNORES COVER",
+      "TORRENT"
+     ]
+    }
+   ],
+   "meleeWeapons": [
+    {
+     "name": "Zealot's Vindictor",
+     "range": "Melee",
+     "A": "3",
+     "WS": "4+",
+     "S": 5,
+     "AP": -1,
+     "D": "2",
+     "tags": []
+    }
+   ],
+   "factionAbilities": [
+    "ASSIGNED AGENTS"
+   ],
+   "datasheetAbilities": [
+    {
+     "name": "ZEALOT (ONCE PER BATTLE PER UNIT)",
+     "text": "When this unit is selected to fight, you can use this ability. If you do, this model's melee attacks have +3 A and S."
+    },
+    {
+     "name": "HOLY HATRED",
+     "text": "If this is an Attached unit, this unit's melee attacks have [SUSTAINED HITS 1]."
+    }
+   ],
+   "wargearAbilities": [],
+   "composition": {
+    "bullets": [
+     "1 Preacher Teguen model"
+    ],
+    "equipment": [
+     "This model is equipped with: 1 Zealot's Vindictor."
+    ],
+    "notes": "Model table: Preacher Teguen x1.",
+    "baseSize": "32mm"
+   },
+   "leaderAttach": "This model can be attached to the following units: INQUISITOR'S HAND INQUISITORIAL AGENTS",
+   "transport": null,
+   "keywords": [
+    "CHARACTER",
+    "IMPERIUM",
+    "INFANTRY",
+    "INQUISITOR'S HAND",
+    "MINISTORUM PRIEST",
+    "ORDO HERETICUS"
+   ],
+   "factionKeywords": [
+    "AGENTS OF THE IMPERIUM"
+   ]
+  },
+  {
+   "name": "Inquisitor's Hand Vigilant Squad",
+   "profiles": [
+    {
+     "name": "Cyber-Mastiff",
+     "M": "6\"",
+     "T": 3,
+     "SV": "4+",
+     "W": 1,
+     "LD": "7+",
+     "OC": 2
+    },
+    {
+     "name": "Proctor-Vigilant",
+     "M": "6\"",
+     "T": 3,
+     "SV": "4+",
+     "W": 1,
+     "LD": "7+",
+     "OC": 2
+    },
+    {
+     "name": "Vigilant with Combat Shotgun, Shotpistol and Gun Stocks",
+     "M": "6\"",
+     "T": 3,
+     "SV": "4+",
+     "W": 1,
+     "LD": "7+",
+     "OC": 2
+    },
+    {
+     "name": "Vigilant with Grenade Launcher, Shotpistol and Gun Stocks",
+     "M": "6\"",
+     "T": 3,
+     "SV": "4+",
+     "W": 1,
+     "LD": "7+",
+     "OC": 2
+    },
+    {
+     "name": "Vigilant with Shotpistol, Webber and Gun Stocks",
+     "M": "6\"",
+     "T": 3,
+     "SV": "4+",
+     "W": 1,
+     "LD": "7+",
+     "OC": 2
+    }
+   ],
+   "invuln": null,
+   "invulnNote": null,
+   "rangedWeapons": [
+    {
+     "name": "Combat Shotgun",
+     "profileOf": null,
+     "range": "18\"",
+     "A": "2",
+     "BS": "4+",
+     "S": 4,
+     "AP": 0,
+     "D": "1",
+     "tags": []
+    },
+    {
+     "name": "Grenade Launcher - Frag",
+     "profileOf": "Grenade Launcher",
+     "range": "24\"",
+     "A": "D3",
+     "BS": "4+",
+     "S": 4,
+     "AP": 0,
+     "D": "1",
+     "tags": [
+      "BLAST 1"
+     ]
+    },
+    {
+     "name": "Grenade Launcher - Krak",
+     "profileOf": "Grenade Launcher",
+     "range": "24\"",
+     "A": "1",
+     "BS": "4+",
+     "S": 9,
+     "AP": -2,
+     "D": "D3",
+     "tags": []
+    },
+    {
+     "name": "Shotpistol",
+     "profileOf": null,
+     "range": "12\"",
+     "A": "1",
+     "BS": "4+",
+     "S": 4,
+     "AP": 0,
+     "D": "1",
+     "tags": [
+      "CLOSE-QUARTERS"
+     ]
+    },
+    {
+     "name": "Webber",
+     "profileOf": null,
+     "range": "12\"",
+     "A": "D6",
+     "BS": "3+",
+     "S": 2,
+     "AP": 0,
+     "D": "1",
+     "tags": [
+      "ASSAULT",
+      "DEVASTATING WOUNDS"
+     ]
+    }
+   ],
+   "meleeWeapons": [
+    {
+     "name": "Gun Stocks",
+     "range": "Melee",
+     "A": "2",
+     "WS": "4+",
+     "S": 3,
+     "AP": 0,
+     "D": "1",
+     "tags": []
+    },
+    {
+     "name": "Mechanical Bite",
+     "range": "Melee",
+     "A": "3",
+     "WS": "4+",
+     "S": 4,
+     "AP": 0,
+     "D": "1",
+     "tags": []
+    }
+   ],
+   "factionAbilities": [
+    "ASSIGNED AGENTS"
+   ],
+   "datasheetAbilities": [
+    {
+     "name": "NUNCIO-AQUILA",
+     "text": "At the start of the Command phase, you can use this ability. If you do, select one objective within 6\" of this model that has not been selected for this ability this turn. Enemy units (excluding MONSTER/VEHICLE units) within range of that objective must make a battle-shock roll."
+    },
+    {
+     "name": "MERCILESS JUDGEMENT",
+     "text": "This unit's ranged attacks that target a unit below half-strength have +1 to wound rolls."
+    }
+   ],
+   "wargearAbilities": [],
+   "composition": {
+    "bullets": [
+     "1 Cyber-Mastiff model",
+     "1 Proctor-Vigilant model",
+     "1 Vigilant with Grenade Launcher, Shotpistol and Gun Stocks model",
+     "1 Vigilant with Shotpistol, Webber and Gun Stocks model",
+     "6 Vigilant with Combat Shotgun, Shotpistol and Gun Stocks models"
+    ],
+    "equipment": [
+     "The Cyber-Mastiff is equipped with: 1 Mechanical Bite.",
+     "The Proctor-Vigilant is equipped with: 1 Combat Shotgun; 1 Gun Stocks; Nuncio-Aquila; 1 Shotpistol.",
+     "The Vigilant with Grenade Launcher, Shotpistol and Gun Stocks is equipped with: 1 Grenade Launcher - Frag; 1 Gun Stocks; 1 Shotpistol.",
+     "The Vigilant with Shotpistol, Webber and Gun Stocks is equipped with: 1 Gun Stocks; 1 Shotpistol; 1 Webber.",
+     "Every Vigilant with Combat Shotgun, Shotpistol and Gun Stocks is equipped with: 1 Combat Shotgun; 1 Gun Stocks; 1 Shotpistol."
+    ],
+    "notes": "Model table: Cyber-Mastiff x1, Proctor-Vigilant x1, Vigilant with Combat Shotgun/Shotpistol/Gun Stocks x6, Vigilant with Grenade Launcher/Shotpistol/Gun Stocks x1, Vigilant with Shotpistol/Webber/Gun Stocks x1. Multi-profile weapon footnote (marker on both Grenade Launcher rows): 'Before selecting targets with this weapon, select one of its profiles to make attacks with.'",
+    "baseSize": "25mm, 28.5mm"
+   },
+   "leaderAttach": null,
+   "transport": null,
+   "keywords": [
+    "ADEPTUS ARBITES",
+    "BATTLELINE",
+    "EXPLOSIVES",
+    "IMPERIUM",
+    "INFANTRY",
+    "INQUISITOR'S HAND",
+    "RETINUE"
+   ],
+   "factionKeywords": [
+    "AGENTS OF THE IMPERIUM"
+   ]
+  },
+  {
+   "name": "Inquisitor's Hand Eversor Assassin",
+   "profiles": [
+    {
+     "name": "Eversor Assassin",
+     "M": "9\"",
+     "T": 4,
+     "SV": "6+",
+     "W": 4,
+     "LD": "6+",
+     "OC": 1
+    }
+   ],
+   "invuln": "4+",
+   "invulnNote": null,
+   "rangedWeapons": [
+    {
+     "name": "Executioner Pistol",
+     "profileOf": null,
+     "range": "12\"",
+     "A": "4",
+     "BS": "2+",
+     "S": 4,
+     "AP": 0,
+     "D": "1",
+     "tags": [
+      "ANTI-INFANTRY 3+",
+      "CLOSE-QUARTERS",
+      "PRECISION",
+      "SUSTAINED HITS 3"
+     ]
+    }
+   ],
+   "meleeWeapons": [
+    {
+     "name": "Power Sword and Neuro-Gauntlet",
+     "range": "Melee",
+     "A": "6",
+     "WS": "2+",
+     "S": 5,
+     "AP": -2,
+     "D": "2",
+     "tags": [
+      "ANTI-INFANTRY 3+",
+      "PRECISION",
+      "SUSTAINED HITS 3"
+     ]
+    }
+   ],
+   "factionAbilities": [
+    "ASSIGNED AGENTS"
+   ],
+   "datasheetAbilities": [
+    {
+     "name": "OVERKILL (ONCE PER BATTLE PER UNIT)",
+     "text": "When this unit is selected to attack, you can use this ability. If you do, this unit's melee attacks have -4 AP."
+    }
+   ],
+   "wargearAbilities": [],
+   "composition": {
+    "bullets": [
+     "1 Eversor Assassin model"
+    ],
+    "equipment": [
+     "This model is equipped with: 1 Executioner Pistol; 1 Power Sword and Neuro-Gauntlet."
+    ],
+    "notes": "Model table: Eversor Assassin x1. No LEADER section on this datasheet.",
+    "baseSize": "32mm"
+   },
+   "leaderAttach": null,
+   "transport": null,
+   "keywords": [
+    "CHARACTER",
+    "EPIC HERO",
+    "EVERSOR ASSASSIN",
+    "EXPLOSIVES",
+    "IMPERIUM",
+    "INFANTRY",
+    "INQUISITOR'S HAND",
+    "OFFICIO ASSASSINORUM"
+   ],
+   "factionKeywords": [
+    "AGENTS OF THE IMPERIUM"
+   ]
+  },
+  {
+   "name": "Inquisitor's Hand Inquisitorial Agents",
+   "profiles": [
+    {
+     "name": "Inquisitorial Agent with Agent's Firearm, Agent's Implement and Mystic Stave",
+     "M": "6\"",
+     "T": 3,
+     "SV": "5+",
+     "W": 1,
+     "LD": "7+",
+     "OC": 1
+    },
+    {
+     "name": "Inquisitorial Agent with Agent's Firearm and Agent's Implement",
+     "M": "6\"",
+     "T": 3,
+     "SV": "5+",
+     "W": 1,
+     "LD": "7+",
+     "OC": 1
+    },
+    {
+     "name": "Gun Servitor",
+     "M": "6\"",
+     "T": 3,
+     "SV": "5+",
+     "W": 1,
+     "LD": "7+",
+     "OC": 1
+    },
+    {
+     "name": "Inquisitorial Agent with Agent's Firearm, Plasma Pistol and Agent's Implement",
+     "M": "6\"",
+     "T": 3,
+     "SV": "5+",
+     "W": 1,
+     "LD": "7+",
+     "OC": 1
+    }
+   ],
+   "invuln": null,
+   "invulnNote": null,
+   "rangedWeapons": [
+    {
+     "name": "Agent's Firearm",
+     "profileOf": null,
+     "range": "12\"",
+     "A": "1",
+     "BS": "3+",
+     "S": 4,
+     "AP": -1,
+     "D": "1",
+     "tags": [
+      "CLOSE-QUARTERS"
+     ]
+    },
+    {
+     "name": "Heavy Bolter",
+     "profileOf": null,
+     "range": "36\"",
+     "A": "3",
+     "BS": "4+",
+     "S": 5,
+     "AP": -1,
+     "D": "2",
+     "tags": [
+      "HEAVY",
+      "SUSTAINED HITS 1"
+     ]
+    },
+    {
+     "name": "Plasma Pistol - Standard",
+     "profileOf": "Plasma Pistol",
+     "range": "12\"",
+     "A": "1",
+     "BS": "3+",
+     "S": 7,
+     "AP": -2,
+     "D": "1",
+     "tags": [
+      "CLOSE-QUARTERS"
+     ]
+    },
+    {
+     "name": "Plasma Pistol - Supercharge",
+     "profileOf": "Plasma Pistol",
+     "range": "12\"",
+     "A": "1",
+     "BS": "3+",
+     "S": 8,
+     "AP": -3,
+     "D": "2",
+     "tags": [
+      "CLOSE-QUARTERS",
+      "HAZARDOUS"
+     ]
+    }
+   ],
+   "meleeWeapons": [
+    {
+     "name": "Agent's Implement",
+     "range": "Melee",
+     "A": "3",
+     "WS": "3+",
+     "S": 3,
+     "AP": 0,
+     "D": "1",
+     "tags": []
+    },
+    {
+     "name": "Mystic Stave",
+     "range": "Melee",
+     "A": "2",
+     "WS": "3+",
+     "S": 5,
+     "AP": -1,
+     "D": "D3",
+     "tags": [
+      "ANTI-INFANTRY 4+",
+      "PSYCHIC"
+     ]
+    }
+   ],
+   "factionAbilities": [
+    "ASSIGNED AGENTS"
+   ],
+   "datasheetAbilities": [
+    {
+     "name": "TOME SKULL (ONCE PER BATTLE PER UNIT)",
+     "text": "At the start of any phase, you can select one friendly battle-shocked AGENTS OF THE IMPERIUM unit within 6\" of this unit or one enemy within 6\" of this unit. If you select a friendly unit, that unit is no longer battle-shocked. If you select an enemy unit, that unit must make a battle-shock roll."
+    },
+    {
+     "name": "LOYAL TO THE CAUSE",
+     "text": "When an enemy unit targets this unit, if this unit is within range of an objective, attacks that target this unit have -1 to wound rolls."
+    }
+   ],
+   "wargearAbilities": [],
+   "composition": {
+    "bullets": [
+     "1 Gun Servitor model",
+     "1 Inquisitorial Agent with Agent's Firearm, Agent's Implement and Mystic Stave model",
+     "1 Inquisitorial Agent with Agent's Firearm, Plasma Pistol and Agent's Implement model",
+     "3 Inquisitorial Agent with Agent's Firearm and Agent's Implement models"
+    ],
+    "equipment": [
+     "The Gun Servitor is equipped with: 1 Agent's Implement; 1 Heavy Bolter.",
+     "The Inquisitorial Agent with Agent's Firearm, Agent's Implement and Mystic Stave is equipped with: 1 Agent's Firearm; 1 Agent's Implement; 1 Mystic Stave; Tome Skull.",
+     "The Inquisitorial Agent with Agent's Firearm, Plasma Pistol and Agent's Implement is equipped with: 1 Agent's Firearm; 1 Agent's Implement; 1 Plasma Pistol - Standard.",
+     "Every Inquisitorial Agent with Agent's Firearm and Agent's Implement is equipped with: 1 Agent's Firearm; 1 Agent's Implement."
+    ],
+    "notes": "Model table: Inquisitorial Agent with Agent's Firearm, Agent's Implement and Mystic Stave x1; Inquisitorial Agent with Agent's Firearm and Agent's Implement x3; Gun Servitor x1; Inquisitorial Agent with Agent's Firearm, Plasma Pistol and Agent's Implement x1. Multi-profile weapon footnote (marker on both Plasma Pistol rows): 'Before selecting targets with this weapon, select one of its profiles to make attacks with.'",
+    "baseSize": "25mm, 32mm"
+   },
+   "leaderAttach": null,
+   "transport": null,
+   "keywords": [
+    "EXPLOSIVES",
+    "IMPERIUM",
+    "INFANTRY",
+    "INQUISITOR'S HAND",
+    "RETINUE"
+   ],
+   "factionKeywords": [
+    "AGENTS OF THE IMPERIUM"
+   ]
+  }
+ ],
+ "sourceImages": {
+  "IMG_4409.PNG": "Preacher Teguen datasheet, top: photo, stat plaque (6\"/3/6+/3/7+/1), Invulnerable Save 4+, ranged + melee Zealot's Vindictor, start of Abilities.",
+  "IMG_4410.PNG": "Preacher Teguen datasheet, bottom: melee row (overlap), Abilities (Zealot, Holy Hatred), Leader, Unit Composition, Base Size 32mm, Keywords.",
+  "IMG_4411.PNG": "Inquisitor's Hand Vigilant Squad, top: photo and the five model profiles (all 6\"/3/4+/1/7+/2).",
+  "IMG_4412.PNG": "Vigilant Squad ranged weapons (Combat Shotgun, Grenade Launcher Frag/Krak, Shotpistol, Webber), multi-profile footnote, melee (Gun Stocks, Mechanical Bite), start of Abilities.",
+  "IMG_4413.PNG": "Vigilant Squad Abilities (Nuncio-Aquila, Merciless Judgement), Unit Composition with equipment sentences and model table, Base Size 25mm/28.5mm.",
+  "IMG_4414.PNG": "Vigilant Squad (overlaps 4413): Abilities, Unit Composition, Base Size, Keywords.",
+  "IMG_4415.PNG": "Inquisitor's Hand Eversor Assassin, top: photo, stats (9\"/4/6+/4/6+/1), Invulnerable Save 4+, Executioner Pistol, Power Sword and Neuro-Gauntlet, start of Abilities.",
+  "IMG_4416.PNG": "Eversor Assassin, bottom (overlaps 4415): melee row, Abilities (Overkill), Unit Composition, Base Size 32mm, Keywords.",
+  "IMG_4417.PNG": "Inquisitor's Hand Inquisitorial Agents, top: photo and four model profiles (all 6\"/3/5+/1/7+/1), start of Ranged Weapons.",
+  "IMG_4418.PNG": "Inquisitorial Agents ranged weapons (Agent's Firearm, Heavy Bolter, Plasma Pistol Standard/Supercharge), melee (Agent's Implement, Mystic Stave), start of Abilities.",
+  "IMG_4419.PNG": "Inquisitorial Agents Abilities (Tome Skull, Loyal to the Cause), Unit Composition, model table, Base Size 25mm/32mm.",
+  "IMG_4420.PNG": "Inquisitorial Agents (overlaps 4419): Abilities, Unit Composition, Base Size, Keywords.",
+  "IMG_4421.PNG": "Combat Patrol Battle Setup screen: YOUR MISSION 'Inquisitorial Sanction' card expanded (scoring blocks), OPPONENT'S MISSION 'Expansionary Campaign' collapsed.",
+  "IMG_4422.PNG": "Combat Patrol Battle Setup screen: OPPONENT'S MISSION 'Expansionary Campaign' card expanded (scoring blocks), 'Inquisitorial Sanction' collapsed.",
+  "IMG_0164.PNG": "Follow-up capture (2026-08-06): Stratagems page 1/2 — Urban Enforcers (1CP) + Superior Weaponry (1CP) expanded.",
+  "IMG_0165.PNG": "Follow-up capture (2026-08-06): Stratagems page 2/2 — Superior Weaponry + Inquisitorial Mandate (1CP) expanded; confirms exactly 3 cards.",
+  "IMG_0166.PNG": "Follow-up capture (2026-08-06): Enhancements page — Killer Reflexes + Sanctic Slayers, both expanded."
+ }
 }
