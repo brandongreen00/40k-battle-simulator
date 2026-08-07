@@ -330,6 +330,28 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-08-07] — Combat Patrol unit-count review (owner: "I tried deploying with my
+  Inquisitor's Hand and only have ONE vigilant squad when I should have two. Please review for
+  all combat patrols"). Separate PR off main.** All gates green: `pnpm typecheck`, `pnpm test`
+  (**522 tests**, +1 pinning test and a strengthened full-game assertion), `pnpm build`.
+  - **Review outcome**: `tools/combatpatrol/build.ts` emitted ONE roster unit per photographed
+    datasheet and never read the landing page's `rosterList` counts. The three captured landing
+    pages (Crowe's / Sudden Dawn / Vengeful Brethren) all say 1× of each datasheet, so those
+    rosters were correct by luck; the Inquisitor's Hand landing page was never captured
+    (flags §1), so its second Vigilant Squad was silently dropped.
+  - **Fix**: `boxCopies()` in build.ts — the captured `rosterList` count wins when present
+    ("1 (10 models)" → 1); otherwise a documented `OWNER_COPIES` ruling table, else 1. The IH
+    entry (Vigilant Squad ×2, owner ruling 2026-08-07 — transcribe-never-reconstruct means we
+    don't invent a rosterList) is recorded in `inquisitors_hand_flags.md`'s resolution log.
+    `pnpm build:cp` regenerated: cp_inquisitors_hand.json now fields 5 units / 28 models (both
+    squads with the full boxed wargear); the other three rosters byte-identical.
+  - **Tests**: all four patrols' exact datasheet×modelCount tables pinned; the IH-vs-T'au
+    full-game test now asserts BOTH Vigilant Squads reach the table (zero rejected intents —
+    duplicate-datasheet entries flow through deployment/AI/List Builder unchanged, since entry
+    keys are side:index and uids are dsId~N).
+  - **Still assumed** (landing page still uncaptured): Teguen ×1, Eversor ×1, Inquisitorial
+    Agents ×1 — flag the owner if any of those are also multiples.
+
 - **[2026-08-06] — List Builder: patrol ENHANCEMENTS pickable on the imported Combat Patrols
   (owner, with screenshot of an empty Enhancement select: "I don't have the ability to put my 2
   enhancements on any of the imported Combat patrols"). Separate PR off main.** All gates green:
