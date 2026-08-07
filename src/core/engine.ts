@@ -410,7 +410,10 @@ export function resolveAttack(
     }
   }
   if (!isMelee) {
-    const visible = unitCanSeeIn(aPts, target, state, ctx);
+    // A unit you are in Engagement Range of is always visible — base contact cannot hide
+    // behind the centre-point LoS approximation (the Eversor-in-melee case).
+    const engagedWithTarget = attackerEngagedWith.some((e) => e.id === target.id);
+    const visible = engagedWithTarget || unitCanSeeIn(aPts, target, state, ctx, baseRadius(aDs.baseShape));
     if (!visible) {
       if (!kw.indirectFire) return { state, summary: '', rejected: 'no line of sight' };
       // Indirect shooting (10.07): unmod 1-5 fails (1-3 if stationary + target visible to a
@@ -424,7 +427,7 @@ export function resolveAttack(
           return spotters.length > 0 && unitCanSeeIn(spotters, target, state, ctx);
         });
       }
-    } else if (!kw.indirectFire) {
+    } else if (!kw.indirectFire && !engagedWithTarget) {
       // Per-model visibility (10e: a model can only shoot a target it can see). Only the bearers
       // that themselves have line of sight fire — a squad mostly hidden behind a tall ruin no
       // longer contributes its hidden models' shots because one squadmate can peek around it.
@@ -432,11 +435,13 @@ export function resolveAttack(
         (m) => m.alive && (m.datasheetId ?? attacker.datasheetId) === found.sourceDsId,
       );
       const hidden = isHidden(target, state, ctx);
+      const aR = baseRadius(aDs.baseShape);
+      const tR = baseRadius(tDs.baseShape);
       const seeing = bearers.filter((m) =>
         tPts.some(
           (t) =>
             !(hidden && Math.hypot(m.pos.x - t.x, m.pos.y - t.y) > DEFAULT_DETECTION_RANGE) &&
-            !pointLosBlocked(m.pos, t, state.layout),
+            !pointLosBlocked(m.pos, t, state.layout, aR, tR),
         ),
       ).length;
       if (seeing === 0) return { state, summary: '', rejected: 'no line of sight' };

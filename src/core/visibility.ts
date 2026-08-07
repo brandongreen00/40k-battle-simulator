@@ -17,7 +17,7 @@
 
 import type { Datasheet, GameState, Layout, TerrainArea, UnitInstance, Vec2 } from './types';
 import type { EngineContext } from './engine';
-import { pointInPolygon } from './geometry';
+import { baseRadius, distancePointToPolygon, pointInPolygon } from './geometry';
 import { losBlocked as legacyLosBlocked, hasCover as legacyHasCover, segmentIntersectsPolygon } from './los';
 
 export const DEFAULT_DETECTION_RANGE = 15; // inches (13.09)
@@ -29,28 +29,36 @@ function obscuringAreas(layout: Layout): TerrainArea[] {
   return (layout.terrainAreas ?? []).filter((a) => a.features.length > 0);
 }
 
-/** Is the sight line a→b blocked (Obscuring areas + Solid dense features)? */
-export function losBlocked11(a: Vec2, b: Vec2, layout: Layout): boolean {
+/** A model counts as "within" a terrain piece when any part of its BASE overlaps it — the
+ *  centre point alone misses a model standing on the piece's edge (centre a hair outside),
+ *  which would otherwise have every sightline that clips the piece falsely blocked. */
+function modelWithin(p: Vec2, r: number, polygon: Vec2[]): boolean {
+  return pointInPolygon(p, polygon) || (r > 0 && distancePointToPolygon(p, polygon) <= r);
+}
+
+/** Is the sight line a→b blocked (Obscuring areas + Solid dense features)? `aR`/`bR` are the
+ *  two models' base radii — a base overlapping an area/feature sees out of it. */
+export function losBlocked11(a: Vec2, b: Vec2, layout: Layout, aR = 0, bR = 0): boolean {
   for (const area of obscuringAreas(layout)) {
-    const aIn = pointInPolygon(a, area.polygon);
-    const bIn = pointInPolygon(b, area.polygon);
-    if (aIn || bIn) continue; // you can see into/out of an obscuring area, not through it
+    // you can see into/out of an obscuring area, not through it
+    if (modelWithin(a, aR, area.polygon) || modelWithin(b, bR, area.polygon)) continue;
     if (segmentIntersectsPolygon(a, b, area.polygon)) return true;
   }
-  // Solid: dense features block even within/into an area (unless the model is inside the feature).
+  // Solid: dense features block even within/into an area (unless the model is on the feature).
   for (const area of layout.terrainAreas ?? []) {
     for (const f of area.features) {
       if (f.kind !== 'dense') continue;
-      if (pointInPolygon(a, f.polygon) || pointInPolygon(b, f.polygon)) continue;
+      if (modelWithin(a, aR, f.polygon) || modelWithin(b, bR, f.polygon)) continue;
       if (segmentIntersectsPolygon(a, b, f.polygon)) return true;
     }
   }
   return false;
 }
 
-/** Layout-dispatching point LoS. */
-export function pointLosBlocked(a: Vec2, b: Vec2, layout: Layout): boolean {
-  if (is11eLayout(layout)) return losBlocked11(a, b, layout);
+/** Layout-dispatching point LoS. Optional base radii let a model whose base overlaps a terrain
+ *  piece see out of it (11e layouts; the legacy 10e model keeps its centre-point rule). */
+export function pointLosBlocked(a: Vec2, b: Vec2, layout: Layout, aR = 0, bR = 0): boolean {
+  if (is11eLayout(layout)) return losBlocked11(a, b, layout, aR, bR);
   return legacyLosBlocked(a, b, layout.terrain);
 }
 
@@ -99,6 +107,7 @@ export function unitCanSee11(
   state: GameState,
   ctx: EngineContext,
   detectionRange = DEFAULT_DETECTION_RANGE,
+  attackerR = 0,
 ): boolean {
   const layout = state.layout;
   const hidden = isHidden(target, state, ctx);
@@ -106,7 +115,8 @@ export function unitCanSee11(
     for (const m of target.models) {
       if (!m.alive) continue;
       if (hidden && Math.hypot(a.x - m.pos.x, a.y - m.pos.y) > detectionRange) continue;
-      if (!pointLosBlocked(a, m.pos, layout)) return true;
+      const shape = ctx.datasheets.get(m.datasheetId ?? target.datasheetId)?.baseShape;
+      if (!pointLosBlocked(a, m.pos, layout, attackerR, shape ? baseRadius(shape) : 0)) return true;
     }
   }
   return false;
@@ -157,14 +167,16 @@ export function unitCoverIn(
   return tPts.some((b) => attackerPts.some((a) => !legacyLosBlocked(a, b, state.layout.terrain) && legacyHasCover(a, b, state.layout.terrain)));
 }
 
-/** Layout-dispatching unit visibility. */
+/** Layout-dispatching unit visibility. `attackerR` = the attacker models' base radius (11e:
+ *  a base overlapping a terrain piece sees out of it). */
 export function unitCanSeeIn(
   attackerPts: Vec2[],
   target: UnitInstance,
   state: GameState,
   ctx: EngineContext,
+  attackerR = 0,
 ): boolean {
-  if (is11eLayout(state.layout)) return unitCanSee11(attackerPts, target, state, ctx);
+  if (is11eLayout(state.layout)) return unitCanSee11(attackerPts, target, state, ctx, DEFAULT_DETECTION_RANGE, attackerR);
   const tPts = target.models.filter((m) => m.alive).map((m) => m.pos);
   return attackerPts.some((a) => tPts.some((b) => !legacyLosBlocked(a, b, state.layout.terrain)));
 }

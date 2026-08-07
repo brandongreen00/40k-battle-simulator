@@ -330,6 +330,30 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-08-07] — Dead models leave the board + engaged/on-terrain LoS false blocks fixed
+  (owner: "1. Dead units stay on the board… 2. My eversor assassin somehow can't target this
+  unit… even though it should be able to draw a line of sight through cover"). Separate PR off
+  main.** All gates green: `pnpm typecheck`, `pnpm test` (**526 tests**, +4: an all-maps engaged
+  scan, an engaged-shot resolution test, a base-on-terrain LoS case, a jsdom dead-render test),
+  `pnpm build`.
+  - **Dead models rendered forever**: Board.tsx's model loop had no `alive` filter — every
+    casualty stayed as a clickable token. Now `!m.alive` models are skipped; fights-on-death
+    `dying` models stay visible (they keep `alive: true` until swept).
+  - **The Eversor's 0-target bug, root-caused by a 748-position scan**: `losBlocked11` decided
+    "within an area/feature" by the CENTRE point only. A model standing on a terrain edge
+    (base overlapping, centre a hair outside) failed the see-out carve-out, so every sightline
+    clipping the polygon was blocked — including to the enemy it was IN ENGAGEMENT with (the
+    reported scene: engaged pistol shooter, `Target (0 valid)`).
+  - **Fixes (both, in core)**: (1) a unit you are in Engagement Range of is ALWAYS visible —
+    `validShootingTargets` (UI + AI share it) and resolveAttack's visibility/per-bearer clamp
+    carve the engaged target out; (2) "within" = base overlap: `losBlocked11`/`pointLosBlocked`/
+    `unitCanSee(11/In)` accept base radii (`modelWithin` = centre-in OR distance ≤ radius), and
+    the shooting paths pass the real base radii. Legacy 10e maps keep the centre-point model.
+  - **Regression net**: the engaged scan (every 1"-grid position × 3 CP maps × 2 targets) is a
+    committed test pinned to ZERO failing positions (was 748).
+  - **Not changed**: cover (`unitHasCover11`) still uses centre points (more cover = generous,
+    not blocking); Hidden detection unchanged; melee never used LoS.
+
 - **[2026-08-07] — Combat Patrol unit-count review (owner: "I tried deploying with my
   Inquisitor's Hand and only have ONE vigilant squad when I should have two. Please review for
   all combat patrols"). Separate PR off main.** All gates green: `pnpm typecheck`, `pnpm test`
