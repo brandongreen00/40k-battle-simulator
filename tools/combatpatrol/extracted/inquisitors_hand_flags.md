@@ -101,3 +101,10 @@ rows + both melee rows, both mission cards' scoring lines.
 - **2026-08-06 (owner):** "We don't have a faction rule for the Inquisitorial Agents" — the
   patrol has NO detachment/faction rule, so the missing landing page holds no rules content
   (item 3's ASSIGNED AGENTS text covered by this ruling). Gap closed.
+- **2026-08-07 (owner):** the patrol fields **TWO Vigilant Squads** ("I tried deploying with my
+  Inquisitor's Hand and only have ONE vigilant squad when I should have two"). The landing page
+  (roster list) is still uncaptured, so this count is an owner ruling, not a transcription —
+  recorded as `OWNER_COPIES` in `tools/combatpatrol/build.ts`; the builder otherwise emits the
+  captured landing-page counts (the other three patrols) or one per datasheet. Teguen ×1,
+  Eversor ×1 and Inquisitorial Agents ×1 remain the assumed counts until the landing page is
+  captured.

@@ -178,6 +178,27 @@ function reserveRounds(patrol: XPatrol): { token: string; round: number }[] {
   return out;
 }
 
+/** Copies of a datasheet in the box beyond the default 1, for patrols whose app landing page
+ *  (the roster list with unit counts) was never captured. These are OWNER RULINGS, not
+ *  transcriptions — see the flags files' resolution logs. Captured `rosterList` counts win. */
+const OWNER_COPIES: Record<string, Record<string, number>> = {
+  // 2026-08-07 (owner): the Inquisitor's Hand patrol fields TWO Vigilant Squads. Its landing
+  // page is missing from the screenshot set (inquisitors_hand_flags.md §1), so the builder's
+  // one-per-datasheet fallback had silently emitted one.
+  inquisitors_hand: { "Inquisitor's Hand Vigilant Squad": 2 },
+};
+
+/** How many copies of this unit the box holds: the captured landing-page roster list when
+ *  present ("1 (10 models)" → 1), else the owner-ruling table, else 1. */
+function boxCopies(patrol: XPatrol, pid: string, unitName: string): number {
+  const row = (patrol.rosterList ?? []).find((r) => r.name.toUpperCase() === unitName.toUpperCase());
+  if (row?.count) {
+    const n = parseInt(row.count, 10);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return OWNER_COPIES[pid]?.[unitName] ?? 1;
+}
+
 const datasheets: unknown[] = [];
 const patrolMeta: unknown[] = [];
 
@@ -255,11 +276,14 @@ for (const pid of PATROLS) {
       ...(reserve ? { cpReserveRound: reserve.round } : {}),
       patrol: patrol.id,
     });
-    rosterUnits.push({
-      datasheetId: id,
-      modelCount: unitModelCount(u),
-      wargearCounts: wargearCounts(u),
-    });
+    const copies = boxCopies(patrol, pid, u.name);
+    for (let i = 0; i < copies; i++) {
+      rosterUnits.push({
+        datasheetId: id,
+        modelCount: unitModelCount(u),
+        wargearCounts: wargearCounts(u),
+      });
+    }
   }
 
   patrolMeta.push({
@@ -282,7 +306,7 @@ for (const pid of PATROLS) {
     units: rosterUnits,
   };
   writeFileSync(join(ROOT, 'data', 'rosters', `cp_${pid}.json`), JSON.stringify(roster, null, 1));
-  console.log(`roster cp_${pid}: ${patrol.units.length} units, ${rosterUnits.reduce((a, u: any) => a + u.modelCount, 0)} models`);
+  console.log(`roster cp_${pid}: ${rosterUnits.length} units, ${rosterUnits.reduce((a, u: any) => a + u.modelCount, 0)} models`);
 }
 
 writeFileSync(join(ROOT, 'data', 'game', 'cp_datasheets.json'), JSON.stringify(datasheets, null, 1));

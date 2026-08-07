@@ -26,6 +26,18 @@
    }
   },
   {
+   "datasheetId": "cp-inquisitors-hand-vigilant-squad",
+   "modelCount": 10,
+   "wargearCounts": {
+    "Mechanical Bite": 1,
+    "Combat Shotgun": 7,
+    "Gun Stocks": 9,
+    "Shotpistol": 9,
+    "Grenade Launcher": 1,
+    "Webber": 1
+   }
+  },
+  {
    "datasheetId": "cp-inquisitors-hand-eversor-assassin",
    "modelCount": 1,
    "wargearCounts": {

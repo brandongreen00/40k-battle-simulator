@@ -151,7 +151,6 @@ describe('combat patrol rosters (data/rosters/cp_*.json)', () => {
     expect(cpRosters).toHaveLength(4);
     for (const r of cpRosters) {
       expect(r.combatPatrol).toBe(true);
-      expect(r.units).toHaveLength(4);
       for (const u of r.units) {
         const ds = datasheetsById.get(u.datasheetId);
         expect(ds, `${r.name}: ${u.datasheetId}`).toBeTruthy();
@@ -164,6 +163,44 @@ describe('combat patrol rosters (data/rosters/cp_*.json)', () => {
     const strike = crowes.units.find((u) => u.datasheetId === 'cp-crowes-sanctifiers-strike-squad')!;
     expect(strike.modelCount).toBe(10);
     expect(strike.wargearCounts).toMatchObject({ 'Storm Bolter': 8, Incinerator: 1, Psycannon: 1, 'Nemesis Force Weapon': 8 });
+  });
+
+  it('each patrol fields its boxed unit list — Inquisitor’s Hand has TWO Vigilant Squads', () => {
+    // The three captured landing pages say 1× of each datasheet; the Inquisitor's Hand landing
+    // page was never captured, and its Vigilant Squad count of 2 is an owner ruling (2026-08-07,
+    // see tools/combatpatrol/extracted/inquisitors_hand_flags.md).
+    const table = (name: string) =>
+      cpRosters.find((r) => r.name === name)!.units.map((u) => `${u.datasheetId}×${u.modelCount}`).sort();
+    expect(table("Crowe's Sanctifiers")).toEqual([
+      'cp-crowes-sanctifiers-brotherhood-terminator-squad×5',
+      'cp-crowes-sanctifiers-castellan-crowe×1',
+      'cp-crowes-sanctifiers-strike-squad×10',
+      'cp-crowes-sanctifiers-venerable-dreadnought×1',
+    ]);
+    expect(table("Inquisitor's Hand")).toEqual([
+      'cp-inquisitors-hand-eversor-assassin×1',
+      'cp-inquisitors-hand-inquisitorial-agents×6',
+      'cp-inquisitors-hand-preacher-teguen×1',
+      'cp-inquisitors-hand-vigilant-squad×10',
+      'cp-inquisitors-hand-vigilant-squad×10',
+    ]);
+    expect(table('Sudden Dawn Cadre')).toEqual([
+      'cp-sudden-dawn-cadre-breacher-team×10',
+      'cp-sudden-dawn-cadre-commander-cloudspear×1',
+      'cp-sudden-dawn-cadre-devilfish×1',
+      'cp-sudden-dawn-cadre-pathfinder-team×10',
+    ]);
+    expect(table('The Vengeful Brethren')).toEqual([
+      'cp-vengeful-brethren-bladeguard-veteran-squad×3',
+      'cp-vengeful-brethren-hellblaster-squad×5',
+      'cp-vengeful-brethren-intercessor-squad×10',
+      'cp-vengeful-brethren-master-zacharial×1',
+    ]);
+    // Both Vigilant Squads carry the full boxed wargear independently.
+    const vigilants = cpRosters
+      .find((r) => r.name === "Inquisitor's Hand")!
+      .units.filter((u) => u.datasheetId === 'cp-inquisitors-hand-vigilant-squad');
+    expect(vigilants[0]!.wargearCounts).toEqual(vigilants[1]!.wargearCounts);
   });
 });
 
@@ -1102,6 +1139,7 @@ describe('combat patrol battles (deployment + full game through the real reducer
   it('scores ONLY the patrol mission cards in a full game (Inquisitor\'s Hand vs Sudden Dawn Cadre)', () => {
     const inqs = cpRosters.find((r) => r.name === "Inquisitor's Hand")! as Roster;
     let finalState: GameState | null = null;
+    let vigilantsSeen = 0;
     const result = runMatch(
       {
         layout: layoutsCp[1]!,
@@ -1109,12 +1147,20 @@ describe('combat patrol battles (deployment + full game through the real reducer
         profiles: { player: 'balanced', ai: 'balanced' },
         battleType: 'combat_patrol',
         seed: 5,
-        observe: (s) => { finalState = s; },
+        observe: (s) => {
+          finalState = s;
+          vigilantsSeen = Math.max(
+            vigilantsSeen,
+            s.units.filter((u) => u.datasheetId === 'cp-inquisitors-hand-vigilant-squad').length,
+          );
+        },
       },
       data,
     );
     expect(result.ended).toBe(true);
     expect(result.rejectedLog).toEqual([]);
+    // BOTH boxed Vigilant Squads reach the table (owner report 2026-08-07: only one deployed).
+    expect(vigilantsSeen).toBe(2);
     const s = finalState! as GameState;
     // Each side plays its own patrol's card.
     expect(s.cpMissions?.missionId).toEqual({ player: 'inquisitorial_sanction', ai: 'expansionary_campaign' });
