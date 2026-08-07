@@ -10,6 +10,7 @@ import type { EngineContext } from './engine';
 import { closestGap, planUnitShooting, unitWeapons } from './engine';
 import { parseKeywords } from './keywords';
 import { isHidden, pointLosBlocked, DEFAULT_DETECTION_RANGE } from './visibility';
+import { baseRadius } from './geometry';
 import { canActAfterAdvance, hasFightsFirstAbility, hasLoneOperative, ignoresLoneOperative, unitScoutDistance } from './abilities';
 import { canFly, isAircraft } from './transport';
 import { allowsRound1DeepStrike, orderRangeFor, ordersReachTitanicSquadron } from './enhancements';
@@ -147,14 +148,18 @@ export function validShootingTargets(
       continue;
     }
     const hidden = isHidden(e, state, ctx);
+    const aR = baseRadius(aDs.baseShape);
+    const eR = baseRadius(eDs.baseShape);
     const bearerSees = aPts.some((a) =>
       alivePts(e).some(
         (t) =>
           !(hidden && Math.hypot(a.x - t.x, a.y - t.y) > DEFAULT_DETECTION_RANGE) &&
-          !pointLosBlocked(a, t, state.layout),
+          !pointLosBlocked(a, t, state.layout, aR, eR),
       ),
     );
-    const visible = kw.indirectFire || bearerSees;
+    // A unit you are in Engagement Range of is always visible — base contact cannot hide
+    // behind the centre-point LoS approximation.
+    const visible = kw.indirectFire || myEngaged.includes(e.id) || bearerSees;
     if (visible) out.push(e);
   }
   return out;

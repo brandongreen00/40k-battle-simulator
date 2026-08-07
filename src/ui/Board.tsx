@@ -512,6 +512,9 @@ export function Board({
             u.inReserves
               ? null
               : u.models.map((m) => {
+                  // Dead models leave the board (fights-on-death `dying` models stay alive:true
+                  // until swept, so they keep rendering while they can still swing).
+                  if (!m.alive) return null;
                   const r = index.get(m.id)!;
                   const selected = movement ? movement.selectedUnitIds.includes(u.id) : selectedIds.includes(m.id);
                   return (
