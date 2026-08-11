@@ -1,0 +1,1760 @@
+[
+ {
+  "id": "mission:determined_acquisition",
+  "what": "scoring block",
+  "why": "1 printed VP line(s) of 'Determined Acquisition' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "attempted": [
+   "dossier VP-line parse",
+   "evaluator vocabulary match"
+  ],
+  "estimate": "scores through the mapped blocks only"
+ },
+ {
+  "id": "mission:purge_and_secure",
+  "what": "scoring block",
+  "why": "2 printed VP line(s) of 'Purge and Secure' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "attempted": [
+   "dossier VP-line parse",
+   "evaluator vocabulary match"
+  ],
+  "estimate": "scores through the mapped blocks only"
+ },
+ {
+  "id": "mission:unstoppable_force",
+  "what": "scoring block",
+  "why": "1 printed VP line(s) of 'Unstoppable Force' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "attempted": [
+   "dossier VP-line parse",
+   "evaluator vocabulary match"
+  ],
+  "estimate": "scores through the mapped blocks only"
+ },
+ {
+  "id": "mission:meatgrinder",
+  "what": "scoring block",
+  "why": "2 printed VP line(s) of 'Meatgrinder' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "attempted": [
+   "dossier VP-line parse",
+   "evaluator vocabulary match"
+  ],
+  "estimate": "scores through the mapped blocks only"
+ },
+ {
+  "id": "mission:punishment",
+  "what": "scoring block",
+  "why": "1 printed VP line(s) of 'Punishment' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "attempted": [
+   "dossier VP-line parse",
+   "evaluator vocabulary match"
+  ],
+  "estimate": "scores through the mapped blocks only"
+ },
+ {
+  "id": "mission:consecrate",
+  "what": "scoring block",
+  "why": "3 printed VP line(s) of 'Consecrate' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "attempted": [
+   "dossier VP-line parse",
+   "evaluator vocabulary match"
+  ],
+  "estimate": "scores through the mapped blocks only"
+ },
+ {
+  "id": "mission:destroyer's_wrath",
+  "what": "scoring block",
+  "why": "2 printed VP line(s) of 'Destroyer's Wrath' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "attempted": [
+   "dossier VP-line parse",
+   "evaluator vocabulary match"
+  ],
+  "estimate": "scores through the mapped blocks only"
+ },
+ {
+  "id": "mission:death_trap",
+  "what": "scoring block",
+  "why": "3 printed VP line(s) of 'Death Trap' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "attempted": [
+   "dossier VP-line parse",
+   "evaluator vocabulary match"
+  ],
+  "estimate": "scores through the mapped blocks only"
+ },
+ {
+  "id": "mission:smoke_and_mirrors",
+  "what": "scoring block",
+  "why": "3 printed VP line(s) of 'Smoke and Mirrors' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "attempted": [
+   "dossier VP-line parse",
+   "evaluator vocabulary match"
+  ],
+  "estimate": "scores through the mapped blocks only"
+ },
+ {
+  "id": "mission:locate_and_deny",
+  "what": "scoring block",
+  "why": "3 printed VP line(s) of 'Locate and Deny' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "attempted": [
+   "dossier VP-line parse",
+   "evaluator vocabulary match"
+  ],
+  "estimate": "scores through the mapped blocks only"
+ },
+ {
+  "id": "mission:reconnaissance_sweep",
+  "what": "scoring block",
+  "why": "2 printed VP line(s) of 'Reconnaissance Sweep' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "attempted": [
+   "dossier VP-line parse",
+   "evaluator vocabulary match"
+  ],
+  "estimate": "scores through the mapped blocks only"
+ },
+ {
+  "id": "mission:triangulation",
+  "what": "scoring block",
+  "why": "3 printed VP line(s) of 'Triangulation' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "attempted": [
+   "dossier VP-line parse",
+   "evaluator vocabulary match"
+  ],
+  "estimate": "scores through the mapped blocks only"
+ },
+ {
+  "id": "mission:surveil_the_foe",
+  "what": "scoring block",
+  "why": "2 printed VP line(s) of 'Surveil the Foe' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "attempted": [
+   "dossier VP-line parse",
+   "evaluator vocabulary match"
+  ],
+  "estimate": "scores through the mapped blocks only"
+ },
+ {
+  "id": "mission:gather_intel",
+  "what": "scoring block",
+  "why": "3 printed VP line(s) of 'Gather Intel' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "attempted": [
+   "dossier VP-line parse",
+   "evaluator vocabulary match"
+  ],
+  "estimate": "scores through the mapped blocks only"
+ },
+ {
+  "id": "mission:search_and_scour",
+  "what": "scoring block",
+  "why": "2 printed VP line(s) of 'Search and Scour' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "attempted": [
+   "dossier VP-line parse",
+   "evaluator vocabulary match"
+  ],
+  "estimate": "scores through the mapped blocks only"
+ },
+ {
+  "id": "mission:secure_asset",
+  "what": "scoring block",
+  "why": "2 printed VP line(s) of 'Secure Asset' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "attempted": [
+   "dossier VP-line parse",
+   "evaluator vocabulary match"
+  ],
+  "estimate": "scores through the mapped blocks only"
+ },
+ {
+  "id": "mission:vital_link",
+  "what": "scoring block",
+  "why": "2 printed VP line(s) of 'Vital Link' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "attempted": [
+   "dossier VP-line parse",
+   "evaluator vocabulary match"
+  ],
+  "estimate": "scores through the mapped blocks only"
+ },
+ {
+  "id": "mission:extract_relic",
+  "what": "scoring block",
+  "why": "4 printed VP line(s) of 'Extract Relic' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "attempted": [
+   "dossier VP-line parse",
+   "evaluator vocabulary match"
+  ],
+  "estimate": "scores through the mapped blocks only"
+ },
+ {
+  "id": "mission:vanguard_operation",
+  "what": "scoring block",
+  "why": "2 printed VP line(s) of 'Vanguard Operation' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "attempted": [
+   "dossier VP-line parse",
+   "evaluator vocabulary match"
+  ],
+  "estimate": "scores through the mapped blocks only"
+ },
+ {
+  "id": "mission:sabotage",
+  "what": "scoring block",
+  "why": "26 printed VP line(s) of 'Sabotage' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "attempted": [
+   "dossier VP-line parse",
+   "evaluator vocabulary match"
+  ],
+  "estimate": "scores through the mapped blocks only"
+ },
+ {
+  "id": "mission:destroyer’s_wrath",
+  "what": "primary card text",
+  "why": "'DESTROYER’S WRATH' is named by the layout pages but has no card text in the dossier",
+  "attempted": [
+   "layout page header",
+   "mission dossier scan"
+  ],
+  "estimate": "scores through the default Take-and-Hold block"
+ },
+ {
+  "id": "secondary:a_grievous_blow_—_**fixed_capable**",
+  "what": "scoring block",
+  "why": "'A Grievous Blow — **FIXED-capable**' has no evaluator binding (needs Actions / operation markers)",
+  "attempted": [
+   "evaluator vocabulary match"
+  ],
+  "estimate": "held in hand, never scores"
+ },
+ {
+  "id": "secondary:a_tempting_target",
+  "what": "scoring block",
+  "why": "'A Tempting Target' has no evaluator binding (needs Actions / operation markers)",
+  "attempted": [
+   "evaluator vocabulary match"
+  ],
+  "estimate": "held in hand, never scores"
+ },
+ {
+  "id": "secondary:assassination_—_**fixed_capable**",
+  "what": "scoring block",
+  "why": "'Assassination — **FIXED-capable**' has no evaluator binding (needs Actions / operation markers)",
+  "attempted": [
+   "evaluator vocabulary match"
+  ],
+  "estimate": "held in hand, never scores"
+ },
+ {
+  "id": "secondary:beacon",
+  "what": "scoring block",
+  "why": "'Beacon' has no evaluator binding (needs Actions / operation markers)",
+  "attempted": [
+   "evaluator vocabulary match"
+  ],
+  "estimate": "held in hand, never scores"
+ },
+ {
+  "id": "secondary:bring_it_down_—_**fixed_capable**",
+  "what": "scoring block",
+  "why": "'Bring It Down — **FIXED-capable**' has no evaluator binding (needs Actions / operation markers)",
+  "attempted": [
+   "evaluator vocabulary match"
+  ],
+  "estimate": "held in hand, never scores"
+ },
+ {
+  "id": "secondary:burden_of_trust",
+  "what": "scoring block",
+  "why": "'Burden of Trust' has no evaluator binding (needs Actions / operation markers)",
+  "attempted": [
+   "evaluator vocabulary match"
+  ],
+  "estimate": "held in hand, never scores"
+ },
+ {
+  "id": "secondary:centre_ground",
+  "what": "scoring block",
+  "why": "'Centre Ground' has no evaluator binding (needs Actions / operation markers)",
+  "attempted": [
+   "evaluator vocabulary match"
+  ],
+  "estimate": "held in hand, never scores"
+ },
+ {
+  "id": "secondary:cleanse",
+  "what": "scoring block",
+  "why": "'Cleanse' has no evaluator binding (needs Actions / operation markers)",
+  "attempted": [
+   "evaluator vocabulary match"
+  ],
+  "estimate": "held in hand, never scores"
+ },
+ {
+  "id": "secondary:defend_stronghold",
+  "what": "scoring block",
+  "why": "'Defend Stronghold' has no evaluator binding (needs Actions / operation markers)",
+  "attempted": [
+   "evaluator vocabulary match"
+  ],
+  "estimate": "held in hand, never scores"
+ },
+ {
+  "id": "secondary:display_of_might",
+  "what": "scoring block",
+  "why": "'Display of Might' has no evaluator binding (needs Actions / operation markers)",
+  "attempted": [
+   "evaluator vocabulary match"
+  ],
+  "estimate": "held in hand, never scores"
+ },
+ {
+  "id": "secondary:engage_on_all_fronts_—_**fixed_capable**",
+  "what": "scoring block",
+  "why": "'Engage on All Fronts — **FIXED-capable**' has no evaluator binding (needs Actions / operation markers)",
+  "attempted": [
+   "evaluator vocabulary match"
+  ],
+  "estimate": "held in hand, never scores"
+ },
+ {
+  "id": "secondary:forward_position",
+  "what": "scoring block",
+  "why": "'Forward Position' has no evaluator binding (needs Actions / operation markers)",
+  "attempted": [
+   "evaluator vocabulary match"
+  ],
+  "estimate": "held in hand, never scores"
+ },
+ {
+  "id": "secondary:outflank",
+  "what": "scoring block",
+  "why": "'Outflank' has no evaluator binding (needs Actions / operation markers)",
+  "attempted": [
+   "evaluator vocabulary match"
+  ],
+  "estimate": "held in hand, never scores"
+ },
+ {
+  "id": "secondary:overwhelming_force",
+  "what": "scoring block",
+  "why": "'Overwhelming Force' has no evaluator binding (needs Actions / operation markers)",
+  "attempted": [
+   "evaluator vocabulary match"
+  ],
+  "estimate": "held in hand, never scores"
+ },
+ {
+  "id": "secondary:plunder",
+  "what": "scoring block",
+  "why": "'Plunder' has no evaluator binding (needs Actions / operation markers)",
+  "attempted": [
+   "evaluator vocabulary match"
+  ],
+  "estimate": "held in hand, never scores"
+ },
+ {
+  "id": "secondary:secure_no_man's_land",
+  "what": "scoring block",
+  "why": "'Secure No Man's Land' has no evaluator binding (needs Actions / operation markers)",
+  "attempted": [
+   "evaluator vocabulary match"
+  ],
+  "estimate": "held in hand, never scores"
+ },
+ {
+  "id": "effect:ia.ordo_xenos_alien_hunters.adaptive_tactics",
+  "what": "effect binding",
+  "why": "'ADAPTIVE TACTICS' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_xenos_alien_hunters.hellfire_rounds",
+  "what": "effect binding",
+  "why": "'HELLFIRE ROUNDS' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_xenos_alien_hunters.dragonfire_rounds",
+  "what": "effect binding",
+  "why": "'DRAGONFIRE ROUNDS' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_xenos_alien_hunters.kraken_rounds",
+  "what": "effect binding",
+  "why": "'KRAKEN ROUNDS' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_hereticus_purgation_force.stun_grenades",
+  "what": "effect binding",
+  "why": "'STUN GRENADES' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_hereticus_purgation_force.dispense_justice",
+  "what": "effect binding",
+  "why": "'DISPENSE JUSTICE' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_hereticus_purgation_force.inviolate_jurisdiction",
+  "what": "effect binding",
+  "why": "'INVIOLATE JURISDICTION' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_hereticus_purgation_force.execution_order",
+  "what": "effect binding",
+  "why": "'EXECUTION ORDER' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_hereticus_purgation_force.line_of_fire",
+  "what": "effect binding",
+  "why": "'LINE OF FIRE' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_hereticus_purgation_force.exact_punishment",
+  "what": "effect binding",
+  "why": "'EXACT PUNISHMENT' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_malleus_daemon_hunters.ritual_of_warding",
+  "what": "effect binding",
+  "why": "'RITUAL OF WARDING' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_malleus_daemon_hunters.rites_of_exorcism",
+  "what": "effect binding",
+  "why": "'RITES OF EXORCISM' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_malleus_daemon_hunters.steel_heart",
+  "what": "effect binding",
+  "why": "'STEEL HEART' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_malleus_daemon_hunters.truesilver_armour",
+  "what": "effect binding",
+  "why": "'TRUESILVER ARMOUR' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_malleus_daemon_hunters.hexagrammic_wards",
+  "what": "effect binding",
+  "why": "'HEXAGRAMMIC WARDS' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_malleus_daemon_hunters.psybolt_ammunition",
+  "what": "effect binding",
+  "why": "'PSYBOLT AMMUNITION' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.imperialis_fleet.masters_of_the_void",
+  "what": "effect binding",
+  "why": "'MASTERS OF THE VOID' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.imperialis_fleet.close_quarters_barrage",
+  "what": "effect binding",
+  "why": "'CLOSE-QUARTERS BARRAGE' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.imperialis_fleet.emperor_s_will",
+  "what": "effect binding",
+  "why": "'EMPEROR’S WILL' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.imperialis_fleet.displacer_field",
+  "what": "effect binding",
+  "why": "'DISPLACER FIELD' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.imperialis_fleet.selfless_bodyguard",
+  "what": "effect binding",
+  "why": "'SELFLESS BODYGUARD' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.veiled_blade_elimination_force.prime_target",
+  "what": "effect binding",
+  "why": "'PRIME TARGET' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.veiled_blade_elimination_force.hyperstimms",
+  "what": "effect binding",
+  "why": "'HYPERSTIMMS' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.veiled_blade_elimination_force.will_sapping_salvo",
+  "what": "effect binding",
+  "why": "'WILL‑SAPPING SALVO' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.veiled_blade_elimination_force.orbital_oversight",
+  "what": "effect binding",
+  "why": "'ORBITAL OVERSIGHT' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.veiled_blade_elimination_force.blind_grenades",
+  "what": "effect binding",
+  "why": "'BLIND GRENADES' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.veiled_blade_elimination_force.ensnaring_trap",
+  "what": "effect binding",
+  "why": "'ENSNARING TRAP' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_xenos_alien_hunters.enh_amulet_of_auto_chastisement",
+  "what": "effect binding",
+  "why": "'Amulet of Auto-Chastisement' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_xenos_alien_hunters.enh_beacon_angelis",
+  "what": "effect binding",
+  "why": "'Beacon Angelis' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_xenos_alien_hunters.enh_blackweave_shroud",
+  "what": "effect binding",
+  "why": "'Blackweave Shroud' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_xenos_alien_hunters.enh_universal_anathema",
+  "what": "effect binding",
+  "why": "'Universal Anathema' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_xenos_alien_hunters.rule",
+  "what": "effect binding",
+  "why": "'Deathwatch Mission Tactics' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_hereticus_purgation_force.enh_ignis_judicium",
+  "what": "effect binding",
+  "why": "'Ignis Judicium' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_hereticus_purgation_force.enh_liber_heresius",
+  "what": "effect binding",
+  "why": "'Liber Heresius' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_hereticus_purgation_force.enh_no_escape_aura",
+  "what": "effect binding",
+  "why": "'No Escape (Aura)' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_hereticus_purgation_force.enh_witch_hunter",
+  "what": "effect binding",
+  "why": "'Witch Hunter' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_hereticus_purgation_force.rule",
+  "what": "effect binding",
+  "why": "'Root out Heresy' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_malleus_daemon_hunters.enh_daemon_slayer",
+  "what": "effect binding",
+  "why": "'Daemon Slayer' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_malleus_daemon_hunters.enh_formidable_resolve",
+  "what": "effect binding",
+  "why": "'Formidable Resolve' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_malleus_daemon_hunters.enh_gift_of_the_prescient",
+  "what": "effect binding",
+  "why": "'Gift of the Prescient' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_malleus_daemon_hunters.enh_grimoire_of_true_names_aura",
+  "what": "effect binding",
+  "why": "'Grimoire of True Names (Aura)' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.ordo_malleus_daemon_hunters.rule",
+  "what": "effect binding",
+  "why": "'Destroy the Daemonic' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.imperialis_fleet.enh_clandestine_operation",
+  "what": "effect binding",
+  "why": "'Clandestine Operation' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.imperialis_fleet.enh_combat_landers",
+  "what": "effect binding",
+  "why": "'Combat Landers' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.imperialis_fleet.enh_digital_weapons",
+  "what": "effect binding",
+  "why": "'Digital Weapons' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.imperialis_fleet.enh_fleetmaster",
+  "what": "effect binding",
+  "why": "'Fleetmaster' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.imperialis_fleet.rule",
+  "what": "effect binding",
+  "why": "'At all Costs' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.veiled_blade_elimination_force.enh_decoy_targets",
+  "what": "effect binding",
+  "why": "'Decoy Targets' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.veiled_blade_elimination_force.enh_esoteric_explosives",
+  "what": "effect binding",
+  "why": "'Esoteric Explosives' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.veiled_blade_elimination_force.enh_intraneural_biotech",
+  "what": "effect binding",
+  "why": "'Intraneural Biotech' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.veiled_blade_elimination_force.enh_micromelta_rounds",
+  "what": "effect binding",
+  "why": "'Micromelta Rounds' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.veiled_blade_elimination_force.rule",
+  "what": "effect binding",
+  "why": "'Extremis Sanction' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.combined_arms.coordinated_action",
+  "what": "effect binding",
+  "why": "'COORDINATED ACTION' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.combined_arms.reinforcements",
+  "what": "effect binding",
+  "why": "'REINFORCEMENTS!' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.combined_arms.flexible_command",
+  "what": "effect binding",
+  "why": "'FLEXIBLE COMMAND' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.combined_arms.fields_of_fire",
+  "what": "effect binding",
+  "why": "'FIELDS OF FIRE' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.combined_arms.inspired_command",
+  "what": "effect binding",
+  "why": "'INSPIRED COMMAND' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.combined_arms.stalwart_protector",
+  "what": "effect binding",
+  "why": "'STALWART PROTECTOR' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.siege_regiment.trench_fighters",
+  "what": "effect binding",
+  "why": "'TRENCH FIGHTERS' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.siege_regiment.over_the_top",
+  "what": "effect binding",
+  "why": "'OVER THE TOP' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.siege_regiment.flare_burst",
+  "what": "effect binding",
+  "why": "'FLARE BURST' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.siege_regiment.callous_sacrifice",
+  "what": "effect binding",
+  "why": "'CALLOUS SACRIFICE' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.siege_regiment.furious_fusillade",
+  "what": "effect binding",
+  "why": "'FURIOUS FUSILLADE' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.siege_regiment.minefield",
+  "what": "effect binding",
+  "why": "'MINEFIELD' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.mechanised_assault.vox_relay",
+  "what": "effect binding",
+  "why": "'VOX-RELAY' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.mechanised_assault.rapid_dispersal",
+  "what": "effect binding",
+  "why": "'RAPID DISPERSAL' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.mechanised_assault.clear_and_secure",
+  "what": "effect binding",
+  "why": "'CLEAR AND SECURE' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.mechanised_assault.swift_interception",
+  "what": "effect binding",
+  "why": "'SWIFT INTERCEPTION' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.mechanised_assault.hasty_extraction",
+  "what": "effect binding",
+  "why": "'HASTY EXTRACTION' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.mechanised_assault.move_out",
+  "what": "effect binding",
+  "why": "'MOVE OUT' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.hammer_of_the_emperor.final_hour",
+  "what": "effect binding",
+  "why": "'FINAL HOUR' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.hammer_of_the_emperor.blazing_advance",
+  "what": "effect binding",
+  "why": "'BLAZING ADVANCE' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.hammer_of_the_emperor.tactical_withdrawal",
+  "what": "effect binding",
+  "why": "'TACTICAL WITHDRAWAL' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.hammer_of_the_emperor.crash_through",
+  "what": "effect binding",
+  "why": "'CRASH THROUGH' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.hammer_of_the_emperor.furious_cannonade",
+  "what": "effect binding",
+  "why": "'FURIOUS CANNONADE' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.hammer_of_the_emperor.ablative_plating",
+  "what": "effect binding",
+  "why": "'ABLATIVE PLATING' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.recon_element.crack_shots",
+  "what": "effect binding",
+  "why": "'CRACK SHOTS' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.recon_element.draw_them_out",
+  "what": "effect binding",
+  "why": "'DRAW THEM OUT' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.recon_element.scramble_field",
+  "what": "effect binding",
+  "why": "'SCRAMBLE FIELD' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.recon_element.courageous_diversion",
+  "what": "effect binding",
+  "why": "'COURAGEOUS DIVERSION' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.recon_element.tanglefoot_grenades",
+  "what": "effect binding",
+  "why": "'TANGLEFOOT GRENADES' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.recon_element.scouting_outriders",
+  "what": "effect binding",
+  "why": "'SCOUTING OUTRIDERS' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.grizzled_company.snap_to_it",
+  "what": "effect binding",
+  "why": "'SNAP TO IT' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.grizzled_company.no_retreat",
+  "what": "effect binding",
+  "why": "'NO RETREAT!' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.grizzled_company.veteran_sharpshooters",
+  "what": "effect binding",
+  "why": "'VETERAN SHARPSHOOTERS' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.grizzled_company.purging_fire",
+  "what": "effect binding",
+  "why": "'PURGING FIRE' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.grizzled_company.mordian_minute",
+  "what": "effect binding",
+  "why": "'MORDIAN MINUTE' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.grizzled_company.additional_armour",
+  "what": "effect binding",
+  "why": "'ADDITIONAL ARMOUR' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.steel_hammer.engine_of_wrath",
+  "what": "effect binding",
+  "why": "'ENGINE OF WRATH' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.steel_hammer.imposing_arrival",
+  "what": "effect binding",
+  "why": "'IMPOSING ARRIVAL' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.steel_hammer.adamantine_behemoth",
+  "what": "effect binding",
+  "why": "'ADAMANTINE BEHEMOTH' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.steel_hammer.shattering_salvo",
+  "what": "effect binding",
+  "why": "'SHATTERING SALVO' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.steel_hammer.withering_firepower",
+  "what": "effect binding",
+  "why": "'WITHERING FIREPOWER' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.steel_hammer.accuracy_under_pressure",
+  "what": "effect binding",
+  "why": "'ACCURACY UNDER PRESSURE' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.armoured_infantry.order_the_advance",
+  "what": "effect binding",
+  "why": "'ORDER THE ADVANCE' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.armoured_infantry.mobile_firebase",
+  "what": "effect binding",
+  "why": "'MOBILE FIREBASE' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.armoured_infantry.burst_of_speed",
+  "what": "effect binding",
+  "why": "'BURST OF SPEED' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.armoured_infantry.supporting_ordnance",
+  "what": "effect binding",
+  "why": "'SUPPORTING ORDNANCE' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.armoured_infantry.combined_fire",
+  "what": "effect binding",
+  "why": "'COMBINED FIRE' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.armoured_infantry.opening_salvo",
+  "what": "effect binding",
+  "why": "'OPENING SALVO' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.abhuman_auxiliaries.thick_skulled_obdurance",
+  "what": "effect binding",
+  "why": "'THICK-SKULLED OBDURANCE' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.abhuman_auxiliaries.low_profile",
+  "what": "effect binding",
+  "why": "'LOW PROFILE' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.abhuman_auxiliaries.stirred_to_action",
+  "what": "effect binding",
+  "why": "'STIRRED TO ACTION' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.designation_force.close_range_detection",
+  "what": "effect binding",
+  "why": "'CLOSE-RANGE DETECTION' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.designation_force.triggered_alerts",
+  "what": "effect binding",
+  "why": "'TRIGGERED ALERTS' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.designation_force.sump_smog_screen",
+  "what": "effect binding",
+  "why": "'SUMP-SMOG SCREEN' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.bridgehead_strike.on_my_position",
+  "what": "effect binding",
+  "why": "'ON MY POSITION' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.bridgehead_strike.firing_hot",
+  "what": "effect binding",
+  "why": "'FIRING HOT' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.bridgehead_strike.servo_designators",
+  "what": "effect binding",
+  "why": "'SERVO‑DESIGNATORS' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.combined_arms.enh_death_mask_of_ollanius",
+  "what": "effect binding",
+  "why": "'Death Mask of Ollanius' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.combined_arms.enh_drill_commander",
+  "what": "effect binding",
+  "why": "'Drill Commander' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.combined_arms.enh_grand_strategist",
+  "what": "effect binding",
+  "why": "'Grand Strategist' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.combined_arms.enh_reactive_command",
+  "what": "effect binding",
+  "why": "'Reactive Command' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.combined_arms.rule",
+  "what": "effect binding",
+  "why": "'Born Soldiers' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.siege_regiment.enh_eager_advance",
+  "what": "effect binding",
+  "why": "'Eager Advance' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.siege_regiment.enh_flash_grenades",
+  "what": "effect binding",
+  "why": "'Flash Grenades' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.siege_regiment.enh_legacy_sidearm",
+  "what": "effect binding",
+  "why": "'Legacy Sidearm' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.siege_regiment.enh_stalwart_s_honours",
+  "what": "effect binding",
+  "why": "'Stalwart’s Honours' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.siege_regiment.rule",
+  "what": "effect binding",
+  "why": "'Artillery Support' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.mechanised_assault.enh_bold_leadership",
+  "what": "effect binding",
+  "why": "'Bold Leadership' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.mechanised_assault.enh_sacred_unguents",
+  "what": "effect binding",
+  "why": "'Sacred Unguents' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.mechanised_assault.enh_smoke_grenades",
+  "what": "effect binding",
+  "why": "'Smoke Grenades' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.mechanised_assault.enh_vanguard_honours",
+  "what": "effect binding",
+  "why": "'Vanguard Honours' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.mechanised_assault.rule",
+  "what": "effect binding",
+  "why": "'Armoured Fist' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.hammer_of_the_emperor.enh_calm_under_fire",
+  "what": "effect binding",
+  "why": "'Calm Under Fire' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.hammer_of_the_emperor.enh_indomitable_steed",
+  "what": "effect binding",
+  "why": "'Indomitable Steed' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.hammer_of_the_emperor.enh_regimental_banner",
+  "what": "effect binding",
+  "why": "'Regimental Banner' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.hammer_of_the_emperor.enh_veteran_crew",
+  "what": "effect binding",
+  "why": "'Veteran Crew' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.hammer_of_the_emperor.rule",
+  "what": "effect binding",
+  "why": "'Iron Tread' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.recon_element.enh_guerrilla_honours",
+  "what": "effect binding",
+  "why": "'Guerrilla Honours' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.recon_element.enh_scare_gas_grenades",
+  "what": "effect binding",
+  "why": "'Scare Gas Grenades' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.recon_element.enh_survival_gear",
+  "what": "effect binding",
+  "why": "'Survival Gear' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.recon_element.enh_tripwires",
+  "what": "effect binding",
+  "why": "'Tripwires' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.recon_element.rule",
+  "what": "effect binding",
+  "why": "'Masters of Camouflage' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.grizzled_company.enh_abhuman_detail",
+  "what": "effect binding",
+  "why": "'Abhuman Detail' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.grizzled_company.enh_aquilan_eye",
+  "what": "effect binding",
+  "why": "'Aquilan Eye' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.grizzled_company.enh_spec_ops_veteran",
+  "what": "effect binding",
+  "why": "'Spec Ops Veteran' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.grizzled_company.enh_laud_hailer",
+  "what": "effect binding",
+  "why": "'Laud Hailer' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.grizzled_company.rule",
+  "what": "effect binding",
+  "why": "'Ruthless Discipline' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.steel_hammer.enh_battalion_commander",
+  "what": "effect binding",
+  "why": "'Battalion Commander' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.steel_hammer.enh_titan_killer",
+  "what": "effect binding",
+  "why": "'Titan Killer' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.steel_hammer.enh_engine_speaker",
+  "what": "effect binding",
+  "why": "'Engine Speaker' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.steel_hammer.enh_assault_hatches",
+  "what": "effect binding",
+  "why": "'Assault Hatches' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.steel_hammer.rule",
+  "what": "effect binding",
+  "why": "'Ceaseless Cannonade' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.armoured_infantry.enh_exemplary_officer",
+  "what": "effect binding",
+  "why": "'Exemplary Officer' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.armoured_infantry.enh_master_manoeuvrist",
+  "what": "effect binding",
+  "why": "'Master Manoeuvrist' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.armoured_infantry.enh_omnissian_unguents_aura",
+  "what": "effect binding",
+  "why": "'Omnissian Unguents (Aura)' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.armoured_infantry.enh_grand_strategist",
+  "what": "effect binding",
+  "why": "'Grand Strategist' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.armoured_infantry.rule",
+  "what": "effect binding",
+  "why": "'Squadron Command' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.abhuman_auxiliaries.rule",
+  "what": "effect binding",
+  "why": "'Absolutist Principles' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.designation_force.rule",
+  "what": "effect binding",
+  "why": "'Designated Targets' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.bridgehead_strike.enh_bombast_class_vox_array",
+  "what": "effect binding",
+  "why": "'Bombast-class Vox-array' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.bridgehead_strike.enh_priority_drop_beacon",
+  "what": "effect binding",
+  "why": "'Priority drop Beacon' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.bridgehead_strike.rule",
+  "what": "effect binding",
+  "why": "'Fire Zone Purge' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:am.army.voice_of_command",
+  "what": "effect binding",
+  "why": "'Voice of Command' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ },
+ {
+  "id": "effect:ia.army.assigned_agents",
+  "what": "effect binding",
+  "why": "'Assigned Agents' is ingested with its printed text but has no primitive binding yet",
+  "attempted": [
+   "tools2/bindings.py lookup"
+  ],
+  "estimate": "text-only; no in-game effect"
+ }
+]

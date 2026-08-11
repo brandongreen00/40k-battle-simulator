@@ -39,6 +39,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # The Auto Player reads run artifacts as static files; refresh the
+      # published copy (and its index) from results/ before building.
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Publish sim2 result artifacts
+        run: python3 tools2/sync_results.py
+
       - name: Typecheck
         run: pnpm typecheck
 

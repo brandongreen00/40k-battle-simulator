@@ -1,0 +1,465 @@
+[
+ {
+  "id": "ia.ordo_malleus_daemon_hunters",
+  "name": "Ordo Malleus Daemon Hunters",
+  "faction": "IA",
+  "disposition": "Priority Assets",
+  "dp": 2,
+  "rule_ids": [
+   "ia.ordo_malleus_daemon_hunters.rule"
+  ],
+  "stratagem_ids": [
+   "ia.ordo_malleus_daemon_hunters.ritual_of_warding",
+   "ia.ordo_malleus_daemon_hunters.rites_of_exorcism",
+   "ia.ordo_malleus_daemon_hunters.steel_heart",
+   "ia.ordo_malleus_daemon_hunters.truesilver_armour",
+   "ia.ordo_malleus_daemon_hunters.hexagrammic_wards",
+   "ia.ordo_malleus_daemon_hunters.psybolt_ammunition"
+  ],
+  "enhancement_ids": [
+   "ia.ordo_malleus_daemon_hunters.enh_daemon_slayer",
+   "ia.ordo_malleus_daemon_hunters.enh_formidable_resolve",
+   "ia.ordo_malleus_daemon_hunters.enh_gift_of_the_prescient",
+   "ia.ordo_malleus_daemon_hunters.enh_grimoire_of_true_names_aura"
+  ],
+  "exclusion_tags": [],
+  "provenance": {
+   "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/",
+   "pack_version": "11th edition, version 1.1",
+   "retrieved": "2026-08-11"
+  }
+ },
+ {
+  "id": "ia.ordo_xenos_alien_hunters",
+  "name": "Ordo Xenos Alien Hunters",
+  "faction": "IA",
+  "disposition": "Purge the Foe",
+  "dp": 2,
+  "rule_ids": [
+   "ia.ordo_xenos_alien_hunters.rule"
+  ],
+  "stratagem_ids": [
+   "ia.ordo_xenos_alien_hunters.armour_of_contempt",
+   "ia.ordo_xenos_alien_hunters.adaptive_tactics",
+   "ia.ordo_xenos_alien_hunters.hellfire_rounds",
+   "ia.ordo_xenos_alien_hunters.dragonfire_rounds",
+   "ia.ordo_xenos_alien_hunters.kraken_rounds",
+   "ia.ordo_xenos_alien_hunters.rapid_tactical_relocation"
+  ],
+  "enhancement_ids": [
+   "ia.ordo_xenos_alien_hunters.enh_amulet_of_auto_chastisement",
+   "ia.ordo_xenos_alien_hunters.enh_beacon_angelis",
+   "ia.ordo_xenos_alien_hunters.enh_blackweave_shroud",
+   "ia.ordo_xenos_alien_hunters.enh_universal_anathema"
+  ],
+  "exclusion_tags": [],
+  "provenance": {
+   "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/",
+   "pack_version": "11th edition, version 1.1",
+   "retrieved": "2026-08-11"
+  }
+ },
+ {
+  "id": "ia.imperialis_fleet",
+  "name": "Imperialis Fleet",
+  "faction": "IA",
+  "disposition": "Reconnaissance",
+  "dp": 2,
+  "rule_ids": [
+   "ia.imperialis_fleet.rule"
+  ],
+  "stratagem_ids": [
+   "ia.imperialis_fleet.violent_acquisition",
+   "ia.imperialis_fleet.masters_of_the_void",
+   "ia.imperialis_fleet.close_quarters_barrage",
+   "ia.imperialis_fleet.emperor_s_will",
+   "ia.imperialis_fleet.displacer_field",
+   "ia.imperialis_fleet.selfless_bodyguard",
+   "ia.imperialis_fleet.violent_acquisition",
+   "ia.imperialis_fleet.masters_of_the_void",
+   "ia.imperialis_fleet.close_quarters_barrage"
+  ],
+  "enhancement_ids": [
+   "ia.imperialis_fleet.enh_clandestine_operation",
+   "ia.imperialis_fleet.enh_combat_landers",
+   "ia.imperialis_fleet.enh_digital_weapons",
+   "ia.imperialis_fleet.enh_fleetmaster"
+  ],
+  "exclusion_tags": [],
+  "provenance": {
+   "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/",
+   "pack_version": "11th edition, version 1.1",
+   "retrieved": "2026-08-11"
+  }
+ },
+ {
+  "id": "ia.ordo_hereticus_purgation_force",
+  "name": "Ordo Hereticus Purgation Force",
+  "faction": "IA",
+  "disposition": "Take and Hold",
+  "dp": 2,
+  "rule_ids": [
+   "ia.ordo_hereticus_purgation_force.rule"
+  ],
+  "stratagem_ids": [
+   "ia.ordo_hereticus_purgation_force.stun_grenades",
+   "ia.ordo_hereticus_purgation_force.dispense_justice",
+   "ia.ordo_hereticus_purgation_force.inviolate_jurisdiction",
+   "ia.ordo_hereticus_purgation_force.execution_order",
+   "ia.ordo_hereticus_purgation_force.line_of_fire",
+   "ia.ordo_hereticus_purgation_force.exact_punishment"
+  ],
+  "enhancement_ids": [
+   "ia.ordo_hereticus_purgation_force.enh_ignis_judicium",
+   "ia.ordo_hereticus_purgation_force.enh_liber_heresius",
+   "ia.ordo_hereticus_purgation_force.enh_no_escape_aura",
+   "ia.ordo_hereticus_purgation_force.enh_witch_hunter"
+  ],
+  "exclusion_tags": [],
+  "provenance": {
+   "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/",
+   "pack_version": "11th edition, version 1.1",
+   "retrieved": "2026-08-11"
+  }
+ },
+ {
+  "id": "ia.veiled_blade_elimination_force",
+  "name": "Veiled Blade Elimination Force",
+  "faction": "IA",
+  "disposition": "Disruption",
+  "dp": 1,
+  "rule_ids": [
+   "ia.veiled_blade_elimination_force.rule"
+  ],
+  "stratagem_ids": [
+   "ia.veiled_blade_elimination_force.prime_target",
+   "ia.veiled_blade_elimination_force.hyperstimms",
+   "ia.veiled_blade_elimination_force.will_sapping_salvo",
+   "ia.veiled_blade_elimination_force.orbital_oversight",
+   "ia.veiled_blade_elimination_force.blind_grenades",
+   "ia.veiled_blade_elimination_force.ensnaring_trap"
+  ],
+  "enhancement_ids": [
+   "ia.veiled_blade_elimination_force.enh_decoy_targets",
+   "ia.veiled_blade_elimination_force.enh_esoteric_explosives",
+   "ia.veiled_blade_elimination_force.enh_intraneural_biotech",
+   "ia.veiled_blade_elimination_force.enh_micromelta_rounds"
+  ],
+  "exclusion_tags": [],
+  "provenance": {
+   "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/",
+   "pack_version": "11th edition, version 1.1",
+   "retrieved": "2026-08-11"
+  }
+ },
+ {
+  "id": "am.grizzled_company",
+  "name": "Grizzled Company",
+  "faction": "AM",
+  "disposition": "Priority Assets",
+  "dp": 3,
+  "rule_ids": [
+   "am.grizzled_company.rule"
+  ],
+  "stratagem_ids": [
+   "am.grizzled_company.snap_to_it",
+   "am.grizzled_company.no_retreat",
+   "am.grizzled_company.veteran_sharpshooters",
+   "am.grizzled_company.purging_fire",
+   "am.grizzled_company.mordian_minute",
+   "am.grizzled_company.additional_armour"
+  ],
+  "enhancement_ids": [
+   "am.grizzled_company.enh_abhuman_detail",
+   "am.grizzled_company.enh_aquilan_eye",
+   "am.grizzled_company.enh_spec_ops_veteran",
+   "am.grizzled_company.enh_laud_hailer"
+  ],
+  "exclusion_tags": [],
+  "provenance": {
+   "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/",
+   "pack_version": "11th edition, version 1.1",
+   "retrieved": "2026-08-11"
+  }
+ },
+ {
+  "id": "am.recon_element",
+  "name": "Recon Element",
+  "faction": "AM",
+  "disposition": "Reconnaissance",
+  "dp": 3,
+  "rule_ids": [
+   "am.recon_element.rule"
+  ],
+  "stratagem_ids": [
+   "am.recon_element.crack_shots",
+   "am.recon_element.draw_them_out",
+   "am.recon_element.scramble_field",
+   "am.recon_element.courageous_diversion",
+   "am.recon_element.tanglefoot_grenades",
+   "am.recon_element.scouting_outriders"
+  ],
+  "enhancement_ids": [
+   "am.recon_element.enh_guerrilla_honours",
+   "am.recon_element.enh_scare_gas_grenades",
+   "am.recon_element.enh_survival_gear",
+   "am.recon_element.enh_tripwires"
+  ],
+  "exclusion_tags": [],
+  "provenance": {
+   "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/",
+   "pack_version": "11th edition, version 1.1",
+   "retrieved": "2026-08-11"
+  }
+ },
+ {
+  "id": "am.siege_regiment",
+  "name": "Siege Regiment",
+  "faction": "AM",
+  "disposition": "Disruption",
+  "dp": 2,
+  "rule_ids": [
+   "am.siege_regiment.rule"
+  ],
+  "stratagem_ids": [
+   "am.siege_regiment.trench_fighters",
+   "am.siege_regiment.over_the_top",
+   "am.siege_regiment.flare_burst",
+   "am.siege_regiment.callous_sacrifice",
+   "am.siege_regiment.furious_fusillade",
+   "am.siege_regiment.minefield"
+  ],
+  "enhancement_ids": [
+   "am.siege_regiment.enh_eager_advance",
+   "am.siege_regiment.enh_flash_grenades",
+   "am.siege_regiment.enh_legacy_sidearm",
+   "am.siege_regiment.enh_stalwart_s_honours"
+  ],
+  "exclusion_tags": [],
+  "provenance": {
+   "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/",
+   "pack_version": "11th edition, version 1.1",
+   "retrieved": "2026-08-11"
+  }
+ },
+ {
+  "id": "am.hammer_of_the_emperor",
+  "name": "Hammer of the Emperor",
+  "faction": "AM",
+  "disposition": "Purge the Foe",
+  "dp": 2,
+  "rule_ids": [
+   "am.hammer_of_the_emperor.rule"
+  ],
+  "stratagem_ids": [
+   "am.hammer_of_the_emperor.final_hour",
+   "am.hammer_of_the_emperor.blazing_advance",
+   "am.hammer_of_the_emperor.tactical_withdrawal",
+   "am.hammer_of_the_emperor.crash_through",
+   "am.hammer_of_the_emperor.furious_cannonade",
+   "am.hammer_of_the_emperor.ablative_plating"
+  ],
+  "enhancement_ids": [
+   "am.hammer_of_the_emperor.enh_calm_under_fire",
+   "am.hammer_of_the_emperor.enh_indomitable_steed",
+   "am.hammer_of_the_emperor.enh_regimental_banner",
+   "am.hammer_of_the_emperor.enh_veteran_crew"
+  ],
+  "exclusion_tags": [],
+  "provenance": {
+   "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/",
+   "pack_version": "11th edition, version 1.1",
+   "retrieved": "2026-08-11"
+  }
+ },
+ {
+  "id": "am.steel_hammer",
+  "name": "Steel Hammer",
+  "faction": "AM",
+  "disposition": "Purge the Foe",
+  "dp": 2,
+  "rule_ids": [
+   "am.steel_hammer.rule"
+  ],
+  "stratagem_ids": [
+   "am.steel_hammer.engine_of_wrath",
+   "am.steel_hammer.imposing_arrival",
+   "am.steel_hammer.adamantine_behemoth",
+   "am.steel_hammer.shattering_salvo",
+   "am.steel_hammer.withering_firepower",
+   "am.steel_hammer.accuracy_under_pressure"
+  ],
+  "enhancement_ids": [
+   "am.steel_hammer.enh_battalion_commander",
+   "am.steel_hammer.enh_titan_killer",
+   "am.steel_hammer.enh_engine_speaker",
+   "am.steel_hammer.enh_assault_hatches"
+  ],
+  "exclusion_tags": [],
+  "provenance": {
+   "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/",
+   "pack_version": "11th edition, version 1.1",
+   "retrieved": "2026-08-11"
+  }
+ },
+ {
+  "id": "am.mechanised_assault",
+  "name": "Mechanised Assault",
+  "faction": "AM",
+  "disposition": "Reconnaissance",
+  "dp": 2,
+  "rule_ids": [
+   "am.mechanised_assault.rule"
+  ],
+  "stratagem_ids": [
+   "am.mechanised_assault.vox_relay",
+   "am.mechanised_assault.rapid_dispersal",
+   "am.mechanised_assault.clear_and_secure",
+   "am.mechanised_assault.swift_interception",
+   "am.mechanised_assault.hasty_extraction",
+   "am.mechanised_assault.move_out"
+  ],
+  "enhancement_ids": [
+   "am.mechanised_assault.enh_bold_leadership",
+   "am.mechanised_assault.enh_sacred_unguents",
+   "am.mechanised_assault.enh_smoke_grenades",
+   "am.mechanised_assault.enh_vanguard_honours"
+  ],
+  "exclusion_tags": [],
+  "provenance": {
+   "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/",
+   "pack_version": "11th edition, version 1.1",
+   "retrieved": "2026-08-11"
+  }
+ },
+ {
+  "id": "am.armoured_infantry",
+  "name": "Armoured Infantry",
+  "faction": "AM",
+  "disposition": "Take and Hold",
+  "dp": 2,
+  "rule_ids": [
+   "am.armoured_infantry.rule"
+  ],
+  "stratagem_ids": [
+   "am.armoured_infantry.order_the_advance",
+   "am.armoured_infantry.mobile_firebase",
+   "am.armoured_infantry.burst_of_speed",
+   "am.armoured_infantry.supporting_ordnance",
+   "am.armoured_infantry.combined_fire",
+   "am.armoured_infantry.opening_salvo"
+  ],
+  "enhancement_ids": [
+   "am.armoured_infantry.enh_exemplary_officer",
+   "am.armoured_infantry.enh_master_manoeuvrist",
+   "am.armoured_infantry.enh_omnissian_unguents_aura",
+   "am.armoured_infantry.enh_grand_strategist"
+  ],
+  "exclusion_tags": [],
+  "provenance": {
+   "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/",
+   "pack_version": "11th edition, version 1.1",
+   "retrieved": "2026-08-11"
+  }
+ },
+ {
+  "id": "am.combined_arms",
+  "name": "Combined Arms",
+  "faction": "AM",
+  "disposition": "Take and Hold",
+  "dp": 2,
+  "rule_ids": [
+   "am.combined_arms.rule"
+  ],
+  "stratagem_ids": [
+   "am.combined_arms.coordinated_action",
+   "am.combined_arms.reinforcements",
+   "am.combined_arms.flexible_command",
+   "am.combined_arms.fields_of_fire",
+   "am.combined_arms.inspired_command",
+   "am.combined_arms.stalwart_protector",
+   "am.combined_arms.reinforcements"
+  ],
+  "enhancement_ids": [
+   "am.combined_arms.enh_death_mask_of_ollanius",
+   "am.combined_arms.enh_drill_commander",
+   "am.combined_arms.enh_grand_strategist",
+   "am.combined_arms.enh_reactive_command"
+  ],
+  "exclusion_tags": [],
+  "provenance": {
+   "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/",
+   "pack_version": "11th edition, version 1.1",
+   "retrieved": "2026-08-11"
+  }
+ },
+ {
+  "id": "am.bridgehead_strike",
+  "name": "Bridgehead Strike",
+  "faction": "AM",
+  "disposition": "Priority Assets",
+  "dp": 1,
+  "rule_ids": [
+   "am.bridgehead_strike.rule"
+  ],
+  "stratagem_ids": [
+   "am.bridgehead_strike.on_my_position",
+   "am.bridgehead_strike.firing_hot",
+   "am.bridgehead_strike.servo_designators"
+  ],
+  "enhancement_ids": [
+   "am.bridgehead_strike.enh_bombast_class_vox_array",
+   "am.bridgehead_strike.enh_priority_drop_beacon"
+  ],
+  "exclusion_tags": [],
+  "provenance": {
+   "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/",
+   "pack_version": "11th edition, version 1.1",
+   "retrieved": "2026-08-11"
+  }
+ },
+ {
+  "id": "am.designation_force",
+  "name": "Designation Force",
+  "faction": "AM",
+  "disposition": "Reconnaissance",
+  "dp": 1,
+  "rule_ids": [
+   "am.designation_force.rule"
+  ],
+  "stratagem_ids": [
+   "am.designation_force.close_range_detection",
+   "am.designation_force.triggered_alerts",
+   "am.designation_force.sump_smog_screen"
+  ],
+  "enhancement_ids": [],
+  "exclusion_tags": [],
+  "provenance": {
+   "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/",
+   "pack_version": "11th edition, version 1.1",
+   "retrieved": "2026-08-11"
+  }
+ },
+ {
+  "id": "am.abhuman_auxiliaries",
+  "name": "Abhuman Auxiliaries",
+  "faction": "AM",
+  "disposition": "Take and Hold",
+  "dp": 1,
+  "rule_ids": [
+   "am.abhuman_auxiliaries.rule"
+  ],
+  "stratagem_ids": [
+   "am.abhuman_auxiliaries.thick_skulled_obdurance",
+   "am.abhuman_auxiliaries.low_profile",
+   "am.abhuman_auxiliaries.stirred_to_action"
+  ],
+  "enhancement_ids": [],
+  "exclusion_tags": [],
+  "provenance": {
+   "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/",
+   "pack_version": "11th edition, version 1.1",
+   "retrieved": "2026-08-11"
+  }
+ }
+]

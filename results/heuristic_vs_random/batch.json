@@ -1,0 +1,662 @@
+{
+ "result_schema_version": "2.0.0",
+ "kind": "batch",
+ "generated": "2026-08-11T21:25:04Z",
+ "config": {
+  "armies": [
+   "Alien Hunters Strike",
+   "Siege Regiment Vanguard"
+  ],
+  "agents": [
+   "heuristic",
+   "random"
+  ],
+  "battle_size": 500,
+  "games": 24,
+  "seed": 500
+ },
+ "totals": {
+  "wins": [
+   8,
+   8
+  ],
+  "draws": 8,
+  "win_rate": [
+   0.3333,
+   0.3333
+  ],
+  "avg_vp": [
+   57.58,
+   55.88
+  ],
+  "avg_rounds": 5.0,
+  "rejected_actions": 0,
+  "avg_duration_s": 10.389
+ },
+ "games": [
+  {
+   "seed": 500,
+   "vp": [
+    59,
+    63
+   ],
+   "winner": 1,
+   "rounds": 5,
+   "actions": 186,
+   "rejected": 0,
+   "layout": "ec2026-purge-the-foe_vs_disruption-c",
+   "armies": [
+    "Alien Hunters Strike",
+    "Siege Regiment Vanguard"
+   ],
+   "dispositions": [
+    "Purge the Foe",
+    "Disruption"
+   ],
+   "primaries": [
+    "PUNISHMENT",
+    "DELAYING ACTION"
+   ],
+   "duration_s": 12.754,
+   "log": "results/heuristic_vs_random/logs/battle_500.json"
+  },
+  {
+   "seed": 501,
+   "vp": [
+    57,
+    55
+   ],
+   "winner": 0,
+   "rounds": 5,
+   "actions": 198,
+   "rejected": 0,
+   "layout": "ec2026-purge-the-foe_vs_disruption-a",
+   "armies": [
+    "Alien Hunters Strike",
+    "Siege Regiment Vanguard"
+   ],
+   "dispositions": [
+    "Purge the Foe",
+    "Disruption"
+   ],
+   "primaries": [
+    "PUNISHMENT",
+    "DELAYING ACTION"
+   ],
+   "duration_s": 9.81,
+   "log": "results/heuristic_vs_random/logs/battle_501.json"
+  },
+  {
+   "seed": 502,
+   "vp": [
+    55,
+    55
+   ],
+   "winner": null,
+   "rounds": 5,
+   "actions": 176,
+   "rejected": 0,
+   "layout": "ec2026-purge-the-foe_vs_disruption-b",
+   "armies": [
+    "Alien Hunters Strike",
+    "Siege Regiment Vanguard"
+   ],
+   "dispositions": [
+    "Purge the Foe",
+    "Disruption"
+   ],
+   "primaries": [
+    "PUNISHMENT",
+    "DELAYING ACTION"
+   ],
+   "duration_s": 11.037,
+   "log": "results/heuristic_vs_random/logs/battle_502.json"
+  },
+  {
+   "seed": 503,
+   "vp": [
+    55,
+    57
+   ],
+   "winner": 1,
+   "rounds": 5,
+   "actions": 168,
+   "rejected": 0,
+   "layout": "ec2026-purge-the-foe_vs_disruption-c",
+   "armies": [
+    "Alien Hunters Strike",
+    "Siege Regiment Vanguard"
+   ],
+   "dispositions": [
+    "Purge the Foe",
+    "Disruption"
+   ],
+   "primaries": [
+    "PUNISHMENT",
+    "DELAYING ACTION"
+   ],
+   "duration_s": 8.516,
+   "log": ""
+  },
+  {
+   "seed": 504,
+   "vp": [
+    61,
+    48
+   ],
+   "winner": 0,
+   "rounds": 5,
+   "actions": 171,
+   "rejected": 0,
+   "layout": "ec2026-purge-the-foe_vs_disruption-a",
+   "armies": [
+    "Alien Hunters Strike",
+    "Siege Regiment Vanguard"
+   ],
+   "dispositions": [
+    "Purge the Foe",
+    "Disruption"
+   ],
+   "primaries": [
+    "PUNISHMENT",
+    "DELAYING ACTION"
+   ],
+   "duration_s": 11.904,
+   "log": ""
+  },
+  {
+   "seed": 505,
+   "vp": [
+    55,
+    55
+   ],
+   "winner": null,
+   "rounds": 5,
+   "actions": 176,
+   "rejected": 0,
+   "layout": "ec2026-purge-the-foe_vs_disruption-b",
+   "armies": [
+    "Alien Hunters Strike",
+    "Siege Regiment Vanguard"
+   ],
+   "dispositions": [
+    "Purge the Foe",
+    "Disruption"
+   ],
+   "primaries": [
+    "PUNISHMENT",
+    "DELAYING ACTION"
+   ],
+   "duration_s": 11.014,
+   "log": ""
+  },
+  {
+   "seed": 506,
+   "vp": [
+    63,
+    63
+   ],
+   "winner": null,
+   "rounds": 5,
+   "actions": 203,
+   "rejected": 0,
+   "layout": "ec2026-purge-the-foe_vs_disruption-c",
+   "armies": [
+    "Alien Hunters Strike",
+    "Siege Regiment Vanguard"
+   ],
+   "dispositions": [
+    "Purge the Foe",
+    "Disruption"
+   ],
+   "primaries": [
+    "PUNISHMENT",
+    "DELAYING ACTION"
+   ],
+   "duration_s": 10.514,
+   "log": ""
+  },
+  {
+   "seed": 507,
+   "vp": [
+    59,
+    65
+   ],
+   "winner": 1,
+   "rounds": 5,
+   "actions": 179,
+   "rejected": 0,
+   "layout": "ec2026-purge-the-foe_vs_disruption-a",
+   "armies": [
+    "Alien Hunters Strike",
+    "Siege Regiment Vanguard"
+   ],
+   "dispositions": [
+    "Purge the Foe",
+    "Disruption"
+   ],
+   "primaries": [
+    "PUNISHMENT",
+    "DELAYING ACTION"
+   ],
+   "duration_s": 11.103,
+   "log": ""
+  },
+  {
+   "seed": 508,
+   "vp": [
+    55,
+    55
+   ],
+   "winner": null,
+   "rounds": 5,
+   "actions": 182,
+   "rejected": 0,
+   "layout": "ec2026-purge-the-foe_vs_disruption-b",
+   "armies": [
+    "Alien Hunters Strike",
+    "Siege Regiment Vanguard"
+   ],
+   "dispositions": [
+    "Purge the Foe",
+    "Disruption"
+   ],
+   "primaries": [
+    "PUNISHMENT",
+    "DELAYING ACTION"
+   ],
+   "duration_s": 13.828,
+   "log": ""
+  },
+  {
+   "seed": 509,
+   "vp": [
+    59,
+    59
+   ],
+   "winner": null,
+   "rounds": 5,
+   "actions": 170,
+   "rejected": 0,
+   "layout": "ec2026-purge-the-foe_vs_disruption-c",
+   "armies": [
+    "Alien Hunters Strike",
+    "Siege Regiment Vanguard"
+   ],
+   "dispositions": [
+    "Purge the Foe",
+    "Disruption"
+   ],
+   "primaries": [
+    "PUNISHMENT",
+    "DELAYING ACTION"
+   ],
+   "duration_s": 6.38,
+   "log": ""
+  },
+  {
+   "seed": 510,
+   "vp": [
+    59,
+    55
+   ],
+   "winner": 0,
+   "rounds": 5,
+   "actions": 191,
+   "rejected": 0,
+   "layout": "ec2026-purge-the-foe_vs_disruption-a",
+   "armies": [
+    "Alien Hunters Strike",
+    "Siege Regiment Vanguard"
+   ],
+   "dispositions": [
+    "Purge the Foe",
+    "Disruption"
+   ],
+   "primaries": [
+    "PUNISHMENT",
+    "DELAYING ACTION"
+   ],
+   "duration_s": 12.083,
+   "log": ""
+  },
+  {
+   "seed": 511,
+   "vp": [
+    55,
+    57
+   ],
+   "winner": 1,
+   "rounds": 5,
+   "actions": 183,
+   "rejected": 0,
+   "layout": "ec2026-purge-the-foe_vs_disruption-b",
+   "armies": [
+    "Alien Hunters Strike",
+    "Siege Regiment Vanguard"
+   ],
+   "dispositions": [
+    "Purge the Foe",
+    "Disruption"
+   ],
+   "primaries": [
+    "PUNISHMENT",
+    "DELAYING ACTION"
+   ],
+   "duration_s": 9.888,
+   "log": ""
+  },
+  {
+   "seed": 512,
+   "vp": [
+    55,
+    55
+   ],
+   "winner": null,
+   "rounds": 5,
+   "actions": 176,
+   "rejected": 0,
+   "layout": "ec2026-purge-the-foe_vs_disruption-c",
+   "armies": [
+    "Alien Hunters Strike",
+    "Siege Regiment Vanguard"
+   ],
+   "dispositions": [
+    "Purge the Foe",
+    "Disruption"
+   ],
+   "primaries": [
+    "PUNISHMENT",
+    "DELAYING ACTION"
+   ],
+   "duration_s": 14.601,
+   "log": ""
+  },
+  {
+   "seed": 513,
+   "vp": [
+    55,
+    57
+   ],
+   "winner": 1,
+   "rounds": 5,
+   "actions": 176,
+   "rejected": 0,
+   "layout": "ec2026-purge-the-foe_vs_disruption-a",
+   "armies": [
+    "Alien Hunters Strike",
+    "Siege Regiment Vanguard"
+   ],
+   "dispositions": [
+    "Purge the Foe",
+    "Disruption"
+   ],
+   "primaries": [
+    "PUNISHMENT",
+    "DELAYING ACTION"
+   ],
+   "duration_s": 12.842,
+   "log": ""
+  },
+  {
+   "seed": 514,
+   "vp": [
+    57,
+    59
+   ],
+   "winner": 1,
+   "rounds": 5,
+   "actions": 177,
+   "rejected": 0,
+   "layout": "ec2026-purge-the-foe_vs_disruption-b",
+   "armies": [
+    "Alien Hunters Strike",
+    "Siege Regiment Vanguard"
+   ],
+   "dispositions": [
+    "Purge the Foe",
+    "Disruption"
+   ],
+   "primaries": [
+    "PUNISHMENT",
+    "DELAYING ACTION"
+   ],
+   "duration_s": 10.668,
+   "log": ""
+  },
+  {
+   "seed": 515,
+   "vp": [
+    55,
+    55
+   ],
+   "winner": null,
+   "rounds": 5,
+   "actions": 166,
+   "rejected": 0,
+   "layout": "ec2026-purge-the-foe_vs_disruption-c",
+   "armies": [
+    "Alien Hunters Strike",
+    "Siege Regiment Vanguard"
+   ],
+   "dispositions": [
+    "Purge the Foe",
+    "Disruption"
+   ],
+   "primaries": [
+    "PUNISHMENT",
+    "DELAYING ACTION"
+   ],
+   "duration_s": 9.247,
+   "log": ""
+  },
+  {
+   "seed": 516,
+   "vp": [
+    63,
+    44
+   ],
+   "winner": 0,
+   "rounds": 5,
+   "actions": 184,
+   "rejected": 0,
+   "layout": "ec2026-purge-the-foe_vs_disruption-a",
+   "armies": [
+    "Alien Hunters Strike",
+    "Siege Regiment Vanguard"
+   ],
+   "dispositions": [
+    "Purge the Foe",
+    "Disruption"
+   ],
+   "primaries": [
+    "PUNISHMENT",
+    "DELAYING ACTION"
+   ],
+   "duration_s": 8.789,
+   "log": ""
+  },
+  {
+   "seed": 517,
+   "vp": [
+    57,
+    57
+   ],
+   "winner": null,
+   "rounds": 5,
+   "actions": 180,
+   "rejected": 0,
+   "layout": "ec2026-purge-the-foe_vs_disruption-b",
+   "armies": [
+    "Alien Hunters Strike",
+    "Siege Regiment Vanguard"
+   ],
+   "dispositions": [
+    "Purge the Foe",
+    "Disruption"
+   ],
+   "primaries": [
+    "PUNISHMENT",
+    "DELAYING ACTION"
+   ],
+   "duration_s": 7.105,
+   "log": ""
+  },
+  {
+   "seed": 518,
+   "vp": [
+    61,
+    42
+   ],
+   "winner": 0,
+   "rounds": 5,
+   "actions": 179,
+   "rejected": 0,
+   "layout": "ec2026-purge-the-foe_vs_disruption-c",
+   "armies": [
+    "Alien Hunters Strike",
+    "Siege Regiment Vanguard"
+   ],
+   "dispositions": [
+    "Purge the Foe",
+    "Disruption"
+   ],
+   "primaries": [
+    "PUNISHMENT",
+    "DELAYING ACTION"
+   ],
+   "duration_s": 8.109,
+   "log": ""
+  },
+  {
+   "seed": 519,
+   "vp": [
+    59,
+    51
+   ],
+   "winner": 0,
+   "rounds": 5,
+   "actions": 169,
+   "rejected": 0,
+   "layout": "ec2026-purge-the-foe_vs_disruption-a",
+   "armies": [
+    "Alien Hunters Strike",
+    "Siege Regiment Vanguard"
+   ],
+   "dispositions": [
+    "Purge the Foe",
+    "Disruption"
+   ],
+   "primaries": [
+    "PUNISHMENT",
+    "DELAYING ACTION"
+   ],
+   "duration_s": 11.377,
+   "log": ""
+  },
+  {
+   "seed": 520,
+   "vp": [
+    57,
+    55
+   ],
+   "winner": 0,
+   "rounds": 5,
+   "actions": 201,
+   "rejected": 0,
+   "layout": "ec2026-purge-the-foe_vs_disruption-b",
+   "armies": [
+    "Alien Hunters Strike",
+    "Siege Regiment Vanguard"
+   ],
+   "dispositions": [
+    "Purge the Foe",
+    "Disruption"
+   ],
+   "primaries": [
+    "PUNISHMENT",
+    "DELAYING ACTION"
+   ],
+   "duration_s": 8.589,
+   "log": ""
+  },
+  {
+   "seed": 521,
+   "vp": [
+    57,
+    63
+   ],
+   "winner": 1,
+   "rounds": 5,
+   "actions": 163,
+   "rejected": 0,
+   "layout": "ec2026-purge-the-foe_vs_disruption-c",
+   "armies": [
+    "Alien Hunters Strike",
+    "Siege Regiment Vanguard"
+   ],
+   "dispositions": [
+    "Purge the Foe",
+    "Disruption"
+   ],
+   "primaries": [
+    "PUNISHMENT",
+    "DELAYING ACTION"
+   ],
+   "duration_s": 11.157,
+   "log": ""
+  },
+  {
+   "seed": 522,
+   "vp": [
+    57,
+    55
+   ],
+   "winner": 0,
+   "rounds": 5,
+   "actions": 188,
+   "rejected": 0,
+   "layout": "ec2026-purge-the-foe_vs_disruption-a",
+   "armies": [
+    "Alien Hunters Strike",
+    "Siege Regiment Vanguard"
+   ],
+   "dispositions": [
+    "Purge the Foe",
+    "Disruption"
+   ],
+   "primaries": [
+    "PUNISHMENT",
+    "DELAYING ACTION"
+   ],
+   "duration_s": 11.034,
+   "log": ""
+  },
+  {
+   "seed": 523,
+   "vp": [
+    57,
+    61
+   ],
+   "winner": 1,
+   "rounds": 5,
+   "actions": 199,
+   "rejected": 0,
+   "layout": "ec2026-purge-the-foe_vs_disruption-b",
+   "armies": [
+    "Alien Hunters Strike",
+    "Siege Regiment Vanguard"
+   ],
+   "dispositions": [
+    "Purge the Foe",
+    "Disruption"
+   ],
+   "primaries": [
+    "PUNISHMENT",
+    "DELAYING ACTION"
+   ],
+   "duration_s": 6.984,
+   "log": ""
+  }
+ ]
+}

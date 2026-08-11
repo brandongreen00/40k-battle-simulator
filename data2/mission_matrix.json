@@ -1,0 +1,37 @@
+{
+ "disruption": {
+  "disruption": "OUTMANOEUVRE",
+  "priority_assets": "LOCATE AND DENY",
+  "reconnaissance": "SMOKE AND MIRRORS",
+  "purge_the_foe": "DELAYING ACTION",
+  "take_and_hold": "DEATH TRAP"
+ },
+ "priority_assets": {
+  "disruption": "EXTRACT RELIC",
+  "priority_assets": "SABOTAGE",
+  "purge_the_foe": "VITAL LINK",
+  "reconnaissance": "VANGUARD OPERATION",
+  "take_and_hold": "SECURE ASSET"
+ },
+ "reconnaissance": {
+  "disruption": "SURVEIL THE FOE",
+  "purge_the_foe": "TRIANGULATION",
+  "priority_assets": "SEARCH AND SCOUR",
+  "reconnaissance": "GATHER INTEL",
+  "take_and_hold": "RECONNAISSANCE SWEEP"
+ },
+ "purge_the_foe": {
+  "disruption": "PUNISHMENT",
+  "priority_assets": "DESTROYER\u2019S WRATH",
+  "purge_the_foe": "MEATGRINDER",
+  "reconnaissance": "CONSECRATE",
+  "take_and_hold": "UNSTOPPABLE FORCE"
+ },
+ "take_and_hold": {
+  "disruption": "DETERMINED ACQUISITION",
+  "priority_assets": "INESCAPABLE DOMINION",
+  "purge_the_foe": "IMMOVABLE OBJECT",
+  "reconnaissance": "PURGE AND SECURE",
+  "take_and_hold": "BATTLEFIELD DOMINANCE"
+ }
+}

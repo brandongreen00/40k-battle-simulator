@@ -1,0 +1,80 @@
+name: Optimize army lists
+
+# Searches every tournament-legal datasheet of a faction inside the points cap
+# and scores each candidate against a fixed opponent list (brief §2 decision 10).
+
+on:
+  workflow_dispatch:
+    inputs:
+      faction:
+        description: Faction to search (IA / AM)
+        required: true
+        default: AM
+      detachment:
+        description: Detachment id (blank = the faction's first)
+        required: false
+        default: ''
+      opponent:
+        description: Opponent army name
+        required: true
+        default: Imperialis Fleet Patrol
+      candidates:
+        description: Candidate lists to generate
+        required: true
+        default: '20'
+      games:
+        description: Games per candidate
+        required: true
+        default: '4'
+      battle_size:
+        description: Points (500 / 1000 / 2000)
+        required: true
+        default: '1000'
+      seed:
+        description: Base seed
+        required: true
+        default: '1'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sim-results
+  cancel-in-progress: false
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run the sweep
+        run: |
+          python3 -m sim2.cli optimize \
+            --faction "${{ inputs.faction }}" \
+            --detachment "${{ inputs.detachment }}" \
+            --vs "${{ inputs.opponent }}" \
+            --candidates "${{ inputs.candidates }}" \
+            --games "${{ inputs.games }}" \
+            --battle-size "${{ inputs.battle_size }}" \
+            --seed "${{ inputs.seed }}" \
+            --out results
+
+      - name: Publish artifacts to the site
+        run: python3 tools2/sync_results.py
+
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add results public/results
+          if git diff --staged --quiet; then
+            echo "no result changes"
+          else
+            git commit -m "Optimize ${{ inputs.faction }} vs ${{ inputs.opponent }} (${{ inputs.candidates }} candidates)"
+            git push
+          fi

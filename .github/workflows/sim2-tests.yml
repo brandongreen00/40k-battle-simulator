@@ -1,0 +1,25 @@
+name: sim2 engine tests
+
+on:
+  push:
+    paths: ['sim2/**', 'tools2/**', 'tests_py/**', 'data2/**', '.github/workflows/sim2-tests.yml']
+  pull_request:
+    paths: ['sim2/**', 'tools2/**', 'tests_py/**', 'data2/**']
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install pytest
+      - name: Rules and data tests
+        run: python3 -m pytest tests_py -q -m "not slow"
+      - name: Full-game tests (legality, determinism, scoring)
+        run: python3 -m pytest tests_py -q -m "slow" -k "not thousand"
+      - name: No stray randomness outside the RNG service
+        run: python3 tools2/lint_determinism.py
