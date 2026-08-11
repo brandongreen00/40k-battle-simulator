@@ -88,7 +88,14 @@ Reviews (mandate 2b): [`reviews/rules-kernel.md`](reviews/rules-kernel.md) ·
    the traced footprint (recorded in each layout's provenance). Line of sight is
    tested against every edge; the raw organic outlines made a game take minutes.
 
-## 4. Open GAP headlines (full list: `data2/gaps.json`, 193 entries)
+## 4. Open GAP headlines (full list: `data2/gaps.json`, 189 entries)
+
+> **Planning input:** [`docs/sim2_gap_register.md`](docs/sim2_gap_register.md) is
+> the complete, self-contained gap register — every gap with evidence, file
+> locations, impact and acceptance criteria, written for an agent with no code
+> context. It supersedes this summary and includes several parser defects found
+> after this section was written (missing invulnerable saves, inert core
+> abilities, collapsed multi-profile statlines, unparsed transport capacity).
 
 * **MFM reconciliation (Phase D2) not performed.** Points come from the faction
   pages, not the Munitorum Field Manual app, which §6.1 makes the authority. Every
