@@ -1,19 +1,19 @@
 {
  "result_schema_version": "2.0.0",
  "kind": "optimizer",
- "generated": "2026-08-11T21:25:45Z",
+ "generated": "2026-08-11T21:36:56Z",
  "config": {
   "faction": "AM",
   "detachment": "am.grizzled_company",
   "opponent": "Alien Hunters Strike",
-  "candidates": 6,
+  "candidates": 8,
   "games_per_candidate": 2,
   "battle_size": 500,
   "seed": 7,
   "agent": "heuristic"
  },
  "pool_size": 72,
- "duration_s": 41.0,
+ "duration_s": 57.6,
  "leaderboard": [
   {
    "name": "candidate-003",
@@ -38,6 +38,78 @@
    "games": 2,
    "avg_vp_for": 59.0,
    "avg_vp_against": 59.0
+  },
+  {
+   "name": "candidate-006",
+   "points": 470,
+   "detachment": "am.grizzled_company",
+   "units": [
+    {
+     "datasheet": "am.primaris_psyker",
+     "models": 1
+    },
+    {
+     "datasheet": "am.cadian_shock_troops",
+     "models": 10
+    },
+    {
+     "datasheet": "am.cadian_shock_troops",
+     "models": 10
+    },
+    {
+     "datasheet": "am.cadian_shock_troops",
+     "models": 10
+    },
+    {
+     "datasheet": "am.leman_russ_battle_tank",
+     "models": 1
+    }
+   ],
+   "score": 0.0,
+   "wins": 0,
+   "games": 2,
+   "avg_vp_for": 55.0,
+   "avg_vp_against": 55.0
+  },
+  {
+   "name": "candidate-007",
+   "points": 490,
+   "detachment": "am.grizzled_company",
+   "units": [
+    {
+     "datasheet": "am.commissar",
+     "models": 1
+    },
+    {
+     "datasheet": "am.catachan_jungle_fighters",
+     "models": 10
+    },
+    {
+     "datasheet": "am.catachan_jungle_fighters",
+     "models": 10
+    },
+    {
+     "datasheet": "am.death_korps_of_krieg",
+     "models": 10
+    },
+    {
+     "datasheet": "am.cadian_shock_troops",
+     "models": 10
+    },
+    {
+     "datasheet": "am.wyvern",
+     "models": 1
+    },
+    {
+     "datasheet": "am.armoured_sentinels",
+     "models": 1
+    }
+   ],
+   "score": -1.0,
+   "wins": 1,
+   "games": 2,
+   "avg_vp_for": 60.0,
+   "avg_vp_against": 61.0
   },
   {
    "name": "candidate-001",

@@ -47,9 +47,10 @@
   "fixed_capable": false,
   "scoring": [
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 3,
-    "max": 15,
+    "max": 3,
+    "count": 1,
     "when": "end_of_turn",
     "from_round": 1,
     "printed": "you control one or more central objectives."
@@ -117,6 +118,24 @@
   "fixed_capable": false,
   "scoring": [
    {
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 3,
+    "max": 3,
+    "at_least": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "one or more enemy units were destroyed this turn by a friendly unit that was within range of one or more objectives."
+   },
+   {
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 3,
+    "max": 3,
+    "at_least": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "or: one or more enemy units that started the turn within range of one or more objectives were destroyed this turn."
+   },
+   {
     "rule": "control_objectives",
     "per": 4,
     "max": 15,
@@ -125,9 +144,10 @@
     "printed": "for each objective you control (excluding your home objective)."
    },
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 3,
-    "max": 15,
+    "max": 3,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control one or more objectives you did not control at the start of the turn (excluding your home objective)."
@@ -148,17 +168,19 @@
   "fixed_capable": false,
   "scoring": [
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 4,
-    "max": 15,
+    "max": 4,
+    "count": 3,
     "when": "end_of_turn",
     "from_round": 1,
     "printed": "you control three or more objectives."
    },
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 5,
-    "max": 15,
+    "max": 5,
+    "count": 2,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control two or more objectives."
@@ -172,9 +194,10 @@
     "printed": "you control more objectives than your opponent."
    },
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 5,
-    "max": 15,
+    "max": 5,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control your opponent's home objective."
@@ -195,6 +218,15 @@
   "fixed_capable": false,
   "scoring": [
    {
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 3,
+    "max": 3,
+    "at_least": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "one or more enemy units were destroyed this turn."
+   },
+   {
     "rule": "control_objectives",
     "per": 4,
     "max": 15,
@@ -203,17 +235,19 @@
     "printed": "for each objective you control (excluding your home objective)."
    },
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 3,
-    "max": 15,
+    "max": 3,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control one or more objectives you did not control at the start of the turn (excluding your home objective)."
    },
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 5,
-    "max": 15,
+    "max": 5,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control one or more central objectives."
@@ -234,17 +268,37 @@
   "fixed_capable": false,
   "scoring": [
    {
-    "rule": "control_objectives",
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 3,
+    "max": 3,
+    "at_least": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "one or more enemy units were destroyed this turn."
+   },
+   {
+    "rule": "control_at_least",
     "per": 4,
-    "max": 15,
+    "max": 4,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control one or more objectives (excluding your home objective)."
    },
    {
-    "rule": "control_objectives",
+    "rule": "enemy_units_destroyed_this_turn",
     "per": 5,
-    "max": 15,
+    "max": 5,
+    "at_least": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "more enemy units were destroyed this turn than friendly units were destroyed in the previous turn."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 5,
+    "max": 5,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control your opponent's home objective."
@@ -265,9 +319,10 @@
   "fixed_capable": false,
   "scoring": [
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 4,
-    "max": 15,
+    "max": 4,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control one or more objectives (excluding your home objective)."
@@ -281,9 +336,10 @@
     "printed": "you control more objectives than your opponent."
    },
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 8,
-    "max": 15,
+    "max": 8,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control your opponent's home objective."
@@ -304,9 +360,10 @@
   "fixed_capable": false,
   "scoring": [
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 4,
-    "max": 15,
+    "max": 4,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control one or more objectives (excluding your home objective)."
@@ -335,9 +392,19 @@
   "fixed_capable": false,
   "scoring": [
    {
-    "rule": "control_objectives",
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 3,
+    "max": 3,
+    "at_least": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "one or more enemy units were destroyed this turn."
+   },
+   {
+    "rule": "control_at_least",
     "per": 4,
-    "max": 15,
+    "max": 4,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control one or more objectives (excluding your home objective)."
@@ -349,6 +416,15 @@
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control more objectives than your opponent."
+   },
+   {
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 4,
+    "max": 4,
+    "at_least": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "more enemy units were destroyed this turn than friendly units were destroyed in the previous turn."
    }
   ],
   "provenance": {
@@ -366,9 +442,19 @@
   "fixed_capable": false,
   "scoring": [
    {
-    "rule": "control_objectives",
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 3,
+    "max": 3,
+    "at_least": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "one or more enemy units that started the turn within a terrain area were destroyed, if that terrain area is trapped."
+   },
+   {
+    "rule": "control_at_least",
     "per": 4,
-    "max": 15,
+    "max": 4,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control one or more objectives (excluding your home objective)."
@@ -397,17 +483,19 @@
     "printed": "for each enemy unit destroyed this turn."
    },
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 4,
-    "max": 15,
+    "max": 4,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control one or more objectives (excluding home objectives)."
    },
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 3,
-    "max": 15,
+    "max": 3,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control one or more central objectives and one or more expansion objectives."
@@ -428,9 +516,10 @@
   "fixed_capable": false,
   "scoring": [
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 10,
-    "max": 15,
+    "max": 10,
+    "count": 1,
     "when": "end_of_turn",
     "from_round": 1,
     "printed": "you control the enemy home objective."
@@ -475,9 +564,10 @@
   "fixed_capable": false,
   "scoring": [
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 4,
-    "max": 15,
+    "max": 4,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control one or more objectives (excluding your home objective)."
@@ -498,9 +588,19 @@
   "fixed_capable": false,
   "scoring": [
    {
-    "rule": "control_objectives",
+    "rule": "enemy_units_destroyed_this_turn",
     "per": 4,
-    "max": 15,
+    "max": 4,
+    "at_least": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "one or more enemy units that started the turn within range of one or more objectives are destroyed."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 4,
+    "max": 4,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control one or more objectives (excluding your home objective)."
@@ -529,9 +629,10 @@
     "printed": "for each enemy unit destroyed this turn."
    },
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 3,
-    "max": 15,
+    "max": 3,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control one or more objectives (excluding your home objective)."
@@ -552,17 +653,19 @@
   "fixed_capable": false,
   "scoring": [
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 4,
-    "max": 15,
+    "max": 4,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control one or more objectives (excluding your home objective)."
    },
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 10,
-    "max": 15,
+    "max": 10,
+    "count": 4,
     "when": "end_of_turn",
     "from_round": 2,
     "printed": "you control four or more objectives."
@@ -583,9 +686,10 @@
   "fixed_capable": false,
   "scoring": [
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 4,
-    "max": 15,
+    "max": 4,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control one or more objectives (excluding your home objective)."
@@ -614,17 +718,19 @@
   "fixed_capable": false,
   "scoring": [
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 6,
-    "max": 15,
+    "max": 6,
+    "count": 1,
     "when": "end_of_turn",
     "from_round": 1,
     "printed": "you control one or more central objectives."
    },
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 4,
-    "max": 15,
+    "max": 4,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control one or more objectives (excluding your home objective)."
@@ -645,12 +751,22 @@
   "fixed_capable": false,
   "scoring": [
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 3,
-    "max": 15,
+    "max": 3,
+    "count": 1,
     "when": "end_of_turn",
     "from_round": 1,
     "printed": "you control one or more central objectives."
+   },
+   {
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 2,
+    "max": 2,
+    "at_least": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "one or more enemy units that started the turn within a terrain area are destroyed."
    },
    {
     "rule": "control_objectives",
@@ -676,17 +792,28 @@
   "fixed_capable": false,
   "scoring": [
    {
-    "rule": "control_objectives",
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 2,
+    "max": 2,
+    "at_least": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "one or more enemy units that started the turn within range of one or more central objectives are destroyed."
+   },
+   {
+    "rule": "control_at_least",
     "per": 4,
-    "max": 15,
+    "max": 4,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control one or more objectives (excluding your home objective)."
    },
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 4,
-    "max": 15,
+    "max": 4,
+    "count": 3,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control three or more objectives."
@@ -707,25 +834,28 @@
   "fixed_capable": false,
   "scoring": [
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 2,
-    "max": 15,
+    "max": 2,
+    "count": 1,
     "when": "end_of_turn",
     "from_round": 1,
     "printed": "you control one or more central objectives."
    },
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 4,
-    "max": 15,
+    "max": 4,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control one or more objectives (excluding your home objective)."
    },
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 10,
-    "max": 15,
+    "max": 10,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control your opponent's home objective."
@@ -746,9 +876,19 @@
   "fixed_capable": false,
   "scoring": [
    {
-    "rule": "control_objectives",
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 3,
+    "max": 3,
+    "at_least": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "one or more enemy units that started the turn within range of one or more objectives are destroyed."
+   },
+   {
+    "rule": "control_at_least",
     "per": 4,
-    "max": 15,
+    "max": 4,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control one or more objectives (excluding your home objective)."
@@ -769,17 +909,28 @@
   "fixed_capable": false,
   "scoring": [
    {
-    "rule": "control_objectives",
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 2,
+    "max": 2,
+    "at_least": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "one or more enemy units were destroyed this turn."
+   },
+   {
+    "rule": "control_at_least",
     "per": 4,
-    "max": 15,
+    "max": 4,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control one or more objectives (excluding your home objective)."
    },
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 10,
-    "max": 15,
+    "max": 10,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control your opponent's home objective."
@@ -800,9 +951,10 @@
   "fixed_capable": false,
   "scoring": [
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 4,
-    "max": 15,
+    "max": 4,
+    "count": 1,
     "when": "command_phase",
     "from_round": 2,
     "printed": "you control one or more objectives (excluding your home objective)."
@@ -816,17 +968,28 @@
     "printed": "for each enemy unit with a starting strength of 13 or more that is destroyed this turn."
    },
    {
-    "rule": "control_objectives",
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 5,
+    "max": 5,
+    "at_least": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "one or more enemy units with a starting strength of 13 or more were destroyed this turn."
+   },
+   {
+    "rule": "control_at_least",
     "per": 3,
-    "max": 15,
+    "max": 3,
+    "count": 1,
     "when": "end_of_turn",
     "from_round": 2,
     "printed": "you control your home objective."
    },
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 5,
-    "max": 15,
+    "max": 5,
+    "count": 1,
     "when": "end_of_turn",
     "from_round": 1,
     "printed": "you control your opponent's home objective and/or each expansion objective."
@@ -848,9 +1011,10 @@
     "printed": "for each enemy unit that started the turn within range of one or more objectives and is destroyed."
    },
    {
-    "rule": "control_objectives",
+    "rule": "control_at_least",
     "per": 5,
-    "max": 15,
+    "max": 5,
+    "count": 2,
     "when": "end_of_turn",
     "from_round": 1,
     "printed": "you control two or more objectives within no man's land (excluding your home objective)."

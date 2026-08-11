@@ -1,7 +1,7 @@
 {
  "result_schema_version": "2.0.0",
  "kind": "batch",
- "generated": "2026-08-11T21:25:04Z",
+ "generated": "2026-08-11T21:34:10Z",
  "config": {
   "armies": [
    "Alien Hunters Strike",
@@ -12,35 +12,35 @@
    "random"
   ],
   "battle_size": 500,
-  "games": 24,
+  "games": 20,
   "seed": 500
  },
  "totals": {
   "wins": [
-   8,
-   8
+   20,
+   0
   ],
-  "draws": 8,
+  "draws": 0,
   "win_rate": [
-   0.3333,
-   0.3333
+   1.0,
+   0.0
   ],
   "avg_vp": [
-   57.58,
-   55.88
+   57.7,
+   43.8
   ],
   "avg_rounds": 5.0,
   "rejected_actions": 0,
-  "avg_duration_s": 10.389
+  "avg_duration_s": 10.564
  },
  "games": [
   {
    "seed": 500,
    "vp": [
     59,
-    63
+    52
    ],
-   "winner": 1,
+   "winner": 0,
    "rounds": 5,
    "actions": 186,
    "rejected": 0,
@@ -57,14 +57,14 @@
     "PUNISHMENT",
     "DELAYING ACTION"
    ],
-   "duration_s": 12.754,
+   "duration_s": 12.807,
    "log": "results/heuristic_vs_random/logs/battle_500.json"
   },
   {
    "seed": 501,
    "vp": [
     57,
-    55
+    40
    ],
    "winner": 0,
    "rounds": 5,
@@ -83,16 +83,16 @@
     "PUNISHMENT",
     "DELAYING ACTION"
    ],
-   "duration_s": 9.81,
+   "duration_s": 9.753,
    "log": "results/heuristic_vs_random/logs/battle_501.json"
   },
   {
    "seed": 502,
    "vp": [
     55,
-    55
+    38
    ],
-   "winner": null,
+   "winner": 0,
    "rounds": 5,
    "actions": 176,
    "rejected": 0,
@@ -109,16 +109,16 @@
     "PUNISHMENT",
     "DELAYING ACTION"
    ],
-   "duration_s": 11.037,
+   "duration_s": 10.822,
    "log": "results/heuristic_vs_random/logs/battle_502.json"
   },
   {
    "seed": 503,
    "vp": [
     55,
-    57
+    42
    ],
-   "winner": 1,
+   "winner": 0,
    "rounds": 5,
    "actions": 168,
    "rejected": 0,
@@ -135,7 +135,7 @@
     "PUNISHMENT",
     "DELAYING ACTION"
    ],
-   "duration_s": 8.516,
+   "duration_s": 8.352,
    "log": ""
   },
   {
@@ -161,16 +161,16 @@
     "PUNISHMENT",
     "DELAYING ACTION"
    ],
-   "duration_s": 11.904,
+   "duration_s": 11.502,
    "log": ""
   },
   {
    "seed": 505,
    "vp": [
     55,
-    55
+    42
    ],
-   "winner": null,
+   "winner": 0,
    "rounds": 5,
    "actions": 176,
    "rejected": 0,
@@ -187,16 +187,16 @@
     "PUNISHMENT",
     "DELAYING ACTION"
    ],
-   "duration_s": 11.014,
+   "duration_s": 10.927,
    "log": ""
   },
   {
    "seed": 506,
    "vp": [
     63,
-    63
+    46
    ],
-   "winner": null,
+   "winner": 0,
    "rounds": 5,
    "actions": 203,
    "rejected": 0,
@@ -213,16 +213,16 @@
     "PUNISHMENT",
     "DELAYING ACTION"
    ],
-   "duration_s": 10.514,
+   "duration_s": 10.617,
    "log": ""
   },
   {
    "seed": 507,
    "vp": [
     59,
-    65
+    54
    ],
-   "winner": 1,
+   "winner": 0,
    "rounds": 5,
    "actions": 179,
    "rejected": 0,
@@ -239,16 +239,16 @@
     "PUNISHMENT",
     "DELAYING ACTION"
    ],
-   "duration_s": 11.103,
+   "duration_s": 11.092,
    "log": ""
   },
   {
    "seed": 508,
    "vp": [
     55,
-    55
+    42
    ],
-   "winner": null,
+   "winner": 0,
    "rounds": 5,
    "actions": 182,
    "rejected": 0,
@@ -265,16 +265,16 @@
     "PUNISHMENT",
     "DELAYING ACTION"
    ],
-   "duration_s": 13.828,
+   "duration_s": 14.376,
    "log": ""
   },
   {
    "seed": 509,
    "vp": [
     59,
-    59
+    44
    ],
-   "winner": null,
+   "winner": 0,
    "rounds": 5,
    "actions": 170,
    "rejected": 0,
@@ -291,14 +291,14 @@
     "PUNISHMENT",
     "DELAYING ACTION"
    ],
-   "duration_s": 6.38,
+   "duration_s": 6.482,
    "log": ""
   },
   {
    "seed": 510,
    "vp": [
     59,
-    55
+    40
    ],
    "winner": 0,
    "rounds": 5,
@@ -317,16 +317,16 @@
     "PUNISHMENT",
     "DELAYING ACTION"
    ],
-   "duration_s": 12.083,
+   "duration_s": 12.191,
    "log": ""
   },
   {
    "seed": 511,
    "vp": [
     55,
-    57
+    42
    ],
-   "winner": 1,
+   "winner": 0,
    "rounds": 5,
    "actions": 183,
    "rejected": 0,
@@ -343,16 +343,16 @@
     "PUNISHMENT",
     "DELAYING ACTION"
    ],
-   "duration_s": 9.888,
+   "duration_s": 10.034,
    "log": ""
   },
   {
    "seed": 512,
    "vp": [
     55,
-    55
+    40
    ],
-   "winner": null,
+   "winner": 0,
    "rounds": 5,
    "actions": 176,
    "rejected": 0,
@@ -369,16 +369,16 @@
     "PUNISHMENT",
     "DELAYING ACTION"
    ],
-   "duration_s": 14.601,
+   "duration_s": 14.522,
    "log": ""
   },
   {
    "seed": 513,
    "vp": [
     55,
-    57
+    46
    ],
-   "winner": 1,
+   "winner": 0,
    "rounds": 5,
    "actions": 176,
    "rejected": 0,
@@ -395,16 +395,16 @@
     "PUNISHMENT",
     "DELAYING ACTION"
    ],
-   "duration_s": 12.842,
+   "duration_s": 12.725,
    "log": ""
   },
   {
    "seed": 514,
    "vp": [
     57,
-    59
+    44
    ],
-   "winner": 1,
+   "winner": 0,
    "rounds": 5,
    "actions": 177,
    "rejected": 0,
@@ -421,16 +421,16 @@
     "PUNISHMENT",
     "DELAYING ACTION"
    ],
-   "duration_s": 10.668,
+   "duration_s": 10.628,
    "log": ""
   },
   {
    "seed": 515,
    "vp": [
     55,
-    55
+    42
    ],
-   "winner": null,
+   "winner": 0,
    "rounds": 5,
    "actions": 166,
    "rejected": 0,
@@ -447,7 +447,7 @@
     "PUNISHMENT",
     "DELAYING ACTION"
    ],
-   "duration_s": 9.247,
+   "duration_s": 9.052,
    "log": ""
   },
   {
@@ -473,16 +473,16 @@
     "PUNISHMENT",
     "DELAYING ACTION"
    ],
-   "duration_s": 8.789,
+   "duration_s": 8.83,
    "log": ""
   },
   {
    "seed": 517,
    "vp": [
     57,
-    57
+    44
    ],
-   "winner": null,
+   "winner": 0,
    "rounds": 5,
    "actions": 180,
    "rejected": 0,
@@ -499,7 +499,7 @@
     "PUNISHMENT",
     "DELAYING ACTION"
    ],
-   "duration_s": 7.105,
+   "duration_s": 7.059,
    "log": ""
   },
   {
@@ -525,14 +525,14 @@
     "PUNISHMENT",
     "DELAYING ACTION"
    ],
-   "duration_s": 8.109,
+   "duration_s": 8.194,
    "log": ""
   },
   {
    "seed": 519,
    "vp": [
     59,
-    51
+    44
    ],
    "winner": 0,
    "rounds": 5,
@@ -551,111 +551,7 @@
     "PUNISHMENT",
     "DELAYING ACTION"
    ],
-   "duration_s": 11.377,
-   "log": ""
-  },
-  {
-   "seed": 520,
-   "vp": [
-    57,
-    55
-   ],
-   "winner": 0,
-   "rounds": 5,
-   "actions": 201,
-   "rejected": 0,
-   "layout": "ec2026-purge-the-foe_vs_disruption-b",
-   "armies": [
-    "Alien Hunters Strike",
-    "Siege Regiment Vanguard"
-   ],
-   "dispositions": [
-    "Purge the Foe",
-    "Disruption"
-   ],
-   "primaries": [
-    "PUNISHMENT",
-    "DELAYING ACTION"
-   ],
-   "duration_s": 8.589,
-   "log": ""
-  },
-  {
-   "seed": 521,
-   "vp": [
-    57,
-    63
-   ],
-   "winner": 1,
-   "rounds": 5,
-   "actions": 163,
-   "rejected": 0,
-   "layout": "ec2026-purge-the-foe_vs_disruption-c",
-   "armies": [
-    "Alien Hunters Strike",
-    "Siege Regiment Vanguard"
-   ],
-   "dispositions": [
-    "Purge the Foe",
-    "Disruption"
-   ],
-   "primaries": [
-    "PUNISHMENT",
-    "DELAYING ACTION"
-   ],
-   "duration_s": 11.157,
-   "log": ""
-  },
-  {
-   "seed": 522,
-   "vp": [
-    57,
-    55
-   ],
-   "winner": 0,
-   "rounds": 5,
-   "actions": 188,
-   "rejected": 0,
-   "layout": "ec2026-purge-the-foe_vs_disruption-a",
-   "armies": [
-    "Alien Hunters Strike",
-    "Siege Regiment Vanguard"
-   ],
-   "dispositions": [
-    "Purge the Foe",
-    "Disruption"
-   ],
-   "primaries": [
-    "PUNISHMENT",
-    "DELAYING ACTION"
-   ],
-   "duration_s": 11.034,
-   "log": ""
-  },
-  {
-   "seed": 523,
-   "vp": [
-    57,
-    61
-   ],
-   "winner": 1,
-   "rounds": 5,
-   "actions": 199,
-   "rejected": 0,
-   "layout": "ec2026-purge-the-foe_vs_disruption-b",
-   "armies": [
-    "Alien Hunters Strike",
-    "Siege Regiment Vanguard"
-   ],
-   "dispositions": [
-    "Purge the Foe",
-    "Disruption"
-   ],
-   "primaries": [
-    "PUNISHMENT",
-    "DELAYING ACTION"
-   ],
-   "duration_s": 6.984,
+   "duration_s": 11.317,
    "log": ""
   }
  ]

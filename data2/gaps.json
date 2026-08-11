@@ -10,36 +10,6 @@
   "estimate": "scores through the mapped blocks only"
  },
  {
-  "id": "mission:purge_and_secure",
-  "what": "scoring block",
-  "why": "2 printed VP line(s) of 'Purge and Secure' do not map onto an evaluator (operation markers / card-reverse actions)",
-  "attempted": [
-   "dossier VP-line parse",
-   "evaluator vocabulary match"
-  ],
-  "estimate": "scores through the mapped blocks only"
- },
- {
-  "id": "mission:unstoppable_force",
-  "what": "scoring block",
-  "why": "1 printed VP line(s) of 'Unstoppable Force' do not map onto an evaluator (operation markers / card-reverse actions)",
-  "attempted": [
-   "dossier VP-line parse",
-   "evaluator vocabulary match"
-  ],
-  "estimate": "scores through the mapped blocks only"
- },
- {
-  "id": "mission:meatgrinder",
-  "what": "scoring block",
-  "why": "2 printed VP line(s) of 'Meatgrinder' do not map onto an evaluator (operation markers / card-reverse actions)",
-  "attempted": [
-   "dossier VP-line parse",
-   "evaluator vocabulary match"
-  ],
-  "estimate": "scores through the mapped blocks only"
- },
- {
   "id": "mission:punishment",
   "what": "scoring block",
   "why": "1 printed VP line(s) of 'Punishment' do not map onto an evaluator (operation markers / card-reverse actions)",
@@ -60,19 +30,9 @@
   "estimate": "scores through the mapped blocks only"
  },
  {
-  "id": "mission:destroyer's_wrath",
-  "what": "scoring block",
-  "why": "2 printed VP line(s) of 'Destroyer's Wrath' do not map onto an evaluator (operation markers / card-reverse actions)",
-  "attempted": [
-   "dossier VP-line parse",
-   "evaluator vocabulary match"
-  ],
-  "estimate": "scores through the mapped blocks only"
- },
- {
   "id": "mission:death_trap",
   "what": "scoring block",
-  "why": "3 printed VP line(s) of 'Death Trap' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "why": "2 printed VP line(s) of 'Death Trap' do not map onto an evaluator (operation markers / card-reverse actions)",
   "attempted": [
    "dossier VP-line parse",
    "evaluator vocabulary match"
@@ -92,7 +52,7 @@
  {
   "id": "mission:locate_and_deny",
   "what": "scoring block",
-  "why": "3 printed VP line(s) of 'Locate and Deny' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "why": "2 printed VP line(s) of 'Locate and Deny' do not map onto an evaluator (operation markers / card-reverse actions)",
   "attempted": [
    "dossier VP-line parse",
    "evaluator vocabulary match"
@@ -142,7 +102,7 @@
  {
   "id": "mission:search_and_scour",
   "what": "scoring block",
-  "why": "2 printed VP line(s) of 'Search and Scour' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "why": "1 printed VP line(s) of 'Search and Scour' do not map onto an evaluator (operation markers / card-reverse actions)",
   "attempted": [
    "dossier VP-line parse",
    "evaluator vocabulary match"
@@ -152,7 +112,7 @@
  {
   "id": "mission:secure_asset",
   "what": "scoring block",
-  "why": "2 printed VP line(s) of 'Secure Asset' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "why": "1 printed VP line(s) of 'Secure Asset' do not map onto an evaluator (operation markers / card-reverse actions)",
   "attempted": [
    "dossier VP-line parse",
    "evaluator vocabulary match"
@@ -172,7 +132,7 @@
  {
   "id": "mission:extract_relic",
   "what": "scoring block",
-  "why": "4 printed VP line(s) of 'Extract Relic' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "why": "3 printed VP line(s) of 'Extract Relic' do not map onto an evaluator (operation markers / card-reverse actions)",
   "attempted": [
    "dossier VP-line parse",
    "evaluator vocabulary match"
@@ -182,7 +142,7 @@
  {
   "id": "mission:vanguard_operation",
   "what": "scoring block",
-  "why": "2 printed VP line(s) of 'Vanguard Operation' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "why": "1 printed VP line(s) of 'Vanguard Operation' do not map onto an evaluator (operation markers / card-reverse actions)",
   "attempted": [
    "dossier VP-line parse",
    "evaluator vocabulary match"
@@ -192,7 +152,7 @@
  {
   "id": "mission:sabotage",
   "what": "scoring block",
-  "why": "26 printed VP line(s) of 'Sabotage' do not map onto an evaluator (operation markers / card-reverse actions)",
+  "why": "25 printed VP line(s) of 'Sabotage' do not map onto an evaluator (operation markers / card-reverse actions)",
   "attempted": [
    "dossier VP-line parse",
    "evaluator vocabulary match"

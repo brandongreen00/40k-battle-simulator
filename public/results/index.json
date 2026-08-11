@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-11T21:26:24Z",
+ "generated": "2026-08-11T21:36:56Z",
  "data_version": "2026-08-11",
  "armies": [
   {
@@ -76,7 +76,7 @@
   "detachments": 16,
   "layouts": 45,
   "missions": 44,
-  "gaps": 193
+  "gaps": 189
  },
  "batches": [
   {
@@ -86,7 +86,7 @@
   },
   {
    "path": "heuristic_vs_random/batch.json",
-   "label": "Alien Hunters Strike vs Siege Regiment Vanguard (24 games, 500pts)",
+   "label": "Alien Hunters Strike vs Siege Regiment Vanguard (20 games, 500pts)",
    "generated": "2026-08-11"
   }
  ],

@@ -134,6 +134,12 @@ def _ev_control_objectives(state, idx: int, block) -> int:
     return len([h for h in held if h in ids])
 
 
+def _ev_control_at_least(state, idx: int, block) -> int:
+    """A threshold clause pays once: "you control two or more objectives"."""
+    need = int(block.get("count", 1))
+    return 1 if len(objectives.controlled_by(state, idx)) >= need else 0
+
+
 def _ev_control_more(state, idx: int, block) -> int:
     mine = len(objectives.controlled_by(state, idx))
     theirs = len(objectives.controlled_by(state, 1 - idx))
@@ -178,6 +184,7 @@ def _ev_actions_completed(state, idx: int, block) -> int:
 
 EVALUATORS = {
     "control_objectives": _ev_control_objectives,
+    "control_at_least": _ev_control_at_least,
     "control_more_objectives": _ev_control_more,
     "control_enemy_home": _ev_control_enemy_home,
     "units_in_enemy_half": _ev_units_in_enemy_half,

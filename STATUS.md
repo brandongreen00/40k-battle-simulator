@@ -57,9 +57,9 @@ Reviews (mandate 2b): [`reviews/rules-kernel.md`](reviews/rules-kernel.md) ·
 | Illegal actions, 12-game heuristic batch @500pts | 0 | **0** (`results/batch.json`) |
 | Illegal actions, 1000pt game | 0 | **0** (`test_thousand_point_game_is_legal`) |
 | Determinism: same seed → same game | byte-identical | **✅** (`test_battle_log_replays_identically`) |
-| Heuristic beats random | >95% | **not met — 8W/8D/8L, avg VP 57.6 : 55.9** over 24 games. The enumeration is goal-directed, so "random" is not a naive baseline; see `reviews/agents-and-harness.md` |
+| Heuristic beats random | >95% | **met — 20 wins, 0 losses, 0 draws (100%)** over 20 games, avg VP 57.7 : 43.8 (`results/heuristic_vs_random/batch.json`) |
 | Batch + optimizer produce dashboard artifacts | yes | **✅** `results/batch.json`, `results/optimizer.json` |
-| Tests | — | **49 fast + 8 full-game** (`pytest tests_py`), **533** front-end (`pnpm test`) |
+| Tests | — | **56 passing** (`pytest tests_py`, incl. 7 full-game), **534** front-end (`pnpm test`) |
 | Speed | — | ~8s per 500pt game, ~40s per 1000pt game |
 
 ---
@@ -98,6 +98,9 @@ Reviews (mandate 2b): [`reviews/rules-kernel.md`](reviews/rules-kernel.md) ·
   DP cost *is* ingested).
 * **Mission card text** comes from the project's research dossier (a community
   transcription), not the printed deck; unmapped VP lines are logged per card.
+  Cards whose scoring depends on operation markers and card-reverse Actions
+  (most of the Disruption deck) therefore score only through their other
+  clauses, which skews those pairings — visible as a lopsided mirror batch.
 * **Hull-based vehicle footprints** are flagged rectangular estimates.
 * **Transports, attached units, aircraft (§4.7)** are not implemented at all.
 * **Layout transcription was not re-verified** at region level this session; it is
@@ -108,12 +111,11 @@ Reviews (mandate 2b): [`reviews/rules-kernel.md`](reviews/rules-kernel.md) ·
 1. **Reconcile every points figure against MFM v1.2** (Phase D2), recording each
    discrepancy, and settle the Sanctifiers open item. Points feed list legality
    and the optimizer, so everything downstream inherits this uncertainty.
-2. **Make the random baseline honest, then close the heuristic gap.** Movement
-   candidates are all goal-directed, so `RandomAgent` already plays objectives by
-   construction and the 24-game run came out 8W/8D/8L. Add uniformly-sampled
-   lattice destinations to the enumeration, re-measure, and give the heuristic
-   mission-aware scoring (it plays objectives generically, not its own primary
-   card) until it wins decisively.
+2. **Even out the mission cards.** Heuristic-vs-heuristic currently runs 12–0 to
+   the Purge the Foe side against Disruption, because Disruption's cards score
+   through *trapped* terrain areas placed by card-reverse Actions, and those
+   clauses are unmapped (they score nothing). Binding the operation-marker
+   Actions is the single biggest fidelity win left in the mission layer.
 3. **Bind the next tranche of effect records**, starting with the detachment rules
    of the two sample armies and the enhancements that alter Orders — the ontology
    and the interpreter are in place, so each is a data edit plus a test.

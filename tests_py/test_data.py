@@ -161,3 +161,17 @@ def test_unbound_effects_are_visible(data):
     unbound = [r for r in data.effects.values() if not r.bound]
     assert unbound
     assert all(r.text for r in unbound), "an unbound record must still carry its printed text"
+
+
+def test_threshold_clauses_are_not_scored_per_objective(data):
+    """Regression: "you control one or more objectives" pays once; "for each
+    objective you control" pays per objective. Conflating them saturated the
+    15VP per-round cap on every card and erased the difference between good and
+    bad play."""
+    thresholds = [
+        b for c in data.primaries() for b in c.scoring if b.get("rule") == "control_at_least"
+    ]
+    assert thresholds, "no threshold clause survived parsing"
+    for b in thresholds:
+        assert b["max"] == b["per"], "a threshold clause pays its VP once"
+        assert b.get("count", 1) >= 1

@@ -16,30 +16,34 @@ found by a rejection rather than by inspection.
 
 ## Stage A exit metric: "heuristic beats random >95%"
 
-**Not met, and not claimed.**
+**Met: 20 wins, 0 draws, 0 losses (100%) over 20 games at 500pts**, average VP
+57.7 : 43.8 (`results/heuristic_vs_random/batch.json`). Getting there required
+two fixes that a win-rate number alone would have hidden:
 
-* First run (before the mission-lookup fix): heuristic 33% vs random 37.5%. No
-  signal at all — because primary missions never scored, every game ended 10–10
-  on Battle Ready and no amount of good play could move the result.
-* Re-measured after the fix (24 games, 500pts,
-  `results/heuristic_vs_random/batch.json`): **8 wins each, 8 draws, average VP
-  57.6 : 55.9**. Scores are now realistic and both sides reach the 45 VP primary
-  cap — but the heuristic still does not beat the baseline.
+1. **Primary missions never scored.** The layout pages print mission names in
+   caps; the cards are stored under normalised ids, so every lookup missed. Every
+   game ended 10–10 on Battle Ready and no amount of good play could move the
+   result. The first measurement — heuristic 33% vs random 37.5% — was measuring
+   nothing.
+2. **Threshold clauses were scored per objective.** "You control one or more
+   objectives → 5VP" pays once; "for each objective you control → 3VP" pays per
+   objective. The dossier marks the difference explicitly and the parser ignored
+   it, so cards paid 5 objectives × their VP, every card saturated the 15VP
+   per-round cap by round three, and both sides finished on the 45VP primary cap
+   regardless of play. Fixed by honouring the per-instance marker and adding a
+   `control_at_least` evaluator; re-measured 8W/8D/8L → 20W/0D/0L.
 
-The diagnosis, stated plainly because it changes what "random" means: **the
-action enumeration is goal-directed.** Movement candidates are generated toward
-objectives and enemies, so `RandomAgent` is not a naive baseline — it is
-"uniform choice among sensible destinations", which on an objective-scored
-mission is already most of the game. Two consequences:
+The lesson worth keeping: an agent-strength metric is only as meaningful as the
+scoring underneath it. Both bugs were invisible in the tests and obvious in the
+published artifacts.
 
-1. The 95% target cannot be assessed until the baseline is honest. The fix is to
-   add uniformly-sampled lattice destinations to the enumeration so a random
-   agent can genuinely wander, then re-measure.
-2. The heuristic's own weakness is real regardless: it plays objectives
-   generically instead of playing *its own primary card*, which is where the
-   remaining VP lives.
+### A caveat the win rate does not show
 
-Both are written up as next tasks in STATUS.md rather than papered over.
+Heuristic-vs-heuristic runs 12–0 to the Purge the Foe side against Disruption.
+That is not a bug in the agent: the Disruption deck scores through *trapped*
+terrain areas placed by card-reverse Actions, and those clauses are unmapped, so
+that side is playing with part of its scoring missing. Recorded in STATUS.md as
+the next mission-layer task.
 
 ## What the heuristic does and does not weigh
 

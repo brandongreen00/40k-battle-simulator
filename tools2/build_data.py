@@ -180,7 +180,11 @@ def build_layouts() -> Tuple[int, Dict[str, Dict[str, str]]]:
 # --------------------------------------------------------------------------
 CARD_RE = re.compile(r"^####\s+(?P<name>[^—\n]+?)\s+—\s+\*(?P<own>[^*]+)\*\s+vs\s+\*(?P<opp>[^*]+)\*",
                      re.M)
-VP_LINE = re.compile(r"^\s*[-+]\s*(?:\+ CUMULATIVE:\s*)?(?P<text>.+?)→\s*\*\*(?P<vp>\d+)VP\*\*", re.M)
+VP_LINE = re.compile(
+    r"^\s*[-+]\s*(?:\+ CUMULATIVE:\s*)?(?P<text>.+?)→\s*\*\*(?P<vp>\d+)VP\*\*(?P<tail>[^\n]*)",
+    re.M,
+)
+COUNT_WORDS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5}
 
 
 def _scoring_blocks(body: str, name: str, cid: str) -> List[Dict[str, Any]]:
@@ -195,13 +199,27 @@ def _scoring_blocks(body: str, name: str, cid: str) -> List[Dict[str, Any]]:
             when = "command_phase"
         from_round = 2 if "second battle round onwards" in body[
             max(0, m.start() - 400): m.start()].lower() else 1
+        # The dossier marks a per-instance award explicitly ("per instance
+        # (\"for each\")"). Without that marker the clause is a THRESHOLD — "you
+        # control one or more objectives" pays its VP once, not once per
+        # objective. Conflating the two made every card saturate the 15VP
+        # per-round cap and erased any difference between good and bad play.
+        per_instance = "per instance" in (m.group("tail") or "").lower() \
+            or text.startswith("for each")
         block: Optional[Dict[str, Any]] = None
-        if "each enemy unit" in text and "destroyed" in text:
-            block = {"rule": "enemy_units_destroyed_this_turn", "per": vp, "max": 15}
+        if "enemy unit" in text and "destroyed" in text:
+            block = ({"rule": "enemy_units_destroyed_this_turn", "per": vp, "max": 15}
+                     if per_instance
+                     else {"rule": "enemy_units_destroyed_this_turn", "per": vp,
+                           "max": vp, "at_least": 1})
         elif "more objectives than your opponent" in text:
             block = {"rule": "control_more_objectives", "per": vp, "max": vp}
         elif "control" in text and "objective" in text:
-            block = {"rule": "control_objectives", "per": vp, "max": 15}
+            if per_instance:
+                block = {"rule": "control_objectives", "per": vp, "max": 15}
+            else:
+                block = {"rule": "control_at_least", "per": vp, "max": vp,
+                         "count": _threshold(text)}
         elif "enemy deployment zone" in text or "enemy half" in text:
             block = {"rule": "units_in_enemy_half", "per": vp, "max": 15}
         if block is None:
@@ -216,6 +234,15 @@ def _scoring_blocks(body: str, name: str, cid: str) -> List[Dict[str, Any]]:
             ["dossier VP-line parse", "evaluator vocabulary match"],
             estimate="scores through the mapped blocks only")
     return blocks
+
+
+def _threshold(text: str) -> int:
+    """"one or more objectives" -> 1, "two or more" -> 2, and so on."""
+    m = re.search(r"\b(one|two|three|four|five)\s+or\s+more\b", text)
+    if m:
+        return COUNT_WORDS[m.group(1)]
+    m = re.search(r"\b(\d+)\s+or\s+more\b", text)
+    return int(m.group(1)) if m else 1
 
 
 def build_missions(matrix: Dict[str, Dict[str, str]]) -> List[Dict[str, Any]]:
