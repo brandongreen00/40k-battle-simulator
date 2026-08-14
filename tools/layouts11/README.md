@@ -64,9 +64,22 @@ Output: `data/layouts11/ec2026-<pairingA>_vs_<pairingB>-<a|b|c>.json` + `index.j
   quarter-circle arc cutouts, rotated features, objective/marker placement).
 - All 18 features on page 9 audited crop-by-crop for dense/light classification.
 - **v1.1 re-review (2026-08-14):** all 45 pages re-verified with geometry-on-page
-  overlay renders. Every stored territory divider now matches the printed dashed
-  line's true endpoints (an earlier bbox-corner pairing mirrored all 34 diagonal
-  dividers; 11 layouts print no divider and correctly fall back to the midline).
-  The dashed ~9"-radius circle printed around the battlefield centre on some pages
-  is a mission illustration, not part of the divider, and is ignored (its arcs are
-  ~87 pt, under the 100 pt divider threshold).
+  overlay renders (every element class audited page by page). Three systematic
+  defects found and fixed:
+  1. **Territory dividers** — the bbox-corner endpoint pairing mirrored all 34
+     diagonal dividers (they all rise left-to-right); dividers now use the
+     stroke's true endpoints. 11 layouts print no divider and correctly fall
+     back to the midline. The dashed ~9"-radius circle printed around the
+     battlefield centre on some pages is a mission illustration, not part of
+     the divider, and is ignored (its arcs are ~87 pt, under the 100 pt divider
+     threshold).
+  2. **Single/separate markers** — inverted on every badge of every page: the
+     old "slash stroke" test actually matched the PLAIN badge's stroked eye
+     outline (the slashed badge draws its eye as two grey-FILLED halves and has
+     no stroked path at all). Classification now keys on those filled halves.
+  3. **Baked-in features** — some mats carry their tinted rails/ruins inside
+     the neutral mat photo (no separate tinted placement), so one copy of a
+     mirrored pair could miss its gold rails, and two mats on p51 had a
+     mat-sized composite quad swallowing everything. Pixel recovery now runs
+     for every area (per-connected-blob boxes, printed badges masked out,
+     blob centre required inside the area, placed quads win over blobs).

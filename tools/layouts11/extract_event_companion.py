@@ -16,8 +16,11 @@ Colour code (CMYK fills, from the p.8 "Layouts Key"):
   (0,0,0,.2)   grey   = terrain area polygons (the 5 canonical footprints)
   (1,0,.6,.4)  teal   = central objective circle (25pt) / feature letter badges (16pt)
   (.7,0,.42,.28) teal-dark = expansion objective diamonds (5-pt path)
-  (0,0,0,.6)   grey   = single/separate terrain-area markers (15.9pt circles;
-                        'separate' has an extra 3-pt slash stroke)
+  (0,0,0,.6)   grey   = single/separate terrain-area markers (15.9pt circles).
+                        The PLAIN eye badge (= "single terrain area") draws its eye as a
+                        STROKED grey outline; the SLASHED badge (= "separate terrain
+                        areas") draws its eye as TWO grey-FILLED halves (npts > 6) split
+                        by the white slash bar - those halves are the 'separate' signal.
 Terrain features are tinted photos (images): green tint = dense, gold tint = light,
 neutral rust = the terrain-area base mats (skipped; grey polygons are the areas).
 Dashed black line = attacker/defender territory divider.
@@ -370,6 +373,7 @@ def extract_page(pdf, doc, page_no):
     areas = []
     objectives = []
     markers = []
+    eye_halves = []  # grey-filled halves of the slashed "separate" badge (page pts)
     letter_badges = []  # (pos_in, ())
     divider = None
 
@@ -432,29 +436,25 @@ def extract_page(pdf, doc, page_no):
             elif col_eq(ns, TEAL_DARK) and big and len(c["pts"]) <= 6:
                 pos = cal.pt(*centroid((c["x0"], c["top"], c["x1"], c["bottom"])))
                 objectives.append({"kind": "expansion", "pos": pos})
-            elif col_eq(ns, GREY_ICON) and big and 1.4 < w * cal.sx < 2.6 and len(c["pts"]) <= 6:
-                pos = cal.pt(*centroid((c["x0"], c["top"], c["x1"], c["bottom"])))
-                markers.append({"kind": "single", "pos": pos,
-                                "_pt": centroid((c["x0"], c["top"], c["x1"], c["bottom"]))})
-        else:  # stroked
-            ss = c.get("stroking_color")
-            if col_eq(ss, GREY_ICON) and len(c["pts"]) <= 4:
-                # slash over a nearby grey circle -> separate marker
+            elif col_eq(ns, GREY_ICON) and big and 1.4 < w * cal.sx < 2.6:
                 pos_pt = centroid((c["x0"], c["top"], c["x1"], c["bottom"]))
-                for m in markers:
-                    mx, my = m["_pt"]
-                    if abs(mx - pos_pt[0]) < 8 and abs(my - pos_pt[1]) < 8:
-                        m["kind"] = "separate"
+                if len(c["pts"]) <= 6:
+                    # the 15.9pt badge circle itself
+                    markers.append({"kind": "single", "pos": cal.pt(*pos_pt), "_pt": pos_pt})
+                else:
+                    # a grey-filled eye HALF (npts > 6): only the slashed "separate
+                    # terrain areas" badge draws these (its eye is split by the white
+                    # slash bar). The plain "single" badge's eye is a grey STROKED
+                    # outline instead - the old stroked-arc test matched THAT, which
+                    # inverted every marker on every page.
+                    eye_halves.append(pos_pt)
 
-    # slashes can be parsed before their circle - second pass over stroked curves
-    for c in page.curves:
-        ss = c.get("stroking_color")
-        if c["stroke"] and col_eq(ss, GREY_ICON) and len(c["pts"]) <= 4:
-            pos_pt = centroid((c["x0"], c["top"], c["x1"], c["bottom"]))
-            for m in markers:
-                mx, my = m["_pt"]
-                if abs(mx - pos_pt[0]) < 8 and abs(my - pos_pt[1]) < 8:
-                    m["kind"] = "separate"
+    # eye halves may be parsed before or after their badge circle - match after the loop
+    for hx, hy in eye_halves:
+        for m in markers:
+            mx, my = m["_pt"]
+            if abs(mx - hx) < 8 and abs(my - hy) < 8:
+                m["kind"] = "separate"
     for m in markers:
         m.pop("_pt", None)
 
@@ -563,6 +563,7 @@ def extract_page(pdf, doc, page_no):
     area_objs = []
     for i, p in enumerate(areas):
         area_objs.append({"id": f"area-{i}", "polygon": [[round(x, 3), round(y, 3)] for x, y in p], "features": []})
+    composite_ids = set()  # areas whose "feature" was a whole-mat composite photo
     for f in features:
         cx = sum(p[0] for p in f["polygon"]) / len(f["polygon"])
         cy = sum(p[1] for p in f["polygon"]) / len(f["polygon"])
@@ -576,12 +577,33 @@ def extract_page(pdf, doc, page_no):
             if d < bestd:
                 best, bestd = a, d
         if best is not None and bestd < 3.5:
-            best["features"].append(f)
+            # A tinted quad covering (nearly) the WHOLE mat is the mat's composite photo,
+            # not a feature footprint (seen on the two bridge mats of priority-assets vs
+            # priority-assets A: a mat-sized "dense" quad swallowing the gold barricades).
+            # Drop it and recover the real tinted regions from the render instead.
+            fxs = [p[0] for p in f["polygon"]]
+            fys = [p[1] for p in f["polygon"]]
+            axs = [x for x, _ in best["polygon"]]
+            ays = [y for _, y in best["polygon"]]
+            f_area = (max(fxs) - min(fxs)) * (max(fys) - min(fys))
+            a_area = (max(axs) - min(axs)) * (max(ays) - min(ays))
+            if a_area > 0 and f_area >= 0.85 * a_area:
+                composite_ids.add(best["id"])
+            else:
+                best["features"].append(f)
         # features that match no area (shouldn't happen) are dropped with a note
-    # areas whose features are baked into the mat photo: recover from render pixels
+    # Recover tinted features baked into the mat photos from the render pixels. Some mats
+    # carry their rails/ruins inside the neutral mat photo (no separate tinted placement) —
+    # e.g. one copy of a mirrored bridge-strip pair has placed gold-rail quads while its
+    # 180-degree twin bakes the same rails into the mat art. Recovery therefore runs for
+    # EVERY area: blobs already covered by a placed quad are skipped, printed badges
+    # (objectives / letter badges / area markers — teal reads as "dense") are masked out,
+    # each connected blob becomes its own box, and a blob's centre must lie inside the
+    # area's polygon (the bbox crop can clip a neighbouring mat's art).
+    masks = [(o["pos"][0], o["pos"][1], 1.8) for o in objectives]
+    masks += [(bx, by, 1.5) for bx, by, _ in badge_letters]
+    masks += [(m["pos"][0], m["pos"][1], 1.4) for m in markers]
     for a in area_objs:
-        if a["features"]:
-            continue
         poly = [(x, y) for x, y in a["polygon"]]
         xs = [p[0] for p in poly]
         ys = [p[1] for p in poly]
@@ -594,25 +616,42 @@ def extract_page(pdf, doc, page_no):
         if w_px < 4 or h_px < 4:
             continue
         data = list(crop.getdata())
-        for kind, test in (
-            ("light", lambda r, g, b: r > b * 1.3 and g > b * 1.2 and r >= g * 0.92 and max(r, g, b) - b > 30),
-            ("dense", lambda r, g, b: g > r * 1.15 and g > b * 1.08 and g - min(r, b) > 20),
-        ):
-            hits = [
-                (i % w_px, i // w_px)
-                for i, (r, g, b) in enumerate(data)
-                if test(r, g, b)
-            ]
-            if len(hits) < w_px * h_px * 0.015:
-                continue
-            hx0 = min(h[0] for h in hits)
-            hx1 = max(h[0] for h in hits)
-            hy0 = min(h[1] for h in hits)
-            hy1 = max(h[1] for h in hits)
-            fx0 = min(xs) + hx0 / w_px * (max(xs) - min(xs))
-            fx1 = min(xs) + (hx1 + 1) / w_px * (max(xs) - min(xs))
-            fy1 = max(ys) - hy0 / h_px * (max(ys) - min(ys))
-            fy0 = max(ys) - (hy1 + 1) / h_px * (max(ys) - min(ys))
+        in_x0, in_x1 = min(xs), max(xs)
+        in_y0, in_y1 = min(ys), max(ys)
+
+        def to_in(hx, hy):
+            return (
+                in_x0 + hx / w_px * (in_x1 - in_x0),
+                in_y1 - hy / h_px * (in_y1 - in_y0),
+            )
+
+        def emit(kind, hpx):
+            hx0 = min(h[0] for h in hpx)
+            hx1 = max(h[0] for h in hpx)
+            hy0 = min(h[1] for h in hpx)
+            hy1 = max(h[1] for h in hpx)
+            fx0, _ = to_in(hx0, 0)
+            fx1, _ = to_in(hx1 + 1, 0)
+            _, fy1 = to_in(0, hy0)
+            _, fy0 = to_in(0, hy1 + 1)
+            if (fx1 - fx0) * (fy1 - fy0) < 0.6:
+                return  # noise speck
+            # the blob must belong to THIS area (the bbox crop can clip a neighbour's art)
+            mx = sum(h[0] for h in hpx) / len(hpx)
+            my = sum(h[1] for h in hpx) / len(hpx)
+            if not point_in_poly(to_in(mx, my), poly):
+                return
+            # a real placed-photo feature already covering this blob wins (a composite mat
+            # can carry both: p51's top-right bridge mat has its gold quads placed for real)
+            bb = [fx0, fy0, fx1 - fx0, fy1 - fy0]
+            for g in a["features"]:
+                if g["kind"] != kind:
+                    continue
+                gx = [p[0] for p in g["polygon"]]
+                gy = [p[1] for p in g["polygon"]]
+                gb = [min(gx), min(gy), max(gx) - min(gx), max(gy) - min(gy)]
+                if rect_overlap(bb, gb) > 0.5 * bb[2] * bb[3]:
+                    return
             a["features"].append(
                 {
                     "kind": kind,
@@ -625,6 +664,54 @@ def extract_page(pdf, doc, page_no):
                     "recovered": True,
                 }
             )
+
+        for kind, test in (
+            ("light", lambda r, g, b: r > b * 1.3 and g > b * 1.2 and r >= g * 0.92 and max(r, g, b) - b > 30),
+            ("dense", lambda r, g, b: g > r * 1.15 and g > b * 1.08 and g - min(r, b) > 20),
+        ):
+            hits = [
+                (i % w_px, i // w_px)
+                for i, (r, g, b) in enumerate(data)
+                if test(r, g, b)
+            ]
+            # mask out printed badges (teal objective/letter icons read as "dense")
+            pmasks = []
+            for mxm, mym, mr in masks:
+                if in_x0 - 2 <= mxm <= in_x1 + 2 and in_y0 - 2 <= mym <= in_y1 + 2:
+                    pmx = (mxm - in_x0) / (in_x1 - in_x0) * w_px
+                    pmy = (in_y1 - mym) / (in_y1 - in_y0) * h_px
+                    pr = mr * max(w_px / (in_x1 - in_x0), h_px / (in_y1 - in_y0))
+                    pmasks.append((pmx, pmy, pr * pr))
+            if pmasks:
+                hits = [
+                    h for h in hits
+                    if not any((h[0] - qx) ** 2 + (h[1] - qy) ** 2 <= r2 for qx, qy, r2 in pmasks)
+                ]
+            if len(hits) < w_px * h_px * 0.015:
+                continue
+            # Split the mask into connected blobs on a coarse grid and emit one box per
+            # blob — a mat can hold several distinct tinted features (two barricade runs
+            # + a bridge), and one bbox would swallow the whole mat.
+            CELL = 4
+            cells = {(x // CELL, y // CELL) for x, y in hits}
+            seen = set()
+            for c0 in cells:
+                if c0 in seen:
+                    continue
+                stack, comp = [c0], set()
+                seen.add(c0)
+                while stack:
+                    ccx, ccy = stack.pop()
+                    comp.add((ccx, ccy))
+                    for dx in (-1, 0, 1):
+                        for dy in (-1, 0, 1):
+                            nb = (ccx + dx, ccy + dy)
+                            if nb in cells and nb not in seen:
+                                seen.add(nb)
+                                stack.append(nb)
+                hpx = [h for h in hits if (h[0] // CELL, h[1] // CELL) in comp]
+                if len(hpx) >= w_px * h_px * 0.01:
+                    emit(kind, hpx)
 
     for o in objectives:
         for a in area_objs:

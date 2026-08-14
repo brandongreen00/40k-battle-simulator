@@ -116,6 +116,20 @@ describe('Event Companion layouts', () => {
     expect(updated.objectivePoints).toHaveLength(6);
     expect(updated.source).toContain('v1.1');
   });
+
+  it('single/separate terrain-area markers match the printed badges (v1.1 review)', () => {
+    // The plain-eye badge = "single terrain area" (two mats merge into ONE rules-area, via
+    // groupId), the slashed-eye badge = "separate terrain areas". The old extractor inverted
+    // every badge on every page (its slash test matched the plain badge's stroked eye
+    // outline). Pin badge-verified pages: all-single, mixed, and the merge behaviour.
+    const at = (id: string) => layouts11.find((l) => l.id === id)!;
+    // 4 plain-eye badges → 4 single markers → 4 merged pairs = 8 areas carrying a groupId.
+    const allSingle = at('ec2026-take-and-hold_vs_priority-assets-a');
+    expect(allSingle.terrainAreas!.filter((a) => a.groupId).length).toBe(8);
+    // 2 plain + 2 slashed (crop-verified against the PDF): exactly 2 merged pairs.
+    const mixed = at('ec2026-purge-the-foe_vs_purge-the-foe-c');
+    expect(mixed.terrainAreas!.filter((a) => a.groupId).length).toBe(4);
+  });
 });
 
 describe('disposition → mission matrix', () => {
