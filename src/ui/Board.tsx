@@ -34,6 +34,21 @@ export interface MovementUI {
   warnings: { unitId: string; centroid: Vec2 }[];
 }
 
+/** Shooting-phase interaction: tap one of your units to see its weapon ranges on the board,
+ *  then tap an enemy inside a ring to target it (the panel under the board shows the matchup). */
+export interface ShootingUI {
+  /** The shooting (active) side — its units select as the shooter, enemy taps pick the target. */
+  side: Side;
+  attackerUnitId: string | null;
+  targetUnitId: string | null;
+  /** Distinct weapon ranges (inches) of the selected shooter, colored to match the panel. */
+  rings: { range: number; color: string }[];
+  /** Enemy unit ids the shooter can legally target right now (highlighted on the board). */
+  targetableIds: string[];
+  onPickUnit: (unitId: string) => void;
+  onClear: () => void;
+}
+
 interface Props {
   layout: Layout;
   units: UnitInstance[];
@@ -47,6 +62,8 @@ interface Props {
   onPlacementCancel?: () => void;
   /** When set, the board is in Movement-phase mode (select + group move + coherency). */
   movement?: MovementUI | null;
+  /** When set, the board is in Shooting-phase mode (tap shooter → ranges, tap enemy → target). */
+  shooting?: ShootingUI | null;
   /** Combat targeting (from the game panel): highlight the attacker and its target on the board. */
   targeting?: { attackerUnitId?: string; targetUnitId?: string } | null;
   /** Transient combat effects (shot tracers + impact flashes) — pushed by the parent when a
@@ -95,6 +112,7 @@ export function Board({
   onPlacementCycle,
   onPlacementCancel,
   movement,
+  shooting,
   targeting,
   fx,
   operationMarkers,
@@ -260,6 +278,13 @@ export function Board({
     e.stopPropagation();
     e.preventDefault(); // never let a token drag start a native text selection / drag
     if (trackPointerDown(e)) return; // second finger -> pinch, not a game gesture
+    if (shooting) {
+      // Shooting phase: a tap picks the shooter (own unit) or its target (enemy unit) —
+      // no drags, so nothing here can dispatch a rejected MoveModel mid-match.
+      const unitId = index.get(modelId)?.unitId;
+      if (unitId) shooting.onPickUnit(unitId);
+      return;
+    }
     if (movement) {
       const unitId = index.get(modelId)?.unitId;
       // Grabbing a model of a moving unit drags ALL moving units as a group
@@ -319,6 +344,10 @@ export function Board({
       // Zoomed in outside the movement/placement modes: drag the empty board to pan.
       panDrag.current = { cx: e.clientX, cy: e.clientY };
       svgRef.current?.setPointerCapture(e.pointerId);
+      return;
+    }
+    if (shooting) {
+      shooting.onClear();
       return;
     }
     setSelectedIds([]);
@@ -433,9 +462,9 @@ export function Board({
   // Is the current ghost a legal placement? (deployment zone / Infiltrators)
   const ghostLegal = ghost && placement?.legal ? placement.legal(ghost) : true;
 
-  // ── measurement (suppressed while placing) ──
-  const a = !placement && selectedIds[0] ? index.get(selectedIds[0]) : undefined;
-  const b = !placement && selectedIds[1] ? index.get(selectedIds[1]) : undefined;
+  // ── measurement (suppressed while placing or shooting) ──
+  const a = !placement && !shooting && selectedIds[0] ? index.get(selectedIds[0]) : undefined;
+  const b = !placement && !shooting && selectedIds[1] ? index.get(selectedIds[1]) : undefined;
 
   let measure: { from: Vec2; to: Vec2; gap: number; centre: number } | null = null;
   if (a && b) {
@@ -474,9 +503,22 @@ export function Board({
       : 'Drag a box to select your units, then pick a move in the panel'
     : null;
 
+  const unitLabel = (id: string | null) => {
+    const u = id ? units.find((x) => x.id === id) : undefined;
+    return u ? datasheetsById.get(u.datasheetId)?.name ?? u.id : '';
+  };
+  const shootingHud = shooting
+    ? shooting.attackerUnitId
+      ? shooting.targetUnitId
+        ? `${unitLabel(shooting.attackerUnitId)} → ${unitLabel(shooting.targetUnitId)} — check the stat sheet below, then Shoot`
+        : `${unitLabel(shooting.attackerUnitId)} — rings show each weapon's range; tap an enemy inside one to target it`
+      : 'Shooting phase — tap one of your units to see its weapons and ranges'
+    : null;
+
   const hud =
     placementHud ??
     movementHud ??
+    shootingHud ??
     (measure
       ? a && b
         ? `${a.unitName} → ${b.unitName}: ${measure.gap.toFixed(2)}" base-to-base (${measure.centre.toFixed(2)}" centre)`
@@ -507,6 +549,57 @@ export function Board({
         >
           <rect x={0} y={0} width={widthPx} height={heightPx} fill="#1f2430" stroke="#3a4150" strokeWidth={2} />
           <TerrainLayer layout={layout} markers={operationMarkers} />
+
+          {/* Shooting phase: weapon-range rings around the selected shooter. Ranges are measured
+              base-edge to base-edge, so each circle is range + that model's base radius — an
+              enemy whose base touches a ring is in range of that weapon. */}
+          {shooting?.attackerUnitId && shooting.rings.length > 0 && (() => {
+            const att = units.find((u) => u.id === shooting.attackerUnitId && !u.inReserves);
+            if (!att) return null;
+            const ms = att.models.filter((m) => m.alive);
+            // Longest range first so the shorter rings stay visible on top of the bigger fills.
+            const rings = [...shooting.rings].sort((x, y) => y.range - x.range);
+            return (
+              <g className="range-rings" pointerEvents="none">
+                {rings.map((ring) => (
+                  <g key={ring.range}>
+                    {/* Group opacity flattens the per-model circles into one translucent union. */}
+                    <g opacity={0.08}>
+                      {ms.map((m) => {
+                        const rad = baseRadius(index.get(m.id)?.shape ?? FALLBACK_SHAPE);
+                        return (
+                          <circle
+                            key={`f-${m.id}`}
+                            cx={pxX(m.pos.x)}
+                            cy={pxY(m.pos.y, layout.boardHeight)}
+                            r={pxLen(ring.range + rad)}
+                            fill={ring.color}
+                          />
+                        );
+                      })}
+                    </g>
+                    {ms.map((m) => {
+                      const rad = baseRadius(index.get(m.id)?.shape ?? FALLBACK_SHAPE);
+                      return (
+                        <circle
+                          key={`s-${m.id}`}
+                          className="range-ring"
+                          cx={pxX(m.pos.x)}
+                          cy={pxY(m.pos.y, layout.boardHeight)}
+                          r={pxLen(ring.range + rad)}
+                          fill="none"
+                          stroke={ring.color}
+                          strokeOpacity={0.5}
+                          strokeWidth={1.25}
+                          strokeDasharray="7 5"
+                        />
+                      );
+                    })}
+                  </g>
+                ))}
+              </g>
+            );
+          })()}
 
           {units.map((u) =>
             u.inReserves
@@ -555,6 +648,40 @@ export function Board({
               </g>
             );
           })}
+
+          {/* Shooting phase: enemies the shooter can legally target right now get an amber
+              tappable ring (the current target keeps the red targeting rings below). */}
+          {shooting?.attackerUnitId && shooting.targetableIds.length > 0 && (
+            <g pointerEvents="none" className="targetable-overlay">
+              {shooting.targetableIds
+                .filter((id) => id !== shooting.targetUnitId)
+                .map((id) => {
+                  const u = units.find((x) => x.id === id && !x.inReserves);
+                  if (!u) return null;
+                  return u.models
+                    .filter((m) => m.alive)
+                    .map((m) => {
+                      const r = index.get(m.id);
+                      if (!r) return null;
+                      const rad = r.shape.kind === 'circle' ? r.shape.radius! : Math.max(r.shape.rx!, r.shape.ry!);
+                      return (
+                        <circle
+                          key={`tgt-${m.id}`}
+                          className="targetable-ring"
+                          cx={pxX(m.pos.x)}
+                          cy={pxY(m.pos.y, layout.boardHeight)}
+                          r={pxLen(rad) + 3}
+                          fill="none"
+                          stroke="#fbbf24"
+                          strokeOpacity={0.8}
+                          strokeWidth={1.5}
+                          strokeDasharray="3 3"
+                        />
+                      );
+                    });
+                })}
+            </g>
+          )}
 
           {/* Rubber-band selection box (Movement phase) */}
           {selectBox && (

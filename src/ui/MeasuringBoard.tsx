@@ -5,7 +5,7 @@ import { makeRNG } from '../core/rng';
 import { nextFormation, type Formation } from '../core/formation';
 import { checkUnitDeployment, deepStrikeArrivalLegal, isEntryPlaced, type DeployAbility } from '../core/deployment';
 import { anyOverlap, occupiedBases, unitOverlaps } from '../core/collision';
-import { unitCoherency, unitCentroid } from '../core/phases';
+import { unitCoherency, unitCentroid, validUnitShootingTargets } from '../core/phases';
 import { gapBetweenBases } from '../core/geometry';
 import { canEmbark, deploymentProbeUnit, remainingCapacity, splitRideCounts, splitRuleSelects, transportSplitRule } from '../core/transport';
 import { PREBATTLE_GRANTS, allowsRound1DeepStrike, grantedDeployAbility } from '../core/enhancements';
@@ -21,8 +21,9 @@ import {
 } from '../core/ai/prompts';
 import { dataIndex, datasheetsById, deployAbilityForDatasheet, getDatasheet, layouts, layoutsForPairing, rosters, stratagems } from '../data/loaders';
 import { DISPOSITIONS, MISSION_MATRIX, MISSION_NAMES, type DispositionId } from '../core/missions11';
-import { Board, type Placement, type MovementUI, type ShotFx } from './Board';
+import { Board, type Placement, type MovementUI, type ShootingUI, type ShotFx } from './Board';
 import { GamePanel } from './GamePanel';
+import { ShootingBar, ringsForPlan } from './ShootingPanel';
 import { DeploymentPanel, effectiveSide } from './DeploymentPanel';
 import { AiBar, type AiSeats } from './AiBar';
 import { loadSavedRosters } from './savedLists';
@@ -265,6 +266,8 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName, initialSt
   const [selectedUnitIds, setSelectedUnitIds] = useState<string[]>([]);
   // Attacker/target picked in the game panel — highlighted on the board (rings + firing line).
   const [targeting, setTargeting] = useState<{ attackerUnitId?: string; targetUnitId?: string }>({});
+  // Shooting from the map: the unit tapped as the shooter and the enemy tapped as its target.
+  const [shootSel, setShootSel] = useState<{ attackerId?: string; targetId?: string }>({});
   const spawnCount = useRef(0);
   // Transient shot tracers/impacts on the board (auto-expire).
   const [fx, setFx] = useState<ShotFx[]>([]);
@@ -875,6 +878,62 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName, initialSt
       }
     : null;
 
+  // Shooting-phase board interaction: tap your unit → its weapons + range rings; tap an enemy →
+  // the matchup stat sheet + Shoot. Active only on a HUMAN side's own Shooting phase (an AI
+  // volley at your units already pauses in the Incoming fire panel).
+  const inShooting =
+    inMatch && state.stage === 'battle' && state.phase === 'Shooting' && !state.ended &&
+    !placing && !aiSeats[state.activePlayer].enabled;
+  useEffect(() => {
+    if (!inShooting && (shootSel.attackerId || shootSel.targetId)) setShootSel({});
+  }, [inShooting, shootSel]);
+  const shootAttacker =
+    inShooting && shootSel.attackerId
+      ? state.units.find(
+          (u) =>
+            u.id === shootSel.attackerId && u.owner === state.activePlayer &&
+            !u.inReserves && u.models.some((m) => m.alive),
+        )
+      : undefined;
+  const shootPlan = useMemo(
+    () => (shootAttacker ? planUnitShooting(state, shootAttacker, { datasheets: datasheetsById }) : null),
+    [state, shootAttacker],
+  );
+  const shootRings = useMemo(() => (shootPlan ? ringsForPlan(shootPlan) : []), [shootPlan]);
+  const shootTargetable = useMemo(
+    () =>
+      shootAttacker
+        ? validUnitShootingTargets(shootAttacker, state, { datasheets: datasheetsById }).map((u) => u.id)
+        : [],
+    [state, shootAttacker],
+  );
+  const shooting: ShootingUI | null = inShooting
+    ? {
+        side: state.activePlayer,
+        attackerUnitId: shootAttacker?.id ?? null,
+        targetUnitId: shootSel.targetId ?? null,
+        rings: shootRings,
+        targetableIds: shootTargetable,
+        onPickUnit: (unitId) => {
+          const cur = stateRef.current;
+          const u = cur.units.find((x) => x.id === unitId);
+          if (!u || u.inReserves || !u.models.some((m) => m.alive)) return;
+          if (u.owner === cur.activePlayer) {
+            // Tap your unit: select it as the shooter (tap again to clear; a new unit switches).
+            setShootSel((s) => (s.attackerId === unitId ? {} : { attackerId: unitId }));
+          } else {
+            // Tap an enemy: target it for the selected shooter (tap again to untarget).
+            setShootSel((s) =>
+              s.attackerId
+                ? { attackerId: s.attackerId, ...(s.targetId === unitId ? {} : { targetId: unitId }) }
+                : s,
+            );
+          }
+        },
+        onClear: () => setShootSel({}),
+      }
+    : null;
+
   const sandboxRoster = rosterFor('player');
 
   return (
@@ -1237,6 +1296,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName, initialSt
           onPlacementCycle={() => setPlacing((p) => (p ? { ...p, formation: nextFormation(p.formation) } : p))}
           onPlacementCancel={() => setPlacing(null)}
           movement={movement}
+          shooting={shooting}
           targeting={
             incoming
               ? {
@@ -1245,10 +1305,30 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName, initialSt
                 }
               : inSetup
                 ? null
-                : targeting
+                : shooting && (shooting.attackerUnitId || shooting.targetUnitId)
+                  ? {
+                      ...(shooting.attackerUnitId ? { attackerUnitId: shooting.attackerUnitId } : {}),
+                      ...(shooting.targetUnitId ? { targetUnitId: shooting.targetUnitId } : {}),
+                    }
+                  : targeting
           }
           fx={fx}
         />
+        {/* Shooting phase, driven from the map: the tapped shooter's weapons + range rings, and
+            the tapped enemy's stat sheet. Lives right under the board so the phone's Board page
+            covers the whole phase without tab-flipping. */}
+        {shooting?.attackerUnitId && shootPlan && (
+          <ShootingBar
+            state={state}
+            attackerUnitId={shooting.attackerUnitId}
+            targetUnitId={shooting.targetUnitId}
+            plan={shootPlan}
+            rings={shootRings}
+            datasheetsById={datasheetsById}
+            dispatch={dispatch}
+            onClear={() => setShootSel({})}
+          />
+        )}
         {/* Mobile-only: drive the Movement phase right on the Board page — selecting and
             dragging happen here, so starting and confirming the move should too (no tab-flip). */}
         {inMatch && !inSetup && !state.ended && (() => {
