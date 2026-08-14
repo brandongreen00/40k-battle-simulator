@@ -90,11 +90,11 @@
  "territoryDivider": [
   [
    0.483,
-   33.774
+   26.005
   ],
   [
    43.719,
-   26.005
+   33.774
   ]
  ],
  "terrainAreas": [
@@ -16175,5 +16175,5 @@
  ],
  "id": "ec2026-disruption_vs_priority-assets-b",
  "layoutLetter": "B",
- "source": "GW Warhammer Event Companion v1.0 (2026-06), page 43"
+ "source": "GW Warhammer Event Companion v1.1 (2026-07), page 43"
 }

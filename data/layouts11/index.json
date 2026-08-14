@@ -64,8 +64,8 @@
    "UNSTOPPABLE FORCE"
   ],
   "areas": 16,
-  "features": 20,
-  "objectives": 5
+  "features": 21,
+  "objectives": 6
  },
  {
   "id": "ec2026-take-and-hold_vs_purge-the-foe-b",
@@ -81,8 +81,8 @@
    "UNSTOPPABLE FORCE"
   ],
   "areas": 16,
-  "features": 20,
-  "objectives": 5
+  "features": 21,
+  "objectives": 6
  },
  {
   "id": "ec2026-take-and-hold_vs_purge-the-foe-c",
@@ -98,8 +98,8 @@
    "UNSTOPPABLE FORCE"
   ],
   "areas": 16,
-  "features": 20,
-  "objectives": 5
+  "features": 21,
+  "objectives": 6
  },
  {
   "id": "ec2026-take-and-hold_vs_disruption-a",
@@ -320,7 +320,7 @@
   ],
   "areas": 16,
   "features": 21,
-  "objectives": 5
+  "objectives": 6
  },
  {
   "id": "ec2026-purge-the-foe_vs_disruption-b",
@@ -336,8 +336,8 @@
    "DELAYING ACTION"
   ],
   "areas": 16,
-  "features": 20,
-  "objectives": 5
+  "features": 22,
+  "objectives": 6
  },
  {
   "id": "ec2026-purge-the-foe_vs_disruption-c",
@@ -353,8 +353,8 @@
    "DELAYING ACTION"
   ],
   "areas": 16,
-  "features": 20,
-  "objectives": 5
+  "features": 21,
+  "objectives": 6
  },
  {
   "id": "ec2026-purge-the-foe_vs_reconnaissance-a",

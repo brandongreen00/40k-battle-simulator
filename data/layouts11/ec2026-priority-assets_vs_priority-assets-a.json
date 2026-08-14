@@ -90,11 +90,11 @@
  "territoryDivider": [
   [
    19.081,
-   59.643
+   0.606
   ],
   [
    24.912,
-   0.606
+   59.643
   ]
  ],
  "terrainAreas": [
@@ -16163,5 +16163,5 @@
  ],
  "id": "ec2026-priority-assets_vs_priority-assets-a",
  "layoutLetter": "A",
- "source": "GW Warhammer Event Companion v1.0 (2026-06), page 51"
+ "source": "GW Warhammer Event Companion v1.1 (2026-07), page 51"
 }

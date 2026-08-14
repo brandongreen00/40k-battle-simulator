@@ -186,11 +186,11 @@
  "territoryDivider": [
   [
    0.313,
-   59.687
+   0.534
   ],
   [
    43.824,
-   0.534
+   59.687
   ]
  ],
  "terrainAreas": [
@@ -16315,5 +16315,5 @@
  ],
  "id": "ec2026-purge-the-foe_vs_priority-assets-b",
  "layoutLetter": "B",
- "source": "GW Warhammer Event Companion v1.0 (2026-06), page 34"
+ "source": "GW Warhammer Event Companion v1.1 (2026-07), page 34"
 }

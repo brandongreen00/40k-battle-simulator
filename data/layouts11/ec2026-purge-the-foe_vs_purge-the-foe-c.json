@@ -90,11 +90,11 @@
  "territoryDivider": [
   [
    19.081,
-   59.643
+   0.606
   ],
   [
    24.912,
-   0.606
+   59.643
   ]
  ],
  "terrainAreas": [
@@ -16202,5 +16202,5 @@
  ],
  "id": "ec2026-purge-the-foe_vs_purge-the-foe-c",
  "layoutLetter": "C",
- "source": "GW Warhammer Event Companion v1.0 (2026-06), page 26"
+ "source": "GW Warhammer Event Companion v1.1 (2026-07), page 26"
 }

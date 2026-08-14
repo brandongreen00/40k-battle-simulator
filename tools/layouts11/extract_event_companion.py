@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Extract the 45 Warhammer Event Companion (11th edition, June 2026) terrain layouts.
+"""Extract the 45 Warhammer Event Companion (11th edition) terrain layouts.
 
-Source PDF (not committed - GW IP, personal use):
-  https://assets.warhammer-community.com/eng_12-06_warhammer40000_event_companion-s3bfb5f9s1-ivswuij3fo.pdf
+Source PDF (not committed - GW IP, personal use) - v1.1, July 2026:
+  https://assets.warhammer-community.com/eng_22-07_warhammer_40,000_event_companion-alyapl19us-b2drgwkji4.pdf
+(previously v1.0, June 2026:
+  https://assets.warhammer-community.com/eng_12-06_warhammer40000_event_companion-s3bfb5f9s1-ivswuij3fo.pdf)
 
 The companion's layout pages (9-53) are vector diagrams. This script reads the
 vector objects directly (pdfplumber) so every polygon is exact, calibrated via the
@@ -468,25 +470,16 @@ def extract_page(pdf, doc, page_no):
         if not cal.contains(*centroid((l["x0"], l["top"], l["x1"], l["bottom"]))):
             continue
         length = math.hypot(l["x1"] - l["x0"], l["bottom"] - l["top"])
-        if length > 100:
-            pts = l.get("pts") or [(l["x0"], l["y0"]), (l["x1"], l["y1"])]
-            cands.append((length, pts))
+        if length > 100 and l.get("pts"):
+            cands.append((length, l["pts"]))
     if cands:
+        # pdfplumber stores the true endpoints in `pts` ((x, top-based y) - for plain lines
+        # and curves alike). Pairing the bbox corners (x0,top)/(x1,bottom) instead mirrors
+        # every bottom-left -> top-right diagonal - and ALL of the companion's diagonal
+        # dividers run that way (the v1.0 extraction shipped 34 mirrored dividers this way).
         cands.sort(key=lambda t: -t[0])
         raw = cands[0][1]
-        # lines store pts as (x, y) with y in top-based coords for curves;
-        # plain lines use y0/y1 distance coords - convert via top/bottom fields
-        ln = max(page.lines + page.curves, key=lambda l: (
-            math.hypot(l["x1"] - l["x0"], l["bottom"] - l["top"])
-            if l.get("dash") and l.get("dash")[0] else -1))
-        p1 = cal.pt(ln["x0"], ln["top"])
-        p2 = cal.pt(ln["x1"], ln["bottom"])
-        # dashed diagonal runs top-left -> bottom-right in page space; recover
-        # true endpoint pairing from the curve pts when available
-        if ln in page.curves and ln.get("pts"):
-            p1 = cal.pt(*ln["pts"][0])
-            p2 = cal.pt(*ln["pts"][-1])
-        divider = [list(p1), list(p2)]
+        divider = [list(cal.pt(*raw[0])), list(cal.pt(*raw[-1]))]
 
     # letter badges -> nearest word letters (AB/CD/EF/GH)
     words = page.extract_words()
@@ -700,7 +693,7 @@ def main():
         lid = f"ec2026-{combo}-{letter.lower()}"
         data["id"] = lid
         data["layoutLetter"] = letter
-        data["source"] = f"GW Warhammer Event Companion v1.0 (2026-06), page {page_no}"
+        data["source"] = f"GW Warhammer Event Companion v1.1 (2026-07), page {page_no}"
         with open(os.path.join(OUT_DIR, f"{lid}.json"), "w") as f:
             json.dump(data, f, indent=1)
         index.append(

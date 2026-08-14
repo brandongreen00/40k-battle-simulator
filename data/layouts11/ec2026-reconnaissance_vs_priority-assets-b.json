@@ -90,11 +90,11 @@
  "territoryDivider": [
   [
    0.496,
-   33.908
+   26.139
   ],
   [
    43.733,
-   26.139
+   33.908
   ]
  ],
  "terrainAreas": [
@@ -16155,5 +16155,5 @@
  ],
  "id": "ec2026-reconnaissance_vs_priority-assets-b",
  "layoutLetter": "B",
- "source": "GW Warhammer Event Companion v1.0 (2026-06), page 49"
+ "source": "GW Warhammer Event Companion v1.1 (2026-07), page 49"
 }
