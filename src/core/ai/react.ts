@@ -9,7 +9,7 @@
 // just before a ShootUnit intent from the other side resolves.
 
 import type { GameState, Side } from '../types';
-import { engagedEnemies, gapBetween, isOnBoard } from '../phases';
+import { engagedEnemies, gapBetween, isOnBoard, validUnitShootingTargets } from '../phases';
 import { pointInPolygon } from '../geometry';
 import { blocksOverwatch } from '../enhancements';
 import { chargePathExists } from '../engine';
@@ -140,10 +140,16 @@ export function aiReactionToPhaseEnd(
         const ds = ctx.datasheets.get(u.datasheetId);
         if (!ds || ds.keywords.some((k) => k.toLowerCase() === 'titanic')) continue;
         if (engagedEnemies(u, state, ctx).length > 0) continue;
+        // The exact per-weapon range+LoS check the engine resolves with — shootingEV's sampled
+        // visibility uses the legacy terrain list (empty on 11e maps), so it alone would happily
+        // declare an overwatch the reducer then rejects ("no weapon could fire").
+        const legalTargets = validUnitShootingTargets(u, state, ctx);
+        if (legalTargets.length === 0) continue;
         for (const e of state.units) {
           if (e.owner === defendingSide || !isOnBoard(e)) continue;
           if (blocksOverwatch(e)) continue; // Shroud Projector / Flash Grenades
           if (gapBetween(u, e, ctx) > 24) continue;
+          if (!legalTargets.some((t) => t.id === e.id)) continue;
           const ev = shootingEV(state, u, e, ctx) * 0.28;
           if (!best || ev > best.ev) best = { unitId: u.id, targetId: e.id, ev };
         }

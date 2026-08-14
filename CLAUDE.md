@@ -370,6 +370,14 @@ ability-system design that these stages depend on.
     just VEHICLE/MOUNTED; movement paths are straight lines (matching the budget model), so
     "crossing" = the start→end segment; the one-shot stamp lives in `resolveAttack` (single
     chokepoint for volley + direct paths), match mode only (sandbox stays a free calculator).
+  - **Merge-time catch (post-#27 map refresh)**: the acceptance game's zero-reject pin caught a
+    LATENT AI/engine mismatch on the v1.1 maps — the AI's Fire Overwatch picker gated only on
+    gap ≤ 24" + `shootingEV`, whose sampled visibility reads the LEGACY `layout.terrain` list
+    (empty on 11e maps → everything "visible"), so it could declare overwatch at a terrain-
+    blocked target the reducer then rejects. Fixed in ai/react.ts: overwatch candidates must
+    also pass `validUnitShootingTargets` (the exact per-weapon range+LoS check the engine
+    resolves with). shootingEV's 11e-blind visibility remains for ranking only (normal shooting
+    already picks targets from the exact check) — a future candidate for `unitCanSeeIn`.
   - **Known nits**: the AI never holds weapons (fires everything, incl. the HK missile at the
     first target — an EV-based hold policy is a future profile knob); `pnpm sim` (headless)
     still only loads legacy `data/layouts/` so dense rules are exercised there only via the
