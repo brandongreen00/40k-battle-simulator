@@ -25,7 +25,8 @@ import {
   enhancementEffectIds, enhancementLdBonus, enhancementOcBonus, enhancementWeaponGrantFor,
   hasDigitalWeapons, shockedOcFloor,
 } from './enhancements';
-import { defensiveProfileForItem } from './wargear';
+import { defensiveProfileForItem, normalizeItemName } from './wargear';
+import { clampDeltaAvoidingDense, translateDenseLegal } from './terrainmove';
 import { ocBonusFromOrders, ldBonusFromOrders } from './orders';
 import { canFly, embarkedUnits, firingDeckX, isAircraft } from './transport';
 import { formationPositions } from './formation';
@@ -88,9 +89,10 @@ export function unitWeapons(unit: UnitInstance, ctx: EngineContext): { weapon: W
 }
 
 /** A weapon profile's base item name: multi-profile names ("Infernus heavy bolter – heavy bolter")
- *  collapse to the item the roster counts ("Infernus heavy bolter"). */
+ *  collapse to the item the roster counts ("Infernus heavy bolter"). Normalized so app-export
+ *  punctuation (Unicode hyphens/quotes, e.g. "Jindarii tox‑cycler") matches the datasheet name. */
 function weaponItemName(profileName: string): string {
-  return profileName.split(/\s+[–—-]\s+/)[0]!.trim().toLowerCase();
+  return normalizeItemName(profileName.split(/\s+[–—-]\s+/)[0]!);
 }
 
 /** The wargear counts governing weapons from `sourceDsId` (the unit's own, or a merged Leader's). */
@@ -117,7 +119,7 @@ export function weaponCarrierCount(
   if (!counts || Object.keys(counts).length === 0) return aliveOfSource;
   const item = weaponItemName(weapon.name);
   for (const [k, v] of Object.entries(counts)) {
-    if (k.trim().toLowerCase() === item) return Math.min(v, aliveOfSource);
+    if (normalizeItemName(k) === item) return Math.min(v, aliveOfSource);
   }
   return null; // loadout known and this weapon isn't in it
 }
@@ -348,6 +350,15 @@ export function resolveAttack(
     if (state.phase !== requiredPhase && !overwatchOk) {
       return { state, summary: '', rejected: `${isMelee ? 'melee' : 'ranged'} attacks only in the ${requiredPhase} phase (now ${state.phase})` };
     }
+  }
+
+  // [ONE SHOT] (match mode): the weapon is usable once per battle.
+  const oneShotKey = `${found.sourceDsId}|${weaponDef.name}`;
+  if (
+    state.mode === 'match' && !isMelee && !params.weaponOverride &&
+    profile.keywords.oneShot && (attacker.status.oneShotFired ?? []).includes(oneShotKey)
+  ) {
+    return { state, summary: '', rejected: `${weaponDef.name} has already been fired (One Shot — once per battle)` };
   }
 
   const carriers = params.weaponOverride
@@ -655,6 +666,10 @@ export function resolveAttack(
           ...u.status,
           [isMelee ? 'hasFought' : 'hasShot']: true,
           ...(!isMelee ? { lastShotOnTurn: state.turnCounter ?? 0 } : {}),
+          // [ONE SHOT]: spent for the rest of the battle (match mode; the sandbox stays free).
+          ...(state.mode === 'match' && !isMelee && !params.weaponOverride && profile.keywords.oneShot
+            ? { oneShotFired: [...new Set([...(u.status.oneShotFired ?? []), oneShotKey])] }
+            : {}),
         },
       };
     }
@@ -723,6 +738,14 @@ function diceAverage(expr: string): number {
 export function planUnitShooting(state: GameState, attacker: UnitInstance, ctx: EngineContext): FirePlan {
   const notes: string[] = [];
   let ranged = availableUnitWeapons(attacker, ctx).filter((w) => w.weapon.type === 'ranged');
+
+  // [ONE SHOT]: usable once per battle — a spent weapon drops out of every later fire plan.
+  ranged = ranged.filter((w) => {
+    if (!parseKeywords(w.weapon.keywords).oneShot) return true;
+    if (!(attacker.status.oneShotFired ?? []).includes(`${w.sourceDsId}|${w.weapon.name}`)) return true;
+    notes.push(`${w.weapon.name}: already fired (One Shot — once per battle)`);
+    return false;
+  });
 
   // Multi-profile weapons are ONE weapon: keep the first profile per item, note the rest.
   const seenItems = new Set<string>();
@@ -796,6 +819,10 @@ export interface UnitShootParams {
   /** Per-weapon target split (04.02: targets are selected per weapon): weapon key
    *  `${sourceDsId}|${weaponName}` → target unit id. Unlisted weapons fire at `targetUnitId`. */
   splitTargets?: Record<string, string>;
+  /** Weapons the controller chooses NOT to fire this volley (weapon keys
+   *  `${sourceDsId}|${weaponName}`) — e.g. saving a [ONE SHOT] Hunter-killer missile for a
+   *  better target. Held weapons are skipped without being marked as fired. */
+  holdWeapons?: string[];
 }
 
 /**
@@ -848,8 +875,15 @@ export function resolveUnitShooting(
     return { state, summary: '', rejected: 'while within Engagement Range, ranged attacks can only target an enemy unit within Engagement Range' };
   }
 
-  const { fire, notes } = planUnitShooting(state, attacker, ctx);
-  if (fire.length === 0) return { state, summary: '', rejected: 'no ranged weapons can fire' };
+  const { fire: planned, notes } = planUnitShooting(state, attacker, ctx);
+  if (planned.length === 0) return { state, summary: '', rejected: 'no ranged weapons can fire' };
+  // The controller may hold weapons back (they are not fired and not marked as spent).
+  const held = new Set(params.holdWeapons ?? []);
+  const fire = planned.filter((w) => !held.has(`${w.sourceDsId}|${w.weapon.name}`));
+  if (fire.length === 0) return { state, summary: '', rejected: 'every weapon was held back — unhold at least one to shoot' };
+  for (const w of planned) {
+    if (held.has(`${w.sourceDsId}|${w.weapon.name}`)) notes.push(`${w.weapon.name}: held back by the controller`);
+  }
 
   const aliveBefore = target.models.filter((m) => m.alive).length;
   let cur: GameState = {
@@ -1296,6 +1330,8 @@ function findChargeMove(
   /** Per-model bases of a translated charger copy (merged units mix base sizes). */
   chargerBases: (u: UnitInstance) => OccupiedBase[] = (u) =>
     u.models.filter((m) => m.alive).map((m) => ({ pos: m.pos, shape: cShape })),
+  /** Extra per-candidate legality (e.g. dense terrain, 13.06): the translate `v` must pass. */
+  moveLegal: (v: Vec2) => boolean = () => true,
   step = 0.1,
 ): Vec2 | null {
   const from = aliveCentroid(charger);
@@ -1325,6 +1361,8 @@ function findChargeMove(
         if (!clearOfNonTargets) continue; // a longer move might clear it — keep scanning
         // Bases may end in contact but never on top of another model (friend or foe).
         if (anyOverlap(chargerBases(moved), occupied)) continue;
+        // Dense terrain (13.06): a tank/rider charge may not cross or end on a dense feature.
+        if (!moveLegal(v)) continue;
         return v;
       }
     }
@@ -1441,7 +1479,10 @@ export function resolveCharge(
       const selected = selectable.slice(0, n);
       const selectedIds = new Set(selected.map((t) => t.unit.id));
       const nonTargets = otherEnemies.filter((e) => !selectedIds.has(e.unit.id));
-      const move = findChargeMove(charger, cDs.baseShape, selected, nonTargets, dist, occupied, (u) => unitBases(u, ctx));
+      const move = findChargeMove(
+        charger, cDs.baseShape, selected, nonTargets, dist, occupied, (u) => unitBases(u, ctx),
+        (v) => translateDenseLegal(charger, v, ctx, state.layout),
+      );
       if (move) return { move, selected };
     }
     return null;
@@ -1579,7 +1620,12 @@ export function chargePathExists(
     .filter((u) => u.owner !== charger.owner && !u.inReserves && !targetSet.has(u.id) && u.models.some((m) => m.alive))
     .map((u) => ({ unit: u, shape: ctx.datasheets.get(u.datasheetId)?.baseShape ?? cDs.baseShape }));
   const occupied = occupiedBases(state, ctx, [charger.id]);
-  return findChargeMove(charger, cDs.baseShape, targets, nonTargets, roll, occupied, (u) => unitBases(u, ctx)) !== null;
+  return (
+    findChargeMove(
+      charger, cDs.baseShape, targets, nonTargets, roll, occupied, (u) => unitBases(u, ctx),
+      (v) => translateDenseLegal(charger, v, ctx, state.layout),
+    ) !== null
+  );
 }
 
 /** Unit vector from the charger's closest model to the target's closest model. */
@@ -1765,9 +1811,11 @@ export function resolveFightMove(
 
   // Never end on top of another model's base (a friendly unit can sit between us and the enemy).
   const occupied = occupiedBases(state, ctx, [unit.id]);
-  const clamped = clampDeltaAvoidingOverlap(
+  let clamped = clampDeltaAvoidingOverlap(
     unitBases(unit, ctx), occupied, { x: dir.x * moveDist, y: dir.y * moveDist },
   );
+  // Dense terrain (13.06): a tank/rider pile-in/consolidation stops at a dense feature's edge.
+  clamped = clampDeltaAvoidingDense(unit, clamped, ctx, state.layout);
   moveDist = Math.hypot(clamped.x, clamped.y);
 
   // "Must end engaged" modes: if the clamped move still leaves us out of Engagement Range, the

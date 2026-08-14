@@ -4,6 +4,7 @@ import { reduce, createInitialState, type Intent } from '../core/state';
 import { makeRNG } from '../core/rng';
 import { nextFormation, type Formation } from '../core/formation';
 import { checkUnitDeployment, deepStrikeArrivalLegal, isEntryPlaced, type DeployAbility } from '../core/deployment';
+import { blockedByDense, unitDenseViolation } from '../core/terrainmove';
 import { anyOverlap, occupiedBases, unitOverlaps } from '../core/collision';
 import { unitCoherency, unitCentroid, validUnitShootingTargets } from '../core/phases';
 import { gapBetweenBases } from '../core/geometry';
@@ -832,11 +833,12 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName, initialSt
                 return deepStrikeArrivalLegal(
                   positions, placing.ds.baseShape, enemyModels(placing.side), effRound,
                   occupiedBases(state, { datasheets: datasheetsById }, placing.arriveUnitId ? [placing.arriveUnitId] : []),
+                  { layout, denseBlocked: blockedByDense(placing.ds) },
                 ).legal;
               },
             }
           : placing.entryKey
-          ? { legal: (positions: Vec2[]) => checkUnitDeployment(positions, placing.ds.baseShape, layout, placing.side, placing.ability, enemyModels(placing.side), occupiedBases(state, { datasheets: datasheetsById })).legal }
+          ? { legal: (positions: Vec2[]) => checkUnitDeployment(positions, placing.ds.baseShape, layout, placing.side, placing.ability, enemyModels(placing.side), occupiedBases(state, { datasheets: datasheetsById }), blockedByDense(placing.ds)).legal }
           : {}),
       }
     : null;
@@ -872,7 +874,9 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName, initialSt
           .filter(
             (u) =>
               !unitCoherency(u, { datasheets: datasheetsById }).inCoherency ||
-              (u.status.moveMode != null && unitOverlaps(state, u, { datasheets: datasheetsById })),
+              (u.status.moveMode != null &&
+                (unitOverlaps(state, u, { datasheets: datasheetsById }) ||
+                  unitDenseViolation(u, { datasheets: datasheetsById }, state.layout) !== null)),
           )
           .map((u) => ({ unitId: u.id, centroid: unitCentroid(u) })),
       }
