@@ -330,6 +330,40 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-08-14] — Tap a unit on the map → a mobile-friendly stat block (owner: "a small PR that
+  opens a mobile friendly stat block if I tap on a unit in the map"). Separate PR off main.**
+  All gates green: `pnpm typecheck`, `pnpm test` (**550 tests**, +2 jsdom in
+  `tests/unitStatBlock.test.tsx`), `pnpm build`; a Playwright iPhone-13 drive (tap a unit → sheet
+  → expand an ability → scroll → ✕) plus a desktop drive (click opens, drag does NOT) both pass
+  with zero console errors, zero horizontal overflow (scrollWidth == 390) and a 44px ✕.
+  - **New `src/ui/UnitStatBlock.tsx`**, rendered under the board (same slot as the ShootingBar,
+    so the phone's Board page needs no tab-flip): the printed-datasheet content — profile line(s)
+    (M/T/Sv/Inv/W/Ld/OC, one block per datasheet so a merged Leader shows its own line), ranged
+    and melee weapons with full profiles + keywords (carrier counts via `availableUnitWeapons`,
+    so it shows what this unit actually carries), abilities as tap-to-expand `<details>` (phones
+    have no hover, so rule text is never a tooltip) and the keyword line — plus LIVE state:
+    models left ×alive/starting, wounds remaining, and this turn's status chips (Battle-shocked,
+    Moved, Advanced, Has shot, …). **Read-only by design — it never dispatches an intent**, so
+    tapping a unit is safe in any phase.
+  - **Tap ≠ drag**: `Board.onInspectUnit` fires on pointer-UP only when the press never wandered
+    past `TAP_SLOP_PX` (8px), so a model drag / group move / pinch never pops the sheet. Armed
+    before the mode branches so it survives their early returns, and disarmed by the second
+    finger. Suppressed while placing a ghost and in the Shooting mode (which has its own matchup
+    stat sheet); the sheet also closes itself when the unit leaves the board or Shooting starts.
+  - **CSS ordering bug found + fixed**: the phone `min-height: 44px` overrides for `.shoot-clear`
+    lived in the app-shell media query at line ~1460 while its base `min-height: 34px` is
+    declared at ~1740 — same specificity, so the LATER base rule was winning and the existing
+    shooting panel's ✕ was a 34px touch target. Both panels' phone overrides now live in a second
+    media query at the END of styles.css (measured 44×44 in the browser). The sheet header is
+    sticky inside the scrolling sheet so ✕ stays reachable in a long rule.
+  - **Decisions**: the sheet lives under the board (the proven ShootingBar slot) rather than as a
+    fixed overlay — an overlay steals board taps exactly where units sit; capped at 48% height on
+    phones so the map stays usable; only on-board units are inspectable (Reserves/embarked units
+    aren't tappable), so no transport/reserves plumbing.
+  - **Handoff nits**: no way to open the sheet from the sidebar's unit list (would cover
+    Reserves/embarked units — the component takes a `UnitInstance`, so it's a small addition);
+    the Shooting phase deliberately shows the matchup sheet instead of the full stat block.
+
 - **[2026-08-14] — LoS/visibility/terrain fixes (owner: Kroyle's missing tox-cycler · "why can't
   my units see the Death Riders?" · deselect weapons/save the Hunter-killer · tanks+riders
   can't move through dense terrain). Separate PR off main.** All gates green: `pnpm typecheck`,

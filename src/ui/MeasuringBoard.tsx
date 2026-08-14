@@ -25,6 +25,7 @@ import { DISPOSITIONS, MISSION_MATRIX, MISSION_NAMES, type DispositionId } from 
 import { Board, type Placement, type MovementUI, type ShootingUI, type ShotFx } from './Board';
 import { GamePanel } from './GamePanel';
 import { ShootingBar, ringsForPlan } from './ShootingPanel';
+import { UnitStatBlock } from './UnitStatBlock';
 import { DeploymentPanel, effectiveSide } from './DeploymentPanel';
 import { AiBar, type AiSeats } from './AiBar';
 import { loadSavedRosters } from './savedLists';
@@ -269,6 +270,8 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName, initialSt
   const [targeting, setTargeting] = useState<{ attackerUnitId?: string; targetUnitId?: string }>({});
   // Shooting from the map: the unit tapped as the shooter and the enemy tapped as its target.
   const [shootSel, setShootSel] = useState<{ attackerId?: string; targetId?: string }>({});
+  // The unit whose stat block is open (tapped on the map). Read-only — never dispatches.
+  const [inspectId, setInspectId] = useState<string | null>(null);
   const spawnCount = useRef(0);
   // Transient shot tracers/impacts on the board (auto-expire).
   const [fx, setFx] = useState<ShotFx[]>([]);
@@ -938,6 +941,17 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName, initialSt
       }
     : null;
 
+  // The tapped unit's stat block. It closes itself when the unit leaves the board (wiped out,
+  // embarked, put in Reserves) and while the Shooting mode is on — that has its own stat sheet.
+  const inspectUnit = inspectId
+    ? state.units.find(
+        (u) => u.id === inspectId && !u.inReserves && !u.embarkedIn && u.models.some((m) => m.alive),
+      )
+    : undefined;
+  useEffect(() => {
+    if (inspectId && (!inspectUnit || inShooting)) setInspectId(null);
+  }, [inspectId, inspectUnit, inShooting]);
+
   const sandboxRoster = rosterFor('player');
 
   return (
@@ -1316,8 +1330,14 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName, initialSt
                     }
                   : targeting
           }
+          onInspectUnit={setInspectId}
           fx={fx}
         />
+        {/* Tapping any unit on the map opens its full stat block right under the board (mobile
+            first: it caps its height and scrolls internally, so the map stays usable). */}
+        {inspectUnit && (
+          <UnitStatBlock unit={inspectUnit} datasheetsById={datasheetsById} onClose={() => setInspectId(null)} />
+        )}
         {/* Shooting phase, driven from the map: the tapped shooter's weapons + range rings, and
             the tapped enemy's stat sheet. Lives right under the board so the phone's Board page
             covers the whole phase without tab-flipping. */}

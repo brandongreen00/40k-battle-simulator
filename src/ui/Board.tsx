@@ -21,6 +21,8 @@ export interface Placement {
 
 const ROTATE_STEP = Math.PI / 12; // 15° per scroll notch / R keypress / rotate button
 const WHEEL_ZOOM = 1.18; // zoom factor per wheel notch (when not placing)
+/** Screen px a press may wander and still count as a tap (fingers are never perfectly still). */
+const TAP_SLOP_PX = 8;
 
 /** Movement-phase interaction: drag-box select, group nudge, and coherency warnings. */
 export interface MovementUI {
@@ -66,6 +68,9 @@ interface Props {
   shooting?: ShootingUI | null;
   /** Combat targeting (from the game panel): highlight the attacker and its target on the board. */
   targeting?: { attackerUnitId?: string; targetUnitId?: string } | null;
+  /** A unit was TAPPED (pressed and released without dragging) — open its stat block. Not called
+   *  while placing a ghost or in the Shooting mode (which has its own tap meaning + stat sheet). */
+  onInspectUnit?: (unitId: string) => void;
   /** Transient combat effects (shot tracers + impact flashes) — pushed by the parent when a
    *  shooting intent resolves, removed on a timer. Coordinates in inches. */
   fx?: ShotFx[];
@@ -114,6 +119,7 @@ export function Board({
   movement,
   shooting,
   targeting,
+  onInspectUnit,
   fx,
   operationMarkers,
 }: Props) {
@@ -124,6 +130,8 @@ export function Board({
   // Movement mode: rubber-band selection + group drag.
   const [selectBox, setSelectBox] = useState<{ a: Vec2; b: Vec2 } | null>(null);
   const groupDrag = useRef<Vec2 | null>(null); // last cursor pos during a group nudge
+  // A press on a model that may still turn out to be a TAP (stat block) rather than a drag.
+  const tapCandidate = useRef<{ unitId: string; cx: number; cy: number } | null>(null);
 
   const widthPx = layout.boardWidth * INCH_TO_PX;
   const heightPx = layout.boardHeight * INCH_TO_PX;
@@ -262,6 +270,7 @@ export function Board({
       groupDrag.current = null;
       panDrag.current = null;
       placingDrag.current = false;
+      tapCandidate.current = null;
       svgRef.current?.setPointerCapture(e.pointerId);
       return true;
     }
@@ -278,6 +287,10 @@ export function Board({
     e.stopPropagation();
     e.preventDefault(); // never let a token drag start a native text selection / drag
     if (trackPointerDown(e)) return; // second finger -> pinch, not a game gesture
+    // Arm the stat block: if this press ends without dragging, it was a tap on the unit. Armed
+    // before the mode branches so it survives their early returns; a drag disarms it on move.
+    const tapped = index.get(modelId)?.unitId;
+    tapCandidate.current = onInspectUnit && !shooting && tapped ? { unitId: tapped, cx: e.clientX, cy: e.clientY } : null;
     if (shooting) {
       // Shooting phase: a tap picks the shooter (own unit) or its target (enemy unit) —
       // no drags, so nothing here can dispatch a rejected MoveModel mid-match.
@@ -357,6 +370,9 @@ export function Board({
     if (pointers.current.has(e.pointerId)) {
       pointers.current.set(e.pointerId, { cx: e.clientX, cy: e.clientY });
     }
+    // Wandering past the slop makes this a drag, not a tap — no stat block on release.
+    const tap = tapCandidate.current;
+    if (tap && Math.hypot(e.clientX - tap.cx, e.clientY - tap.cy) > TAP_SLOP_PX) tapCandidate.current = null;
     // Two-finger pinch: zoom/pan only. Both finger positions are converted into the PINCH-START
     // view's board coordinates so each move is computed against one stable reference frame.
     if (pinchStart.current && pointers.current.size >= 2) {
@@ -414,6 +430,10 @@ export function Board({
   function handlePointerUp(e: PointerEvent) {
     pointers.current.delete(e.pointerId);
     if (pinchStart.current && pointers.current.size < 2) pinchStart.current = null;
+    // A press that never became a drag was a tap on a unit: open its stat block.
+    const tap = tapCandidate.current;
+    tapCandidate.current = null;
+    if (tap && e.type !== 'pointercancel') onInspectUnit?.(tap.unitId);
     if (selectBox && movement) {
       const ids = unitsInBox(selectBox);
       movement.onSelectUnits(ids, e.shiftKey || addSelect);
@@ -423,7 +443,8 @@ export function Board({
     panDrag.current = null;
     placingDrag.current = false;
     setDragId(null);
-    if (svgRef.current?.hasPointerCapture(e.pointerId)) svgRef.current.releasePointerCapture(e.pointerId);
+    // Optional-called: pointer capture is a browser API jsdom does not implement.
+    if (svgRef.current?.hasPointerCapture?.(e.pointerId)) svgRef.current.releasePointerCapture?.(e.pointerId);
   }
 
   /** Unit ids with at least one alive model inside the rubber-band rect (active player handled upstream). */
@@ -523,7 +544,7 @@ export function Board({
       ? a && b
         ? `${a.unitName} → ${b.unitName}: ${measure.gap.toFixed(2)}" base-to-base (${measure.centre.toFixed(2)}" centre)`
         : `${a!.unitName} → cursor: ${measure.gap.toFixed(2)}" to base edge`
-      : 'Tap a model to select; tap a second to measure between them. Drag to move.');
+      : 'Tap a model for its unit stat block; tap a second to measure between them. Drag to move.');
 
   // Bigger touch hit-areas: at least ~2% of the visible board width per tap, mouse stays precise.
   const hitBoostPx = coarse ? view.w * 0.02 : 0;
