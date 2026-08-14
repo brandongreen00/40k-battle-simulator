@@ -83,3 +83,10 @@ Output: `data/layouts11/ec2026-<pairingA>_vs_<pairingB>-<a|b|c>.json` + `index.j
      mat-sized composite quad swallowing everything. Pixel recovery now runs
      for every area (per-connected-blob boxes, printed badges masked out,
      blob centre required inside the area, placed quads win over blobs).
+  Also: one badge on p35 exists in the vector stream but is painted over by
+  the red zone fill — markers now require their badge to be visible in the
+  render, so the invisible fifth badge is dropped (players only see four).
+  Known convention: the tiny (~0.5"x1.5") rust hook motif printed at the tip
+  of some triangle/strip mats is part of the mat's outline art (the footprint
+  polygon traces its silhouette) and is deliberately NOT a terrain feature —
+  it appears identically on ~38 pages.
