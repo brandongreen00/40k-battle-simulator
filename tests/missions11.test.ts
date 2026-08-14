@@ -82,6 +82,54 @@ describe('Event Companion layouts', () => {
       }
     }
   });
+
+  it('territory dividers match the printed lines (Event Companion v1.1 review, 2026-08-14)', () => {
+    // Every printed diagonal divider in the companion rises left-to-right; the old bbox-corner
+    // endpoint pairing mirrored all 34 of them (falling slope). Pin the direction for the lot.
+    for (const l of layouts11) {
+      const div = l.territoryDivider!;
+      expect(div, l.id).toBeTruthy();
+      const [a, b] = div;
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      if (Math.abs(dx) > 0.01 && Math.abs(dy) > 0.01) {
+        expect(dy / dx, `${l.id} divider must rise left-to-right like the printed line`).toBeGreaterThan(0);
+      }
+      for (const p of div) {
+        expect(p.x).toBeGreaterThanOrEqual(0);
+        expect(p.x).toBeLessThanOrEqual(l.boardWidth);
+        expect(p.y).toBeGreaterThanOrEqual(0);
+        expect(p.y).toBeLessThanOrEqual(l.boardHeight);
+      }
+    }
+    // Exact pins against the v1.1 PDF: a shallow diagonal (p9), a midline fallback (p10 prints
+    // no divider), and a v1.1-updated page (p12) that also gained a sixth objective.
+    const at = (id: string) => layouts11.find((l) => l.id === id)!;
+    expect(at('ec2026-take-and-hold_vs_take-and-hold-a').territoryDivider).toEqual([
+      { x: 0.496, y: 26.139 }, { x: 43.733, y: 33.908 },
+    ]);
+    expect(at('ec2026-take-and-hold_vs_take-and-hold-b').territoryDivider).toEqual([
+      { x: 22, y: 0 }, { x: 22, y: 60 },
+    ]);
+    const updated = at('ec2026-take-and-hold_vs_purge-the-foe-a');
+    expect(updated.territoryDivider).toEqual([{ x: 19.081, y: 0.606 }, { x: 24.912, y: 59.643 }]);
+    expect(updated.objectivePoints).toHaveLength(6);
+    expect(updated.source).toContain('v1.1');
+  });
+
+  it('single/separate terrain-area markers match the printed badges (v1.1 review)', () => {
+    // The plain-eye badge = "single terrain area" (two mats merge into ONE rules-area, via
+    // groupId), the slashed-eye badge = "separate terrain areas". The old extractor inverted
+    // every badge on every page (its slash test matched the plain badge's stroked eye
+    // outline). Pin badge-verified pages: all-single, mixed, and the merge behaviour.
+    const at = (id: string) => layouts11.find((l) => l.id === id)!;
+    // 4 plain-eye badges → 4 single markers → 4 merged pairs = 8 areas carrying a groupId.
+    const allSingle = at('ec2026-take-and-hold_vs_priority-assets-a');
+    expect(allSingle.terrainAreas!.filter((a) => a.groupId).length).toBe(8);
+    // 2 plain + 2 slashed (crop-verified against the PDF): exactly 2 merged pairs.
+    const mixed = at('ec2026-purge-the-foe_vs_purge-the-foe-c');
+    expect(mixed.terrainAreas!.filter((a) => a.groupId).length).toBe(4);
+  });
 });
 
 describe('disposition → mission matrix', () => {

@@ -376,6 +376,52 @@ ability-system design that these stages depend on.
     vitest acceptance game; explainNoReach reasons off the closest model pair (mixed per-bearer
     blocks fall back to the generic line).
 
+- **[2026-08-14] — Event Companion maps: full 45-layout accuracy review against the official
+  v1.1 PDF (owner: "do a thorough review of all of the disposition based maps and see if their
+  layout is accurate"), refresh + three systematic extraction bugs fixed. Separate PR off
+  main.** All gates green: `pnpm typecheck`, `pnpm test` (**530 tests**, +2: divider pins for
+  all 45 + marker/groupId pins), `pnpm build`. Method: re-extracted the owner-linked PDF and
+  diffed against the committed data, then rendered geometry-on-page overlay images of all 45
+  pages and audited every element class with parallel vision reviewers (two full passes:
+  find, then re-verify after the fixes), with disputed badges settled by direct PDF crops.
+  - **The owner's PDF is v1.1 (July)** — the committed data was extracted from v1.0 (June).
+    v1.1's own changelog lists 8 updated layouts (Take and Hold vs Purge the Foe A/B/C,
+    Purge the Foe vs Disruption A/B/C, Reconnaissance vs Disruption A/C) and the
+    re-extraction diff matched exactly those 8 (the other 37 extract byte-identical from
+    both PDFs — cross-validating extractor and data). GW moved terrain areas/features and
+    objectives, added a SIXTH objective to six of those maps, and revised area markers.
+    All 45 regenerated from v1.1; `source` now records v1.1 (2026-07).
+  - **Bug 1 — every diagonal territory divider was MIRRORED** (all 34 of them; scoring
+    impact: `missions11.attackerSideOfDivider` + the secondaries' territory tests read this
+    line, so "enemy territory" primaries/secondaries mis-scored). The extractor paired bbox
+    corners `(x0,top)/(x1,bottom)` for line-type strokes — every printed diagonal rises
+    left-to-right, so every one flipped. Fixed to use the stroke's true endpoints
+    (`pts`); all 34 now match the print to <0.05", the 11 no-divider pages keep the correct
+    midline fallback. (The ~9" dashed circle some pages print around the centre is a
+    mission illustration, correctly ignored.)
+  - **Bug 2 — single/separate terrain-area markers were INVERTED on every badge of every
+    page** (gameplay impact: the loader merges two mats into ONE rules-area exactly where a
+    badge says "single" — every merge was happening at the wrong badges). Root cause: the
+    old "slash stroke" test actually matched the PLAIN badge's stroked eye outline; the
+    slashed badge draws its eye as two grey-FILLED halves and has no stroked path at all.
+    Classification now keys on those filled halves; verified by direct badge crops.
+  - **Bug 3 — features baked into mat photos were missed**: several mirrored bridge/walkway
+    pairs had gold rails on one copy only (the twin's rails live inside the neutral mat
+    photo, which the tint classifier rightly skips), and two p51 mats had a mat-sized
+    composite quad swallowing their barricades. Pixel recovery now runs for EVERY area:
+    per-connected-blob boxes (not one bbox per kind), printed badges masked out (teal
+    icons read as "dense"), blob centres required inside the area, real placed quads
+    win over recovered blobs. Mirrored pairs now carry matching features.
+  - **Verified clean everywhere else**: deployment zones (incl. quarter-arc cutouts, steps,
+    triangles), mat outlines, dense/light tints, home/central/expansion objective badges,
+    and the pairing headers all sit exactly on the printed art across the 45 pages; the
+    disposition→layout pairing matrix is unchanged.
+  - **Decisions**: regenerated all 45 from v1.1 (unchanged pages differ only in `source` +
+    the divider/marker/feature fixes); Combat Patrol maps are out of scope (different
+    pipeline from owner screenshots); recovered feature boxes remain axis-aligned bboxes
+    of the tinted blobs (the PDF has no per-ruin vector footprints — same ground-truth
+    limitation as before, now symmetric).
+
 - **[2026-08-14] — Shooting phase playable from the map (owner: "tapping on one of your units
   brings up the weapons it can use; and a radius showing the range of each weapon. When tapping
   an enemy within this radius, it shows a stat sheet of the weapon BS + strength, and the

@@ -1,12 +1,18 @@
 # 11th-edition Event Companion layout extractor
 
 Extracts the **45 official terrain layouts** (15 Force Disposition pairings x layouts A/B/C)
-from the GW *Warhammer Event Companion* v1.0 (June 2026) PDF into `data/layouts11/*.json`.
+from the GW *Warhammer Event Companion* v1.1 (July 2026) PDF into `data/layouts11/*.json`.
 
 ## Source documents (not committed — GW IP, personal use only)
 
-- Event Companion (layout pages 9–53):
-  `https://assets.warhammer-community.com/eng_12-06_warhammer40000_event_companion-s3bfb5f9s1-ivswuij3fo.pdf`
+- Event Companion v1.1 (layout pages 9–53; the committed data's source):
+  `https://assets.warhammer-community.com/eng_22-07_warhammer_40,000_event_companion-alyapl19us-b2drgwkji4.pdf`
+  - v1.1 changed 8 layouts vs v1.0 (its own changelog, verified by re-extraction diff):
+    Take and Hold vs Purge the Foe A/B/C, Purge the Foe vs Disruption A/B/C,
+    Disruption ("Reconnaissance") vs Reconnaissance A and C. The other 37 extract
+    byte-identically from both PDFs.
+  - previous v1.0 (June 2026):
+    `https://assets.warhammer-community.com/eng_12-06_warhammer40000_event_companion-s3bfb5f9s1-ivswuij3fo.pdf`
 - Terrain area footprints (the five 1:1-scale mats the layouts use):
   `https://assets.warhammer-community.com/eng_12-06_warhammer40000_terrainareafootprints-biavo5zf9f-gxdahkydbj.pdf`
 
@@ -57,3 +63,30 @@ Output: `data/layouts11/ec2026-<pairingA>_vs_<pairingB>-<a|b|c>.json` + `index.j
 - Pages 9, 10 and 24 verified visually against the PDF renders (zones incl.
   quarter-circle arc cutouts, rotated features, objective/marker placement).
 - All 18 features on page 9 audited crop-by-crop for dense/light classification.
+- **v1.1 re-review (2026-08-14):** all 45 pages re-verified with geometry-on-page
+  overlay renders (every element class audited page by page). Three systematic
+  defects found and fixed:
+  1. **Territory dividers** — the bbox-corner endpoint pairing mirrored all 34
+     diagonal dividers (they all rise left-to-right); dividers now use the
+     stroke's true endpoints. 11 layouts print no divider and correctly fall
+     back to the midline. The dashed ~9"-radius circle printed around the
+     battlefield centre on some pages is a mission illustration, not part of
+     the divider, and is ignored (its arcs are ~87 pt, under the 100 pt divider
+     threshold).
+  2. **Single/separate markers** — inverted on every badge of every page: the
+     old "slash stroke" test actually matched the PLAIN badge's stroked eye
+     outline (the slashed badge draws its eye as two grey-FILLED halves and has
+     no stroked path at all). Classification now keys on those filled halves.
+  3. **Baked-in features** — some mats carry their tinted rails/ruins inside
+     the neutral mat photo (no separate tinted placement), so one copy of a
+     mirrored pair could miss its gold rails, and two mats on p51 had a
+     mat-sized composite quad swallowing everything. Pixel recovery now runs
+     for every area (per-connected-blob boxes, printed badges masked out,
+     blob centre required inside the area, placed quads win over blobs).
+  Also: one badge on p35 exists in the vector stream but is painted over by
+  the red zone fill — markers now require their badge to be visible in the
+  render, so the invisible fifth badge is dropped (players only see four).
+  Known convention: the tiny (~0.5"x1.5") rust hook motif printed at the tip
+  of some triangle/strip mats is part of the mat's outline art (the footprint
+  polygon traces its silhouette) and is deliberately NOT a terrain feature —
+  it appears identically on ~38 pages.
