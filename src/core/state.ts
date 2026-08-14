@@ -19,6 +19,7 @@ import { rollOff, otherSide } from './setup';
 import { checkUnitDeployment, deepStrikeArrivalLegal, deployAbilityFromKeywords, isEntryPlaced, whollyInOwnZone, type DeployAbility } from './deployment';
 import { checkCoherency } from './coherency';
 import { anyOverlap, occupiedBases, unitOverlaps } from './collision';
+import { blockedByDense, unitDenseViolation } from './terrainmove';
 import { canEmbark, disembarkMode, isAircraft, splitRideCounts, splitRuleSelects, transportSplitRule } from './transport';
 import {
   PREBATTLE_GRANTS, REDEPLOY_RULES, allowsRound1DeepStrike, blocksOverwatch, enhancementDeployGrant,
@@ -367,6 +368,8 @@ function beginTurnFor(state: GameState, side: Side): UnitInstance[] {
             // Once-per-battle/turn ability plays and until-end-of-battle marks survive the reset.
             ...(u.status.abilityUsed ? { abilityUsed: u.status.abilityUsed } : {}),
             ...(u.status.permanentEffects ? { permanentEffects: u.status.permanentEffects } : {}),
+            // [ONE SHOT] weapons stay spent for the rest of the battle.
+            ...(u.status.oneShotFired ? { oneShotFired: u.status.oneShotFired } : {}),
           },
           models: u.models.map((m) => (m.moveStart ? { ...m, moveStart: undefined } : m)),
         }
@@ -985,6 +988,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       const check = checkUnitDeployment(
         positions, intent.baseShape, state.layout, intent.owner, ability, enemies,
         occupiedBases(state, ctx),
+        blockedByDense(ctx?.datasheets.get(intent.datasheetId)),
       );
       if (!check.legal) {
         return { ...state, log: [...state.log, `Deployment rejected (${intent.owner}): ${check.reason}`] };
@@ -1756,6 +1760,17 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
           log = [...log, `Move not confirmed: ${name} ends on top of another model's base`];
           return u;
         }
+        // Dense terrain (13.06): tanks/riders/monsters can neither cross a dense (green)
+        // feature nor end a move on one — only Infantry/Beasts/Swarms pass through; FLY is over.
+        if (ctx) {
+          const dense = unitDenseViolation(u, ctx, state.layout);
+          if (dense) {
+            anyRejected = true;
+            const name = ctx.datasheets.get(u.datasheetId)?.name ?? u.id;
+            log = [...log, `Move not confirmed: ${name} ${dense === 'ends_on' ? 'ends on' : 'moves through'} a dense terrain feature (only Infantry, Beasts and Swarms can — go around instead)`];
+            return u;
+          }
+        }
         const mode = u.status.moveMode;
         // A Scout move must end more than 9" from all enemy models (10e Scouts).
         if (mode === 'scout') {
@@ -1857,6 +1872,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         const zoneCheck = checkUnitDeployment(
           formationWorld(opts), shape, state.layout, unit.owner, 'standard', [],
           occupiedBases(state, ctx, [unit.id]),
+          blockedByDense(ds),
         );
         if (!zoneCheck.legal) {
           return { ...state, log: [...state.log, `Reserves arrival rejected: must arrive wholly within your deployment zone (${zoneCheck.reason})`] };
@@ -1869,7 +1885,10 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       if (!cpRound) {
         // Priority-drop Beacon: the bearer's unit may Deep Strike from the FIRST battle round.
         const effectiveRound = allowsRound1DeepStrike(unit) ? Math.max(state.round, 2) : state.round;
-        const baseOpts = { deepStrike: ability === 'deep_strike', layout: state.layout, side: unit.owner };
+        const baseOpts = {
+          deepStrike: ability === 'deep_strike', layout: state.layout, side: unit.owner,
+          denseBlocked: blockedByDense(ds),
+        };
         let check = deepStrikeArrivalLegal(
           formationWorld(opts), shape, enemies, effectiveRound,
           occupiedBases(state, ctx, [unit.id]), baseOpts,

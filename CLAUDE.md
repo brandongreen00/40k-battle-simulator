@@ -330,6 +330,52 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-08-14] — LoS/visibility/terrain fixes (owner: Kroyle's missing tox-cycler · "why can't
+  my units see the Death Riders?" · deselect weapons/save the Hunter-killer · tanks+riders
+  can't move through dense terrain). Separate PR off main.** All gates green: `pnpm typecheck`,
+  `pnpm test` (**546 tests**, +18 in `tests/losTerrainFixes.test.ts` incl. a full Bane-vs-
+  Armoured-Spearhead AI game on an 11e map with zero rejected intents AND zero settled
+  tank/rider bases on dense terrain via the `observe` hook), `pnpm build`.
+  - **Kroyle's Jindarii tox-cycler was dropped by a Unicode mismatch**, not missing data: the
+    app export writes "tox‑cycler" with a U+2011 non-breaking hyphen, the Wahapedia datasheet
+    uses ASCII, and `weaponCarrierCount`'s exact-string compare returned "nobody carries it".
+    New `wargear.normalizeItemName` (folds Unicode hyphens/dashes/quotes/NBSP) now backs
+    `weaponItemName` + carrier matching and the wargear option parser — every fire plan shows
+    the 36" tox-cycler (with the Stubcarbine held as its Pistol pair).
+  - **Death Riders LoS verdict: the engine was RIGHT (11e terrain rules)** — screenshot 1's
+    sightline crossed an intervening terrain area (Obscuring, 13.10: see into an area, never
+    through one) and screenshot 2's Immolator had the green dense ruin between it and the
+    riders (Solid, 13.11: dense features block sight even within the same area). Instead of a
+    bare "out of range or not visible", the stat sheet now explains the block: new
+    `visibility.losBlockReason11` + `explainNoReach` name the rule (Obscuring area / dense
+    ruin / Hidden / plain range with the actual distances).
+  - **Per-weapon holds**: `ShootUnit.holdWeapons` (weapon keys) — held weapons are skipped,
+    logged, and NOT marked fired; all-held rejects instead of wasting the activation. UI:
+    ✓ firing/⏸ held toggle per weapon row in the from-map ShootingPanel, a fire/hold checkbox
+    per row in the GamePanel plan. **[ONE SHOT] is now enforced** (match mode): firing stamps
+    `status.oneShotFired` (survives turn resets), later plans drop the weapon with a note, and
+    the direct Attack path rejects a re-fire — the Hunter-killer really is once per battle.
+  - **Dense terrain movement (13.06)**: new pure `core/terrainmove.ts` — only INFANTRY/BEASTS/
+    SWARM move through dense (green) features, FLY over; everyone else (VEHICLE, MOUNTED,
+    MONSTER — tanks, Death Riders, Kroyle's Garralisk) can neither CROSS one nor END/set up on
+    one (light yellow features + plain grey areas stay free; edge contact legal; a model
+    already on a feature is grandfathered off so nothing wedges). Enforced at: `EndMove`
+    (reject + warning triangle + Confirm gate incl. the mobile move bar), `checkUnitDeployment`
+    + `deepStrikeArrivalLegal` (new `denseBlocked` param — reducer, ghosts, AI anchor searches
+    all pass it), the charge path search (`findChargeMove` predicate, so `chargePathExists`
+    agrees and the AI never declares a doomed charge), pile-in/consolidate clamping, and the
+    AI's move clamps (tick B, goal scoring, scout step). Legacy 10e labrador maps keep free
+    movement (no terrain areas — decision).
+  - **Decisions**: dense-blocking keys off "not I/B/S, not FLY" per the real 13.06 rather than
+    just VEHICLE/MOUNTED; movement paths are straight lines (matching the budget model), so
+    "crossing" = the start→end segment; the one-shot stamp lives in `resolveAttack` (single
+    chokepoint for volley + direct paths), match mode only (sandbox stays a free calculator).
+  - **Known nits**: the AI never holds weapons (fires everything, incl. the HK missile at the
+    first target — an EV-based hold policy is a future profile knob); `pnpm sim` (headless)
+    still only loads legacy `data/layouts/` so dense rules are exercised there only via the
+    vitest acceptance game; explainNoReach reasons off the closest model pair (mixed per-bearer
+    blocks fall back to the generic line).
+
 - **[2026-08-14] — Shooting phase playable from the map (owner: "tapping on one of your units
   brings up the weapons it can use; and a radius showing the range of each weapon. When tapping
   an enemy within this radius, it shows a stat sheet of the weapon BS + strength, and the

@@ -37,8 +37,24 @@ const WORD_NUM: Record<string, number> = {
 function toInt(token: string): number {
   return WORD_NUM[token.toLowerCase()] ?? parseInt(token, 10);
 }
+/**
+ * Canonical form for comparing wargear/weapon item names across sources. The official app's
+ * text exports use typographic punctuation the Wahapedia data doesn't ("Jindarii tox‑cycler"
+ * with a U+2011 non-breaking hyphen vs the datasheet's ASCII hyphen), so equality must survive
+ * Unicode hyphens/dashes, curly quotes, and non-breaking spaces.
+ */
+export function normalizeItemName(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[‐‑‒–—―−]/g, '-')
+    .replace(/[’‘‛]/g, "'")
+    .replace(/[   ]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function norm(s: string): string {
-  return s.toLowerCase().replace(/[’]/g, "'").trim();
+  return normalizeItemName(s);
 }
 
 /**

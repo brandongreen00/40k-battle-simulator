@@ -1774,6 +1774,34 @@ body {
 .shoot-w .wvs.miss {
   color: #fca5a5;
 }
+/* A weapon held out of the volley (saving a One Shot Hunter-killer, etc.). */
+.shoot-w.held .wname,
+.shoot-w.held .wstats,
+.shoot-w.held .wvs {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+.hold-btn {
+  margin-left: auto;
+  min-height: 32px;
+  padding: 2px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #232936;
+  color: var(--text);
+  font-size: 12px;
+}
+.hold-btn.on {
+  border-color: #fbbf24;
+  color: #fbbf24;
+}
+/* GamePanel fire-plan hold checkbox + held row. */
+.fire-plan li.weapon-held {
+  opacity: 0.55;
+}
+.fire-plan .hold-toggle {
+  margin-right: 6px;
+}
 .wdot {
   width: 10px;
   height: 10px;

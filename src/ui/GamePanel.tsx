@@ -3,6 +3,7 @@ import type { Datasheet, GameState, UnitInstance } from '../core/types';
 import type { Intent } from '../core/state';
 import { availableUnitWeapons, planUnitFight, planUnitShooting, type EngineContext } from '../core/engine';
 import { unitOverlaps } from '../core/collision';
+import { unitDenseViolation } from '../core/terrainmove';
 import type { MoveMode } from '../core/movement';
 import { EFFECT_REGISTRY } from '../core/effects';
 import {
@@ -68,6 +69,8 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
   const [chargeReroll, setChargeReroll] = useState(false);
   // Per-weapon target splits (04.02): weapon key → target unit id; cleared when the volley fires.
   const [splitSel, setSplitSel] = useState<Record<string, string>>({});
+  // Weapons held back from the volley (weapon keys) — e.g. saving a One Shot Hunter-killer.
+  const [holdSel, setHoldSel] = useState<string[]>([]);
 
   const ctx: EngineContext = useMemo(() => ({ datasheets: datasheetsById }), [datasheetsById]);
   // Only the ACTIVE player's open activations belong to this panel — an opponent's unit left
@@ -77,6 +80,9 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
   const coherencyOk = incoherentMoving.length === 0;
   const overlappingMoving = movingUnits.filter((u) => unitOverlaps(state, u, ctx));
   const overlapOk = overlappingMoving.length === 0;
+  // Dense terrain (13.06): tanks/riders/monsters cannot cross or end on a dense (green) feature.
+  const denseMoving = movingUnits.filter((u) => unitDenseViolation(u, ctx, state.layout) !== null);
+  const denseOk = denseMoving.length === 0;
   const arrivable = reservesArrivable(state);
   const nameOfUnit = (id: string) => datasheetsById.get(units.find((u) => u.id === id)?.datasheetId ?? '')?.name ?? id;
 
@@ -467,24 +473,28 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
             </>
           ) : (
             <>
-              <p className={coherencyOk && overlapOk ? 'muted' : 'coh-bad'}>
+              <p className={coherencyOk && overlapOk && denseOk ? 'muted' : 'coh-bad'}>
                 {movingUnits.length} unit(s) moving ·{' '}
                 {!coherencyOk
                   ? `⚠ out of coherency: ${incoherentMoving.map((u) => nameOfUnit(u.id)).join(', ')}`
                   : !overlapOk
                     ? `⚠ on top of another model: ${overlappingMoving.map((u) => nameOfUnit(u.id)).join(', ')}`
-                    : 'in coherency ✓'}
+                    : !denseOk
+                      ? `⚠ in dense terrain (tanks/riders cannot cross green ruins): ${denseMoving.map((u) => nameOfUnit(u.id)).join(', ')}`
+                      : 'in coherency ✓'}
               </p>
               <div className="btnrow">
                 <button
                   className="primary"
-                  disabled={!coherencyOk || !overlapOk}
+                  disabled={!coherencyOk || !overlapOk || !denseOk}
                   title={
                     !coherencyOk
                       ? 'A unit is out of coherency — bring its models back together first'
                       : !overlapOk
                         ? 'Bases cannot end a move on top of another model — move them clear first'
-                        : ''
+                        : !denseOk
+                          ? 'Only Infantry, Beasts and Swarms move through dense (green) terrain — go around it'
+                          : ''
                   }
                   onClick={() => { dispatch({ type: 'EndMove', unitIds: movingUnits.map((u) => u.id) }); setSelectedUnitIds?.([]); }}
                 >
@@ -604,7 +614,7 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
       <h3>Resolve combat</h3>
       <label className="field">
         <span>Attacker {combatPhase ? `(${eligibleAttackers.length} eligible)` : ''}</span>
-        <select value={attackerId} onChange={(e) => { setAttackerId(e.target.value); setWeaponSel(''); setTargetId(''); setChargeTargetIds([]); setSplitSel({}); }}>
+        <select value={attackerId} onChange={(e) => { setAttackerId(e.target.value); setWeaponSel(''); setTargetId(''); setChargeTargetIds([]); setSplitSel({}); setHoldSel([]); }}>
           <option value="">{attackerOptions.length === 0 && combatPhase ? '— no eligible units —' : '— pick a unit —'}</option>
           {attackerOptions.map((u) => (
             <option key={u.id} value={u.id}>{nameOf(u.id)} ({u.owner}, ×{aliveOf(u.id)})</option>
@@ -642,9 +652,21 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
             <ul>
               {firePlan.fire.map((w) => {
                 const key = `${w.sourceDsId}|${w.weapon.name}`;
+                const held = holdSel.includes(key);
                 return (
-                  <li key={key}>
+                  <li key={key} className={held ? 'weapon-held' : undefined}>
+                    {/* Hold a weapon out of the volley (e.g. save a One Shot Hunter-killer missile). */}
+                    <label className="hold-toggle" title={held ? 'Held back — will not fire this volley' : 'Untick to hold this weapon back (it stays available for a later volley)'}>
+                      <input
+                        type="checkbox"
+                        checked={!held}
+                        onChange={(e) =>
+                          setHoldSel((prev) => (e.target.checked ? prev.filter((k) => k !== key) : [...prev, key]))
+                        }
+                      />
+                    </label>
                     {w.carriers}× {w.weapon.name} ({w.weapon.range}", A{w.weapon.attacks})
+                    {held ? ' — held' : ''}
                     {w.sourceDsId !== attacker.datasheetId && !w.viaFiringDeck ? ` — ${datasheetsById.get(w.sourceDsId)?.name ?? w.sourceDsId}` : ''}
                     {w.viaFiringDeck ? ' — Firing Deck' : ''}
                     {/* Per-weapon target split (04.02): defaults to the main target below. */}
@@ -725,19 +747,32 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
         {phase === 'Shooting' ? (
           <button
             className="primary"
-            disabled={!attackerId || !targetId || !firePlan || firePlan.fire.length === 0}
+            disabled={
+              !attackerId || !targetId || !firePlan || firePlan.fire.length === 0 ||
+              firePlan.fire.every((w) => holdSel.includes(`${w.sourceDsId}|${w.weapon.name}`))
+            }
+            title={
+              firePlan && firePlan.fire.length > 0 && firePlan.fire.every((w) => holdSel.includes(`${w.sourceDsId}|${w.weapon.name}`))
+                ? 'Every weapon is held back — tick at least one to fire'
+                : ''
+            }
             onClick={() => {
               const splitTargets = Object.fromEntries(
                 Object.entries(splitSel).filter(([, v]) => v && v !== targetId),
               );
+              const holdWeapons = holdSel.filter((k) =>
+                firePlan!.fire.some((w) => `${w.sourceDsId}|${w.weapon.name}` === k),
+              );
               dispatch({
                 type: 'ShootUnit', attackerUnitId: attackerId, targetUnitId: targetId,
                 ...(Object.keys(splitTargets).length ? { splitTargets } : {}),
+                ...(holdWeapons.length ? { holdWeapons } : {}),
               });
               setSplitSel({});
+              setHoldSel([]);
             }}
           >
-            🔫 Shoot — all weapons
+            🔫 Shoot{holdSel.length ? ' — selected weapons' : ' — all weapons'}
           </button>
         ) : inMatch && phase === 'Fight' ? (
           <button

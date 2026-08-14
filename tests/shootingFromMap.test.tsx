@@ -84,6 +84,17 @@ describe('shooting from the map (jsdom, real UI)', () => {
     // Each reachable weapon row shows the matchup (hit + wound thresholds).
     expect(container.querySelector('.shootbar')!.textContent).toMatch(/wounds \d\+/);
 
+    // Per-weapon holds: every weapon row has a hold toggle; holding ALL of them disables Shoot.
+    const holdButtons = [...container.querySelectorAll('.shootbar .hold-btn')] as HTMLButtonElement[];
+    expect(holdButtons.length).toBeGreaterThan(0);
+    for (const b of holdButtons) await act(async () => { fireEvent.click(b); });
+    const shootAllHeld = [...container.querySelectorAll('.shootbar button')].find((b) => /Shoot/.test(b.textContent ?? ''))!;
+    expect((shootAllHeld as HTMLButtonElement).disabled).toBe(true);
+    // Un-hold everything again — the volley is back on.
+    for (const b of [...container.querySelectorAll('.shootbar .hold-btn')] as HTMLButtonElement[]) {
+      await act(async () => { fireEvent.click(b); });
+    }
+
     // Shoot resolves the volley from the map: tracer fires, selection clears, unit has shot.
     const shoot = [...container.querySelectorAll('.shootbar button')].find((b) => /Shoot/.test(b.textContent ?? ''))!;
     expect(shoot).toBeTruthy();
@@ -106,7 +117,8 @@ describe('shooting from the map (jsdom, real UI)', () => {
     // Tap a model of the far Breacher Team (~32" away, beyond every gun).
     await tap(container.querySelectorAll('.model-token')[10]!);
     const bar = container.querySelector('.shootbar')!;
-    expect(bar.textContent).toMatch(/Out of range or not visible/);
+    // The no-reach line now explains the actual reason (here: plain range).
+    expect(bar.textContent).toMatch(/Out of range — the closest model is .* away and the longest weapon reaches/);
     expect(bar.textContent).toMatch(/can't reach/);
     expect([...bar.querySelectorAll('button')].some((b) => /Shoot/.test(b.textContent ?? ''))).toBe(false);
 

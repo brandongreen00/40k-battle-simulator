@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react';
 import type { Datasheet, GameState, UnitInstance } from '../core/types';
 import type { Intent } from '../core/state';
 import type { EngineContext, FirePlan } from '../core/engine';
 import { eligibleToShoot, validShootingTargets } from '../core/phases';
+import { explainNoReach } from '../core/visibility';
 import { woundThreshold } from '../core/combat';
 import { parseKeywords } from '../core/keywords';
 
@@ -40,6 +42,9 @@ interface Props {
  */
 export function ShootingBar({ state, attackerUnitId, targetUnitId, plan, rings, datasheetsById, dispatch, onClear }: Props) {
   const ctx: EngineContext = { datasheets: datasheetsById };
+  // Weapons the user has tapped to hold out of the volley (e.g. a One Shot Hunter-killer).
+  const [held, setHeld] = useState<string[]>([]);
+  useEffect(() => setHeld([]), [attackerUnitId]);
   const attacker = state.units.find((u) => u.id === attackerUnitId);
   const target = targetUnitId ? state.units.find((u) => u.id === targetUnitId) : undefined;
   if (!attacker) return null;
@@ -47,6 +52,7 @@ export function ShootingBar({ state, attackerUnitId, targetUnitId, plan, rings, 
   const aliveCount = (u: UnitInstance) => u.models.filter((m) => m.alive).length;
   const eligibility = eligibleToShoot(attacker, state, ctx);
   const colorOf = (range?: number) => rings.find((r) => r.range === (range ?? 0))?.color ?? '#94a3b8';
+  const keyOf = (w: FirePlan['fire'][number]) => `${w.sourceDsId}|${w.weapon.name}`;
   // Can this fire-plan weapon legally reach the tapped target (range + per-bearer visibility)?
   const reaches = (w: FirePlan['fire'][number]) =>
     !!target && validShootingTargets(attacker, w.weapon.name, state, ctx, w.sourceDsId).some((t) => t.id === target.id);
@@ -54,7 +60,8 @@ export function ShootingBar({ state, attackerUnitId, targetUnitId, plan, rings, 
   const tds = target ? datasheetsById.get(target.datasheetId) : undefined;
   // The engine defends with the unit's primary (bodyguard) profile — mirror it here.
   const tProfile = tds?.models[0];
-  const canShoot = eligibility.eligible && !!target && reachable.length > 0;
+  const firing = reachable.filter((w) => !held.includes(keyOf(w)));
+  const canShoot = eligibility.eligible && !!target && firing.length > 0;
 
   return (
     <div className="shootbar">
@@ -74,12 +81,15 @@ export function ShootingBar({ state, attackerUnitId, targetUnitId, plan, rings, 
           {plan.fire.map((w) => {
             const kw = parseKeywords(w.weapon.keywords);
             const unreachable = !!target && !reaches(w);
+            const key = keyOf(w);
+            const isHeld = held.includes(key);
             return (
-              <div key={`${w.sourceDsId}|${w.weapon.name}`} className={`shoot-w${unreachable ? ' unreachable' : ''}`}>
+              <div key={key} className={`shoot-w${unreachable ? ' unreachable' : ''}${isHeld ? ' held' : ''}`}>
                 <span className="wdot" style={{ background: colorOf(w.weapon.range) }} />
                 <span className="wname">
                   {w.carriers}× {w.weapon.name}
                   {w.viaFiringDeck ? ' (Firing Deck)' : ''}
+                  {kw.oneShot ? ' · One Shot' : ''}
                 </span>
                 <span className="wstats">
                   {w.weapon.range}" · A{w.weapon.attacks} · {kw.torrent ? 'auto-hit' : `BS ${w.weapon.skill}+`} · S
@@ -95,6 +105,16 @@ export function ShootingBar({ state, attackerUnitId, targetUnitId, plan, rings, 
                     </span>
                   )
                 )}
+                {/* Hold this weapon out of the volley (it stays available for a later target). */}
+                <button
+                  type="button"
+                  className={`hold-btn${isHeld ? ' on' : ''}`}
+                  aria-pressed={isHeld}
+                  title={isHeld ? 'Held back — tap to include it in the volley' : 'Tap to hold this weapon back (save it for another target)'}
+                  onClick={() => setHeld((prev) => (isHeld ? prev.filter((k) => k !== key) : [...prev, key]))}
+                >
+                  {isHeld ? '⏸ held' : '✓ firing'}
+                </button>
               </div>
             );
           })}
@@ -116,19 +136,24 @@ export function ShootingBar({ state, attackerUnitId, targetUnitId, plan, rings, 
             </span>
           </div>
           {reachable.length === 0 ? (
-            <p className="warn">✗ Out of range or not visible — no weapon can reach this unit.</p>
+            <p className="warn">✗ {explainNoReach(attacker, plan, target, state, ctx)}</p>
           ) : (
             <div className="btnrow">
               <button
                 type="button"
                 className="primary"
                 disabled={!canShoot}
+                title={!canShoot && reachable.length > 0 ? 'Every weapon that reaches is held back' : ''}
                 onClick={() => {
-                  dispatch({ type: 'ShootUnit', attackerUnitId, targetUnitId: target.id });
+                  const holdWeapons = held.filter((k) => plan.fire.some((w) => keyOf(w) === k));
+                  dispatch({
+                    type: 'ShootUnit', attackerUnitId, targetUnitId: target.id,
+                    ...(holdWeapons.length ? { holdWeapons } : {}),
+                  });
                   onClear();
                 }}
               >
-                🔫 Shoot — all weapons
+                🔫 Shoot{held.length ? ' — selected weapons' : ' — all weapons'}
               </button>
             </div>
           )}

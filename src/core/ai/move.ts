@@ -13,6 +13,7 @@ import type { EngineContext } from '../engine';
 import { aliveModels, isOnBoard, engagedEnemies, pendingScoutUnits, reservesArrivable, unitCentroid, ENGAGEMENT_RANGE } from '../phases';
 import { checkCoherency } from '../coherency';
 import { anyOverlap, clampDeltaAvoidingOverlap, occupiedBases, unitBases, unitOverlaps } from '../collision';
+import { blockedByDense, clampDeltaAvoidingDense } from '../terrainmove';
 import { checkUnitDeployment, deepStrikeArrivalLegal, zoneFor } from '../deployment';
 import { formationPositions } from '../formation';
 import { gapBetweenBases, dist, baseRadius } from '../geometry';
@@ -260,6 +261,9 @@ export function planMove(
     for (const budget of need > M && g.advanceOk ? [M, M + 3.5] : [M]) {
       const t = need > budget ? budget / need : 1;
       let delta = clampDeltaToBoard(unit, { x: want.x * t, y: want.y * t }, state.layout);
+      // Score the position the unit can actually reach: a dense-blocked unit's move stops at a
+      // dense (green) feature's edge (13.06), so a goal through a ruin evaluates AT the ruin.
+      delta = clampDeltaAvoidingDense(unit, delta, ctx, state.layout);
       if (endsEngaged(state, unit, delta, ctx)) {
         // Stop 1.2" short of engagement along the same line rather than discarding the goal.
         const len = Math.hypot(delta.x, delta.y);
@@ -321,7 +325,7 @@ export function findArrivalAnchor(state: GameState, unit: UnitInstance, deps: Ai
   const r = baseRadius(ds.baseShape);
   const W = state.layout.boardWidth;
   const H = state.layout.boardHeight;
-  const legalOpts = { deepStrike, layout: state.layout, side: unit.owner };
+  const legalOpts = { deepStrike, layout: state.layout, side: unit.owner, denseBlocked: blockedByDense(ds) };
   for (const step of [2, 1]) {
     let best: { anchor: Vec2; score: number } | null = null;
     for (let x = r + step / 2; x <= W - r; x += step) {
@@ -363,7 +367,7 @@ function findZoneArrivalAnchor(state: GameState, unit: UnitInstance, deps: AiDep
         const objDist = Math.min(...targets.map((o) => dist(anchor, o)));
         if (best && objDist >= -best.score) continue;
         const positions = formationPositions({ anchor, count: unit.models.length, baseShape: ds.baseShape, formation: 'block', rotation: 0 });
-        if (!checkUnitDeployment(positions, ds.baseShape, state.layout, unit.owner, 'standard', [], occupied).legal) continue;
+        if (!checkUnitDeployment(positions, ds.baseShape, state.layout, unit.owner, 'standard', [], occupied, blockedByDense(ds)).legal) continue;
         if (!best || -objDist > best.score) best = { anchor, score: -objDist };
       }
     }
@@ -471,6 +475,8 @@ export function aiMovementAction(state: GameState, side: Side, profile: AiProfil
       // Never END the move with bases stacked on another unit (friend or foe) — back off along
       // the line so EndMove cannot bounce. Passing over models mid-move is fine.
       delta = clampDeltaAvoidingOverlap(unitBases(moving, ctx), occupiedBases(state, ctx, [moving.id]), delta);
+      // Dense terrain (13.06): a tank/rider stops at a dense feature instead of crossing it.
+      delta = clampDeltaAvoidingDense(moving, delta, ctx, state.layout);
     }
     const intents: AiAction['intents'] = [];
     if (Math.hypot(delta.x, delta.y) > 0.01) intents.push({ intent: { type: 'NudgeUnit', unitIds: ids, delta } });
@@ -628,6 +634,7 @@ export function aiScoutAction(state: GameState, side: Side, profile: AiProfile, 
     let delta = clampDeltaToBoard(unit, { x: want.x * t, y: want.y * t }, state.layout);
     delta = clampDeltaToNine(state, unit, delta, ctx);
     delta = clampDeltaAvoidingOverlap(unitBases(unit, ctx), occupiedBases(state, ctx, [unit.id]), delta);
+    delta = clampDeltaAvoidingDense(unit, delta, ctx, state.layout);
     if (Math.hypot(delta.x, delta.y) < 0.25) continue;
     const score = positionScore(state, unit, delta, profile, deps, plan, false);
     if (score > best.score) best = { score, delta };
