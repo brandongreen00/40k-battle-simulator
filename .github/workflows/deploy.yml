@@ -47,6 +47,9 @@ jobs:
           python-version: '3.11'
 
       - name: Publish sim2 result artifacts
+        # Never let a v2 data problem stop the v1 site from deploying: the app
+        # degrades to "no published results yet" if the manifest is missing.
+        continue-on-error: true
         run: python3 tools2/sync_results.py
 
       - name: Typecheck

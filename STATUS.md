@@ -45,7 +45,7 @@ Reviews (mandate 2b): [`reviews/rules-kernel.md`](reviews/rules-kernel.md) ·
 * **45 Event Companion layouts**, 3 per disposition pairing, with typed
   objectives and dense/light terrain areas
 * **44 mission cards** and the full asymmetric 5×5 disposition matrix
-* **193 logged `GAP` entries** — nothing was guessed
+* **189 logged `GAP` entries** — nothing was guessed
 
 ---
 

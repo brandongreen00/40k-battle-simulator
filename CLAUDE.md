@@ -308,6 +308,54 @@ Stub their state fields if convenient, but implement no behavior.
 
 ---
 
+## 7b. THE SECOND SIMULATOR (`sim2/`) — read this before touching anything
+
+There are now **two systems in this repository**, and they are deliberately
+independent:
+
+* **v1 — this document's subject.** TypeScript, `src/core/` + `src/ui/`, the
+  measuring board, List Builder and Combat Patrol flow. Everything in sections
+  1–9 of this file describes v1.
+* **v2 — the Auto Player.** A Python 11th-edition matched-play engine in
+  `sim2/`, its data snapshot in `data2/`, its tools in `tools2/`, its tests in
+  `tests_py/`, and a browser surface at `src/ui/autoplayer/` reachable from the
+  top bar. Built to a separate written brief; see **`docs/sim2_architecture.md`**
+  and **`STATUS.md`**.
+
+**Do not merge the two.** v2 does not import v1 code and v1 does not import v2.
+v2 reuses only *data* (the Event Companion layout extraction and the mission
+dossier). Refactoring one to serve the other is not wanted.
+
+**Which one to work in:** a request about the measuring board, the List Builder,
+Combat Patrol or the 10e/11e TypeScript core is v1. A request about playing
+whole games automatically, agents, batches, list optimisation, battle-log replay
+or the Auto Player tab is v2.
+
+**v2's own non-negotiables** (they mirror rules #1–#6 above but are enforced
+differently):
+
+1. **The kernel knows no faction.** Datasheet abilities, stratagems,
+   enhancements, detachment rules and Orders are data records in `data2/`, bound
+   to effect primitives in `tools2/bindings.py`. Writing a unit's rule into
+   `sim2/kernel/*.py` is a design violation.
+2. **One RNG.** All randomness goes through `sim2/rng.py`;
+   `python3 tools2/lint_determinism.py` fails the build otherwise.
+3. **Agents choose, never construct.** `sim2/kernel/legal.py` enumerates legal
+   actions and `Engine.apply` re-validates. Every batch publishes a count of
+   refused actions; it is 0 and must stay 0.
+4. **Transcribe, never reconstruct.** A value the source does not carry becomes
+   an entry in `data2/gaps.json`, never a guess.
+
+**v2 commands:** `python3 -m sim2.cli {data,armies,play,batch,optimize}` ·
+`python3 -m pytest tests_py -q` · `python3 tools2/sync_results.py` ·
+`python3 tools2/build_data.py`.
+
+**The v2 backlog is written up in full** in `docs/sim2_gap_register.md` — every
+known gap with evidence, file locations and acceptance criteria. Start there
+rather than re-deriving it.
+
+---
+
 ## 8. Roadmap beyond Stage 1 (context only — do not build yet)
 
 - **Stage 2 — Deterministic combat core:** phase/turn state machine, hit→wound→save→damage
@@ -329,6 +377,56 @@ ability-system design that these stages depend on.
 ## 9. Progress Log
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
+
+- **[2026-08-11] — V2: an independent 11th-edition simulator behind a new "Auto Player" tab
+  (owner: "follow this brief to create a fully independent battle simulator… consider this a
+  version 2… make this accessible via a new selection in the top bar").** v1 is untouched. All
+  gates green: `pnpm typecheck`, `pnpm test` (**534**), `pnpm build`, `pytest tests_py` (**57**,
+  incl. 8 full-game tests), `tools2/lint_determinism.py`. Full status: **`STATUS.md`**;
+  architecture: **`docs/sim2_architecture.md`**; backlog: **`docs/sim2_gap_register.md`**;
+  per-area adversarial reviews in **`reviews/`**. Orientation for future sessions is §7b above.
+  - **Engine (`sim2/`, Python 3.11, stdlib only).** Continuous 2D + height geometry (base-to-base
+    distance, the 2"/5" engagement cylinder, coherency, Obscuring/Solid line of sight, cover as an
+    11e *hit* penalty, Hidden/Gone to Ground with a modifiable detection range); the full attack
+    sequence (allocation groups with CHARACTER last and [PRECISION] promotion, Devastating Wounds
+    capped per critical, FNP, Hazardous, the S-vs-T table transcribed from the PDF because
+    Wahapedia strips its numerals); phase machine, battle-shock, CP economy, stratagem usage
+    limits, Actions, the Voice of Command Order subsystem, objectives and mission scoring under
+    the 45/45/10 caps.
+  - **Rules as data.** An effect interpreter with a selector algebra
+    (`unit(DEATHWATCH & INFANTRY & !engaged & from_my_army)`) and a primitive vocabulary; unknown
+    predicates RAISE rather than silently matching. 175 effect records carry their printed text +
+    provenance; 19 are bound to primitives so far.
+  - **Data ingested from source** (`tools2/ingest_wahapedia.py`, raw HTML NOT committed): 179
+    datasheets (46 IA / 133 AM, 78 flagged Legends), all 16 detachments with Force Disposition and
+    DP matching the brief's verified strip (**Imperialis Fleet = Reconnaissance**, pinned by a
+    test), 45 Event Companion layouts, the asymmetric 5×5 mission matrix. The documented parsing
+    traps are handled and tested: duplicated weapon rows, per-word keyword spans, the Agents dual
+    points column (Eversor 100/110), escalating squadron costs (3rd Hellhound 135), Boarding
+    Actions contamination. 189 missing values are logged in `data2/gaps.json`, none guessed.
+  - **Agents + harness.** Random and heuristic agents choosing only from the enumerated legal
+    actions; batch runner, list optimizer over every tournament-legal datasheet, an MCTS rollout
+    scaffold, and a self-play loop that runs (RL to strength is explicitly out of scope).
+    Measured: **0 illegal actions**, byte-identical replays per seed, heuristic beats random
+    **20–0**, ~8s per 500pt game and ~40s per 1000pt game.
+  - **Auto Player tab** (`src/ui/autoplayer/`): run configurator (copyable CLI command or a
+    GitHub Actions `workflow_dispatch` using a token kept in browser storage — never committed),
+    results dashboard, and a turn-by-turn replay viewer that draws terrain, base-accurate models
+    and the event feed straight from a battle log. GitHub Pages cannot execute the engine; that
+    split is stated in the UI rather than hidden.
+  - **Two bugs worth remembering, both found by playing games rather than reading code:** primary
+    missions never scored (layout pages print mission names in caps, cards are stored under
+    normalised ids), and threshold clauses ("you control one or more objectives") were scored
+    per objective, so every card saturated the 15VP/round cap and the agent-strength metric
+    measured nothing. Both fixed with regression tests.
+  - **Handoff / known gaps (full register in `docs/sim2_gap_register.md`):** four ingester defects
+    found while writing that register are the highest-value next work — invulnerable saves are
+    captured on 1 of 179 sheets, core abilities (Deep Strike/Leader/Infiltrators/Scouts/Stealth/
+    FNP/Fights First) are inert because they are stored under a single "CORE" key, multi-profile
+    statlines collapse to one profile, and transport capacity parses as 0. Also: 16 of 18
+    secondary missions have no scoring binding; transports/attached units/aircraft are not
+    implemented; Fight-phase activation does not alternate between players; MFM points
+    reconciliation was never performed.
 
 - **[2026-08-07] — Dead models leave the board + engaged/on-terrain LoS false blocks fixed
   (owner: "1. Dead units stay on the board… 2. My eversor assassin somehow can't target this
