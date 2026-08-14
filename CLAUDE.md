@@ -330,6 +330,43 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-08-14] — Shooting phase playable from the map (owner: "tapping on one of your units
+  brings up the weapons it can use; and a radius showing the range of each weapon. When tapping
+  an enemy within this radius, it shows a stat sheet of the weapon BS + strength, and the
+  enemy's toughness and save. Ensure that this is mobile friendly."). Separate PR off main.**
+  All gates green: `pnpm typecheck`, `pnpm test` (**528 tests**, +2 jsdom in
+  `tests/shootingFromMap.test.tsx`), `pnpm build`; a Playwright iPhone-13 touch drive of the
+  real app (tap shooter → rings + weapons panel → tap enemy → stat sheet → Shoot → tracer →
+  "already shot" on re-tap → out-of-range enemy shows no Shoot button) passes **12/12** with
+  zero console errors, zero horizontal overflow, the board keeping ≥50% of the screen and the
+  Shoot button at 44px.
+  - **New board mode** (`ShootingUI` in Board.tsx, active only on a HUMAN side's own Shooting
+    phase in a match): tapping your unit selects it as the shooter — the board draws a dashed
+    **range ring per distinct weapon range around every alive model** (radius = range + that
+    model's base radius, since 40k measures base-edge to base-edge; group-opacity fill keeps
+    the union flat), enemies the unit can legally target (range + per-bearer LoS via
+    `validUnitShootingTargets`) get amber ticks, and the existing cyan/red targeting rings +
+    firing line follow the selection. Taps never drag (no rejected mid-match MoveModel);
+    measuring is suppressed while the mode is on; pinch-zoom/pan unchanged.
+  - **New `src/ui/ShootingPanel.tsx`** (the under-board panel, so the phone's Board page covers
+    the whole phase without tab-flipping): the shooter's fire plan (`planUnitShooting`) with a
+    color dot matching each weapon's ring and its profile line (range · A · BS/auto-hit for
+    Torrent · S · AP · D); tapping an enemy adds the **matchup stat sheet** — the target's
+    T / Sv / invuln / W header plus per-weapon "hits X+ · wounds Y+" (`woundThreshold`), with
+    out-of-reach weapons dimmed "✗ can't reach" — and a **🔫 Shoot — all weapons** button that
+    dispatches the same `ShootUnit` intent as the game panel (tracer, AI defensive reactions,
+    the lot). An enemy no weapon reaches shows the sheet with "✗ out of range or not visible"
+    instead of the button; an ineligible shooter (already shot / Advanced / Fell Back) shows
+    the reason and still displays its ranges.
+  - **Decisions**: stat-sheet numbers are the raw profile values (modifiers — cover, stealth,
+    Orders — resolve in the dice as always; noted in the component); the board-tap selection is
+    separate state from the GamePanel's pickers (both dispatch the same intents; the board
+    selection wins the highlight while active); the whole volley fires at the tapped target —
+    per-weapon target splits stay in the game panel; rings key off the shooter's OWN base
+    radii (a target is in range when its base touches the ring).
+  - **Handoff nits**: tapping empty board clears the selection only when not zoomed in (zoomed
+    drags pan); the GamePanel's attacker/target selects don't mirror a board-tap selection.
+
 - **[2026-08-07] — Dead models leave the board + engaged/on-terrain LoS false blocks fixed
   (owner: "1. Dead units stay on the board… 2. My eversor assassin somehow can't target this
   unit… even though it should be able to draw a line of sight through cover"). Separate PR off

@@ -1449,6 +1449,21 @@ body {
     border-color: var(--accent);
   }
 
+  /* Shooting panel on the Board page: cap its height so the map stays usable; scroll inside. */
+  .shootbar {
+    flex: none;
+    max-height: 44%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .shootbar .btnrow button {
+    min-height: 44px;
+  }
+  .shoot-clear {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
   /* ── List builder: three full-height pages (My list / Add units / Setup) ── */
   .lb-layout .sidebar {
     order: 1;
@@ -1695,4 +1710,84 @@ body {
 @keyframes reaction-pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.35); }
   50% { box-shadow: 0 0 0 5px rgba(245, 158, 11, 0.08); }
+}
+
+/* ── Shooting from the map: weapon ranges + tap-to-target stat sheet ───────── */
+.shootbar {
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #171b22;
+  padding: 8px 10px;
+  font-size: 13px;
+  max-width: 100%;
+}
+.shoot-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.shoot-title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.shoot-clear {
+  flex: none;
+  min-width: 34px;
+  min-height: 34px;
+  border-radius: 8px;
+  background: #232936;
+  color: var(--text);
+  border: 1px solid var(--line);
+}
+.shoot-weapons {
+  margin: 4px 0;
+}
+.shoot-w {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 0;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.shoot-w.unreachable {
+  opacity: 0.45;
+}
+.shoot-w .wname {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.shoot-w .wstats {
+  color: var(--muted);
+  font-family: monospace;
+  font-size: 12px;
+}
+.shoot-w .wvs {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--accent);
+}
+.shoot-w .wvs.miss {
+  color: #fca5a5;
+}
+.wdot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+  display: inline-block;
+}
+.shoot-target {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--line);
+}
+.shoot-target .tstats {
+  flex: none;
+  font-family: monospace;
+  color: var(--muted);
 }
