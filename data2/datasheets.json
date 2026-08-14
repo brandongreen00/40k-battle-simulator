@@ -296,6 +296,7 @@
   "ability_ids": [],
   "ability_text": {
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Death to the Alien": "Each time a model in this unit makes an attack, re-roll a Hit roll of 1. If the target of that attack does not have the IMPERIUM or CHAOS keywords, you can re-roll the Hit roll instead.Kill Team: Each time an attack targets this unit, if it contains models with different Toughness characteristics, until the attacking unit has finished making its attacks, use the Toughness characteristic of the majority of the models in that unit when determining what roll is required for that attack to successfully wound. If two or more Toughness characteristics are tied for majority, use the highest value. For the purposes of determining which models in this unit can embark within a TRANSPORT, Gravis Veteran models take up the space of 2 models, but can otherwise embark within any TRANSPORT their unit can embark within, even though similar models in other units have the GRAVIS keyword. Designer’s Note: While the abstractions in the above rule cause some models to behave differently to similar models in other units, they are designed to minimise complicated Transport rules.",
    "Astartes Shield": "The bearer has a 4+ invulnerable save.",
    "Kill Team": "Each time an attack targets this unit, if it contains models with different Toughness characteristics, until the attacking unit has finished making its attacks, use the Toughness characteristic of the majority of the models in that unit when determining what roll is required for that attack to successfully wound. If two or more Toughness characteristics are tied for majority, use the highest value."
@@ -321,14 +322,14 @@
    }
   ],
   "transport_capacity": 0,
-  "transport_text": ", Gravis Veteran models take up the space of 2 models, but can otherwise embark within any TRANSPORT their unit can embark within, even though similar models in other units have the GRAVIS keyword. Designer’s Note: While the abstractions in the above rule cause some models to behave differently to similar models in other units, they are designed to minimise complicated Transport rules.",
+  "transport_text": "",
   "legends": false,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Aquila-Kill-Team.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -345,6 +346,7 @@
     "w": 4,
     "ld": 6,
     "oc": 1,
+    "invuln": 4,
     "base": {
      "kind": "circle",
      "radius": 0.6299
@@ -394,7 +396,12 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deep Strike, Fights First, Infiltrators, Lone Operative",
+   "Deep Strike": "Core ability (see the core rules).",
+   "Fights First": "Core ability (see the core rules).",
+   "Infiltrators": "Core ability (see the core rules).",
+   "Lone Operative": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Acrobatic Escape": "At the end of the Fight phase, if this unit is engaged, this unit can make a fall-back move of up to D6\".At the end of your opponent’s turn, if this unit is more than 3\" from all enemy units, you can use this ability. If you do:Place this unit in strategic reserves.This unit must make an ingress move in your next Movement phase (including in your first turn).Reign of Confusion: Once per turn, when your opponent targets a unit from their army within 12\" of this model with a stratagem, this model can use this ability. If you do increase the CP cost of that use of that stratagem by 1CP."
   },
   "unit_sizes": [
@@ -417,7 +424,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Callidus-Assassin.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -531,7 +538,11 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D6, Hover, Stealth",
+   "Deadly Demise D6": "Core ability (see the core rules).",
+   "Hover": "Core ability (see the core rules).",
+   "Stealth": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Blackstar Cluster Launcher": "Each time this model ends a Normal move, you can select one enemy unit it moved over during that move and roll six D6: for each 5+, that unit suffers 1 mortal wound.",
    "Auspex Array": "Ranged weapons equipped by the bearer have the [IGNORES COVER] ability.",
    "Infernum Halo-launcher": "The bearer has the Smoke keyword."
@@ -548,15 +559,15 @@
     "column": "army_faction"
    }
   ],
-  "transport_capacity": 0,
-  "transport_text": "",
+  "transport_capacity": 12,
+  "transport_text": "This model has a transport capacity of 12 DEATHWATCH INFANTRY models.",
   "legends": false,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Corvus-Blackstar.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -573,6 +584,7 @@
     "w": 4,
     "ld": 6,
     "oc": 1,
+    "invuln": 4,
     "base": {
      "kind": "circle",
      "radius": 0.6299
@@ -623,9 +635,13 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "Psychic Assassin": "Each time you select a PSYKER unit as the target for this weapon, until those attacks are resolved, change the Attacks characteristic of this weapon to 6.",
    "CORE": "Deep Strike, Lone Operative, Stealth",
+   "Deep Strike": "Core ability (see the core rules).",
+   "Lone Operative": "Core ability (see the core rules).",
+   "Stealth": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
+   "Psychic Assassin": "Each time you select a PSYKER unit as the target for this weapon, until those attacks are resolved, change the Attacks characteristic of this weapon to 6.",
    "Etheric Emergence": "In your Movement phase, when this model is set up on the battlefield using the Deep Strike ability, it can perform an etheric emergence. If it does, this model can be set up anywhere on the battlefield that is more than 6\" horizontally away from all enemy units, but until the end of the turn, it is not eligible to declare a charge.Abomination: This model has the Feel No Pain 2+ ability against Psychic Attacks.Soulless Horror: Once per battle, at the start of any Command phase, this model can use this ability. If it does, each enemy unit within 9\" of this model must take a Battle-shock test, subtracting 1 from that test (or subtracting 2 if that unit is a PSYKER).",
    "Abomination": "This model has the",
    "Soulless Horror": "Once per battle, at the start of any"
@@ -650,7 +666,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Culexus-Assassin.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -667,6 +683,7 @@
     "w": 3,
     "ld": 7,
     "oc": 0,
+    "invuln": 5,
     "base": {
      "kind": "circle",
      "radius": 0.4921
@@ -714,7 +731,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise 1",
+   "Deadly Demise 1": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Malefic Warding": "While an INQUISITOR model is leading a unit that includes one or more DAEMONHOST models, models in that unit have a 5+ invulnerable save.",
    "Bound Daemon": "While an INQUISITOR model is leading a unit that includes one or more DAEMONHOST models, the Objective Control characteristic of DAEMONHOST models in that unit is 1."
   },
@@ -746,7 +765,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Daemonhost.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -763,6 +782,7 @@
     "w": 2,
     "ld": 6,
     "oc": 1,
+    "invuln": 4,
     "base": {
      "kind": "circle",
      "radius": 0.4921
@@ -950,7 +970,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deep Strike",
+   "Deep Strike": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Grim Spectres": "In your Shooting phase, after this unit has shot, select one enemy unit hit by one or more of those attacks. That enemy unit must take a Battle-shock test, subtracting 1 from the result when doing so."
   },
   "unit_sizes": [
@@ -981,7 +1003,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Damned-Legionnaires.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -1172,6 +1194,7 @@
   "ability_ids": [],
   "ability_text": {
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Death to the Alien": "Each time a model in this unit makes an attack, re-roll a Hit roll of 1. If the target of that attack does not have the IMPERIUM or CHAOS keywords, you can re-roll the Hit roll instead.",
    "Astartes Shield": "The bearer has a 4+ invulnerable save."
   },
@@ -1203,7 +1226,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Deathwatch-Kill-Team.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -1220,6 +1243,7 @@
     "w": 3,
     "ld": 6,
     "oc": 1,
+    "invuln": 4,
     "base": {
      "kind": "circle",
      "radius": 0.7874
@@ -1390,7 +1414,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deep Strike",
+   "Deep Strike": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Terminatus Assault": "Each time this unit ends a Charge move, each enemy unit within Engagement Range of this unit must take a Battle-shock test.Teleport Homer: At the start of the battle, you can set up one Teleport Homer token for this unit anywhere on the battlefield that is not in your opponent’s deployment zone. If you do, once per battle, you can target this unit with the Rapid Ingress Stratagem for 0CP, but when resolving that Stratagem, you must set this unit up within 3\" of that token and not within 8\" of any enemy models. That token is then removed.",
    "Storm Shield": "The bearer has a Wounds characteristic of 4.",
    "Teleport Homer": "At the start of the battle, you can set up one Teleport Homer token for this unit anywhere on the battlefield that is not in your opponent’s deployment zone. If you do, once per battle, you can target this unit with the"
@@ -1423,7 +1449,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Deathwatch-Terminator-Squad.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -1440,6 +1466,7 @@
     "w": 4,
     "ld": 6,
     "oc": 1,
+    "invuln": 4,
     "base": {
      "kind": "circle",
      "radius": 0.6299
@@ -1492,7 +1519,11 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D3, Lone Operative, Scouts 9\"",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "Lone Operative": "Core ability (see the core rules).",
+   "Scouts 9\"": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Frenzon": "This model is eligible to shoot and declare a charge in a turn in which it Advanced.Overkill: Once per battle, in your Movement phase, this model can use this ability before it makes a Normal move. If it does, until the end of the turn, add 6\" to this model’s Move characteristic and add 3 to the Attacks characteristic of this model’s melee weapons.",
    "Overkill": "Once per battle, in your"
   },
@@ -1523,7 +1554,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Eversor-Assassin.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -1681,6 +1712,7 @@
   "ability_ids": [],
   "ability_text": {
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Imperial Law": "At the start of the battle, select one unit from your opponent’s army. Each time a model in this unit makes an attack that targets that unit, that attack has the [LETHAL HITS] and [PRECISION] abilities.",
    "Arbites Medi-kit": "At the start of your Command phase, if the bearer’s unit is below its Starting Strength, you can return up to D3 destroyed Exaction Vigilants to this unit.",
    "Nuncio Aquila": "Once per battle, at the start of any Command phase, you can select one objective marker within 6\" of the bearer. All enemy units (excluding MONSTERS and VEHICLES) within range of that objective marker must take a Battle-shock test. Each objective marker can only be targeted by this ability once per turn. Designer’s Note: Place one Nuncio-aquila token next to the bearer, removing it once it uses this ability.",
@@ -1713,7 +1745,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Exaction-Squad.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -1923,6 +1955,8 @@
   "ability_ids": [],
   "ability_text": {
    "FACTION": "Kill Team, Assigned Agents",
+   "Kill Team": "Faction ability (see the core rules).",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Fortis Doctrines": "Each time a model in this unit makes an attack that targets a unit that is Below Half-strength, add 1 to the Hit roll."
   },
   "unit_sizes": [
@@ -1946,14 +1980,14 @@
    }
   ],
   "transport_capacity": 0,
-  "transport_text": "",
+  "transport_text": "This unit cannot embark within an IMPERIAL RHINO.",
   "legends": true,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Fortis-Kill-Team.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -1970,6 +2004,7 @@
     "w": 3,
     "ld": 6,
     "oc": 2,
+    "invuln": 4,
     "base": {
      "kind": "circle",
      "radius": 0.7874
@@ -2059,7 +2094,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deep Strike",
+   "Deep Strike": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Ancient’s Banner": "Add 1 to the Objective Control characteristic of models in the bearer’s unit.",
    "Narthecium": "In your Command phase, you can return 1 destroyed model (excluding CHARACTERS) to the bearer’s unit.",
    "Hammerhand (Psychic)": "Each time a model in this unit makes a"
@@ -2106,7 +2143,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Grey-Knights-Terminator-Squad.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -2303,8 +2340,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Breaching Team": "Each time a model in this unit makes an attack, re-roll a Wound roll of 1. If the target is within range of an objective marker, you can re-roll the Wound roll instead.Gheistskull: Once per battle, when you select this unit as the target of the Explosives Stratagem, you can target one enemy unit visible to and within 18\" of this unit that is not within Engagement Range of any units from your army, instead of one within 8\".CAT Unit: Once per battle, when this unit is selected to shoot, until the end of the phase, ranged weapons equipped by models in this unit gain the [IGNORES COVER] ability. Designer’s Note: Place one Gheistskull and one CAT Unit token next to this unit, removing each token once the relevant ability has been used.",
    "Endurant Shield": "The bearer has a 4+ invulnerable save.",
    "Gheistskull": "Once per battle, when you select this unit as the target of the"
@@ -2329,7 +2367,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Imperial-Navy-Breachers.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -2400,9 +2438,12 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D3, Firing Deck 2",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "Firing Deck 2": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Self Repair": "At the end of your Command phase, this model regains 1 lost wound."
   },
   "unit_sizes": [
@@ -2424,15 +2465,15 @@
     "column": "army_faction"
    }
   ],
-  "transport_capacity": 0,
-  "transport_text": "",
+  "transport_capacity": 12,
+  "transport_text": "This model has a transport capacity of 12 AGENTS OF THE IMPERIUM INFANTRY models. It cannot transport TERMINATOR or OFFICIO ASSASSINORUM models.",
   "legends": false,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Imperial-Rhino-1.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -2653,6 +2694,8 @@
   "ability_ids": [],
   "ability_text": {
    "FACTION": "Kill Team, Assigned Agents",
+   "Kill Team": "Faction ability (see the core rules).",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Indomitor Doctrines": "Each time a model in this unit makes an attack, add 1 to the Hit roll if this unit is below its Starting Strength, and add 1 to the Wound roll as well if this unit is Below Half-strength.",
    "Jump Pack": "The bearer has a Move characteristic of 10\" and can move over models and terrain features as if they were not there."
   },
@@ -2677,14 +2720,14 @@
    }
   ],
   "transport_capacity": 0,
-  "transport_text": "",
+  "transport_text": "This unit cannot embark within an IMPERIAL RHINO.",
   "legends": true,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Indomitor-Kill-Team.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -2766,7 +2809,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Leader",
+   "Leader": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Authority of the Inquisition": "While this model is leading a unit, it can embark within any TRANSPORT that its Bodyguard unit can embark within.Malefic Wardings (Psychic): While this model is leading a unit, models in that unit have a 6+ invulnerable save, and a 4+ invulnerable save against Psychic Attacks and attacks made by DAEMON models.Spy Network: Each time your opponent gains a CP as the result of an ability, roll one D6: on a 2+, you also gain 1CP.",
    "Glovodan Psyber-eagle": "In your Command phase, you can select one enemy unit within 18\" of the bearer. Until the start of your next Command phase, that unit cannot have the Benefit of Cover. Designer’s Note: Place a Glovodan Psyber-eagle token next to the selected unit to remind you.",
    "Malefic Wardings (Psychic)": "While this model is leading a unit, models in that unit have a 6+ invulnerable save, and a 4+ invulnerable save against",
@@ -2792,14 +2837,14 @@
    }
   ],
   "transport_capacity": 0,
-  "transport_text": "that its Bodyguard unit can embark within.",
+  "transport_text": "",
   "legends": false,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Inquisitor-Coteaz.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -2816,6 +2861,7 @@
     "w": 4,
     "ld": 6,
     "oc": 1,
+    "invuln": 5,
     "base": {
      "kind": "circle",
      "radius": 0.6299
@@ -2878,7 +2924,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Leader",
+   "Leader": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Authority of the Inquisition": "While this model is leading a unit, it can embark within any TRANSPORT that its Bodyguard unit can embark within.Xenos Hunter: While this model is leading a unit, each time a model in that unit makes an attack that targets an enemy unit that does not have the IMPERIUM or CHAOS keywords, add 1 to the Hit roll.Psychic Veil (Psychic): In your Command phase, this PSYKER can use this ability. If it does, roll one D6: on a 1, this PSYKER’s unit suffers D3 mortal wounds; on a 2+, until the start of your next Command phase, this PSYKER’s unit can only be selected as the target of a ranged attack if the attacking model is within 18\".",
    "Xenos Hunter": "While this model is leading a unit, each time a model in that unit makes an attack that targets an enemy unit that does not have the"
   },
@@ -2902,14 +2950,14 @@
    }
   ],
   "transport_capacity": 0,
-  "transport_text": "that its Bodyguard unit can embark within.",
+  "transport_text": "",
   "legends": false,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Inquisitor-Draxus.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -2926,6 +2974,7 @@
     "w": 4,
     "ld": 6,
     "oc": 1,
+    "invuln": 5,
     "base": {
      "kind": "circle",
      "radius": 0.6299
@@ -2988,7 +3037,10 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Feel No Pain 6+, Leader",
+   "Feel No Pain 6+": "Core ability (see the core rules).",
+   "Leader": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Authority of the Inquisition": "While this model is leading a unit, it can embark within any Transport that its Bodyguard unit can embark within.Malus Codicium: While this model is leading a unit, double the Attacks characteristic of melee weapons equipped by DAEMONHOST models in that unit.Dominate Will (Psychic): At the start of your opponent’s Shooting phase, select one enemy INFANTRY unit that is within 12\" of and visible to this model and roll one D6: on a 1, this model suffers D3 mortal wounds; on a 2-5, until the end of the phase, each time a model in that unit makes an attack, subtract 1 from the Hit roll; on a 6, until the end of the phase, that unit is not eligible to shoot.",
    "Malus Codicium": "While this model is leading a unit, double the Attacks characteristic of melee weapons equipped by",
    "Dominate Will (Psychic)": "At the start of your opponent’s"
@@ -3013,7 +3065,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Inquisitor-Eisenhorn.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -3030,6 +3082,7 @@
     "w": 4,
     "ld": 6,
     "oc": 1,
+    "invuln": 5,
     "base": {
      "kind": "circle",
      "radius": 0.6299
@@ -3095,7 +3148,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Leader",
+   "Leader": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Authority of the Inquisition": "While this model is leading a unit, it can embark within any TRANSPORT that its Bodyguard unit can embark within.Psyoculum: While this model is leading a unit, ranged weapons equipped by models in that unit have the [ANTI-PSYKER 4+] ability.No Mercy: While this model is leading a unit, each time a model in that unit makes an attack that targets a unit that is Below Half-strength, add 1 to the Hit roll.",
    "Psyoculum": "While this model is leading a unit, ranged weapons equipped by models in that unit have the",
    "No Mercy": "While this model is leading a unit, each time a model in that unit makes an attack that targets a unit that is"
@@ -3113,14 +3168,14 @@
    }
   ],
   "transport_capacity": 0,
-  "transport_text": "that its Bodyguard unit can embark within.",
+  "transport_text": "",
   "legends": false,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Inquisitor-Greyfax.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -3137,6 +3192,7 @@
     "w": 5,
     "ld": 6,
     "oc": 1,
+    "invuln": 4,
     "base": {
      "kind": "circle",
      "radius": 0.4921
@@ -3235,7 +3291,10 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deep Strike, Leader",
+   "Deep Strike": "Core ability (see the core rules).",
+   "Leader": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Authority of the Inquisition": "While this model is leading a unit, it can embark within any Transport that its Bodyguard unit can embark within.Power of the Rosette: Each time you target this model’s unit with a Stratagem, roll one D6: on a 3+, you gain 1CP.",
    "Blessed Wardings": "While the bearer is leading a unit, models in that unit have a 6+ invulnerable save.",
    "Psychic Gifts": "The bearer has the PSYKER keyword."
@@ -3260,7 +3319,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Inquisitor-In-Terminator-Armour.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -3277,6 +3336,7 @@
     "w": 10,
     "ld": 6,
     "oc": 3,
+    "invuln": 4,
     "base": {
      "kind": "circle",
      "radius": 1.1811
@@ -3322,7 +3382,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise 1",
+   "Deadly Demise 1": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Unsubtle Crusader": "At the start of the Declare Battle Formations step, you can select up to three"
   },
   "unit_sizes": [
@@ -3345,7 +3407,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Inquisitor-Karamazov.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -3362,6 +3424,7 @@
     "w": 6,
     "ld": 6,
     "oc": 2,
+    "invuln": 4,
     "base": {
      "kind": "circle",
      "radius": 1.1811
@@ -3434,7 +3497,10 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Lone Operative, Scouts 6\"",
+   "Lone Operative": "Core ability (see the core rules).",
+   "Scouts 6\"": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "On My Signal, Fire!": "After this unit has shot, you can select one enemy unit hit by those attacks. Until the end of the phase, each time an"
   },
   "unit_sizes": [
@@ -3457,7 +3523,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Inquisitor-Kroyle.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -3474,6 +3540,7 @@
     "w": 4,
     "ld": 6,
     "oc": 1,
+    "invuln": 5,
     "base": {
      "kind": "circle",
      "radius": 0.6299
@@ -3527,9 +3594,13 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Feel No Pain 4+, Leader",
+   "Feel No Pain 4+": "Core ability (see the core rules).",
+   "Leader": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Authority of the Inquisition": "While this unit is leading a unit, it can embark within any TRANSPORT that its Bodyguard unit can embark within.Ward Against the Malefic Arts: While this unit is leading a unit, each time a Psychic Attack targets that unit, subtract 1 from the Hit roll and subtract 1 from the Wound roll.Vox-cast Proclamations (Aura): Each time your opponent targets a unit from their army with a Stratagem, if that unit is within 12\" of this unit’s Inquisitor Ostromandeus model, increase the cost of that use of that Stratagem by 1CP.",
-   "Vox-skull": "Once per battle, at the start of any phase, you can select one enemy unit (excluding MONSTERS and VEHICLES) within 12\" of the bearer. That unit must take a Battle-shock test; if that test is failed, until the end of your next turn, that unit cannot have the Benefit of Cover. Designer’s Note: Place a vox-skull token next to the unit, removing it once this ability has been used."
+   "Vox-skull": "Once per battle, at the start of any phase, you can select one enemy unit (excluding MONSTERS and VEHICLES) within 12\" of the bearer. That unit must take a Battle-shock test; if that test is failed, until the end of your next turn, that unit cannot have the Benefit of Cover. Designer’s Note: Place a vox-skull token next to the unit, removing it once this ability has been used.",
+   "Invulnerable Save note": "* Inquisitor Ostromandeus only."
   },
   "unit_sizes": [
    2
@@ -3544,14 +3615,14 @@
    }
   ],
   "transport_capacity": 0,
-  "transport_text": "that its Bodyguard unit can embark within.",
+  "transport_text": "",
   "legends": true,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Inquisitor-Ostromandeus.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -3568,6 +3639,7 @@
     "w": 4,
     "ld": 6,
     "oc": 1,
+    "invuln": 5,
     "base": {
      "kind": "circle",
      "radius": 0.6299
@@ -3652,7 +3724,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Leader",
+   "Leader": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Authority of the Inquisition": "While this model is leading a unit, it can embark within any Transport that its Bodyguard unit can embark within.Power of the Rosette: Each time you target this model’s unit with a Stratagem, roll one D6: on a 3+, you gain 1CP.",
    "Blessed Wardings": "While this model is leading a unit, models in that unit have the 6+ invulnerable save.",
    "Psychic Gifts": "The bearer has the PSYKER keyword."
@@ -3684,7 +3758,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Inquisitor.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -3856,6 +3930,7 @@
   "ability_ids": [],
   "ability_text": {
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Loyal Henchmen": "While an INQUISITOR model is leading this unit, each time an attack is made against this unit, subtract 1 from the Wound roll.",
    "Tome-skull": "Once per battle for each Tome-skull this unit is equipped with, at the start of any phase, you can select either one friendly AGENTS OF THE IMPERIUM unit that is Battle-shocked and within 6\" of this unit or one enemy unit within 6\" of this unit. If you select a friendly unit, that unit is no longer Battle-shocked. If you select an enemy unit, it must take a Battle-shock test. Designer’s Note: Place the appropriate number of Tome-skull tokens next to the unit at the start of the battle, removing one each time this unit uses this ability."
   },
@@ -3901,7 +3976,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Inquisitorial-Agents.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -4035,9 +4110,12 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D3, Firing Deck 2",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "Firing Deck 2": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Rapid Deployment": "Units can disembark from this TRANSPORT after it has Advanced. Units that do so count as having made a Normal move that phase, and cannot declare a charge in the same turn, but can otherwise act normally."
   },
   "unit_sizes": [
@@ -4059,15 +4137,15 @@
     "column": "army_faction"
    }
   ],
-  "transport_capacity": 0,
-  "transport_text": "after it has Advanced. Units that do so count as having made a Normal move that phase, and cannot declare a charge in the same turn, but can otherwise act normally.",
+  "transport_capacity": 13,
+  "transport_text": "This model has a transport capacity of 13 INQUISITOR INFANTRY and INQUISITORIAL AGENT models. It cannot transport TERMINATOR models.",
   "legends": false,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Inquisitorial-Chimera.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -4084,6 +4162,7 @@
     "w": 4,
     "ld": 6,
     "oc": 1,
+    "invuln": 4,
     "base": {
      "kind": "circle",
      "radius": 0.6299
@@ -4132,7 +4211,10 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Infiltrators, Leader",
+   "Infiltrators": "Core ability (see the core rules).",
+   "Leader": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Backroom Deals": "If your army contains one or more units with this ability, during the Declare Battle Formations step, select one of those units. While the selected unit is leading a unit, models in that unit have the Infiltrators ability.Warrant of Trade: If your army includes one or more units with this ability, after both players have deployed their armies, select up to D3 IMPERIUM BATTLELINE units from your army and redeploy them. When doing so, you can set those units up in Strategic Reserves, regardless of how many units are already in Strategic Reserves."
   },
   "unit_sizes": [
@@ -4155,7 +4237,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Janus-Draik.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -4172,6 +4254,7 @@
     "w": 2,
     "ld": 7,
     "oc": 0,
+    "invuln": 4,
     "base": {
      "kind": "circle",
      "radius": 0.4921
@@ -4225,7 +4308,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Leader",
+   "Leader": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Inconceivable Augmentation": "While this model is leading a unit, ranged weapons equipped by models in that unit have the [LETHAL HITS] ability.A Weaponsmith, Not a Warlord: This model cannot be selected to be your WARLORD. While an INQUISITOR model is leading a unit that includes one or more JOKAERO WEAPONSMITH models, the Objective Control characteristic of JOKAERO WEAPONSMITH models in that unit is 1."
   },
   "unit_sizes": [
@@ -4248,7 +4333,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Jokaero-Weaponsmith.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -4265,6 +4350,7 @@
     "w": 2,
     "ld": 6,
     "oc": 2,
+    "invuln": 4,
     "base": {
      "kind": "circle",
      "radius": 0.6299
@@ -4441,7 +4527,10 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deep Strike",
+   "Deep Strike": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents, Kill Team",
+   "Assigned Agents": "Faction ability (see the core rules).",
+   "Kill Team": "Faction ability (see the core rules).",
    "Catechism of Death": "While this unit contains Chaplain Cassius, melee weapons equipped by models in this unit have the [DEVASTATING WOUNDS] ability.Unflinching: You can re-roll Battle-shock tests for this unit.",
    "Jump Pack": "The bearer has a Move characteristic of 12\" and can move over models and terrain as if they were not there.",
    "Psychic Hood": "Models in the bearer’s unit have the Feel No Pain 4+ ability against Psychic Attacks.",
@@ -4467,7 +4556,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Kill-Team-Cassius.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -4484,6 +4573,7 @@
     "w": 3,
     "ld": 7,
     "oc": 1,
+    "invuln": 4,
     "base": {
      "kind": "circle",
      "radius": 0.6299
@@ -4549,7 +4639,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Support",
+   "Support": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Holy Hatred": "While this model is leading a unit, melee weapons equipped by models in that unit have the [SUSTAINED HITS 1] ability.Zealot: Once per battle, in the Fight phase, this model can use this ability. If it does, until the end of the phase, improve the Strength and Attacks characteristics of melee weapons equipped by this model by 3.",
    "Zealot": "Once per battle, in the"
   },
@@ -4573,7 +4665,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Ministorum-Priest.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -4590,6 +4682,7 @@
     "w": 3,
     "ld": 7,
     "oc": 1,
+    "invuln": 4,
     "base": {
      "kind": "circle",
      "radius": 0.6299
@@ -4636,7 +4729,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Leader",
+   "Leader": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Third Eye (Psychic)": "At the start of your"
   },
   "unit_sizes": [
@@ -4666,7 +4761,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Navigator.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -4683,6 +4778,7 @@
     "w": 4,
     "ld": 6,
     "oc": 1,
+    "invuln": 4,
     "base": {
      "kind": "circle",
      "radius": 0.6299
@@ -4727,7 +4823,10 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Infiltrators, Leader",
+   "Infiltrators": "Core ability (see the core rules).",
+   "Leader": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Backroom Deals": "If your army contains one or more units with this ability, during the Declare Battle Formations step, select one of those units. While the selected unit is leading a unit, models in that unit have the Infiltrators ability.Warrant of Trade: If your army includes one or more units with this ability, after both players have deployed their armies, select up to D3 IMPERIUM BATTLELINE units from your army and redeploy them. When doing so, you can set those units up in Strategic Reserves, regardless of how many units are already in Strategic Reserves."
   },
   "unit_sizes": [
@@ -4750,7 +4849,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Neyam-Shai-Murad.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -4767,6 +4866,7 @@
     "w": 2,
     "ld": 6,
     "oc": 1,
+    "invuln": 4,
     "base": {
      "kind": "circle",
      "radius": 0.6299
@@ -5053,10 +5153,13 @@
   "ability_ids": [],
   "ability_text": {
    "FACTION": "Kill Team, Assigned Agents",
+   "Kill Team": "Faction ability (see the core rules).",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Proteus Doctrines": "Each time a model in this unit makes an attack that targets a unit that is not Below Half-strength, add 1 to the Hit roll.",
    "Astartes Shield": "The bearer has a 4+ invulnerable save.",
    "Jump Pack": "The bearer has a Move characteristic of 12\" and can move over models and terrain features as if they were not there.",
-   "Storm Shield": "The bearer has a Wounds characteristic of 4."
+   "Storm Shield": "The bearer has a Wounds characteristic of 4.",
+   "Invulnerable Save note": "* Kill Team Terminator models only."
   },
   "unit_sizes": [
    5,
@@ -5086,7 +5189,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Proteus-Kill-Team.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -5103,6 +5206,7 @@
     "w": 4,
     "ld": 6,
     "oc": 1,
+    "invuln": 4,
     "base": {
      "kind": "circle",
      "radius": 0.4921
@@ -5209,7 +5313,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Leader",
+   "Leader": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Backroom Deals": "If your army contains one or more units with this ability, during the Declare Battle Formations step, select one of those units. While the selected unit is leading a unit, models in that unit have the Infiltrators ability.Warrant of Trade: If your army includes one or more units with this ability, after both players have deployed their armies, select upto D3 IMPERIUM BATTLELINE units from your army and redeploy them. When doing so, you can set those units up in Strategic Reserves, regardless of how many units are already in Strategic Reserves.",
    "Healing Serum": "At the start of your Command phase, if the bearer’s unit is below its Starting Strength, you can return up to D3 destroyed models (excluding CHARACTERS) to the bearer’s unit."
   },
@@ -5240,7 +5346,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Rogue-Trader-Entourage.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -5257,6 +5363,7 @@
     "w": 1,
     "ld": 7,
     "oc": 1,
+    "invuln": 5,
     "base": {
      "kind": "circle",
      "radius": 0.4921
@@ -5403,9 +5510,11 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Scouts 6\"",
+   "Scouts 6\"": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Ministorum Sermon": "While this unit contains a MINISTORUM PRIEST, each time a model in this unit makes a melee attack, add 1 to the Wound roll.Cherub: Once per battle, you can target this unit with the Command Re-roll Stratagem for 0CP, and can do so even if you have already targeted a different unit with that Stratagem this phase. Designer’s Note: Place a Cherub token next to the unit, removing it once this ability has been used.",
    "Salvationist Medikit": "In your Command phase, if the bearer is on the battlefield, you can return up to D3 destroyed models (excluding CHARACTER models) to this unit.",
    "Simulacrum Imperialis": "Improve the Leadership characteristic of models in the bearer’s unit by 1.",
@@ -5431,7 +5540,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Sanctifiers.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -5448,6 +5557,7 @@
     "w": 11,
     "ld": 7,
     "oc": 2,
+    "invuln": 6,
     "base": {
      "kind": "hull",
      "rx": 2.0,
@@ -5545,9 +5655,11 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D3",
+   "Deadly Demise D3": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Purge and Cleanse": "Each time this model has shot, select one enemy unit hit by one or more of those attacks. Until the end of the phase, that enemy unit cannot have the Benefit of Cover."
   },
   "unit_sizes": [
@@ -5597,15 +5709,15 @@
     "column": "assigned_agent"
    }
   ],
-  "transport_capacity": 0,
-  "transport_text": "",
+  "transport_capacity": 6,
+  "transport_text": "This model has a transport capacity of 6 ORDO HERETICUS INFANTRY models. At the start of the Declare Battle Formations step, you can select one SISTERS OF BATTLE SQUAD from your army. If you do, that unit is split into two units, each containing as equal a number of models as possible (when splitting a unit in this way, make a note of which models form each of the two new units). One of these units must start the battle embarked within this TRANSPORT; the other can start the battle embarked within another TRANSPORT, or it can be deployed as a separate unit.",
   "legends": false,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Sisters-of-Battle-Immolator.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -5622,6 +5734,7 @@
     "w": 1,
     "ld": 7,
     "oc": 2,
+    "invuln": 6,
     "base": {
      "kind": "circle",
      "radius": 0.6299
@@ -5865,6 +5978,7 @@
   "ability_ids": [],
   "ability_text": {
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Defenders of the Faith": "If you control an objective marker at the end of your Command phase and this unit is within range of that objective marker, that objective marker remains under your control, even if you have no models within range of it, until your opponent controls it at the start or end of any turn.Incensor Cherub: Once per battle, you can target this unit with the Command Re-roll Stratagem for 0CP, and can do so even if you have already targeted a different unit with that Stratagem this phase. Designer’s Note: Place an Incensor Cherub token next to the unit, removing it once this ability has been used.",
    "Simulacrum Imperials": "Improve the Leadership characteristic of models in the bearer’s unit by 1.",
    "Incensor Cherub": "Once per battle, you can target this unit with the"
@@ -5896,7 +6010,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Sisters-of-Battle-Squad.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -6077,7 +6191,11 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Infiltrators, Scouts 6\"",
+   "Infiltrators": "Core ability (see the core rules).",
+   "Scouts 6\"": "Core ability (see the core rules).",
    "FACTION": "Kill Team, Assigned Agents",
+   "Kill Team": "Faction ability (see the core rules).",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Spectrus Doctrines": "At the end of your opponent’s turn, if this unit is more than 6\" away from all enemy units, you can remove this unit from the battlefield and place it into Strategic Reserves.",
    "Helix Gauntlet": "Models in the bearer’s unit have the Feel No Pain 6+ ability.",
    "Infiltrator Comms Array": "Each time you target the bearer’s unit with a Stratagem, roll one D6: on a 5+, you gain 1CP.",
@@ -6104,14 +6222,14 @@
    }
   ],
   "transport_capacity": 0,
-  "transport_text": "",
+  "transport_text": "This unit cannot embark within an IMPERIAL RHINO.",
   "legends": true,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Spectrus-Kill-Team.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -6128,6 +6246,7 @@
     "w": 1,
     "ld": 7,
     "oc": 1,
+    "invuln": 4,
     "base": {
      "kind": "circle",
      "radius": 0.0984
@@ -6180,8 +6299,10 @@
   "ability_ids": [],
   "ability_text": {
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Dedication to Duty": "Each time a model in this unit is destroyed by a melee attack, if that model has not fought this phase, roll one D6: on a 4+, do not remove it from play. The destroyed model can fight after the attacking model’s unit has finished making its attacks, and is then removed from play.",
-   "Nuncio Aquila": "Once per battle, at the start of any Command phase, you can select one objective marker within 6\" of the bearer. All enemy units (excluding MONSTERS and VEHICLES) within range of that objective marker must take a Battle-shock test. Each objective marker can only be targeted by this ability once per turn. Designer’s Note: Place one Nuncio-aquila token next to the bearer, removing it once it uses this ability."
+   "Nuncio Aquila": "Once per battle, at the start of any Command phase, you can select one objective marker within 6\" of the bearer. All enemy units (excluding MONSTERS and VEHICLES) within range of that objective marker must take a Battle-shock test. Each objective marker can only be targeted by this ability once per turn. Designer’s Note: Place one Nuncio-aquila token next to the bearer, removing it once it uses this ability.",
+   "Invulnerable Save note": "*Excluding the Cyber-mastiff."
   },
   "unit_sizes": [
    11
@@ -6210,7 +6331,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Subductor-Squad.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -6269,7 +6390,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Lone Operative",
+   "Lone Operative": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Self Repair": "At the start of your Command phase, this model regains 1 lost wound.Evade and Survive: In your opponent's Movement phase, when an enemy unit ends a Normal, Advance or Fall Back move within 8\" of this model, if this model is not within Engagement Range of one or more enemy units, it can make a Normal move."
   },
   "unit_sizes": [
@@ -6292,7 +6415,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-UR-025.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -6403,6 +6526,7 @@
   "ability_ids": [],
   "ability_text": {
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Turbo-boost": "Each time this unit Advances, do not make an Advance roll for it. Instead, until the end of the phase, add 6\" to the Move characteristic of models in this unit.",
    "Astartes Shield": "The bearer has a 4+ invulnerable save."
   },
@@ -6434,7 +6558,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Veteran-Bike-Squad.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -6584,6 +6708,7 @@
   "ability_ids": [],
   "ability_text": {
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Merciless Judgement": "Each time a model in this unit makes a ranged attack that targets a unit that is Below Half-strength, add 1 to the Wound roll.",
    "Nuncio Aquila (Aura)": "Once per battle, at the start of any"
   },
@@ -6607,7 +6732,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Vigilant-Squad.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -6624,6 +6749,7 @@
     "w": 4,
     "ld": 6,
     "oc": 1,
+    "invuln": 4,
     "base": {
      "kind": "circle",
      "radius": 0.6299
@@ -6687,7 +6813,11 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Infiltrators, Lone Operative, Stealth",
+   "Infiltrators": "Core ability (see the core rules).",
+   "Lone Operative": "Core ability (see the core rules).",
+   "Stealth": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Deadshot": "When this unit is selected to shoot, until this unit has shot: Enemy units do not have Lone Operative.Hidden enemy units have +15\" detection range.Shieldbreaker: Once per battle, when selecting targets for this model’s exitus rifle, it can fire a shieldbreaker round. If it does, until the end of the phase, each time this model makes an attack with that weapon, add 1 to the Wound roll and any successful Wound roll scores a Critical Wound.",
    "Shieldbreaker": "Once per battle, when selecting targets for this model’s exitus rifle, it can fire a shieldbreaker round. If it does, until the end of the phase, each time this model makes an attack with that weapon, add 1 to the"
   },
@@ -6718,7 +6848,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Vindicare-Assassin.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -6827,6 +6957,7 @@
   "ability_ids": [],
   "ability_text": {
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Masters of Close Confines": "Each time a model in this unit makes a ranged attack that targets the closest eligible target, that attack has the [LETHAL HITS] ability."
   },
   "unit_sizes": [
@@ -6856,7 +6987,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Voidsmen-at-arms.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -6873,6 +7004,7 @@
     "w": 4,
     "ld": 6,
     "oc": 1,
+    "invuln": 4,
     "base": {
      "kind": "circle",
      "radius": 0.6299
@@ -6921,7 +7053,10 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Feel No Pain 6+, Leader",
+   "Feel No Pain 6+": "Core ability (see the core rules).",
+   "Leader": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Tactical Instinct": "While this model is leading a unit, weapons equipped by models in that unit have the [LETHAL HITS] ability.Unstoppable Champion: The first time this model is destroyed, roll one D6 at the end of the phase. On a 2+, set this model back up on the battlefield, as close as possible to where it was destroyed and not within Engagement Range of any enemy units, with 1 wound remaining.",
    "Unstoppable Champion": "The first time this model is"
   },
@@ -6945,7 +7080,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Watch-Captain-Artemis.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -6962,6 +7097,7 @@
     "w": 5,
     "ld": 6,
     "oc": 1,
+    "invuln": 4,
     "base": {
      "kind": "circle",
      "radius": 0.6299
@@ -7006,7 +7142,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Leader",
+   "Leader": "Core ability (see the core rules).",
    "FACTION": "Assigned Agents",
+   "Assigned Agents": "Faction ability (see the core rules).",
    "Strategic Knowledge": "While this model is leading a unit, that unit is eligible to shoot and declare a charge in a turn in which it Advanced or Fell Back.Rites of Battle: Once per battle round, one unit from your army with this ability can use it when its unit is targeted with a Stratagem. If it does, reduce the CP cost of that use of that Stratagem by 1CP."
   },
   "unit_sizes": [
@@ -7029,7 +7167,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Watch-Master.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -7089,7 +7227,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Aegis-Defence-Line.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -7170,6 +7308,8 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D3, Hover",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "Hover": "Core ability (see the core rules).",
    "Aerial Deployment": "If this model starts the game in Hover mode and in Strategic Reserves, it can be set up in the Reinforcements step of your first, second or third Movement phase, regardless of any mission rules."
   },
   "unit_sizes": [
@@ -7184,15 +7324,15 @@
     "column": "army_faction"
    }
   ],
-  "transport_capacity": 0,
-  "transport_text": "",
+  "transport_capacity": 12,
+  "transport_text": "This model has a transport capacity of 12 ASTRA MILITARUM INFANTRY models. Each HEAVY WEAPONS TEAM model and VETERAN HEAVY WEAPONS TEAM model takes up the space of 2 models. Each OGRYN model takes up the space of 3 models. It cannot transport ARTILLERY models.",
   "legends": true,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Aquila-Lander.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -7349,8 +7489,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D6+2",
+   "Deadly Demise D6+2": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Rolling Fortress": "Each time a ranged attack is allocated to an ASTRA MILITARUM model from your army, if that model is not fully visible to every model in the attacking unit because of this ARKURIAN STORMHAMMER model, that model has the Benefit of Cover against that attack."
   },
   "unit_sizes": [
@@ -7373,7 +7514,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Arkurian-Stormhammer.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -7498,8 +7639,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D3",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Pinning Bombardment": "In your Shooting phase, after this model has shot, if one or more of those attacks made with its Medusa siege cannon scored a hit against an enemy INFANTRY unit, that unit must take a Battle-shock test."
   },
   "unit_sizes": [
@@ -7522,7 +7664,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Armageddon-pattern-Medusa.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -7690,8 +7832,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise 1",
+   "Deadly Demise 1": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Mobile Hunter-killers": "Each time a model in this unit makes an attack that targets a MONSTER or VEHICLE unit, you can re-roll the Wound roll."
   },
   "unit_sizes": [
@@ -7722,7 +7865,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Armoured-Sentinels.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -7865,7 +8008,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Artillery-Team.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -7913,6 +8056,8 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise 1, Hover",
+   "Deadly Demise 1": "Core ability (see the core rules).",
+   "Hover": "Core ability (see the core rules).",
    "Aerial Deployment": "If this model starts the game in Hover mode and in Strategic Reserves, it can be set up in the Reinforcements step of your first, second or third Movement phase, regardless of any mission rules."
   },
   "unit_sizes": [
@@ -7927,15 +8072,15 @@
     "column": "army_faction"
    }
   ],
-  "transport_capacity": 0,
-  "transport_text": "",
+  "transport_capacity": 12,
+  "transport_text": "This model has a transport capacity of 12 ASTRA MILITARUM INFANTRY models. Each HEAVY WEAPONS TEAM model and VETERAN HEAVY WEAPONS TEAM model takes up the space of 2 models. It cannot transport OGRYN or ARTILLERY models.",
   "legends": true,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Arvus-Lighter.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -8031,8 +8176,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D3",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Recovery Vehicle": "At the end of your Movement phase, you can select one friendly ASTRA MILITARUM VEHICLE model within 3\" of this model. That VEHICLE model regains up to D3 lost wounds. Each model can only be selected for this ability once per turn."
   },
   "unit_sizes": [
@@ -8055,7 +8201,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Atlas-Recovery-Vehicle.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -8220,7 +8366,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Attilan-Rough-Riders.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -8303,6 +8449,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D6",
+   "Deadly Demise D6": "Core ability (see the core rules).",
    "Fiery Vengeance": "Once per turn, in your opponent’s Shooting phase, when another friendly ASTRA MILITARUM unit within 6\" of this model is destroyed by an attack made by a unit that can FLY, one model from your army with this ability can use it. If it does, after the attacking unit has finished making its attacks, that model can shoot as if it were your Shooting phase, but when resolving those attacks it can only target that enemy unit (and only if it is an eligible target)."
   },
   "unit_sizes": [
@@ -8325,7 +8472,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Avenger-Strike-Fighter.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -8461,6 +8608,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D6+2",
+   "Deadly Demise D6+2": "Core ability (see the core rules).",
    "Rolling Fortress": "Each time a ranged attack is allocated to an ASTRA MILITARUM model from your army, if that model is not fully visible to every model in the attacking unit because of this BANEBLADE model, that model has the Benefit of Cover against that attack."
   },
   "unit_sizes": [
@@ -8490,7 +8638,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Baneblade.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -8591,6 +8739,8 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D6+2, Firing Deck 6",
+   "Deadly Demise D6+2": "Core ability (see the core rules).",
+   "Firing Deck 6": "Core ability (see the core rules).",
    "Tremor Quake": "In your Shooting phase, just after selecting a target for this model’s tremor cannon, the target unit and every other enemy INFANTRY unit within 3\" of that unit must take a Battle-shock test."
   },
   "unit_sizes": [
@@ -8612,15 +8762,15 @@
     "column": "army_faction"
    }
   ],
-  "transport_capacity": 0,
-  "transport_text": "",
+  "transport_capacity": 26,
+  "transport_text": "This model has a transport capacity of 26 ASTRA MILITARUM INFANTRY models. Each OGRYN model takes up the space of 3 models. It cannot transport ARTILLERY models.",
   "legends": false,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Banehammer.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -8721,6 +8871,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D6+2",
+   "Deadly Demise D6+2": "Core ability (see the core rules).",
    "Armour Obliteration": "Each time an attack made with this model’s quake cannon destroys an enemy model that has the Deadly Demise ability, that model’s Deadly Demise ability inflicts mortal wounds on a D6 roll of 3+ instead of on a 6."
   },
   "unit_sizes": [
@@ -8750,7 +8901,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Banesword.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -8849,8 +9000,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D3",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Earthshaker Rounds": "In your Shooting phase, after this model has shot, if one or more of those attacks made with its earthshaker cannon scored a hit against an enemy INFANTRY unit, until the start of your next Shooting phase, that unit is shaken. While a unit is shaken, subtract 2\" from its Move characteristic and subtract 2 from Charge rolls made for it."
   },
   "unit_sizes": [
@@ -8880,7 +9032,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Basilisk.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -8948,6 +9100,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Feel No Pain 6+",
+   "Feel No Pain 6+": "Core ability (see the core rules).",
    "Wall of Muscle": "Each time an attack is allocated to a model in this unit, subtract 1 from the Damage characteristic of that attack.",
    "Brute Shield": "The bearer has a 4+ invulnerable save.",
    "Slabshield": "The bearer has a Wounds characteristic of 4."
@@ -8994,7 +9147,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Bullgryn-Squad.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -9011,6 +9164,7 @@
     "w": 4,
     "ld": 7,
     "oc": 1,
+    "invuln": 5,
     "base": {
      "kind": "circle",
      "radius": 0.0984
@@ -9136,7 +9290,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Leader",
+   "Leader": "Core ability (see the core rules).",
    "FACTION": "Voice of Command",
+   "Voice of Command": "Faction ability (see the core rules).",
    "Senior Officer": "While this model is leading a unit, ranged weapons equipped by models in that unit have the [SUSTAINED HITS 1] ability.Get Back in the Fight: While this model is leading a unit, that unit is eligible to shoot in a turn in which it Fell Back."
   },
   "unit_sizes": [
@@ -9159,7 +9315,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Cadian-Castellan.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -9383,7 +9539,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Leader",
+   "Leader": "Core ability (see the core rules).",
    "FACTION": "Voice of Command",
+   "Voice of Command": "Faction ability (see the core rules).",
    "Master Vox": "Each time the OFFICER in the bearer’s unit issues an Order, it can issue it to an eligible unit up to 24\" away.",
    "Medi-pack": "At the start of your Command phase, if the bearer’s unit is below its Starting Strength, you can return up to D3 destroyed PLATOON models (excluding CHARACTERS) to this unit.",
    "Regimental Standard": "Add 1 to the Objective Control characteristic of models in the bearer’s unit.",
@@ -9409,7 +9567,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Cadian-Command-Squad.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -9566,14 +9724,14 @@
    }
   ],
   "transport_capacity": 0,
-  "transport_text": ", each model takes up the space of 2 models, and each weapon equipped by these models is considered to be 2 models’ weapons for the purposes of the Firing Deck ability.",
+  "transport_text": "",
   "legends": false,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Cadian-Heavy-Weapons-Squad.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -9745,6 +9903,8 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Infiltrators, Stealth",
+   "Infiltrators": "Core ability (see the core rules).",
+   "Stealth": "Core ability (see the core rules).",
    "Independent Operatives": "Each time an Order is issued to this unit, that Order affects this unit until a new Order is issued to this unit, or until this unit becomes Battle-shocked, or until the battle ends (whichever happens first).",
    "Vox-caster": "Each time you target the bearer’s unit with a Stratagem, roll one D6, adding 1 to the result if there are one or more friendly OFFICER models within 6\": on a 5+, you gain 1CP.",
    "Vox-relay Beacon": "At the start of the battle, you can set up one Vox-relay Beacon token for this unit anywhere on the battlefield that is not in your opponent’s deployment zone. While a friendly ASTRA MILITARUM REGIMENT unit is within 6\" of that token, OFFICER units from your army can issue orders to that REGIMENT unit as if the OFFICER unit was within 6\" of it. At the end of every phase, If an enemy unit is within 1\" of a Vox-relay Beacon token you set up, that token is removed from the battlefield."
@@ -9769,7 +9929,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Cadian-Recon-Squad.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -9987,7 +10147,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Cadian-Shock-Troops.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -10166,8 +10326,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D3",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Ancient Conquest": "Each time this model makes an attack that targets an enemy unit that is within your opponent’s deployment zone, re-roll a Hit roll of 1 and re-roll a Wound roll of 1."
   },
   "unit_sizes": [
@@ -10190,7 +10351,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Carnodon.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -10455,7 +10616,10 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Leader, Scouts 6\"",
+   "Leader": "Core ability (see the core rules).",
+   "Scouts 6\"": "Core ability (see the core rules).",
    "FACTION": "Voice of Command",
+   "Voice of Command": "Faction ability (see the core rules).",
    "Gung-ho Command": "While this unit contains an OFFICER, ranged weapons equipped by models in this unit have the [ASSAULT] ability.",
    "Master Vox": "Each time the OFFICER in the bearer’s unit issues an Order, it can issue it to an eligible unit up to 24\" away.",
    "Medi-pack": "At the start of your Command phase, if the bearer’s unit is below its Starting Strength, you can return up to D3 destroyed PLATOON models (excluding CHARACTERS) to this unit.",
@@ -10481,7 +10645,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Catachan-Command-Squad.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -10623,7 +10787,8 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "CORE": "Scouts 6\""
+   "CORE": "Scouts 6\"",
+   "Scouts 6\"": "Core ability (see the core rules)."
   },
   "unit_sizes": [
    3
@@ -10638,14 +10803,14 @@
    }
   ],
   "transport_capacity": 0,
-  "transport_text": ", each model takes up the space of 2 models, and each weapon equipped by these models is considered to be 2 models’ weapons for the purposes of the Firing Deck ability.",
+  "transport_text": "",
   "legends": false,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Catachan-Heavy-Weapons-Squad.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -10733,6 +10898,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Scouts 6\"",
+   "Scouts 6\"": "Core ability (see the core rules).",
    "Jungle Fighters": "Each time a model in this unit makes a melee attack, if this unit made a Charge move or was charged this turn, add 1 to the Wound roll.",
    "Vox-caster": "Each time you target the bearer’s unit with a Stratagem, roll one D6, adding 1 to the result if there are one or more friendly OFFICER models within 6\": on a 5+, you gain 1CP."
   },
@@ -10764,7 +10930,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Catachan-Jungle-Fighters.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -10835,8 +11001,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise 1",
+   "Deadly Demise 1": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Blistering Advance": "Units can disembark from this TRANSPORT after it has Advanced. Units that do so count as having made a Normal move that phase, and cannot declare a charge in the same turn, but can otherwise act normally in the remainder of the turn."
   },
   "unit_sizes": [
@@ -10851,15 +11018,15 @@
     "column": "army_faction"
    }
   ],
-  "transport_capacity": 0,
-  "transport_text": "after it has Advanced. Units that do so count as having made a Normal move that phase, and cannot declare a charge in the same turn, but can otherwise act normally in the remainder of the turn.",
+  "transport_capacity": 6,
+  "transport_text": "This model has a transport capacity of 6 ASTRA MILITARUM INFANTRY models. Each HEAVY WEAPONS TEAM model and VETERAN HEAVY WEAPONS TEAM model takes up the space of 2 models. It cannot transport OGRYN or ARTILLERY models.",
   "legends": true,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Centaur-Light-Carrier.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -10921,6 +11088,8 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D3, Firing Deck 12",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "Firing Deck 12": "Core ability (see the core rules).",
    "Rapid Strike Vehicle": "While one or more units are embarked within this model, unless this model is Battle-shocked, add 1 to this model’s Objective Control characteristic for every 3 models (rounding down) embarked within it."
   },
   "unit_sizes": [
@@ -10942,15 +11111,15 @@
     "column": "army_faction"
    }
   ],
-  "transport_capacity": 0,
-  "transport_text": "",
+  "transport_capacity": 12,
+  "transport_text": "This model has a transport capacity of 12 ASTRA MILITARUM INFANTRY models. Each OGRYN model takes up the space of 3 models. It cannot transport ARTILLERY models.",
   "legends": false,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Centaur-RSV.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -11085,8 +11254,10 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D3, Firing Deck 2",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "Firing Deck 2": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Mobile Command Vehicle": "In your Command phase, one OFFICER model embarked within this TRANSPORT can issue Orders even though it is not on the battlefield. When doing so, measure distances to and from this TRANSPORT."
   },
   "unit_sizes": [
@@ -11108,15 +11279,15 @@
     "column": "army_faction"
    }
   ],
-  "transport_capacity": 0,
-  "transport_text": "can issue Orders even though it is not on the battlefield. When doing so, measure distances to and from this TRANSPORT.",
+  "transport_capacity": 12,
+  "transport_text": "This model has a transport capacity of 12 ASTRA MILITARUM INFANTRY models. Each OGRYN model takes up the space of 3 models. It cannot transport ARTILLERY models.",
   "legends": false,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Chimera.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -11213,8 +11384,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D6",
+   "Deadly Demise D6": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Tracking Target": "Each time this model is selected to shoot, provided it Remained Stationary this turn, its Colossus siege mortar has the [ANTI-MONSTER 5+] and [ANTI-VEHICLE 5+] abilities while resolving those attacks."
   },
   "unit_sizes": [
@@ -11237,7 +11409,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Colossus.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -11254,6 +11426,7 @@
     "w": 4,
     "ld": 6,
     "oc": 1,
+    "invuln": 5,
     "base": {
      "kind": "circle",
      "radius": 0.6299
@@ -11296,7 +11469,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Leader",
+   "Leader": "Core ability (see the core rules).",
    "FACTION": "Voice of Command",
+   "Voice of Command": "Faction ability (see the core rules).",
    "Icon of Discipline": "This model’s unit is eligible to shoot and declare a Charge in a turn in which it Fell Back.Brutal Disciplinarian: Once per turn, at the start of any phase, you can select one friendly ASTRA MILITARUM INFANTRY (excluding units that only contain one model) unit that is Battle-shocked and within 12\" of this model. If you do, one model in that unit is destroyed, and that unit is no longer Battle-shocked.",
    "Brutal Disciplinarian": "Once per turn, at the start of any phase, you can select one friendly"
   },
@@ -11320,7 +11495,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Commissar-Graves-on-Foot.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -11337,6 +11512,7 @@
     "w": 12,
     "ld": 6,
     "oc": 5,
+    "invuln": 4,
     "base": {
      "kind": "hull",
      "rx": 2.0,
@@ -11419,7 +11595,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D3",
+   "Deadly Demise D3": "Core ability (see the core rules).",
    "FACTION": "Voice of Command",
+   "Voice of Command": "Faction ability (see the core rules).",
    "Mechanised Spearhead": "In your Movement phase, each time a friendly ASTRA MILITARUM REGIMENT unit disembarks from a TRANSPORT that is within 6\" of this model, after that unit has been set up, this model can issue 1 Order to that Regiment unit, regardless of how many Orders this model has already issued this turn.Brutal Disciplinarian: Once per turn, at the start of any phase, you can select one friendly ASTRA MILITARUM INFANTRY unit (excluding units that only contain one model) that is Battle-shocked and within 24\" of and visible to this model. If you do, one model in that unit is destroyed, and that unit is no longer Battle-shocked.",
    "Aquiline Prow": "Each time this unit ends a Charge move, you can select one enemy unit within Engagement Range of it, then roll one D6: on a 2-3, that enemy unit suffers D3 mortal wounds; on a 4-5, that enemy unit suffers 3 mortal wounds; on a 6, that enemy unit suffers D3+3 mortal wounds.",
    "Brutal Disciplinarian": "Once per turn, at the start of any phase, you can select one friendly"
@@ -11437,14 +11615,14 @@
    }
   ],
   "transport_capacity": 0,
-  "transport_text": "that is within 6\" of this model, after that unit has been set up, this model can issue 1 Order to that Regiment unit, regardless of how many Orders this model has already issued this turn.",
+  "transport_text": "",
   "legends": false,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Commissar-Graves.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -11461,6 +11639,7 @@
     "w": 5,
     "ld": 6,
     "oc": 1,
+    "invuln": 4,
     "base": {
      "kind": "circle",
      "radius": 0.6299
@@ -11538,10 +11717,12 @@
   ],
   "ability_ids": [],
   "ability_text": {
+   "CORE": "Leader",
+   "Leader": "Core ability (see the core rules).",
+   "FACTION": "Voice of Command",
+   "Voice of Command": "Faction ability (see the core rules).",
    "Counterstrategist": "At the end of your opponent’s Movement phase, you can select one enemy unit that was set up or ended a move within 8\" of this model, and one friendly REGIMENT unit within 6\" of and visible to this model that has not made a Normal move or been targeted with the Fire Overwatch Stratagem this phase. That REGIMENT unit can then either: Make a Normal move of up to D6\".Shoot at that enemy unit, but only if it is an eligible target. Until the end of the phase, each time a model in that unit makes a ranged attack, an unmodified Hit roll of 6 is required to score a hit, irrespective of the attacking weapon’s Ballistic Skill or any modifiers.Make a Surge move. To do so, roll one D6: models in that unit move a number of inches up to the result, but that unit must end that move as close as possible to the closest enemy unit (excluding AIRCRAFT). When doing so, those models can be moved within Engagement Range of that enemy unit. That unit cannot make a Surge move while it is Battle-shocked or within Engagement Range of one or more enemy units, and can only make one Surge move per phase.",
    "Decisive Command": "The next Order issued by this model can be issued to one eligible friendly unit within 12\" of this model; if this is the first Order issued by a unit from your army this Command phase, that Order affects not only that eligible unit, but every other eligible friendly unit within 6\" of that eligible unit.",
-   "CORE": "Leader",
-   "FACTION": "Voice of Command",
    "Will of Iron": "The first time this model is destroyed, remove it from play, then, at the end of the phase, roll one D6: on a 2+, set this model back up on the battlefield as close as possible to where it was destroyed and not within Engagement Range of one or more enemy units, with 3 wounds remaining.Hero of Hades Hive: In your Command phase, you can select one of the abilities in the Hero of Hades Hive section (see below). Until the start of your next Command phase, this model has that ability.",
    "Inspiring Hero (Aura)": "While a friendly"
   },
@@ -11565,7 +11746,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Commissar-Yarrick.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -11582,6 +11763,7 @@
     "w": 3,
     "ld": 6,
     "oc": 1,
+    "invuln": 5,
     "base": {
      "kind": "circle",
      "radius": 0.0984
@@ -11662,7 +11844,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Leader",
+   "Leader": "Core ability (see the core rules).",
    "FACTION": "Voice of Command",
+   "Voice of Command": "Faction ability (see the core rules).",
    "Summary Execution": "Once per battle round, at the start of any phase, you can select one friendly ASTRA MILITARUM INFANTRY unit that is Battle-shocked and within 12\" of this model. If you do, one model in that unit is destroyed, and that unit is then no longer Battle-shocked.Political Overwatch: While another OFFICER model is in the same unit as this model, you can re-roll Battle-shock tests taken for that unit.",
    "Political Overwatch": "While another"
   },
@@ -11686,7 +11870,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Commissar.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -11774,6 +11958,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D6",
+   "Deadly Demise D6": "Core ability (see the core rules).",
    "Fire Support": "In your Shooting phase, after this model has shot, select one enemy unit that was hit by one or more of those attacks. Until the end of the phase, each time a friendly model that disembarked from this TRANSPORT this turn makes an attack that targets that enemy unit, you can re-roll the Wound roll."
   },
   "unit_sizes": [
@@ -11788,15 +11973,15 @@
     "column": "army_faction"
    }
   ],
-  "transport_capacity": 0,
-  "transport_text": "this turn makes an attack that targets that enemy unit, you can re-roll the Wound roll.",
+  "transport_capacity": 35,
+  "transport_text": "This model has a transport capacity of 35 ASTRA MILITARUM INFANTRY models. Each HEAVY WEAPONS TEAM model and VETERAN HEAVY WEAPONS TEAM model takes up the space of 2 models. Each OGRYN model takes up the space of 3 models. It cannot transport ARTILLERY models.",
   "legends": true,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Crassus.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -11832,6 +12017,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise 1",
+   "Deadly Demise 1": "Core ability (see the core rules).",
    "Demolition Charges": "Each time this model or an enemy unit ends a move, if this model is within 3\" of one or more enemy units, select one of those enemy units. This model is destroyed, but instead of rolling for its Deadly Demise ability, roll one D6: on a 2-5, that enemy unit suffers D3 mortal wounds; on a 6, that enemy unit suffers D6 mortal wounds.Unstable Payload: When rolling for this model’s Deadly Demise ability, units within 6\" suffer mortal wounds on a 4+, instead of on a 6.",
    "Unstable Payload": "When rolling for this model’s"
   },
@@ -11855,14 +12041,14 @@
    }
   ],
   "transport_capacity": 0,
-  "transport_text": "model as if it were an Infantry model. If it does, it takes up the space of 7 models.",
+  "transport_text": "",
   "legends": false,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Cyclops-Demolition-Vehicle.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -12090,7 +12276,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Death-Korps-Grenadier-Squad.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -12363,7 +12549,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Death-Korps-Of-Krieg.html",
    "pack_version": "10th edition",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -12380,6 +12566,7 @@
     "w": 4,
     "ld": 6,
     "oc": 1,
+    "invuln": 5,
     "base": {
      "kind": "circle",
      "radius": 0.7874
@@ -12435,7 +12622,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Leader",
+   "Leader": "Core ability (see the core rules).",
    "FACTION": "Voice of Command",
+   "Voice of Command": "Faction ability (see the core rules).",
    "Summary Execution": "Once per battle round, at the start of any phase, you can select one friendly ASTRA MILITARUM INFANTRY or ASTRA MILITARUM MOUNTED unit that is Battle-shocked and within 12\" of this model. If you do, one model in that unit is destroyed, and that unit is then no longer Battle-shocked.Political Overwatch: While another OFFICER model is in the same unit as this model, you can re-roll Battle-shock tests taken for that unit.",
    "Political Overwatch": "While another"
   },
@@ -12459,7 +12648,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Death-Rider-Commissar.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -12571,7 +12760,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Death-Riders.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -12668,9 +12857,10 @@
   ],
   "ability_ids": [],
   "ability_text": {
+   "CORE": "Deadly Demise D6",
+   "Deadly Demise D6": "Core ability (see the core rules).",
    "Plasma Warhead": "The bearer can only shoot with this weapon in your Shooting phase, and only if it Remained Stationary this turn and you did not use its Deathstrike Missile ability to Designate Target or Adjust Target this phase. When the bearer shoots with this weapon, do not select a target. Instead, resolve this weapon’s attacks, rolling for each unit within 6\" of the centre of its Deathstrike Target marker individually.",
    "One Shot": "The bearer can only shoot with this weapon once per battle.",
-   "CORE": "Deadly Demise D6",
    "Deathstrike Missile": "In your Shooting phase, each time this model is selected to shoot, if it has not shot with its Deathstrike missile this battle, you can do one of the following in addition to resolving this model’s ranged attacks: Designate Target: If this model does not have a Deathstrike Target marker on the battlefield, place a unique Deathstrike Target marker for this model anywhere on the battlefield.Adjust Target: If this model has a Deathstrike Target marker on the battlefield, move that marker to anywhere else on the battlefield.",
    "Designate Target": "If this model does not have a Deathstrike Target marker on the battlefield, place a unique Deathstrike Target marker for this model anywhere on the battlefield.",
    "Adjust Target": "If this model has a Deathstrike Target marker on the battlefield, move that marker to anywhere else on the battlefield."
@@ -12702,7 +12892,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Deathstrike.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -12846,8 +13036,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D6+2",
+   "Deadly Demise D6+2": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Pinning Bombardment": "In your Shooting phase, after this model has shot, if one or more of those attacks made with its Dominus triple bombard scored a hit against an enemy INFANTRY unit, that unit must take a Battle-shock test."
   },
   "unit_sizes": [
@@ -12870,7 +13061,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Dominus-Armoured-Siege-Bombard.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -12972,6 +13163,8 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D6+2, Firing Deck 6",
+   "Deadly Demise D6+2": "Core ability (see the core rules).",
+   "Firing Deck 6": "Core ability (see the core rules).",
    "Close-range Titan Killer": "Each time this model’s magma cannon targets a MONSTER or VEHICLE unit, that target is always considered to be within half range of that weapon."
   },
   "unit_sizes": [
@@ -12993,15 +13186,15 @@
     "column": "army_faction"
    }
   ],
-  "transport_capacity": 0,
-  "transport_text": "",
+  "transport_capacity": 26,
+  "transport_text": "This model has a transport capacity of 26 ASTRA MILITARUM INFANTRY models. Each OGRYN model takes up the space of 3 models. It cannot transport ARTILLERY models.",
   "legends": false,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Doomhammer.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -13086,7 +13279,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Earthshaker-Carriage-Battery.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -13147,6 +13340,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise 1",
+   "Deadly Demise 1": "Core ability (see the core rules).",
    "Earthshaker Rounds": "In your Shooting phase, after this model has shot, if one or more of those attacks made with its earthshaker cannon scored a hit against an enemy Infantry unit, until the end of your opponent’s next turn, that unit is shaken. While a unit is shaken, subtract 2\" from its Move characteristic and subtract 2 from Advance and Charge rolls made for it.Reinforced Cover: Each time a ranged attack is allocated to a model, if that model is not fully visible to every model in the attacking unit because of this Fortification, that model has the Benefit of Cover against that attack.",
    "Reinforced Cover": "Each time a ranged attack is allocated to a model, if that model is not fully visible to every model in the attacking unit because of this Fortification, that model has the"
   },
@@ -13170,7 +13364,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Earthshaker-Platform.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -13267,8 +13461,10 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise 1, Deep Strike",
+   "Deadly Demise 1": "Core ability (see the core rules).",
+   "Deep Strike": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Meteoric Descent": "When this model is set up on the battlefield using the Deep Strike ability, it can perform a meteoric descent. If it does, this model can be set up anywhere on the battlefield that is more than 6\" horizontally away from all enemy units, but until the end of the turn, it is not eligible to declare a charge."
   },
   "unit_sizes": [
@@ -13291,7 +13487,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Elysian-Drop-Sentinel.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -13364,6 +13560,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deep Strike",
+   "Deep Strike": "Core ability (see the core rules).",
    "Mark the Target": "Each time this unit Remains Stationary, until the start of your next Movement phase, ranged weapons equipped by models in this unit have the [DEVASTATING WOUNDS] ability."
   },
   "unit_sizes": [
@@ -13379,14 +13576,14 @@
    }
   ],
   "transport_capacity": 0,
-  "transport_text": "S, each Elysian Sniper Team model counts as one Heavy Weapons Team model.",
+  "transport_text": "",
   "legends": true,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Elysian-Sniper-Squad.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -13530,7 +13727,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Field-Ordnance-Battery.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -13547,6 +13744,7 @@
     "w": 3,
     "ld": 6,
     "oc": 1,
+    "invuln": 5,
     "base": {
      "kind": "circle",
      "radius": 0.0984
@@ -13679,9 +13877,15 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Fights First, Infiltrators, Lone Operative, Stealth",
+   "Fights First": "Core ability (see the core rules).",
+   "Infiltrators": "Core ability (see the core rules).",
+   "Lone Operative": "Core ability (see the core rules).",
+   "Stealth": "Core ability (see the core rules).",
    "FACTION": "Voice of Command",
+   "Voice of Command": "Faction ability (see the core rules).",
    "Tanith Camo-cloaks": "Models in this unit have the Benefit of Cover.Covert Stealth Team: At the end of your opponent’s turn, if this unit is unengaged, you can use this ability. If you do: Place this unit in strategic reserves.This unit has Deep Strike until the start of your next Shooting phase.This unit must make an ingress move in your next Movement phase (including in your first turn).",
-   "Covert Stealth Team": "At the end of your opponent’s turn, if this unit is"
+   "Covert Stealth Team": "At the end of your opponent’s turn, if this unit is",
+   "Invulnerable Save note": "Ibram Gaunt only."
   },
   "unit_sizes": [
    6
@@ -13703,7 +13907,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Gaunt-s-Ghosts.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -13720,6 +13924,7 @@
     "w": 20,
     "ld": 7,
     "oc": 8,
+    "invuln": 5,
     "base": {
      "kind": "hull",
      "rx": 2.0,
@@ -13829,9 +14034,11 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D6+2",
-   "Mount Up!": "At the end of your opponent’s"
+   "Deadly Demise D6+2": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
+   "Mount Up!": "At the end of your opponent’s",
+   "Invulnerable Save note": "Against ranged attacks only"
   },
   "unit_sizes": [
    1
@@ -13845,15 +14052,15 @@
     "column": "army_faction"
    }
   ],
-  "transport_capacity": 0,
-  "transport_text": ", you can select one friendly ASTRA MILITARUM INFANTRY unit (excluding ARTILLERY units) that is wholly within 6\" of this TRANSPORT. Unless that unit is within Engagement Range of one or more enemy units, it can embark within this TRANSPORT.",
+  "transport_capacity": 30,
+  "transport_text": "This model has a transport capacity of 30 ASTRA MILITARUM INFANTRY models. Each HEAVY WEAPONS TEAM model and VETERAN HEAVY WEAPONS TEAM model takes up the space of 2 models. Each OGRYN model takes up the space of 3 models. It cannot transport ARTILLERY models.",
   "legends": true,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Gorgon-Heavy-Transport.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -13969,6 +14176,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D3",
+   "Deadly Demise D3": "Core ability (see the core rules).",
    "Suppression Bombardment": "In your Shooting phase, after this model has shot, select one enemy unit (excluding MONSTER and VEHICLE units) hit by one or more of those attacks made with this model’s Griffon heavy mortar. Until the start of your next turn, that enemy unit is suppressed. While a unit is suppressed, each time a model in that unit makes an attack, subtract 1 from the Hit roll."
   },
   "unit_sizes": [
@@ -13991,7 +14199,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Griffon-Mortar-Carrier.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -14037,6 +14245,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deep Strike",
+   "Deep Strike": "Core ability (see the core rules).",
    "Subterranean Assault": "Each time you set up this model on the battlefield using the Deep Strike ability, you can select one friendly ASTRA MILITARUM INFANTRY unit in Strategic Reserves. If you do, set up that unit anywhere on the battlefield that is wholly within 9\" of this model and more than 8\" away from all enemy units."
   },
   "unit_sizes": [
@@ -14059,7 +14268,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Hades-Breaching-Drill.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -14144,7 +14353,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Heavy-Mortar-Team.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -14228,7 +14437,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Heavy-Quad-Launcher-Team.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -14245,6 +14454,7 @@
     "w": 3,
     "ld": 7,
     "oc": 1,
+    "invuln": 5,
     "base": {
      "kind": "circle",
      "radius": 0.6299
@@ -14346,9 +14556,11 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Leader",
+   "Leader": "Core ability (see the core rules).",
    "FACTION": "Voice of Command",
+   "Voice of Command": "Faction ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Heroic Example": "While this unit’s Minka Lesk model is on the battlefield, each time a model in this unit makes an attack, you can re-roll the Hit roll.Lesk’s Heroes: Add 1 to the Leadership characteristic of models in this unit and you can re-roll Battle-shock and Leadership tests taken for this unit.",
    "Regimental Banner": "Add 1 to the Objective Control characteristic of models in the bearer’s unit."
   },
@@ -14372,7 +14584,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Hell-s-Last.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -14509,6 +14721,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D6+2",
+   "Deadly Demise D6+2": "Core ability (see the core rules).",
    "Close-quarters Warfare": "This model does not suffer the penalty to its Hit rolls for making ranged attacks while enemy units are within Engagement Range of it."
   },
   "unit_sizes": [
@@ -14538,7 +14751,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Hellhammer.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -14677,8 +14890,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D6",
+   "Deadly Demise D6": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Flush Them Out": "In your Shooting phase, after this model has shot, select one enemy unit that was hit by one or more of those attacks. Until the start of your next Shooting phase, that unit is scattered. While a unit is scattered, it cannot have the Benefit of Cover."
   },
   "unit_sizes": [
@@ -14708,7 +14922,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Hellhound.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -14837,6 +15051,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise 1",
+   "Deadly Demise 1": "Core ability (see the core rules).",
    "Convoy Escort Vehicle": "In your Shooting phase, after this unit has shot, it can make a Normal move of up to D6\". If it does, until the end of the turn, this unit is not eligible to declare a charge."
   },
   "unit_sizes": [
@@ -14867,7 +15082,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Hippogriff-AFV.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -14928,6 +15143,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise 1",
+   "Deadly Demise 1": "Core ability (see the core rules).",
    "Flak Battery": "Each time this model makes an attack that targets a unit that can FLY, you can re-roll the Hit roll.Reinforced Cover: Each time a ranged attack is allocated to a model, if that model is not fully visible to every model in the attacking unit because of this Fortification, that model has the Benefit of Cover against that attack.",
    "Reinforced Cover": "Each time a ranged attack is allocated to a model, if that model is not fully visible to every model in the attacking unit because of this Fortification, that model has the"
   },
@@ -14951,7 +15167,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Hydra-Platform.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -15049,8 +15265,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D3",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Flak Battery": "Each time this model makes an attack that targets a unit that can FLY, you can re-roll the Hit roll."
   },
   "unit_sizes": [
@@ -15073,7 +15290,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Hydra.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -15090,6 +15307,7 @@
     "w": 4,
     "ld": 7,
     "oc": 1,
+    "invuln": 4,
     "base": {
      "kind": "circle",
      "radius": 0.4921
@@ -15166,7 +15384,10 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Leader, Scouts 6\"",
+   "Leader": "Core ability (see the core rules).",
+   "Scouts 6\"": "Core ability (see the core rules).",
    "FACTION": "Voice of Command",
+   "Voice of Command": "Faction ability (see the core rules).",
    "Cold Steel and Courage": "While this model is leading a unit, melee weapons equipped by models in that unit have the [LETHAL HITS] ability.Been There, Seen it, Killed it: Each time this model makes a melee attack, if it made a Charge move this turn, you can re-roll the Hit roll and you can re-roll the Wound roll."
   },
   "unit_sizes": [
@@ -15189,7 +15410,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Iron-Hand-Straken.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -15429,6 +15650,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Scouts 6\"",
+   "Scouts 6\"": "Core ability (see the core rules).",
    "Warrior Elite": "Once per battle round, at the start of any phase, you can select one Order to affect this unit until the start of your next Command phase, in addition to any other Orders issued to this unit by an OFFICER model this battle round.",
    "Vox-caster": "Each time you target the bearer’s unit with a Stratagem, roll one D6, adding 1 to the result if there are one or more friendly OFFICER models within 6\": on a 5+, you gain 1CP.",
    "Melta Mine": "Once per battle, at the start of any phase, you can select one enemy unit within 3\" of the bearer and roll one D6: on a 2+, that enemy unit suffers D3 mortal wounds, or 2D3 mortal wounds instead if it is a VEHICLE unit."
@@ -15460,7 +15682,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Kasrkin.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -15631,6 +15853,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Scouts 6\"",
+   "Scouts 6\"": "Core ability (see the core rules).",
    "Grenadiers": "Once per turn, you can target this unit with the Explosives Stratagem for 0CP.",
    "Remote Mine": "Once per battle, at the start of your Shooting phase, you can select one enemy unit within 9\" of and visible to the bearer and roll one D6: on a 3+, that enemy unit suffers D3 mortal wounds, or 2D3 mortal wounds instead if it is a VEHICLE or FORTIFICATIONS unit. Designer’s Note: Place a Remote Mine token next to the unit, removing it once this ability has been used."
   },
@@ -15676,7 +15899,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Krieg-Combat-Engineers.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -15922,7 +16145,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Leader",
+   "Leader": "Core ability (see the core rules).",
    "FACTION": "Voice of Command",
+   "Voice of Command": "Faction ability (see the core rules).",
    "Grim Determination": "While this unit contains an OFFICER, you can target this unit with Stratagems even while it is Battle-shocked and Orders issued to this unit do not cease to affect this unit if it becomes Battle-shocked.",
    "Master Vox": "Each time the OFFICER in the bearer’s unit issues an Order, it can issue it to an eligible unit up to 24\" away.",
    "Alchemyk Counteragents": "The bearer’s unit has the Feel No Pain 6+ ability against mortal wounds.",
@@ -15949,7 +16174,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Krieg-Command-Squad.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -16072,14 +16297,14 @@
    }
   ],
   "transport_capacity": 0,
-  "transport_text": ", each Heavy Weapons Gunner model takes up the space of 2 models, and each weapon equipped by these models is considered to be 2 models’ weapons for the purposes of the Firing Deck ability.",
+  "transport_text": "",
   "legends": false,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Krieg-Heavy-Weapons-Squad.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -16254,8 +16479,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D3",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Armoured Spearhead": "Each time this model makes an attack that targets an enemy unit, re-roll a Hit roll of 1 and, if that unit is within range of an objective marker you do not control, you can re-roll the Hit roll instead."
   },
   "unit_sizes": [
@@ -16285,7 +16511,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Leman-Russ-Battle-Tank.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -16555,9 +16781,11 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D3",
+   "Deadly Demise D3": "Core ability (see the core rules).",
    "FACTION": "Voice of Command",
+   "Voice of Command": "Faction ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Vox-net": "Each time this model issues an Order, it can issue it to an eligible unit up to 12\" away.Death Befitting An Officer: In your opponent’s Shooting phase, when this unit is destroyed, before this unit’s deadly demise roll, roll one D6: On a 2+, do not remove this unit from the battlefield. After the attacking unit has shot, this unit can shoot using normal shooting, but while doing so this unit can only target that enemy unit. When this unit has shot, or at the end of the phase (whichever comes first), resolve this unit’s deadly demise roll, then this unit is removed from the battlefield.",
    "Death Befitting An Officer": "In your opponent’s"
   },
@@ -16595,7 +16823,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Leman-Russ-Commander.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -16770,8 +16998,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D3",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Line-breaker": "When making ranged attacks with its demolisher battle cannon, this model can target enemy units within Engagement Range of it (provided no other friendly units are also within Engagement Range of that enemy unit). In addition, when making ranged attacks, this model does not suffer the penalty to its Hit rolls for being within Engagement Range of one or more enemy units."
   },
   "unit_sizes": [
@@ -16801,7 +17030,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Leman-Russ-Demolisher.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -16977,8 +17206,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D3",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Urban Warfare": "Each time a ranged attack targets this model, if this model has the Benefit of Cover against that attack, subtract 1 from the Damage characteristic of that attack."
   },
   "unit_sizes": [
@@ -17008,7 +17238,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Leman-Russ-Eradicator.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -17199,8 +17429,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D3",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Gung-ho Executioners": "Each time this model makes an attack with its executioner plasma cannon that targets a unit that is Below Half-strength, add 1 to the Hit roll."
   },
   "unit_sizes": [
@@ -17230,7 +17461,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Leman-Russ-Executioner.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -17406,8 +17637,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D3",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Withering Hail": "In your Shooting phase, after this model has shot, select one enemy unit hit by one or more of those attacks made with its exterminator autocannon. Until the end of the phase, each time a friendly ASTRA MILITARUM unit makes an attack that targets that enemy unit, improve the Armour Penetration characteristic of that attack by 1. The same enemy unit can only be affected by this ability once per phase."
   },
   "unit_sizes": [
@@ -17437,7 +17669,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Leman-Russ-Exterminator.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -17609,8 +17841,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D3",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Mow Down the Enemy": "Each time this model makes an attack with its punisher gatling cannon that targets an enemy unit (excluding MONSTERS and VEHICLES), that attack has the [DEVASTATING WOUNDS] ability."
   },
   "unit_sizes": [
@@ -17640,7 +17873,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Leman-Russ-Punisher.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -17815,8 +18048,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D3",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Tank-killer": "Each time this model makes a ranged attack with its vanquisher battle cannon that targets a MONSTER or VEHICLE unit, you can re-roll the Wound roll."
   },
   "unit_sizes": [
@@ -17846,7 +18080,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Leman-Russ-Vanquisher.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -17863,6 +18097,7 @@
     "w": 6,
     "ld": 7,
     "oc": 2,
+    "invuln": 4,
     "base": {
      "kind": "oval",
      "rx": 1.4764,
@@ -17923,7 +18158,10 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Leader, Feel No Pain 6+",
+   "Leader": "Core ability (see the core rules).",
+   "Feel No Pain 6+": "Core ability (see the core rules).",
    "FACTION": "Voice of Command",
+   "Voice of Command": "Faction ability (see the core rules).",
    "Tough to Kill": "The first time this model is destroyed, roll one D6 at the end of the phase. On a 2+, set this model back up on the battlefield as close as possible to where it was destroyed and not within Engagement Range of any enemy units, with D3 wounds remaining.Leading the Charge: Each time this model’s unit makes a Charge move, until the end of the turn, melee weapons equipped by models in that unit have the [DEVASTATING WOUNDS] ability."
   },
   "unit_sizes": [
@@ -17946,7 +18184,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Lord-Marshal-Dreir.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -17963,6 +18201,7 @@
     "w": 8,
     "ld": 6,
     "oc": 2,
+    "invuln": 4,
     "base": {
      "kind": "circle",
      "radius": 1.5748
@@ -18018,7 +18257,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Leader",
+   "Leader": "Core ability (see the core rules).",
    "FACTION": "Voice of Command",
+   "Voice of Command": "Faction ability (see the core rules).",
    "The Lord Solar": "At the start of your Command phase, if this model is on the battlefield, you gain 1CP.The Collegiate Astrolex: After both players have deployed their armies, select up to three ASTRA MILITARUM units from your army and redeploy them. When doing so, you can set those units up in Strategic Reserves if you wish, regardless of how many units are already in Strategic Reserves.",
    "The Collegiate Astrolex": "After both players have deployed their armies, select up to three"
   },
@@ -18042,7 +18283,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Lord-Solar-Leontus.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -18191,8 +18432,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D6+2",
+   "Deadly Demise D6+2": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Overwhelming Short-range Firepower": "Each time this model makes an attack that targets the closest eligible enemy unit, re-roll a Hit roll of 1 and re-roll a Wound roll or 1."
   },
   "unit_sizes": [
@@ -18215,7 +18457,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Macharius-Omega.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -18353,8 +18595,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D6+2",
+   "Deadly Demise D6+2": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Tank Hunter": "Each time this model makes a ranged attack with its Macharius twin vanquisher cannon that targets a MONSTER or VEHICLE unit, you can re-roll the Hit roll."
   },
   "unit_sizes": [
@@ -18377,7 +18620,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Macharius-Vanquisher.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -18514,8 +18757,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D6+2",
+   "Deadly Demise D6+2": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Armoured Aggressor": "Each time this model makes a ranged attack, it does not suffer the penalty to the Hit roll for being within Engagement Range of one or more enemy units."
   },
   "unit_sizes": [
@@ -18538,7 +18782,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Macharius-Vulcan.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -18676,8 +18920,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D6+2",
+   "Deadly Demise D6+2": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Battlefield Control": "Each time this model makes a ranged attack, if it is within range of an objective marker you control, re-roll a Hit roll of 1."
   },
   "unit_sizes": [
@@ -18700,7 +18945,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Macharius.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -18842,8 +19087,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D6",
+   "Deadly Demise D6": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Battlefield Dominance": "Ranged weapons equipped by this model have the [IGNORES COVER] ability while targeting an enemy unit within half range."
   },
   "unit_sizes": [
@@ -18866,7 +19112,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Malcador-Annihilator.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -18995,8 +19241,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D6",
+   "Deadly Demise D6": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Armoured Defender": "Each time you target this model with the Fire Overwatch Stratagem, hits are scored on unmodified Hit rolls of 5+ while resolving that Stratagem."
   },
   "unit_sizes": [
@@ -19019,7 +19266,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Malcador-Defender.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -19163,8 +19410,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D6",
+   "Deadly Demise D6": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Explosive Death": "When this model is destroyed, roll one D6: on a 3+, do not remove it from play – it can, after the attacking model’s unit has finished making its attacks, shoot with its inferno gun as if it were your Shooting phase and as if it had its full wounds remaining. This model is then removed from play."
   },
   "unit_sizes": [
@@ -19187,7 +19435,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Malcador-Infernus.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -19316,8 +19564,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D6",
+   "Deadly Demise D6": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Rugged Reliability": "Each time a ranged attack targets this model, worsen the Armour Penetration characteristic of that attack by 1."
   },
   "unit_sizes": [
@@ -19340,7 +19589,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Malcador.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -19401,6 +19650,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise 1",
+   "Deadly Demise 1": "Core ability (see the core rules).",
    "Furious Barrage": "Each time this model makes an attack with its storm eagle rockets that targets an enemy unit that contains five or more models, you can re-roll the Hit roll.Reinforced Cover: Each time a ranged attack is allocated to a model, if that model is not fully visible to every model in the attacking unit because of this Fortification, that model has the Benefit of Cover against that attack.",
    "Reinforced Cover": "Each time a ranged attack is allocated to a model, if that model is not fully visible to every model in the attacking unit because of this Fortification, that model has the"
   },
@@ -19424,7 +19674,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Manticore-Platform.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -19524,8 +19774,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D3",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Furious Barrage": "In your Shooting phase, after this model has shot, select one enemy unit (excluding MONSTERS and VEHICLES) that was hit by one or more of those attacks made with this model’s storm eagle rockets. Until the start of your next Shooting phase, that enemy unit is staggered. While a unit is staggered, subtract 1 from the Objective Control characteristic of models in that unit (to a minimum of 1)."
   },
   "unit_sizes": [
@@ -19555,7 +19806,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Manticore.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -19626,6 +19877,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D6+2",
+   "Deadly Demise D6+2": "Core ability (see the core rules).",
    "Heavy Bombs": "Each time the bearer ends a Normal move, you can select one enemy unit it moved over during that move and roll nine D6, adding 1 to each result if that unit is a MONSTER or VEHICLE: for each 5+, that unit suffers 1 mortal wound.",
    "Inferno Bombs": "Each time the bearer ends a Normal move, you can select one enemy unit it moved over during that move and roll nine D6, adding 1 to each result if that unit is not a MONSTER or VEHICLE: for each 5+, that unit suffers 1 mortal wound."
   },
@@ -19649,7 +19901,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Marauder-Bomber.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -19749,6 +20001,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D6+2",
+   "Deadly Demise D6+2": "Core ability (see the core rules).",
    "Bomb Drop": "Each time this model ends a Normal move, you can select one enemy unit it moved over during that move and roll six D6: for each 3+, that unit suffers 1 mortal wound."
   },
   "unit_sizes": [
@@ -19771,7 +20024,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Marauder-Destroyer.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -19855,7 +20108,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Medusa-Carriage-Battery.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -20073,7 +20326,10 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deep Strike, Leader",
+   "Deep Strike": "Core ability (see the core rules).",
+   "Leader": "Core ability (see the core rules).",
    "FACTION": "Voice of Command",
+   "Voice of Command": "Faction ability (see the core rules).",
    "Tempestor Prime": "While this unit contains a Tempestor Prime, ranged weapons equipped by models in this unit have the [SUSTAINED HITS 1] ability.",
    "Medi-pack": "At the start of your Command phase, if the bearer’s unit is below its Starting Strength, you can return up to D3 destroyed Tempestus Scions models to this unit.",
    "Regimental Standard": "Add 1 to the Objective Control characteristic of models in the bearer’s unit.",
@@ -20107,7 +20363,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Militarum-Tempestus-Command-Squad.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -20124,6 +20380,7 @@
     "w": 3,
     "ld": 7,
     "oc": 1,
+    "invuln": 4,
     "base": {
      "kind": "circle",
      "radius": 0.6299
@@ -20189,6 +20446,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Leader",
+   "Leader": "Core ability (see the core rules).",
    "War Hymns": "While this model is leading a unit, melee weapons equipped by models in that unit have the [SUSTAINED HITS 1] ability.Holy Piety: Each time this model makes a melee attack, unless this model’s unit is Battle-shocked, you can re-roll the Hit roll.",
    "Holy Piety": "Each time this model makes a melee attack, unless this model’s unit is"
   },
@@ -20212,7 +20470,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Ministorum-Priest.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -20277,6 +20535,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D6",
+   "Deadly Demise D6": "Core ability (see the core rules).",
    "Armoured Frontis": "Each time an attack is allocated to this model, subtract 1 from the Damage characteristic of that attack."
   },
   "unit_sizes": [
@@ -20292,14 +20551,14 @@
    }
   ],
   "transport_capacity": 0,
-  "transport_text": "; SMOKE; MINOTAUR",
+  "transport_text": "",
   "legends": true,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Minotaur.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -20501,6 +20760,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Scouts 6\"",
+   "Scouts 6\"": "Core ability (see the core rules).",
    "Desert Riders": "You can ignore any or all modifiers to this unit’s Move characteristic and to Advance and Charge rolls made for it. In addition, this unit is eligible to shoot and declare a charge in a turn in which it Fell Back."
   },
   "unit_sizes": [
@@ -20523,7 +20783,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Mukaali-Riders.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -20540,6 +20800,7 @@
     "w": 1,
     "ld": 8,
     "oc": 0,
+    "invuln": 6,
     "base": {
      "kind": "circle",
      "radius": 0.4921
@@ -20656,7 +20917,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Munitorum-Servitors.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -20721,6 +20982,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Feel No Pain 5+",
+   "Feel No Pain 5+": "Core ability (see the core rules).",
    "Ogryn Bodyguard": "While one or more OFFICER models are in the same unit as this model, those OFFICER models have the Feel No Pain 4+ ability.Thunderous Head-butt: Each time this model’s unit is selected to fight, you can select one enemy unit within Engagement Range of this model and roll one D6: on a 2-5, that enemy unit suffers D3 mortal wounds; on a 6, that enemy unit suffers D3+3 mortal wounds."
   },
   "unit_sizes": [
@@ -20736,14 +20998,14 @@
    }
   ],
   "transport_capacity": 0,
-  "transport_text": "that unit can embark within, and takes up the space of 3 models. This model cannot be selected as your WARLORD.",
+  "transport_text": "",
   "legends": false,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Nork-Deddog.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -20844,6 +21106,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Feel No Pain 6+",
+   "Feel No Pain 6+": "Core ability (see the core rules).",
    "Ogryn Bodyguard": "While one or more OFFICER models are in the same unit as this model, those OFFICER models have the Feel No Pain 4+ ability.",
    "Brute Shield": "The bearer has a 4+ invulnerable save.",
    "Slabshield": "The bearer has a Wounds characteristic of 7."
@@ -20861,14 +21124,14 @@
    }
   ],
   "transport_capacity": 0,
-  "transport_text": "that unit can embark within, and takes up the space of 3 models. This model cannot be selected as your WARLORD and cannot be given Enhancements.",
+  "transport_text": "",
   "legends": false,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Ogryn-Bodyguard.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -20927,6 +21190,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Feel No Pain 6+",
+   "Feel No Pain 6+": "Core ability (see the core rules).",
    "Point-blank Barrage": "Each time a model in this unit makes a ranged attack that targets the closest eligible target, improve the Armour Penetration characteristic of that attack by 1."
   },
   "unit_sizes": [
@@ -20957,7 +21221,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Ogryn-Squad.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -21079,6 +21343,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D6",
+   "Deadly Demise D6": "Core ability (see the core rules).",
    "Targeting Coordinates": "While this model is being affected by an Order, each time it makes an attack with its Praetor launcher, it does not suffer the penalty to the Hit roll for attacking a unit that is not visible to it."
   },
   "unit_sizes": [
@@ -21101,7 +21366,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Praetor.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -21196,6 +21461,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Leader",
+   "Leader": "Core ability (see the core rules).",
    "Malign Wardings(Psychic)": "While this model is leading a unit, models in that unit have the",
    "Psychic Barrier (Psychic)": "At the start of your opponent’s"
   },
@@ -21219,7 +21485,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Primaris-Psyker.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -21280,6 +21546,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Infiltrators, Leader, Stealth",
+   "Infiltrators": "Core ability (see the core rules).",
+   "Leader": "Core ability (see the core rules).",
+   "Stealth": "Core ability (see the core rules).",
    "A Hearty ‘Pick Me Up’": "While this model is leading a unit, in your"
   },
   "unit_sizes": [
@@ -21302,7 +21571,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Provisionally-Prepared.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -21370,6 +21639,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Leader",
+   "Leader": "Core ability (see the core rules).",
    "Medicae Medi-packs": "Whilst this unit contains one or more Medicae Servitors, models in this unit have the Feel No Pain 5+ ability.Mindlock: While this unit contains a Quartermaster Revenant model, improve the Weapon Skill characteristic of this unit’s Medical scalpels by 1.",
    "Mindlock": "While this unit contains a Quartermaster Revenant model, improve the Weapon Skill characteristic of this unit’s Medical scalpels by 1."
   },
@@ -21393,7 +21663,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Quartermaster-Cadre-Squad.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -21492,7 +21762,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Rapier-Laser-Destroyer-Battery.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -21563,6 +21833,8 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Infiltrators, Stealth",
+   "Infiltrators": "Core ability (see the core rules).",
+   "Stealth": "Core ability (see the core rules).",
    "Shoot Sharp and Scarper": "In your Shooting phase, after this unit has shot, if it is not within Engagement Range of any enemy units, it can make a Normal move as if it were your Movement phase. If it does, until the end of the turn, this unit is not eligible to declare a charge.",
    "Ratling Battlemutt": "Once per battle, when this unit is selected to shoot, it can use this ability. If it does, until the end of the phase, ranged weapons equipped by models in this unit have the [LETHAL HITS] ability. Designer’s Note: Place a Ratling Battlemutt token next to the unit, removing it once this ability has been used.",
    "Demolition Gear": "The bearer’s unit has the GRENADES keyword."
@@ -21595,7 +21867,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Ratlings.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -21680,14 +21952,14 @@
    }
   ],
   "transport_capacity": 0,
-  "transport_text": "that unit can embark within.",
+  "transport_text": "",
   "legends": true,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Regimental-Attach-s.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -21773,8 +22045,11 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Infiltrators, Lone Operative, Stealth",
+   "Infiltrators": "Core ability (see the core rules).",
+   "Lone Operative": "Core ability (see the core rules).",
+   "Stealth": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Shoot Sharp and Scarper": "In your Shooting phase, after this unit has shot, if it is not within Engagement Range of one or more enemy units, it can make a Normal move. If it does, until the end of the turn, this unit is not eligible to declare a charge.The Ratling Twins: While this unit contains 2 models, each time a model in this unit makes a ranged attack, you can re-roll the Hit roll and you can re-roll the Wound roll.",
    "The Ratling Twins": "While this unit contains 2 models, each time a model in this unit makes a ranged attack, you can re-roll the"
   },
@@ -21798,7 +22073,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Rein-And-Raus.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -21958,6 +22233,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D6",
+   "Deadly Demise D6": "Core ability (see the core rules).",
    "Ablative Plating": "Once per battle, when an attack is allocated to this model, you change the Damage characteristic of that attack to 0."
   },
   "unit_sizes": [
@@ -21987,7 +22263,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Rogal-Dorn-Battle-Tank.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -22149,7 +22425,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D6",
+   "Deadly Demise D6": "Core ability (see the core rules).",
    "FACTION": "Voice of Command",
+   "Voice of Command": "Faction ability (see the core rules).",
    "Vox-net": "Each time this model issues an Order, it can issue it to an eligible unit up to 12\" away.Called Shots: Each time this model is selected to shoot, you can re-roll one Hit roll, you can re-roll one Wound roll and you can re-roll one Damage roll when resolving its attacks.",
    "Called Shots": "Each time this model is selected to shoot, you can re-roll one"
   },
@@ -22180,7 +22458,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Rogal-Dorn-Commander.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -22310,7 +22588,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Sabre-Weapons-Battery.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -22420,8 +22698,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D3",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Auspex Surveyor": "Each time this model has shot, select one enemy unit hit by one or more of those attacks. Until the end of the phase, that unit cannot have the Benefit of Cover."
   },
   "unit_sizes": [
@@ -22444,7 +22723,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Salamander-Command-Vehicle.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -22550,8 +22829,10 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D3, Scouts 9\"",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "Scouts 9\"": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Outflank": "When this model arrives from Strategic Reserves, it can be set up within your opponent’s deployment zone (all other restrictions still apply)."
   },
   "unit_sizes": [
@@ -22574,7 +22855,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Salamander-Scout-Vehicle.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -22742,8 +23023,10 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise 1, Scouts 9\"",
+   "Deadly Demise 1": "Core ability (see the core rules).",
+   "Scouts 9\"": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Daring Recon": "At the start of your Shooting phase, select one enemy unit within 18\" of and visible to this unit. Until the end of the phase, each time a friendly ASTRA MILITARUM model makes an attack that targets that unit, re-roll a Hit roll of 1."
   },
   "unit_sizes": [
@@ -22774,7 +23057,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Scout-Sentinels.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -22824,6 +23107,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise 1",
+   "Deadly Demise 1": "Core ability (see the core rules).",
    "Powerlifter Charge": "Each time this model ends a Charge move, select one enemy unit within Engagement Range of it and roll one D6: on a 2-5, that enemy unit suffers D3 mortal wounds; on a 6, that enemy unit suffers 3 mortal wounds."
   },
   "unit_sizes": [
@@ -22846,7 +23130,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Sentinel-Powerlifter.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -22907,7 +23191,11 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Feel No Pain 6+, Leader, Scouts 6\"",
+   "Feel No Pain 6+": "Core ability (see the core rules).",
+   "Leader": "Core ability (see the core rules).",
+   "Scouts 6\"": "Core ability (see the core rules).",
    "FACTION": "Voice of Command",
+   "Voice of Command": "Faction ability (see the core rules).",
    "Harker’s Hellraisers": "While this model is leading a unit, each time a ranged attack targets that unit, if the attacking model is more than 12\" away, subtract 1 from the Hit roll.Payback Time: Once per battle, when this model is selected to shoot, it can use this ability. If it does, until the end of the phase, its Payback weapon has an Attacks characteristic of 6 and the [SUSTAINED HITS 3] ability instead of the [SUSTAINED HITS 1] ability.",
    "Payback Time": "Once per battle, when this model is selected to shoot, it can use this ability. If it does, until the end of the phase, its Payback weapon has an Attacks characteristic of 6 and the"
   },
@@ -22931,7 +23219,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Sergeant-Harker.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -23032,6 +23320,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D6+2",
+   "Deadly Demise D6+2": "Core ability (see the core rules).",
    "Titan-killer": "Each time this model makes a ranged attack with its volcano cannon that targets a MONSTER or VEHICLE unit, that attack has the [DEVASTATING WOUNDS] ability."
   },
   "unit_sizes": [
@@ -23061,7 +23350,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Shadowsword.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -23128,6 +23417,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Infiltrators, Lone Operative, Stealth",
+   "Infiltrators": "Core ability (see the core rules).",
+   "Lone Operative": "Core ability (see the core rules).",
+   "Stealth": "Core ability (see the core rules).",
    "One-man Army": "Once per turn, in your opponent’s Shooting phase, when an enemy unit makes a ranged attack that targets a friendly REGIMENT unit within 3\" of this model, after that enemy unit has shot, this model can shoot as if it were your Shooting phase, but it must target only that enemy unit when doing so, and can only do so if that enemy unit is an eligible target.Like Fighting a Shadow: In your Shooting phase, after this model has shot, if it is not within Engagement Range of one or more enemy units, it can make a Normal move. If it does, until the end of the turn, this model is not eligible to declare a charge."
   },
   "unit_sizes": [
@@ -23150,7 +23442,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Sly-Marbo.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -23272,8 +23564,10 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D3, Firing Deck 2",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "Firing Deck 2": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Mobile Command Vehicle": "In your Command phase, one OFFICER model embarked within this TRANSPORT can issue Orders even though it is not on the battlefield. When doing so, measure distances to and from this TRANSPORT."
   },
   "unit_sizes": [
@@ -23288,15 +23582,15 @@
     "column": "army_faction"
    }
   ],
-  "transport_capacity": 0,
-  "transport_text": "can issue Orders even though it is not on the battlefield. When doing so, measure distances to and from this TRANSPORT.",
+  "transport_capacity": 12,
+  "transport_text": "This model has a transport capacity of 12 ASTRA MILITARUM INFANTRY models. Each HEAVY WEAPONS TEAM model and Veteran HEAVY WEAPONS TEAM MODEL takes up the space of 2 models. Each OGRYN model takes up the space of 3 models. It cannot transport ARTILLERY models.",
   "legends": true,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Storm-Chimera.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -23447,8 +23741,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D6+2",
+   "Deadly Demise D6+2": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Close-range Devastation": "Each time this model makes a ranged attack with its Stormblade plasma blastgun that targets a unit within half range, you can re-roll the Hit roll."
   },
   "unit_sizes": [
@@ -23471,7 +23766,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Stormblade.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -23585,6 +23880,8 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D6+2, Firing Deck 12",
+   "Deadly Demise D6+2": "Core ability (see the core rules).",
+   "Firing Deck 12": "Core ability (see the core rules).",
    "Mount Up!": "At the end of your opponent’s"
   },
   "unit_sizes": [
@@ -23606,15 +23903,15 @@
     "column": "army_faction"
    }
   ],
-  "transport_capacity": 0,
-  "transport_text": ", you can select one friendly ASTRA MILITARUM INFANTRY unit (excluding ARTILLERY units) that is wholly within 6\" of this TRANSPORT. Unless that unit is within Engagement Range of one or more enemy units, it can embark within this TRANSPORT.",
+  "transport_capacity": 40,
+  "transport_text": "This model has a transport capacity of 40 ASTRA MILITARUM INFANTRY models. Each OGRYN model takes up the space of 3 models. It cannot transport ARTILLERY models.",
   "legends": false,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Stormlord.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -23715,6 +24012,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D6+2",
+   "Deadly Demise D6+2": "Core ability (see the core rules).",
    "Concussive Wave": "In your Shooting phase, just after selecting a target for this model’s Stormsword siege cannon, roll one D6 for the target unit and every other unit within 3\" of that unit: on a 5+, the unit being rolled for is struck by a concussive wave. After this model has finished making its attacks against that target unit this phase, each unit struck by a concussive wave suffers D3 mortal wounds."
   },
   "unit_sizes": [
@@ -23744,7 +24042,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Stormsword.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -23840,8 +24138,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D3",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Tank Hunter": "Each time this model makes a ranged attack that targets a VEHICLE unit, add 1 to the Wound roll."
   },
   "unit_sizes": [
@@ -23864,7 +24163,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Stygies-Destroyer-Tank-Hunter.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -23960,8 +24259,10 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise 1, Scouts 9\"",
+   "Deadly Demise 1": "Core ability (see the core rules).",
+   "Scouts 9\"": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Turbo-boost": "Each time this model Advances, do not make an Advance roll for it. Instead, until the end of the phase, add 6\" to the Move characteristic of this model."
   },
   "unit_sizes": [
@@ -23984,7 +24285,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Tauros-Assault-Vehicle.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -24067,8 +24368,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise 1",
+   "Deadly Demise 1": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Mobile Hunter-killer": "Each time this model makes an attack that targets a MONSTER or VEHICLE unit, you can re-roll the Wound roll."
   },
   "unit_sizes": [
@@ -24091,7 +24393,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Tauros-Venator.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -24236,6 +24538,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D3",
+   "Deadly Demise D3": "Core ability (see the core rules).",
    "Transport Support": "In your Shooting phase, after this model has shot, select one enemy unit that was hit by one or more of those attacks. Until the end of the phase, each time a model that disembarked from this TRANSPORT this turn makes an attack that targets that enemy unit, you can re-roll the Hit roll."
   },
   "unit_sizes": [
@@ -24257,15 +24560,15 @@
     "column": "army_faction"
    }
   ],
-  "transport_capacity": 0,
-  "transport_text": "this turn makes an attack that targets that enemy unit, you can re-roll the Hit roll.",
+  "transport_capacity": 12,
+  "transport_text": "This model has a transport capacity of 12 MILITARUM TEMPESTUS INFANTRY or ASTRA MILITARUM INFANTRY CHARACTER models.",
   "legends": false,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Taurox-Prime.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -24340,6 +24643,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D3",
+   "Deadly Demise D3": "Core ability (see the core rules).",
    "Rapid Deployment": "Units can disembark from this TRANSPORT after it has Advanced. Units that do so count as having made a Normal move that phase, and cannot declare a charge in the same turn, but can otherwise act normally."
   },
   "unit_sizes": [
@@ -24361,15 +24665,15 @@
     "column": "army_faction"
    }
   ],
-  "transport_capacity": 0,
-  "transport_text": "after it has Advanced. Units that do so count as having made a Normal move that phase, and cannot declare a charge in the same turn, but can otherwise act normally.",
+  "transport_capacity": 12,
+  "transport_text": "This model has a transport capacity of 12 ASTRA MILITARUM INFANTRY models. Each OGRYN model takes up the space of 3 models. It cannot transport ARTILLERY models.",
   "legends": false,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Taurox.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -24386,6 +24690,7 @@
     "w": 3,
     "ld": 7,
     "oc": 1,
+    "invuln": 5,
     "base": {
      "kind": "circle",
      "radius": 0.6299
@@ -24440,6 +24745,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Leader",
+   "Leader": "Core ability (see the core rules).",
    "Enginseer": "While this model is within 3\" of one or more friendly ASTRA MILITARUM VEHICLE units, this model has the Lone Operative ability.Omnissiah’s Blessing: In your Command phase, select one friendly ASTRA MILITARUM VEHICLE model within 3\" of this model. That VEHICLE model regains up to D3 lost wounds and, until the start of your next Command phase, that VEHICLE model has a 4+ invulnerable save. Each model can only be selected for this ability once per turn.Vengeance for the Omnissiah: If a friendly ASTRA MILITARUM VEHICLE model is destroyed within 12\" of this model, until the end of the battle, this model’s Enginseer axe has an Attacks characteristic of 6."
   },
   "unit_sizes": [
@@ -24462,7 +24768,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Tech-Priest-Enginseer.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -24676,6 +24982,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deep Strike",
+   "Deep Strike": "Core ability (see the core rules).",
    "Precision Drop": "In your Movement phase, when this unit is set up on the battlefield using the Deep Strike ability, it can perform a precision drop. If it does, this unit can be set up anywhere on the battlefield that is more than 6\" horizontally away from all enemy units, but until the end of the turn, it is not eligible to declare a charge.Servo-sentry: When this unit is set up on the battlefield using the Deep Strike ability, the Tempestor Aquilon can shoot with its sentry weapon (its sentry flamer, sentry grenade launcher or sentry hot-shot volley gun)."
   },
   "unit_sizes": [
@@ -24698,7 +25005,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Tempestus-Aquilons.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -24934,6 +25241,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deep Strike",
+   "Deep Strike": "Core ability (see the core rules).",
    "Storm Troopers": "Each time a model in this unit makes an attack, re-roll a Wound roll of 1. If the target of that attack is an enemy unit within range of an objective marker, you can re-roll the Wound roll instead.",
    "Vox-caster": "Each time you target the bearer’s unit with a Stratagem, roll one D6, adding 1 to the result if there are one or more friendly OFFICER models within 6\": on a 5+, you gain 1CP."
   },
@@ -24979,7 +25287,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Tempestus-Scions.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -25063,8 +25371,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D3",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Support Vehicle": "In your Command phase, select one friendly ASTRA MILITARUM VEHICLE model within 3\" of this model. That VEHICLE model regains up to D3 lost wounds and, until the start of your next Command phase, each time that VEHICLE model makes an attack, re-roll a Hit roll of 1. The same VEHICLE model cannot be selected for both this ability and the REGIMENTAL ENGINSEER’S Omnissiah’s Blessing ability in the same turn, and each model can only be selected for this ability once per Command phase."
   },
   "unit_sizes": [
@@ -25087,7 +25396,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Trojan-Support-Vehicle.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -25104,6 +25413,7 @@
     "w": 4,
     "ld": 7,
     "oc": 1,
+    "invuln": 5,
     "base": {
      "kind": "circle",
      "radius": 0.6299
@@ -25147,7 +25457,9 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Leader",
+   "Leader": "Core ability (see the core rules).",
    "FACTION": "Voice of Command",
+   "Voice of Command": "Faction ability (see the core rules).",
    "Lord Castellan": "While this model is leading a unit, that unit can be affected by up to two different Orders at the same time.Tactical Genius: Once per battle round, one friendly REGIMENT unit within 12\" of this model can be targeted with a Stratagem. If it does, reduce the CP cost of that use of that Stratagem by 1CP.",
    "Tactical Genius": "Once per"
   },
@@ -25171,7 +25483,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Ursula-Creed.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -25314,8 +25626,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D6+2",
+   "Deadly Demise D6+2": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Power Overload": "Each time this model makes an attack that targets a MONSTER or VEHICLE unit, you can re-roll the Damage roll."
   },
   "unit_sizes": [
@@ -25338,7 +25651,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Valdor.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -25425,6 +25738,8 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D6, Hover",
+   "Deadly Demise D6": "Core ability (see the core rules).",
+   "Hover": "Core ability (see the core rules).",
    "Fire Support": "In your Shooting phase, after this model has shot, select one enemy unit it scored one or more hits against this phase. Until the end of the phase, each time a friendly model that disembarked from this TRANSPORT this turn makes an attack that targets that enemy unit, you can re-roll the Wound roll."
   },
   "unit_sizes": [
@@ -25439,15 +25754,15 @@
     "column": "army_faction"
    }
   ],
-  "transport_capacity": 0,
-  "transport_text": "this turn makes an attack that targets that enemy unit, you can re-roll the Wound roll.",
+  "transport_capacity": 1,
+  "transport_text": "This model has a transport capacity of 1 TAUROS model or 2 ASTRA MILITARUM WALKER models.",
   "legends": true,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Valkyrie-Sky-Talon.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -25553,6 +25868,8 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D6, Hover",
+   "Deadly Demise D6": "Core ability (see the core rules).",
+   "Hover": "Core ability (see the core rules).",
    "Airborne Insertion": "At the end of your opponent’s Movement phase, one or more units embarked within this TRANSPORT can disembark from it."
   },
   "unit_sizes": [
@@ -25574,15 +25891,15 @@
     "column": "army_faction"
    }
   ],
-  "transport_capacity": 0,
-  "transport_text": "can disembark from it.",
+  "transport_capacity": 12,
+  "transport_text": "This model has a transport capacity of 12 ASTRA MILITARUM INFANTRY models. Each OGRYN model takes up the space of 3 models. It cannot transport ARTILLERY models.",
   "legends": false,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Valkyrie.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -25669,6 +25986,8 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D3, Hover",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "Hover": "Core ability (see the core rules).",
    "Anti-armour Gunship": "Each time a ranged attack made by this model is allocated to a MONSTER or VEHICLE model, re-roll a Damage roll of 1."
   },
   "unit_sizes": [
@@ -25684,14 +26003,14 @@
    }
   ],
   "transport_capacity": 0,
-  "transport_text": "; VENDETTA GUNSHIP",
+  "transport_text": "",
   "legends": true,
   "led_by": [],
   "default_loadout": {},
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Vendetta-Gunship.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -25762,6 +26081,7 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D6",
+   "Deadly Demise D6": "Core ability (see the core rules).",
    "Agile Dogfighter": "Each time an attack targets this model, subtract 1 from the Hit roll."
   },
   "unit_sizes": [
@@ -25784,7 +26104,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Voss-pattern-Lightning.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -25883,6 +26203,8 @@
   "ability_ids": [],
   "ability_text": {
    "CORE": "Deadly Demise D6, Hover",
+   "Deadly Demise D6": "Core ability (see the core rules).",
+   "Hover": "Core ability (see the core rules).",
    "Gunship Barrage": "In your Shooting phase, after this model has shot, select one enemy unit hit by one or more of those attacks. That enemy unit must take a Battle-shock test."
   },
   "unit_sizes": [
@@ -25905,7 +26227,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Vulture-Gunship.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  },
  {
@@ -26005,8 +26327,9 @@
   ],
   "ability_ids": [],
   "ability_text": {
-   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "CORE": "Deadly Demise D3",
+   "Deadly Demise D3": "Core ability (see the core rules).",
+   "One Shot": "The bearer can only shoot with this weapon once per battle.",
    "Suppression Bombardment": "In your Shooting phase, after this model has shot, select one enemy unit (excluding MONSTERS and VEHICLES) that was hit by one or more of those attacks made with this model’s Wyvern quad stormshard mortar. Until the start of your next Shooting phase, that enemy unit is suppressed. While a unit is suppressed, each time a model in that unit makes an attack, subtract 1 from the Hit roll."
   },
   "unit_sizes": [
@@ -26036,7 +26359,7 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Wyvern.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-11"
+   "retrieved": "2026-08-14"
   }
  }
 ]

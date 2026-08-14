@@ -17,6 +17,25 @@ trusting the parser's output shape.
 | 6.x — Legends flagged, not dropped | The expansion logo reads "(Warhammer Legends)" | ✅ 78 of 179 sheets flagged; the optimizer excludes them, the replayer can still render one |
 | §1 — detachment strips | All 16 detachments' Force Disposition and DP re-read from the pages | ✅ exactly matches the brief's verified table, including **Imperialis Fleet = Reconnaissance**. Pinned by a test so a re-snapshot that changes it fails loudly |
 
+## Second pass, 2026-08-14 — four claims re-checked against source
+
+Writing the gap register meant auditing the snapshot field by field rather than
+trusting the parser's output shape. That found three real defects and one false
+alarm. All four are now settled.
+
+| Claim | Verdict | Outcome |
+|---|---|---|
+| Invulnerable saves missing | **Real** — captured on 1 of 179 sheets. The value is a `dsCharInvulValue` markup block; the parser searched the block text for the words "INVULNERABLE SAVE", which almost never appear | Fixed: 47 sheets now carry one. The Callidus Assassin's 4++ is pinned by a test, as is the save step preferring it over a 4+ worsened by AP-3 |
+| Core abilities inert | **Real** — the datasheet prints them as one comma-separated `CORE:` line, stored under a single `"CORE"` key, so the loader's name matching found none of them. Deep Strike, Leader, Infiltrators, Scouts, Stealth, Feel No Pain and Fights First did nothing on any unit | Fixed: each ability is its own entry with its parameter (`Scouts 6"`, `Firing Deck 2`). 13 of 18 units in a 500 pt game now carry at least one |
+| Transport capacity 0 everywhere | **Real** — the search matched a keyword tooltip long before the TRANSPORT section | Fixed: 19 transports, Chimera reads 12 with its OGRYN multiplier and ARTILLERY exclusion preserved. Conditional capacities (Valkyrie Sky Talon: "1 TAUROS **or** 2 WALKER models") take the first figure and log a `GAP` |
+| Multi-profile statlines collapsing | **False alarm** — inferred from "no sheet yields >1 profile" without checking the source. Scanning all 179 datasheet blocks finds zero sheets printing more than one `M` characteristic: 11th edition consolidated mixed units onto one statline. The Rogue Trader Entourage fields four differently-named models under a single profile | Withdrawn, and pinned by a test so the assumption is explicit rather than incidental |
+
+The lesson repeats the one from the agent review: the defects were invisible in
+the tests (which asserted shape, not coverage) and obvious the moment the data
+was counted field by field. Coverage counts belong in the test suite, not in a
+one-off audit — hence the "far too few invulnerable saves parsed" style
+assertions now guarding each one.
+
 ## Honest gaps recorded rather than filled
 
 * **MFM reconciliation (Phase D2) has not been performed.** Points come from the

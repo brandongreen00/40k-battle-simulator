@@ -1,7 +1,7 @@
 {
  "result_schema_version": "2.0.0",
  "kind": "optimizer",
- "generated": "2026-08-11T21:36:56Z",
+ "generated": "2026-08-14T22:20:20Z",
  "config": {
   "faction": "AM",
   "detachment": "am.grizzled_company",
@@ -13,7 +13,7 @@
   "agent": "heuristic"
  },
  "pool_size": 72,
- "duration_s": 57.6,
+ "duration_s": 81.0,
  "leaderboard": [
   {
    "name": "candidate-003",
@@ -70,46 +70,6 @@
    "games": 2,
    "avg_vp_for": 55.0,
    "avg_vp_against": 55.0
-  },
-  {
-   "name": "candidate-007",
-   "points": 490,
-   "detachment": "am.grizzled_company",
-   "units": [
-    {
-     "datasheet": "am.commissar",
-     "models": 1
-    },
-    {
-     "datasheet": "am.catachan_jungle_fighters",
-     "models": 10
-    },
-    {
-     "datasheet": "am.catachan_jungle_fighters",
-     "models": 10
-    },
-    {
-     "datasheet": "am.death_korps_of_krieg",
-     "models": 10
-    },
-    {
-     "datasheet": "am.cadian_shock_troops",
-     "models": 10
-    },
-    {
-     "datasheet": "am.wyvern",
-     "models": 1
-    },
-    {
-     "datasheet": "am.armoured_sentinels",
-     "models": 1
-    }
-   ],
-   "score": -1.0,
-   "wins": 1,
-   "games": 2,
-   "avg_vp_for": 60.0,
-   "avg_vp_against": 61.0
   },
   {
    "name": "candidate-001",
@@ -186,6 +146,46 @@
    "games": 2,
    "avg_vp_for": 57.0,
    "avg_vp_against": 59.0
+  },
+  {
+   "name": "candidate-007",
+   "points": 490,
+   "detachment": "am.grizzled_company",
+   "units": [
+    {
+     "datasheet": "am.commissar",
+     "models": 1
+    },
+    {
+     "datasheet": "am.catachan_jungle_fighters",
+     "models": 10
+    },
+    {
+     "datasheet": "am.catachan_jungle_fighters",
+     "models": 10
+    },
+    {
+     "datasheet": "am.death_korps_of_krieg",
+     "models": 10
+    },
+    {
+     "datasheet": "am.cadian_shock_troops",
+     "models": 10
+    },
+    {
+     "datasheet": "am.wyvern",
+     "models": 1
+    },
+    {
+     "datasheet": "am.armoured_sentinels",
+     "models": 1
+    }
+   ],
+   "score": -2.0,
+   "wins": 1,
+   "games": 2,
+   "avg_vp_for": 59.0,
+   "avg_vp_against": 61.0
   },
   {
    "name": "candidate-000",

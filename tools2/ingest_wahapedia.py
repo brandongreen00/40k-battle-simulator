@@ -123,8 +123,18 @@ def parse_datasheet(path: str, slug: str) -> Optional[Datasheet]:
     keywords = parse_keywords(block)
     points = parse_points(block)
     abilities = parse_abilities(block)
+    inv_note = parse_invuln_note(block)
+    if inv_note:
+        abilities["Invulnerable Save note"] = inv_note
     unit_sizes = sorted({t.models for t in points}) or [1]
     transport_cap, transport_text = parse_transport(block)
+    if transport_cap and " or " in transport_text.split(".")[0]:
+        # e.g. "capacity of 1 TAUROS model or 2 ASTRA MILITARUM WALKER models":
+        # the first figure is taken and the alternative is kept as text.
+        gap(f"ds:{faction.lower()}.{slug_id(name)}:transport", "conditional transport capacity",
+            "capacity depends on which models are carried; only the first figure is structured",
+            ["transport section parse"], estimate=str(transport_cap),
+            basis="first printed capacity; full wording preserved in transport_text")
 
     ds_id = f"{faction.lower()}.{slug_id(name)}"
     if not models:
@@ -177,11 +187,7 @@ def parse_profiles(block: str, unit_name: str) -> List[ModelProfile]:
     if not pairs:
         return []
     base = parse_base(block)
-    invulns = re.findall(r'dsInvSvValue[^>]*>([^<]+)<', block)
-    inv = None
-    m_inv = re.search(r'INVULNERABLE SAVE[^0-9]*(\d)\+', text_of(block).upper())
-    if m_inv:
-        inv = int(m_inv.group(1))
+    inv = parse_invuln(block)
 
     profiles: List[ModelProfile] = []
     current: Dict[str, str] = {}
@@ -194,6 +200,25 @@ def parse_profiles(block: str, unit_name: str) -> List[ModelProfile]:
     if current:
         profiles.append(_mk_profile(current, base, inv, names, len(profiles), unit_name))
     return [p for p in profiles if p is not None]
+
+
+def parse_invuln(block: str) -> Optional[int]:
+    """The invulnerable save is its own markup block, not prose.
+
+    Wahapedia renders it as ``dsInvulWrap`` containing a ``dsCharInvulValue``
+    of e.g. "4+". Searching the block text for the words "INVULNERABLE SAVE"
+    (the obvious approach) matches almost nothing — it captured the value on
+    1 of 179 datasheets.
+    """
+    m = re.search(r'dsCharInvulValue[^>]*>\s*(\d)\+', block)
+    return int(m.group(1)) if m else None
+
+
+def parse_invuln_note(block: str) -> str:
+    """Footnotes that exclude specific models from the invulnerable save
+    (trap §6.9, e.g. cyber-mastiffs) are transcribed verbatim."""
+    m = re.search(r'dsInvul(?:Comment|Text2|Note)[^>]*>(.*?)</div>', block, re.S)
+    return text_of(m.group(1)) if m else ""
 
 
 def _profile_names(block: str, unit_name: str) -> List[str]:
@@ -387,8 +412,42 @@ def parse_points(block: str) -> List[PointsTier]:
     return out
 
 
+#: Ability lines the datasheet prints as one comma-separated run.
+ABILITY_GROUP_RE = re.compile(
+    r'<div class="dsAbility">(CORE|FACTION):\s*<b>(?P<body>.*?)</b>\s*</div>', re.S
+)
+
+
+def parse_ability_group(block: str, label: str) -> List[str]:
+    """"CORE: Deep Strike, Fights First, Infiltrators" -> three abilities.
+
+    Each ability is a tooltip span whose words are split one span per word
+    (the same trap as weapon keywords, §6.4), so the words are rejoined per
+    span and the run is split on the commas BETWEEN spans. Parameters ride
+    along with the name: "Scouts 6\"", "Deadly Demise D3", "Firing Deck 2".
+    """
+    out: List[str] = []
+    for m in ABILITY_GROUP_RE.finditer(block):
+        if m.group(1) != label:
+            continue
+        for chunk in re.split(r"</span>\s*,", m.group("body")):
+            words = re.findall(r'class="tt kwbu">([^<]+)</span>', chunk)
+            if words:
+                out.append(" ".join(w.strip() for w in words))
+    return out
+
+
 def parse_abilities(block: str) -> Dict[str, str]:
     out: Dict[str, str] = {}
+    # Core and faction abilities first: the engine reads these by NAME to grant
+    # Deep Strike, Leader, Infiltrators, Scouts, Stealth, Feel No Pain and the
+    # rest, so each needs its own entry rather than one "CORE" blob.
+    for label in ("CORE", "FACTION"):
+        names = parse_ability_group(block, label)
+        if names:
+            out[label] = ", ".join(names)
+            for name in names:
+                out.setdefault(name, f"{label.title()} ability (see the core rules).")
     for seg in re.findall(r'<div class="dsAbility">(.*?)</div>\s*(?=<div|$)', block, re.S):
         txt = text_of(seg)
         m = re.match(r"([A-Z][A-Za-z’'\- ]{2,40}):\s*(.+)", txt)
@@ -403,12 +462,25 @@ def parse_abilities(block: str) -> Dict[str, str]:
 
 
 def parse_transport(block: str) -> Tuple[int, str]:
-    m = re.search(r"TRANSPORT(.*?)(?:</div>)", block, re.S)
+    """Capacity is printed under a TRANSPORT section header.
+
+    The naive search for the word "TRANSPORT" anywhere in the block matches a
+    keyword tooltip long before it reaches the section, which is why capacity
+    parsed as 0 on every datasheet. The exclusions ("It cannot transport
+    ARTILLERY models") and the space-multipliers ("Each OGRYN model takes up
+    the space of 3 models") are kept as text for later binding.
+    """
+    m = re.search(
+        r'<div class="dsHeader[^"]*">\s*TRANSPORT\s*</div>\s*'
+        r'<div class="dsAbility">(.*?)</div>', block, re.S,
+    )
     if not m:
         return 0, ""
     txt = text_of(m.group(1))
-    cap = re.search(r"can transport up to (\d+)", txt, re.I)
-    return (int(cap.group(1)) if cap else 0), txt[:400]
+    cap = re.search(r"transport capacity of (\d+)", txt, re.I)
+    if not cap:
+        cap = re.search(r"can transport up to (\d+)", txt, re.I)
+    return (int(cap.group(1)) if cap else 0), txt[:600]
 
 
 # --------------------------------------------------------------------------

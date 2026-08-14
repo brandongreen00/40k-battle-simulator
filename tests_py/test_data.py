@@ -175,3 +175,106 @@ def test_threshold_clauses_are_not_scored_per_objective(data):
     for b in thresholds:
         assert b["max"] == b["per"], "a threshold clause pays its VP once"
         assert b.get("count", 1) >= 1
+
+
+# --------------------------------------------------------------------------
+# Ingester regressions found while writing docs/sim2_gap_register.md
+# --------------------------------------------------------------------------
+def test_invulnerable_saves_are_parsed(data):
+    """The value lives in a dsInvulWrap markup block, not in prose. Searching
+    the text for "INVULNERABLE SAVE" captured it on 1 of 179 datasheets, so
+    every Terminator, character and assassin fought without its invuln."""
+    callidus = data.by_name("Callidus Assassin")
+    assert callidus is not None
+    assert callidus.models[0].invuln == 4
+
+    with_invuln = [
+        ds for ds in data.datasheets.values() if any(m.invuln for m in ds.models)
+    ]
+    assert len(with_invuln) > 25, "far too few invulnerable saves parsed"
+    for ds in with_invuln:
+        for m in ds.models:
+            if m.invuln is not None:
+                assert 2 <= m.invuln <= 6, (ds.name, m.invuln)
+
+
+def test_invulnerable_save_beats_a_high_ap_armour_save(data, simple_battle):
+    """The parsed value must actually reach the save step."""
+    from sim2.kernel.attacks import _best_save
+    from sim2.effects.interpreter import AttackMods
+
+    engine, state, attacker, target = simple_battle
+    prof = target.models[0]
+    profile = data.datasheets[target.datasheet_id].models[0]
+    save, inv = _best_save(state, target, prof, profile, ap=0, mods=AttackMods())
+    assert inv is None                       # the test sheet prints no invuln
+
+    profile.invuln = 4
+    save, inv = _best_save(state, target, prof, profile, ap=-3, mods=AttackMods())
+    assert inv == 4 and save == 4, "a 4++ must beat a 4+ save worsened by AP-3"
+    profile.invuln = None
+
+
+def test_core_abilities_are_individually_named(data):
+    """The datasheet prints them as one comma-separated CORE line. Stored under
+    a single "CORE" key they were invisible to the loader's name matching, so
+    Deep Strike, Leader, Infiltrators, Scouts, Stealth, Feel No Pain and Fights
+    First did nothing on any unit."""
+    callidus = data.by_name("Callidus Assassin")
+    for ability in ("Deep Strike", "Fights First", "Infiltrators", "Lone Operative"):
+        assert ability in callidus.ability_text, ability
+    assert "CORE" in callidus.ability_text          # the printed line is kept too
+
+    granted = data.innate_abilities_for(callidus)
+    assert "DEEP STRIKE" in granted and "LONE OPERATIVE" in granted
+
+
+def test_core_ability_parameters_survive(data):
+    """"Scouts 6"" and "Firing Deck 2" carry a value the engine reads."""
+    scouts = [
+        ds for ds in data.datasheets.values()
+        if any(k.startswith("Scouts") for k in ds.ability_text)
+    ]
+    assert scouts
+    assert any('6"' in k or '9"' in k for ds in scouts for k in ds.ability_text
+               if k.startswith("Scouts"))
+
+    chimera = data.by_name("Chimera")
+    assert any(k.startswith("Firing Deck") for k in chimera.ability_text)
+
+
+def test_core_abilities_reach_live_units(data):
+    """End to end: an ability on the datasheet must be on the unit in play."""
+    from sim2.kernel.state import new_unit_from_datasheet
+
+    callidus = data.by_name("Callidus Assassin")
+    unit = new_unit_from_datasheet("u", 0, callidus, 1)
+    unit.innate_abilities = data.innate_abilities_for(callidus)
+    assert unit.has_ability("DEEP STRIKE")
+    assert unit.has_ability("LONE OPERATIVE")
+
+
+def test_transport_capacity_is_parsed(data):
+    """Capacity sits under a TRANSPORT section header; the old search matched a
+    keyword tooltip first and every transport came out with capacity 0."""
+    chimera = data.by_name("Chimera")
+    assert chimera.transport_capacity == 12
+    assert "OGRYN" in chimera.transport_text and "ARTILLERY" in chimera.transport_text
+
+    transports = [d for d in data.datasheets.values() if d.transport_capacity]
+    assert len(transports) >= 10
+    for ds in transports:
+        # the Crassus super-heavy prints 35; the Valkyrie Sky Talon prints a
+        # conditional "1 TAUROS model or 2 ASTRA MILITARUM WALKER models"
+        assert 1 <= ds.transport_capacity <= 40, (ds.name, ds.transport_capacity)
+
+
+def test_eleventh_edition_datasheets_print_one_statline(data):
+    """Not a defect, contrary to an earlier reading of the data: 11th edition
+    consolidated mixed units onto a single profile. The Rogue Trader Entourage
+    fields four differently-named models under one statline, so a single parsed
+    profile is faithful, not a collapse."""
+    entourage = data.by_name("Rogue Trader Entourage")
+    assert entourage is not None
+    assert len(entourage.models) == 1
+    assert all(len(ds.models) == 1 for ds in data.datasheets.values())

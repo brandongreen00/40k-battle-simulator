@@ -1,1 +1,22 @@
-[]
+[
+ {
+  "id": "ds:am.taurox_prime:transport",
+  "what": "conditional transport capacity",
+  "why": "capacity depends on which models are carried; only the first figure is structured",
+  "attempted": [
+   "transport section parse"
+  ],
+  "estimate": "12",
+  "basis": "first printed capacity; full wording preserved in transport_text"
+ },
+ {
+  "id": "ds:am.valkyrie_sky_talon:transport",
+  "what": "conditional transport capacity",
+  "why": "capacity depends on which models are carried; only the first figure is structured",
+  "attempted": [
+   "transport section parse"
+  ],
+  "estimate": "1",
+  "basis": "first printed capacity; full wording preserved in transport_text"
+ }
+]

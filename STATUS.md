@@ -45,7 +45,11 @@ Reviews (mandate 2b): [`reviews/rules-kernel.md`](reviews/rules-kernel.md) ·
 * **45 Event Companion layouts**, 3 per disposition pairing, with typed
   objectives and dense/light terrain areas
 * **44 mission cards** and the full asymmetric 5×5 disposition matrix
-* **189 logged `GAP` entries** — nothing was guessed
+* **191 logged `GAP` entries** — nothing was guessed
+* **47 datasheets carry an invulnerable save, 19 a transport capacity**, and the
+  printed core abilities (Deep Strike, Leader, Infiltrators, Scouts, Stealth,
+  Feel No Pain, Fights First, Deadly Demise, Firing Deck) are individually named
+  so the engine grants them — three ingester defects fixed 2026-08-14
 
 ---
 
@@ -57,10 +61,10 @@ Reviews (mandate 2b): [`reviews/rules-kernel.md`](reviews/rules-kernel.md) ·
 | Illegal actions, 12-game heuristic batch @500pts | 0 | **0** (`results/batch.json`) |
 | Illegal actions, 1000pt game | 0 | **0** (`test_thousand_point_game_is_legal`) |
 | Determinism: same seed → same game | byte-identical | **✅** (`test_battle_log_replays_identically`) |
-| Heuristic beats random | >95% | **met — 20 wins, 0 losses, 0 draws (100%)** over 20 games, avg VP 57.7 : 43.8 (`results/heuristic_vs_random/batch.json`) |
+| Heuristic beats random | >95% | **met — 20 wins, 0 losses, 0 draws (100%)** over 20 games, avg VP 57.6 : 43.2 (`results/heuristic_vs_random/batch.json`, re-measured against the corrected datasheets) |
 | Batch + optimizer produce dashboard artifacts | yes | **✅** `results/batch.json`, `results/optimizer.json` |
-| Tests | — | **56 passing** (`pytest tests_py`, incl. 7 full-game), **534** front-end (`pnpm test`) |
-| Speed | — | ~8s per 500pt game, ~40s per 1000pt game |
+| Tests | — | **64 passing** (`pytest tests_py`, incl. 7 full-game), **534** front-end (`pnpm test`) |
+| Speed | — | ~12-16s per 500pt game, ~60s per 1000pt game (slower since invulnerable saves landed: units survive longer, so games run more actions) |
 
 ---
 
@@ -94,8 +98,10 @@ Reviews (mandate 2b): [`reviews/rules-kernel.md`](reviews/rules-kernel.md) ·
 > the complete, self-contained gap register — every gap with evidence, file
 > locations, impact and acceptance criteria, written for an agent with no code
 > context. It supersedes this summary and includes several parser defects found
-> after this section was written (missing invulnerable saves, inert core
-> abilities, collapsed multi-profile statlines, unparsed transport capacity).
+> after this section was written. Three of those (invulnerable saves, inert core
+> abilities, transport capacity) were **fixed before merge on 2026-08-14**; a
+> fourth (multi-profile statlines) was **withdrawn** — 11th edition datasheets
+> genuinely print one statline per sheet.
 
 * **MFM reconciliation (Phase D2) not performed.** Points come from the faction
   pages, not the Munitorum Field Manual app, which §6.1 makes the authority. Every

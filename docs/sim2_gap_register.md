@@ -4,8 +4,14 @@
 document is self-contained: it explains what exists, then lists every known gap
 with evidence, file locations, impact and acceptance criteria.
 
-Everything marked *measured* was produced by running the code on 2026-08-11, not
-estimated. Commands to reproduce each measurement are given.
+Everything marked *measured* was produced by running the code, not estimated.
+Commands to reproduce each measurement are given.
+
+> **Update 2026-08-14 — four entries closed before merge.** A1 (invulnerable
+> saves), A2 (core abilities) and A4 (transport capacity) are fixed and pinned by
+> tests. **A3 was withdrawn: it was not a defect** — 11th edition datasheets
+> genuinely print one statline per sheet, verified across all 179 pages. The
+> remaining register is unchanged and still the plan of record.
 
 ---
 
@@ -109,15 +115,15 @@ wrong even if it passes tests.
 
 | Thing | Value |
 |---|---|
-| Datasheets ingested | 179 (46 Imperial Agents, 133 Astra Militarum); 78 flagged Legends |
+| Datasheets ingested | 179 (46 Imperial Agents, 133 Astra Militarum); 78 flagged Legends; 47 with invulnerable saves, 19 transports |
 | Detachments | 16, all with correct Force Disposition + DP (pinned by test) |
 | Effect records | 175 total; **19 bound** to primitives (13 stratagems, 6 Orders) |
 | Mission cards | 26 primaries (25 with scoring blocks), 18 secondaries (**2** with blocks) |
 | Layouts | 45 Event Companion layouts, 3 per disposition pairing |
-| Logged gaps | 189 in `data2/gaps.json` |
+| Logged gaps | 191 in `data2/gaps.json` |
 | Illegal actions | 0 across random + heuristic full games |
-| Heuristic vs random | 20–0 (100%), avg VP 57.7 : 43.8 |
-| Speed | ~8 s per 500 pt game, ~40 s per 1000 pt game |
+| Heuristic vs random | 20–0 (100%), avg VP 57.6 : 43.2 |
+| Speed | ~12–16 s per 500 pt game, ~60 s per 1000 pt game (invulnerable saves keep units alive longer, so games run more actions — see E1) |
 
 ---
 
@@ -134,7 +140,7 @@ These are parser defects in `tools2/ingest_wahapedia.py`. They are cheap to fix
 and each one silently degrades every game played. **A1–A4 should almost
 certainly be the first work done.**
 
-#### A1 — Invulnerable saves are missing from 178 of 179 datasheets 🔴 critical
+#### A1 — Invulnerable saves are missing from 178 of 179 datasheets ✅ FIXED 2026-08-14
 
 * **Exists:** `ModelProfile.invuln` field, and the save resolution in
   `sim2/kernel/attacks.py::_best_save` correctly takes the better of armour and
@@ -151,12 +157,12 @@ certainly be the first work done.**
   unit is fighting without its invulnerable save. Combat outcomes — and therefore
   every VP number, win rate and optimizer ranking — are systematically wrong
   against high-AP weapons.
-* **Done when:** invulns are parsed from `dsInvulWrap`; a test asserts a known
-  value (e.g. Callidus Assassin) and that the count of sheets with an invuln is
-  in the expected range; the asterisk footnotes that exclude specific models
-  (trap §6.9 — e.g. cyber-mastiffs) are captured as text.
+* **Fixed:** `parse_invuln` reads `dsCharInvulValue`; 47 of 179 datasheets now
+  carry an invulnerable save (was 1). Footnotes that exclude specific models are
+  captured by `parse_invuln_note`. Tests:
+  `test_invulnerable_saves_are_parsed`, `test_invulnerable_save_beats_a_high_ap_armour_save`.
 
-#### A2 — Core abilities are inert on every unit 🔴 critical
+#### A2 — Core abilities are inert on every unit ✅ FIXED 2026-08-14
 
 * **Exists:** the kernel honours Deep Strike, Infiltrators, Scouts, Lone
   Operative, Stealth, Feel No Pain, Fights First, Leader, Deadly Demise via
@@ -178,29 +184,31 @@ certainly be the first work done.**
   Stealth or Feel No Pain, or be a Leader. Reserves are effectively random
   placement, and roughly a third of the two factions' distinguishing rules do
   nothing.
-* **Done when:** the `CORE` and `FACTION` lines are split into individual
-  abilities with their parameter (`Scouts 6"` → name `SCOUTS`, value 6); a test
-  asserts the Callidus Assassin has Deep Strike + Lone Operative + Infiltrators
-  and that a Chimera has Firing Deck with its number.
+* **Fixed:** `parse_ability_group` splits the `CORE` and `FACTION` lines into
+  individual abilities, keeping each parameter with its name (`Scouts 6"`,
+  `Deadly Demise D3`, `Firing Deck 2`); the printed line is retained too.
+  Measured after the fix: Leader ×34, Deadly Demise ×84, Deep Strike ×13,
+  Infiltrators ×11, Scouts ×15, Lone Operative ×9, Stealth ×9, Feel No Pain ×7
+  now reach live units (13 of 18 units in a 500 pt game carry at least one).
+  Tests: `test_core_abilities_are_individually_named`,
+  `test_core_ability_parameters_survive`, `test_core_abilities_reach_live_units`.
 
-#### A3 — Multi-profile datasheets collapse to one statline 🟠 high
+#### A3 — ~~Multi-profile datasheets collapse to one statline~~ ❌ WITHDRAWN — not a defect
 
-* **Exists:** `Datasheet.models: List[ModelProfile]`, and
-  `state.new_unit_from_datasheet` already assigns the first profile to the first
-  model and the last profile to the rest.
-* **Missing:** the parser produces exactly one profile for every sheet.
-* **Evidence (measured):** `sheets with >1 model profile: 0` out of 179 — yet
-  many squads print a sergeant/leader line plus a trooper line.
-* **Where:** `tools2/ingest_wahapedia.py::parse_profiles` and `_profile_names`
-  (the `dsProfileName` regex never matches, so profile boundaries are wrong).
-* **Why it matters:** squad leaders lose their better statlines; the Toughness
-  used for the whole unit is derived from a single profile, so
-  `attacks._target_toughness` (majority Toughness) can never disagree with it.
-* **Done when:** a known multi-profile sheet parses into ≥2 profiles with
-  correct names, and `new_unit_from_datasheet` is verified to build the printed
-  composition.
+* **This entry was wrong and is retained as a correction rather than deleted.**
+  It inferred a parser bug from the fact that no datasheet produced more than one
+  model profile.
+* **Re-checked against source (2026-08-14):** scanning the full datasheet block of
+  all 179 fetched pages finds **zero** sheets printing more than one `M`
+  characteristic. 11th edition consolidated mixed units onto a single statline —
+  the Rogue Trader Entourage fields four differently-named models (Rogue Trader,
+  Death Cult Assassin, Lectro-Maester, Rejuvenat Adept) under one profile.
+* **Conclusion:** one parsed profile per datasheet is faithful. The schema keeps
+  `Datasheet.models` as a list and the wound-bracket fields for editions or
+  sheets that do print more, so nothing needs to change.
+* **Pinned by:** `test_eleventh_edition_datasheets_print_one_statline`.
 
-#### A4 — Transport capacity is never parsed 🟠 high
+#### A4 — Transport capacity is never parsed ✅ FIXED 2026-08-14
 
 * **Exists:** `Datasheet.transport_capacity`, and it is consumed by nothing yet
   (see C1 — transports are unimplemented).
@@ -210,9 +218,13 @@ certainly be the first work done.**
 * **Where:** `tools2/ingest_wahapedia.py::parse_transport`.
 * **Why it matters:** blocks C1 entirely, and Astra Militarum is a
   transport-heavy faction.
-* **Done when:** the Chimera and other transports carry their printed capacity
-  and the full transport text, including the "cannot transport X" exclusions and
-  the Kill Team "counts as 2" clause.
+* **Fixed:** `parse_transport` now anchors on the `TRANSPORT` section header
+  rather than the first occurrence of the word (which matched a keyword tooltip).
+  19 datasheets carry a capacity; the Chimera reads 12 with its OGRYN
+  space-multiplier and ARTILLERY exclusion preserved as text. Conditional
+  capacities (the Valkyrie Sky Talon prints "1 TAUROS model **or** 2 ASTRA
+  MILITARUM WALKER models") take the first figure and log a `GAP`.
+  Test: `test_transport_capacity_is_parsed`.
 
 #### A5 — Points are not reconciled against the Munitorum Field Manual 🟠 high
 
@@ -499,9 +511,11 @@ certainly be the first work done.**
 
 #### E1 — ~40 s per 1000-point game blocks everything above it 🟠 high
 
-* **Measured:** ~8 s per 500 pt game, ~40 s per 1000 pt game, single-threaded.
-  A 100-game batch at 1000 pts is over an hour; 2000 pt games are untested at
-  scale.
+* **Measured:** ~12–16 s per 500 pt game, ~60 s per 1000 pt game,
+  single-threaded. (It was ~8 s / ~40 s before invulnerable saves were parsed;
+  units now survive longer, so games run more actions — the fidelity fix made
+  this gap more pressing, not less.) A 100-game batch at 1000 pts is well over
+  an hour; 2000 pt games are untested at scale.
 * **Already done:** memoised unit distances and visibility against a geometry
   epoch (`kernel/measure.py::bump_epoch`), bounding-box rejection in
   `geometry.segment_crosses_polygon`, a centre-line fast path in
