@@ -457,6 +457,18 @@ def extract_page(pdf, doc, page_no):
                 m["kind"] = "separate"
     for m in markers:
         m.pop("_pt", None)
+    # A badge painted over by a later deployment-zone fill is invisible on the printed page
+    # (p35 buries one under the red zone; players only ever see four badges there). Keep a
+    # marker only if the render actually shows its grey badge disk: visible badges score
+    # grey-fraction 0.53-0.62 in a 28x28px centre crop, the buried one 0.09.
+    def badge_visible(m):
+        px = (cal.x0 + m["pos"][0] / cal.sx) * rscale
+        py = (cal.bottom - m["pos"][1] / cal.sy) * rscale
+        crop = render.crop((int(px - 14), int(py - 14), int(px + 14), int(py + 14))).convert("RGB")
+        pxls = list(crop.getdata())
+        grey = sum(1 for r, g, b in pxls if max(r, g, b) - min(r, g, b) < 30 and 70 < (r + g + b) // 3 < 190)
+        return grey >= len(pxls) * 0.3
+    markers = [m for m in markers if badge_visible(m)]
 
     # territory divider: dashed black line/curve spanning the board
     cands = []
