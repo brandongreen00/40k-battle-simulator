@@ -1,0 +1,85 @@
+{
+ "name": "Inquisitors",
+ "faction": "IA",
+ "detachments": [
+  "ia.ordo_hereticus_purgation_force"
+ ],
+ "units": [
+  {
+   "datasheet_id": "ia.inquisitor_draxus",
+   "models": 1,
+   "attached_to": "leader",
+   "key": "0"
+  },
+  {
+   "datasheet_id": "ia.exaction_squad",
+   "models": 11,
+   "attached_to": "bodyguard",
+   "key": "1"
+  },
+  {
+   "datasheet_id": "ia.inquisitor_coteaz",
+   "models": 1,
+   "attached_to": "leader",
+   "key": "2"
+  },
+  {
+   "datasheet_id": "ia.grey_knights_terminator_squad",
+   "models": 5,
+   "attached_to": "bodyguard",
+   "key": "3"
+  },
+  {
+   "datasheet_id": "ia.inquisitor",
+   "models": 1,
+   "enhancement_id": "ia.ordo_hereticus_purgation_force.enh_liber_heresius",
+   "attached_to": "leader",
+   "key": "4"
+  },
+  {
+   "datasheet_id": "ia.ministorum_priest",
+   "models": 1,
+   "enhancement_id": "ia.ordo_hereticus_purgation_force.enh_ignis_judicium",
+   "key": "5"
+  },
+  {
+   "datasheet_id": "ia.inquisitorial_agents",
+   "models": 12,
+   "attached_to": "bodyguard",
+   "key": "6"
+  },
+  {
+   "datasheet_id": "ia.inquisitor_kroyle",
+   "models": 1,
+   "warlord": true,
+   "key": "7"
+  },
+  {
+   "datasheet_id": "ia.inquisitorial_chimera",
+   "models": 1,
+   "key": "8"
+  },
+  {
+   "datasheet_id": "ia.subductor_squad",
+   "models": 11,
+   "key": "9"
+  },
+  {
+   "datasheet_id": "ia.subductor_squad",
+   "models": 11,
+   "key": "10"
+  }
+ ],
+ "battle_size": 1000,
+ "points": 940,
+ "notes": [
+  "Imported from a 40k app text export by tools2/import_army.py.",
+  "The export states 990 points; the snapshot totals 940.",
+  "Points come from the 11th edition snapshot, so they differ from an export written by a 10th edition app: this is the list re-priced under 11e, not a verified-legal 11e roster. Points are also unreconciled with the MFM (register A5), so treat the total as provisional.",
+  "the export states Force Disposition 'Purge the Foe', but the 11th edition pack gives Ordo Hereticus Purgation Force 'Take and Hold' — the pack value is used, and it decides which primary missions this army scores",
+  "Grey Knights Terminator Squad: snapshot says 175 pts for 5 models, the export says 195 — snapshot value used (points are unreconciled with MFM)",
+  "Inquisitor: snapshot says 55 pts for 1 models, the export says 65 — snapshot value used (points are unreconciled with MFM)",
+  "Ministorum Priest: snapshot says 40 pts for 1 models, the export says 50 — snapshot value used (points are unreconciled with MFM)",
+  "Inquisitorial Chimera: snapshot says 60 pts for 1 models, the export says 70 — snapshot value used (points are unreconciled with MFM)"
+ ]
+}

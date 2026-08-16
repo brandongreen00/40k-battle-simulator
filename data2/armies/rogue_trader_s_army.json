@@ -1,0 +1,70 @@
+{
+ "name": "Rogue Trader’s Army",
+ "faction": "IA",
+ "detachments": [
+  "ia.imperialis_fleet"
+ ],
+ "units": [
+  {
+   "datasheet_id": "ia.callidus_assassin",
+   "models": 1,
+   "key": "0"
+  },
+  {
+   "datasheet_id": "ia.eversor_assassin",
+   "models": 1,
+   "key": "1"
+  },
+  {
+   "datasheet_id": "ia.inquisitor_draxus",
+   "models": 1,
+   "key": "2"
+  },
+  {
+   "datasheet_id": "ia.rogue_trader_entourage",
+   "models": 4,
+   "enhancement_id": "ia.imperialis_fleet.enh_clandestine_operation",
+   "warlord": true,
+   "key": "3"
+  },
+  {
+   "datasheet_id": "ia.watch_captain_artemis",
+   "models": 1,
+   "key": "4"
+  },
+  {
+   "datasheet_id": "ia.deathwatch_kill_team",
+   "models": 10,
+   "key": "5"
+  },
+  {
+   "datasheet_id": "ia.imperial_navy_breachers",
+   "models": 10,
+   "key": "6"
+  },
+  {
+   "datasheet_id": "ia.imperial_navy_breachers",
+   "models": 10,
+   "key": "7"
+  },
+  {
+   "datasheet_id": "ia.exaction_squad",
+   "models": 11,
+   "key": "8"
+  },
+  {
+   "datasheet_id": "ia.subductor_squad",
+   "models": 11,
+   "key": "9"
+  }
+ ],
+ "battle_size": 1000,
+ "points": 960,
+ "notes": [
+  "Imported from a 40k app text export by tools2/import_army.py.",
+  "The export states 985 points; the snapshot totals 960.",
+  "Points come from the 11th edition snapshot, so they differ from an export written by a 10th edition app: this is the list re-priced under 11e, not a verified-legal 11e roster. Points are also unreconciled with the MFM (register A5), so treat the total as provisional.",
+  "Eversor Assassin: snapshot says 100 pts for 1 models, the export says 110 — snapshot value used (points are unreconciled with MFM)",
+  "Rogue Trader Entourage: snapshot says 75 pts for 4 models, the export says 90 — snapshot value used (points are unreconciled with MFM)"
+ ]
+}

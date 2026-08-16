@@ -48,6 +48,9 @@ Reviews (mandate 2b): [`reviews/rules-kernel.md`](reviews/rules-kernel.md) ·
   mat features: 720 areas now read 545 dense / 175 light, was 553 / 167)
 * **44 mission cards** and the full asymmetric 5×5 disposition matrix
 * **191 logged `GAP` entries** — nothing was guessed
+* **8 armies**: five generated samples plus the owner's three real lists
+  (Bane, Inquisitors, Rogue Trader's Army) imported from their 40k-app exports
+  by `tools2/import_army.py`
 * **47 datasheets carry an invulnerable save, 19 a transport capacity**, and the
   printed core abilities (Deep Strike, Leader, Infiltrators, Scouts, Stealth,
   Feel No Pain, Fights First, Deadly Demise, Firing Deck) are individually named
@@ -140,6 +143,7 @@ Reviews (mandate 2b): [`reviews/rules-kernel.md`](reviews/rules-kernel.md) ·
 ## 6. Running it
 
 ```bash
+python3 tools2/import_army.py <export.txt>  # import a 40k-app list into data2/armies
 python3 -m sim2.cli data                    # snapshot coverage
 python3 -m sim2.cli armies                  # the sample armies
 python3 -m sim2.cli play  --a "Alien Hunters Strike" --b "Siege Regiment Vanguard" \

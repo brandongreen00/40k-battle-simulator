@@ -538,15 +538,26 @@ certainly be the first work done.**
 
 ### F. Product surface and operations
 
-#### F1 — Sample armies are generated, not real lists 🟡 medium
+#### F1 — Sample armies are generated, not real lists ✅ MOSTLY FIXED 2026-08-16
 
 * **Exists:** five sample armies built by `tools2/build_data.py::_fill_army`
   (a greedy fill: cheapest character, battleline spine, then whatever fits).
 * **Missing:** they are not the owner's lists and are not tournament-shaped.
   There is no importer for the 40k app's text export into the v2 `Army` schema
   (v1 has one at `tools/rosters/import-text.ts`, for the old schema).
-* **Done when:** the owner's real lists exist as `data2/armies/*.json`, ideally
-  via an importer, and are validated against the muster rules of C6.
+* **Fixed:** `tools2/import_army.py` imports a 40k-app text export into the v2
+  army schema. All three of the owner's exports import with **zero unresolved
+  units** and every inferred model count lands on a printed unit size; they are
+  committed as `data2/armies/{bane,inquisitors,rogue_trader_s_army}.json`.
+  An unknown unit is reported and dropped, never approximated, and the importer
+  exits non-zero so a partial import cannot pass for a complete one.
+* **Still open:** the exports were written by a **10th edition** app, so this is
+  each list *re-priced under 11e*, not a verified-legal 11e roster — points
+  differ per unit and the Inquisitors export's stated Force Disposition (Purge
+  the Foe) disagrees with the 11e pack (Take and Hold). Both are reported as
+  warnings on import and recorded in the army's `notes`. Validating imported
+  lists against the muster rules of C6 is still to do, and points remain
+  unreconciled with the MFM (A5).
 
 #### F2 — The Auto Player cannot browse the data snapshot 🟢 low
 
