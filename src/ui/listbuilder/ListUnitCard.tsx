@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Datasheet, Enhancement } from '../../core/types';
 import { isCharacter, isEpicHero, type ArmyList, type ListUnit } from '../../core/army';
-import { groupFits, wargearOptionGroups } from '../../core/wargear';
+import { defaultLoadoutCounts, groupFits, loadoutCount, normalizeItemName, wargearOptionGroups } from '../../core/wargear';
 import { getDatasheet, type CpEnhancement } from '../../data/loaders';
 
 interface Props {
@@ -39,7 +39,9 @@ export function ListUnitCard(props: Props) {
 
   // Real, cap-aware wargear options for this unit's current model count. Options that share
   // items (e.g. the Sisters of Battle Squad's two boltgun swaps) render as one pooled group.
+  // Default-wargear bearers (an imported list's export includes them) don't charge the caps.
   const wargearGroups = wargearOptionGroups(ds, unit.modelCount);
+  const defaults = defaultLoadoutCounts(ds, unit.modelCount);
 
   // Wahapedia repeats a size tier for allied pricing ("Agents of the Imperium Detachment") —
   // keep the first row per size (the one unitCost reads) so the options are unique and clean.
@@ -143,8 +145,11 @@ export function ListUnitCard(props: Props) {
           )}
 
           {wargearGroups.map((group) => {
-            const used = group.choices.reduce((s, c) => s + (unit.loadout?.[c.item] ?? 0), 0);
-            const over = !groupFits(group, unit.loadout ?? {});
+            const used = group.choices.reduce(
+              (s, c) => s + Math.max(0, loadoutCount(unit.loadout, c.item) - loadoutCount(defaults, c.item)),
+              0,
+            );
+            const over = !groupFits(group, unit.loadout ?? {}, defaults);
             const texts = Array.from(new Set(group.options.map((o) => o.text)));
             return (
               <div key={group.options[0]!.optionIndex} className={`lu-opt${over ? ' lu-opt-over' : ''}`}>
@@ -161,18 +166,24 @@ export function ListUnitCard(props: Props) {
                 </div>
                 <div className="lu-choices">
                   {group.choices.map((c) => {
-                    const count = unit.loadout?.[c.item] ?? 0;
+                    // An imported list's loadout keys can spell an item differently than the
+                    // option data (casing/punctuation) — resolve to the actual stored key so the
+                    // count and the steppers act on the imported entry.
+                    const lkey =
+                      Object.keys(unit.loadout ?? {}).find((k) => normalizeItemName(k) === normalizeItemName(c.item)) ??
+                      c.item;
+                    const count = loadoutCount(unit.loadout, c.item);
                     // One more of this item is only offered if some assignment of every pick to
                     // an option still fits the caps (items shared across options pool; items in
-                    // a single option stay capped by it).
-                    const canAdd = groupFits(group, { ...unit.loadout, [c.item]: count + 1 });
+                    // a single option stay capped by it; default-wargear bearers don't charge).
+                    const canAdd = groupFits(group, { ...unit.loadout, [lkey]: count + 1 }, defaults);
                     return (
                       <div key={c.item} className="lu-stepper">
                         <button
                           type="button"
                           className="lu-step"
                           disabled={count <= 0}
-                          onClick={() => props.onLoadout(unit.uid, c.item, count - 1)}
+                          onClick={() => props.onLoadout(unit.uid, lkey, count - 1)}
                         >
                           −
                         </button>
@@ -181,7 +192,7 @@ export function ListUnitCard(props: Props) {
                           type="button"
                           className="lu-step"
                           disabled={!canAdd}
-                          onClick={() => props.onLoadout(unit.uid, c.item, count + 1)}
+                          onClick={() => props.onLoadout(unit.uid, lkey, count + 1)}
                         >
                           +
                         </button>

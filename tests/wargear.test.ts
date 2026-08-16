@@ -6,6 +6,7 @@ import {
   wargearOptionGroups,
   groupFits,
   validateUnitLoadout,
+  defaultLoadoutCounts,
   defensiveProfileForItem,
   defensiveItemsInText,
 } from '../src/core/wargear';
@@ -184,6 +185,78 @@ describe('overlapping options share their caps across the group (Sisters of Batt
     expect(validateUnitLoadout(real!, 10, { [item('meltagun')]: 1, [item('heavy bolter')]: 1 })).toHaveLength(0);
     // Still illegal: two heavy bolters.
     expect(validateUnitLoadout(real!, 10, { [item('heavy bolter')]: 2 })).toHaveLength(1);
+  });
+});
+
+describe('default wargear credits the option caps (HOLD OBJECTIVES import false positives)', () => {
+  // The GW app's export lists a unit's FULL equipment, default wargear included — the caps must
+  // only be charged for picks beyond the default bearers. Both cases below are app-legal lists
+  // that used to be flagged ("5 models take Ministorum hand flamer but only 1 may").
+  const real = (name: string) => {
+    const d = (datasheetsJson as unknown as Datasheet[]).find((x) => x.name === name);
+    expect(d, name).toBeDefined();
+    return d!;
+  };
+
+  it('parses default bearers from the loadout text, resolving "Every <Type>" via composition', () => {
+    const sanctifiers = real('Sanctifiers');
+    const defaults = defaultLoadoutCounts(sanctifiers, 9);
+    expect(defaults['Ministorum hand flamer']).toBe(4); // "Every Sanctifier" → 4 per composition
+    expect(defaults['Sanctifier melee weapon']).toBe(6); // 2 Missionaries + 4 Sanctifiers
+    expect(defaults['plasma gun']).toBe(1); // "1 Missionary is equipped with"
+    expect(defaults['holy fire']).toBe(1); // "The Miraculist"
+    const subductors = real('Subductor Squad');
+    // "Every Proctor-Subductor and Subductor" sums the two composition entries.
+    expect(defaultLoadoutCounts(subductors, 11)['Arbites shotpistol']).toBe(10);
+  });
+
+  it('Sanctifiers: 5 hand flamers = 4 default + 1 legal swap — no violation; a 6th is flagged', () => {
+    const sanctifiers = real('Sanctifiers');
+    // The exact loadout of the owner's app export (defaults included).
+    const appLoadout = {
+      'Burning hands': 1, 'Holy fire': 2, 'Close combat weapon': 3, 'Salvationist Medikit': 1,
+      'Death Cult blades': 1, 'Ministorum flamer': 1, 'Plasma gun': 1, 'Sanctifier melee weapon': 4,
+      'Ministorum hand flamer': 5, 'Simulacrum Imperialis': 1,
+    };
+    expect(validateUnitLoadout(sanctifiers, 9, appLoadout)).toHaveLength(0);
+    // Only ONE Sanctifier may swap for an extra hand flamer — a 6th total is over.
+    const v = validateUnitLoadout(sanctifiers, 9, { ...appLoadout, 'Ministorum hand flamer': 6 });
+    expect(v).toHaveLength(1);
+    expect(v[0]!.message).toContain('beyond the default wargear');
+  });
+
+  it('Inquisitorial Chimera: hull + turret heavy flamers pool to 2 (the * footnote strips); 3 are flagged', () => {
+    const chimera = real('Inquisitorial Chimera');
+    // Two separate options grant a heavy flamer — replacing the heavy bolter (hull) and the
+    // multi-laser (turret, printed "1 Heavy flamer*"). They must land in ONE pooled group.
+    const flamerGroups = wargearOptionGroups(chimera, 1).filter((g) =>
+      g.choices.some((c) => c.item.toLowerCase() === 'heavy flamer'),
+    );
+    expect(flamerGroups).toHaveLength(1);
+    expect(flamerGroups[0]!.options.length).toBeGreaterThanOrEqual(2);
+    // The owner's app export: both swaps taken.
+    const appLoadout = {
+      'Armoured tracks': 1, 'Heavy flamer': 2, 'Heavy stubber': 1,
+      'Hunter-killer missile': 1, 'Lasgun array': 1,
+    };
+    expect(validateUnitLoadout(chimera, 1, appLoadout)).toHaveLength(0);
+    expect(validateUnitLoadout(chimera, 1, { ...appLoadout, 'Heavy flamer': 3 })).toHaveLength(1);
+    // Keeping the default hull heavy bolter while taking the turret one is also legal (1 default
+    // + 1 from the multi-laser swap) — but a third heavy bolter has no option to grant it.
+    expect(validateUnitLoadout(chimera, 1, { 'Heavy bolter': 2 })).toHaveLength(0);
+    expect(validateUnitLoadout(chimera, 1, { 'Heavy bolter': 3 })).toHaveLength(1);
+  });
+
+  it('groupFits credits defaults the same way (UI steppers)', () => {
+    const sanctifiers = real('Sanctifiers');
+    const defaults = defaultLoadoutCounts(sanctifiers, 9);
+    const group = wargearOptionGroups(sanctifiers, 9).find((g) =>
+      g.choices.some((c) => c.item.toLowerCase() === 'ministorum hand flamer'),
+    )!;
+    expect(groupFits(group, { 'Ministorum hand flamer': 5 }, defaults)).toBe(true);
+    expect(groupFits(group, { 'Ministorum hand flamer': 6 }, defaults)).toBe(false);
+    // Without the credit the old false positive comes back — pinning the mechanism.
+    expect(groupFits(group, { 'Ministorum hand flamer': 5 })).toBe(false);
   });
 });
 
