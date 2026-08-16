@@ -93,6 +93,32 @@ export function splitDetachments(name: string): string[] {
   return [name];
 }
 
+/** Is `name` one of the curated 11e detachments — i.e. a name splitDetachments can recognise
+ *  inside a combined string? Grotmas/10e leftovers in the data are NOT: a combined name
+ *  containing one would never split back apart (silently breaking enhancement scoping and DP
+ *  sums), so such detachments can only ever be an army's LONE detachment. */
+export function isKnownDetachment(name: string): boolean {
+  const norm = normalizeDetachmentName(name);
+  return Object.keys(DETACHMENT_POINTS).some((k) => normalizeDetachmentName(k) === norm);
+}
+
+/** Canonical inverse of splitDetachments: join component detachments into the combined string
+ *  the GW app prints ("A and B"). Blanks and duplicates (compared case/punctuation-insensitively)
+ *  are dropped; one part returns as-is; none returns ''. */
+export function joinDetachments(parts: string[]): string {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const p of parts) {
+    const t = p.trim();
+    if (!t) continue;
+    const norm = normalizeDetachmentName(t);
+    if (seen.has(norm)) continue;
+    seen.add(norm);
+    out.push(t);
+  }
+  return out.join(' and ');
+}
+
 /** Does an army whose (possibly combined) detachment string is `armyDetachment` include the
  *  detachment `name`? Used for enhancement/stratagem scoping and detachment rules. */
 export function armyHasDetachment(armyDetachment: string | undefined, name: string): boolean {
