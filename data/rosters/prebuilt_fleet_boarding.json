@@ -2,7 +2,7 @@
   "name": "Fleet Boarding Party",
   "faction": "AoI",
   "detachment": "Imperialis Fleet",
-  "points": 990,
+  "points": 995,
   "units": [
     {
       "datasheetId": "000002762",
@@ -55,7 +55,7 @@
       "modelCount": 1
     },
     {
-      "datasheetId": "000003820",
+      "datasheetId": "000003830",
       "modelCount": 1
     },
     {

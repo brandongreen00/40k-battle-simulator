@@ -281,6 +281,9 @@ describe('enhancement redeploys (Liber Heresius)', () => {
     const s = run(createInitialState(layout), [
       { type: 'NewBattle' },
       { type: 'SetAttacker', side: 'ai' },
+      // Redeploys are a deploy-step window — pass Declare Battle Formations first.
+      { type: 'FinishFormations', side: 'player' },
+      { type: 'FinishFormations', side: 'ai' },
       {
         type: 'DeployUnit', unitId: 'player:0', owner: 'player', datasheetId: 'subductors',
         baseShape: circle, modelCount: 5, wounds: 3, anchor: { x: 6, y: 22 },
@@ -303,7 +306,12 @@ describe('enhancement redeploys (Liber Heresius)', () => {
     const deps: AiDeps = {
       ctx, rosters: { player: roster }, detachments: {}, deployAbility: () => 'standard', stratagems: [], rng: makeRNG(3),
     };
-    const s = run(createInitialState(layout), [{ type: 'NewBattle' }, { type: 'SetAttacker', side: 'ai' }]);
+    const s = run(createInitialState(layout), [
+      { type: 'NewBattle' },
+      { type: 'SetAttacker', side: 'ai' },
+      { type: 'FinishFormations', side: 'player' },
+      { type: 'FinishFormations', side: 'ai' },
+    ]);
     expect(enhancementRedeployPending(s, deps)).toEqual({ side: 'player', enhancementId: ENH.LIBER_HERESIUS });
     const declined = run(s, [{ type: 'DeclineEnhancementRedeploy', side: 'player', enhancementId: ENH.LIBER_HERESIUS }]);
     expect(enhancementRedeployPending(declined, deps)).toBeNull();

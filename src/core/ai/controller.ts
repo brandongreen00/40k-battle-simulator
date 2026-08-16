@@ -15,7 +15,7 @@ import { PREBATTLE_GRANTS, REDEPLOY_RULES, grantSelects } from '../enhancements'
 import { isCharacter } from '../leaders';
 import type { AiAction, AiDeps, Decision } from './types';
 import { resolveProfile, type AiProfile } from './profile';
-import { aiDeployAction, deployTurn, pendingLeaderAttaches, rosterEntries } from './deploy';
+import { aiDeployAction, aiFormationsAction, deployTurn, pendingLeaderAttaches, rosterEntries } from './deploy';
 import { isEntryPlaced } from '../deployment';
 import { aiCommandAction } from './command';
 import { aiMovementAction, aiScoutAction } from './move';
@@ -43,7 +43,7 @@ export function warrantPending(state: GameState, deps: AiDeps): Side | null {
 /** The side (Defender first) with an unresolved Declare Battle Formations enhancement grant
  *  (Clandestine Operation / Combat Landers) — resolved BEFORE units are placed. */
 export function enhancementGrantPending(state: GameState, deps: AiDeps): { side: Side; enhancementId: string } | null {
-  if (state.stage !== 'setup' || state.setup?.step !== 'deploy') return null;
+  if (state.stage !== 'setup' || (state.setup?.step !== 'formations' && state.setup?.step !== 'deploy')) return null;
   const order: Side[] = state.setup?.defender ? [state.setup.defender, otherSide(state.setup.defender)] : ['player', 'ai'];
   for (const s of order) {
     for (const u of deps.rosters[s]?.units ?? []) {
@@ -79,6 +79,20 @@ export function whoActs(state: GameState, deps: AiDeps): Decision {
   if (state.stage === 'setup') {
     const step = state.setup?.step ?? 'roll_roles';
     if (step === 'roll_roles') return { actor: 'shared', reason: 'roll off for Attacker/Defender' };
+    if (step === 'formations') {
+      // Declare Battle Formations: enhancement grants first, then each side (Defender first)
+      // declares its transports/Reserves and finishes. The reducer flips the step when both are
+      // done, so a fully-finished state never lingers here.
+      const grant = enhancementGrantPending(state, deps);
+      if (grant) return { actor: grant.side, reason: `${grant.side} resolves a pre-battle enhancement (Declare Battle Formations)` };
+      const order: Side[] = state.setup?.defender ? [state.setup.defender, otherSide(state.setup.defender)] : ['player', 'ai'];
+      for (const s of order) {
+        if (!state.setup?.formationsDone?.[s]) {
+          return { actor: s, reason: `${s} declares battle formations (transports & Reserves)` };
+        }
+      }
+      return { actor: 'shared', reason: 'begin deployment' };
+    }
     if (step === 'deploy') {
       // Declare Battle Formations enhancement grants (Clandestine Operation…) resolve BEFORE
       // placement — the picked units deploy with the granted ability.
@@ -146,7 +160,7 @@ export function aiAction(state: GameState, side: Side, profileIn: string | AiPro
     if (step === 'scouts') {
       return aiScoutAction(state, side, profile, deps);
     }
-    if (step !== 'deploy') return null; // roll-offs are shared actions
+    if (step !== 'deploy' && step !== 'formations') return null; // roll-offs are shared actions
     // Declare Battle Formations enhancement grants: use Infiltrators grants (Clandestine
     // Operation) on the best qualifying units; decline Deep Strike grants (the reserves policy
     // already covers Deep Strike wants).
@@ -166,6 +180,9 @@ export function aiAction(state: GameState, side: Side, profileIn: string | AiPro
           ? `${side} grants ${rule.label} (${rule.grant}) to ${entries.length} unit(s)`
           : `${side} declines the ${rule.label} grant`,
       };
+    }
+    if (step === 'formations') {
+      return aiFormationsAction(state, side, profile, deps);
     }
     const turn = deployTurn(state, deps);
     if (turn === side) return aiDeployAction(state, side, profile, deps);

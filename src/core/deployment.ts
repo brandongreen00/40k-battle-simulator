@@ -140,6 +140,9 @@ export function checkUnitDeployment(
  * deployment alternation and the UI both rely on this staying in sync.
  */
 export function isEntryPlaced(state: GameState, entryKey: string): boolean {
+  // A DEDICATED TRANSPORT destroyed at the end of Declare Battle Formations (18.01 — no unit
+  // embarked) never enters play; its entry is handled for deployment purposes.
+  if (state.setup?.destroyedEntries?.some((d) => d.entryKey === entryKey)) return true;
   const split = state.setup?.splits?.find((s) => s.entryKey === entryKey);
   if (split) return isEntryPlaced(state, `${entryKey}#a`) && isEntryPlaced(state, `${entryKey}#b`);
   return state.units.some(

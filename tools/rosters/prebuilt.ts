@@ -111,7 +111,10 @@ export const PREBUILT: PrebuiltDef[] = [
         u('000002684', 11), //         Subductor Squad — 85
         u('000004174', 5), //          Aquila Kill Team — 100
         u('000000871', 1), //          Callidus Assassin — 100
-        u('000003820', 1), //          Inquisitorial Chimera — 70
+        // Imperial Rhino, not the Inquisitorial Chimera: the 11e Chimera only carries INQUISITOR
+        // INFANTRY / INQUISITORIAL AGENT models — this list has neither, and a DEDICATED
+        // TRANSPORT with no unit embarked is destroyed at Declare Battle Formations (18.01).
+        u('000003830', 1), //          Imperial Rhino — 65
         u('000002766', 1), //          UR-025 — 55
       ], //                            total 1000
     },

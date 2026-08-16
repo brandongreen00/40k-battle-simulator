@@ -16,7 +16,10 @@ import { formationPositions } from '../formation';
 import { canAttach, isCharacter } from '../leaders';
 import { pointInPolygon, distancePointToPolygon, dist } from '../geometry';
 import { hasBackroomDeals, hasLoneOperative } from '../abilities';
-import { canEmbark, deploymentProbeUnit, embarkedUnits, isAircraft } from '../transport';
+import {
+  canDeclareEmbark, canEmbark, deploymentProbeUnit, embarkedUnits, isAircraft,
+  isDedicatedTransport, splitRideCounts, splitRuleSelects, transportCapacity, transportSplitRule,
+} from '../transport';
 import { modelValue } from './evaluate';
 import { classifyDatasheet, rolePlan } from './roles';
 import type { AiAction, AiDeps, AiIntent } from './types';
@@ -315,10 +318,9 @@ function wantsReserves(state: GameState, side: Side, entry: DeployEntry, ability
   return reserved + 1 <= Math.floor(total / 2);
 }
 
-/** One deployment drop for `side`: declare Leader pairings first (their own action, so the
- *  reducer computes the Infiltrators grant before anything is placed), then place the next
- *  entry — a paired Bodyguard brings its Leader down with it, merged. Null when nothing is left. */
-export function aiDeployAction(state: GameState, side: Side, profile: AiProfile, deps: AiDeps): AiAction | null {
+/** The AI's pre-battle one-off choices (Secondary Missions mode, the Combat Patrol enhancement),
+ *  shared by the Declare Battle Formations step and the deploy step (whichever comes first). */
+function prebattleChoices(state: GameState, side: Side, deps: AiDeps): AiAction | null {
   // Pre-battle Secondary Missions choice (secret): Fixed when the enemy roster offers reliable
   // kill targets for the FIXED cards, otherwise Tactical (draw). Decided once, before any drop.
   if (state.secondaries && !state.secondaries[side].mode) {
@@ -391,6 +393,231 @@ export function aiDeployAction(state: GameState, side: Side, profile: AiProfile,
       note: `${side} picks its patrol enhancement`,
     };
   }
+  return null;
+}
+
+/** The intents that place one entry (with its paired Leader, merged) into Reserves. */
+function reserveIntentsFor(
+  entry: DeployEntry,
+  side: Side,
+  leaderEntry: DeployEntry | undefined,
+): AiIntent[] {
+  const common = {
+    unitId: entry.key, owner: side, datasheetId: entry.ds.id, baseShape: entry.ds.baseShape,
+    modelCount: entry.unit.modelCount, wounds: entry.ds.models[0]?.W ?? 1,
+    ...(entry.unit.wargearCounts ? { wargear: entry.unit.wargearCounts } : {}),
+    ...(entry.unit.enhancementId ? { enhancementId: entry.unit.enhancementId } : {}),
+  };
+  const out: AiIntent[] = [{ intent: { type: 'PlaceInReserves', ...common } }];
+  if (leaderEntry) {
+    const leaderUnitId = leaderEntry.key;
+    const bodyguardUnitId = entry.key;
+    out.push({
+      intent: {
+        type: 'PlaceInReserves',
+        unitId: leaderEntry.key, owner: side, datasheetId: leaderEntry.ds.id, baseShape: leaderEntry.ds.baseShape,
+        modelCount: leaderEntry.unit.modelCount, wounds: leaderEntry.ds.models[0]?.W ?? 1,
+        ...(leaderEntry.unit.wargearCounts ? { wargear: leaderEntry.unit.wargearCounts } : {}),
+        ...(leaderEntry.unit.enhancementId ? { enhancementId: leaderEntry.unit.enhancementId } : {}),
+      },
+    });
+    out.push({
+      intent: { type: 'AttachLeader', leaderUnitId, bodyguardUnitId },
+      skipIf: (s) => {
+        const b = s.units.find((u) => u.id === bodyguardUnitId);
+        return !s.units.some((u) => u.id === leaderUnitId) || !b || (b.attachedLeaders?.length ?? 0) > 0;
+      },
+    });
+  }
+  return out;
+}
+
+/**
+ * One Declare Battle Formations action for `side` (the step BEFORE deployment): Leader pairings,
+ * then start-embarked declarations — every DEDICATED TRANSPORT must take a unit or it is
+ * destroyed at the end of the step (18.01) — then Strategic Reserves picks (20.01), then
+ * FinishFormations. Null when the side has already finished.
+ */
+export function aiFormationsAction(state: GameState, side: Side, profile: AiProfile, deps: AiDeps): AiAction | null {
+  const pre = prebattleChoices(state, side, deps);
+  if (pre) return pre;
+  if (state.setup?.formationsDone?.[side]) return null;
+  const { ctx } = deps;
+
+  // 1 · Leader pairings (declared first so paired riders/reserves are known below).
+  const formations = desiredFormations(state, side, deps);
+  if (formations.length > 0) {
+    return { intents: formations, note: `${side} declares battle formations (Leader pairings)` };
+  }
+
+  const remaining = remainingEntries(state, side, deps);
+  const leaderEntryOf = (entry: DeployEntry): DeployEntry | undefined => {
+    const pair = formationForBodyguard(state, entry.key);
+    return pair ? rosterEntries(deps.rosters[side], side, deps.ctx).find((e) => e.key === pair.leaderKey) : undefined;
+  };
+  const embarkIntents = (entry: DeployEntry, transport: DeployEntry, leaderEntry: DeployEntry | undefined): AiIntent[] => {
+    const declare = (e: DeployEntry): AiIntent => ({
+      intent: {
+        type: 'DeclareEmbark',
+        side, unitId: e.key, transportKey: transport.key, transportDsId: transport.ds.id,
+        datasheetId: e.ds.id, baseShape: e.ds.baseShape, modelCount: e.unit.modelCount,
+        wounds: e.ds.models[0]?.W ?? 1,
+        ...(e.unit.wargearCounts ? { wargear: e.unit.wargearCounts } : {}),
+        ...(e.unit.enhancementId ? { enhancementId: e.unit.enhancementId } : {}),
+      },
+      skipIf: (s) => isEntryPlaced(s, e.key),
+    });
+    const out: AiIntent[] = [declare(entry)];
+    if (leaderEntry) {
+      out.push(declare(leaderEntry));
+      const leaderUnitId = leaderEntry.key;
+      const bodyguardUnitId = entry.key;
+      out.push({
+        intent: { type: 'AttachLeader', leaderUnitId, bodyguardUnitId },
+        skipIf: (s) => {
+          const b = s.units.find((u) => u.id === bodyguardUnitId);
+          return !s.units.some((u) => u.id === leaderUnitId) || !b || (b.attachedLeaders?.length ?? 0) > 0;
+        },
+      });
+    }
+    return out;
+  };
+
+  // 2 · Start-embarked declarations (18.01). DEDICATED TRANSPORTS are mandatory (an empty one is
+  // destroyed at the end of the step); other ground transports take one passenger unit,
+  // matching the old deploy-time policy. Aircraft transports are skipped — their riders would sit
+  // in Reserves until the aircraft's ingress.
+  const transports = remaining
+    .filter((e) => transportCapacity(e.ds) && !isAircraft(e.ds))
+    .sort((a, b) => Number(isDedicatedTransport(b.ds)) - Number(isDedicatedTransport(a.ds)));
+  for (const bus of transports) {
+    if (embarkedUnits(state, bus.key).length > 0) continue; // already has its passenger unit
+    const riders = remaining.filter(
+      (e) =>
+        e.key !== bus.key &&
+        !transportCapacity(e.ds) &&
+        e.ds.keywords.some((k) => k.toLowerCase() === 'infantry') &&
+        !isAircraft(e.ds) &&
+        !isPairedLeader(state, e.key) &&
+        !(state.battleType === 'combat_patrol' && e.ds.cpReserveRound),
+    );
+    const fits = (entry: DeployEntry, leaderEntry: DeployEntry | undefined): boolean => {
+      const probes = [deploymentProbeUnit(entry.key, side, entry.ds.id, entry.unit.modelCount)];
+      if (leaderEntry) probes.push(deploymentProbeUnit(leaderEntry.key, side, leaderEntry.ds.id, leaderEntry.unit.modelCount));
+      return canDeclareEmbark(state, probes, bus.key, bus.ds, ctx).ok;
+    };
+    // Prefer an unpaired non-Character rider (Characters want to lead from the board); a paired
+    // Bodyguard rides with its Leader only when a DEDICATED transport would otherwise sit empty.
+    const unpaired = riders.filter((e) => !formationForBodyguard(state, e.key) && !isCharacter(e.ds));
+    const pick =
+      unpaired.filter((e) => fits(e, undefined)).sort((a, b) => b.unit.modelCount - a.unit.modelCount)[0] ??
+      (isDedicatedTransport(bus.ds)
+        ? riders.find((e) => {
+            const le = leaderEntryOf(e);
+            return fits(e, le);
+          })
+        : undefined);
+    if (!pick) {
+      // No whole unit fits — a transport with a Declare Battle Formations split rule (the
+      // Sisters of Battle Immolator) splits its selectable unit instead: half rides here, and
+      // the on-foot half becomes a normal entry (the embark loop offers it to a SECOND
+      // Immolator on a later pass, exactly as the printed rule allows).
+      const rule = isDedicatedTransport(bus.ds) ? transportSplitRule(bus.ds) : null;
+      const splittable = rule
+        ? riders.find(
+            (e) =>
+              !e.key.includes('#') && // a split half cannot split again
+              !formationForBodyguard(state, e.key) &&
+              e.unit.modelCount >= 2 &&
+              splitRuleSelects(rule, e.ds) &&
+              !(state.setup?.splits ?? []).some((x) => x.entryKey === e.key),
+          )
+        : undefined;
+      const rideCount = splittable ? splitRideCounts(splittable.unit.modelCount)[0] ?? 0 : 0;
+      if (splittable && rideCount > 0) {
+        const total = splittable.unit.modelCount;
+        const rideWargear: Record<string, number> = {};
+        for (const [item, n] of Object.entries(splittable.unit.wargearCounts ?? {})) {
+          const share = Math.floor((n * rideCount) / total);
+          if (share > 0) rideWargear[item] = share;
+        }
+        const entryKey = splittable.key;
+        return {
+          intents: [
+            {
+              intent: {
+                type: 'DeclareSplit', side, entryKey,
+                datasheetId: splittable.ds.id, baseShape: splittable.ds.baseShape,
+                modelCount: total, wounds: splittable.ds.models[0]?.W ?? 1,
+                transportUnitId: bus.key, transportDsId: bus.ds.id,
+                rideCount, rideWargear,
+                ...(splittable.unit.wargearCounts ? { totalWargear: splittable.unit.wargearCounts } : {}),
+              },
+              skipIf: (s) => (s.setup?.splits ?? []).some((x) => x.entryKey === entryKey),
+            },
+          ],
+          note: `${side} splits ${splittable.ds.name}: ${rideCount} models start embarked within ${bus.ds.name}`,
+        };
+      }
+      continue;
+    }
+    const leaderEntry = leaderEntryOf(pick);
+    return {
+      intents: embarkIntents(pick, bus, leaderEntry && fits(pick, leaderEntry) ? leaderEntry : undefined),
+      note: `${side} declares ${pick.ds.name}${leaderEntry ? ' (led)' : ''} will start embarked within ${bus.ds.name}`,
+    };
+  }
+
+  // 3 · Strategic Reserves (20.01): Deep Strikers per the profile policy, plus the mandatory
+  // cases (AIRCRAFT 23.01, Combat Patrol reserve rounds) — wantsReserves handles all of them.
+  for (const entry of remaining) {
+    if (isPairedLeader(state, entry.key)) continue; // follows its Bodyguard
+    const pair = formationForBodyguard(state, entry.key);
+    const leaderEntry = leaderEntryOf(entry);
+    const ability: DeployAbility = pair
+      ? pairDeployAbility(pair, deps.ctx, deps.deployAbility)
+      : deps.deployAbility(entry.ds);
+    if (pair && leaderEntry) {
+      if (ability === 'deep_strike' && profile.useReserves) {
+        return {
+          intents: reserveIntentsFor(entry, side, leaderEntry),
+          note: `${side} holds ${entry.ds.name} (led) in Reserves (Deep Strike)`,
+        };
+      }
+      continue;
+    }
+    if (wantsReserves(state, side, entry, ability, profile, deps)) {
+      return {
+        intents: reserveIntentsFor(entry, side, undefined),
+        note: `${side} holds ${entry.ds.name} in Reserves`,
+      };
+    }
+  }
+
+  // 4 · Done. Any DEDICATED TRANSPORT still riderless (no eligible unit at all) is destroyed
+  // per 18.01 — the reducer re-validates each entry.
+  const destroy = remainingEntries(state, side, deps)
+    .filter((e) => isDedicatedTransport(e.ds) && embarkedUnits(state, e.key).length === 0)
+    .map((e) => ({ entryKey: e.key, datasheetId: e.ds.id }));
+  return {
+    intents: [
+      {
+        intent: { type: 'FinishFormations', side, ...(destroy.length ? { destroyEntries: destroy } : {}) },
+        skipIf: (s) => !!s.setup?.formationsDone?.[side],
+      },
+    ],
+    note: destroy.length
+      ? `${side} finishes declaring — ${destroy.length} empty dedicated transport(s) destroyed (18.01)`
+      : `${side} finishes declaring battle formations`,
+  };
+}
+
+/** One deployment drop for `side`: declare Leader pairings first (their own action, so the
+ *  reducer computes the Infiltrators grant before anything is placed), then place the next
+ *  entry — a paired Bodyguard brings its Leader down with it, merged. Null when nothing is left. */
+export function aiDeployAction(state: GameState, side: Side, profile: AiProfile, deps: AiDeps): AiAction | null {
+  const pre = prebattleChoices(state, side, deps);
+  if (pre) return pre;
 
   // Declare Battle Formations before the side's first drop.
   const formations = desiredFormations(state, side, deps);

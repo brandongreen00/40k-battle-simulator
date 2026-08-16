@@ -378,6 +378,65 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-08-16] — DECLARE BATTLE FORMATIONS is now a real pre-deployment step, and the
+  Deathwatch Kill Team can ride its Rhino (owner: "I can't embark my deathwatch kill team onto
+  my rhino… add a 'Declare battle formations' step [that] happens BEFORE deployment and is where
+  you say which units are in transports, and which units are in Reserves", confirmed against
+  the live Wahapedia 11e core rules).** All gates green: `pnpm typecheck`, `pnpm test`
+  (**601 tests**, +10 in `tests/formations.test.ts`), `pnpm build`; a Playwright drive of the
+  REAL app on the owner's exact scenario (HOLD OBJECTIVES: skip the Clandestine grant → pair
+  Watch Master → Deathwatch Kill Team → ⇥ embark the PAIR into the Imperial Rhino at 11/12
+  seats → Inquisitor into the Chimera → ⇆ split the Sisters into Immolator 1 → the on-foot half
+  ⇥ into Immolator 2 → finish with no warning → AI declares Bane's side → deploy the Rhino with
+  riders inside, 🧍11 badge) passes **21/21** with zero console errors.
+  - **The reported bug**: `MeasuringBoard`'s embark select was hidden for any entry in a
+    declared Leader pairing (`buses = !actionable || pair ? [] : …`) — pairing the Watch Master
+    with the Kill Team removed the option entirely. The engine was fine (`canEmbark` passed).
+    Now a paired entry embarks WITH its Leader: the capacity probe counts both units (11 of the
+    Rhino's 12 seats) and selection dispatches both embarks + the merge.
+  - **The step (11e-verified live)**: 18.01 "Before the battle, in the Declare Battle
+    Formations step, your units can start embarked…", 20.01 (Strategic Reserves selected in the
+    same step, incl. within reserved transports), 23.01 (AIRCRAFT must go to reserves), and
+    LEADER 24.22 (attachments are a Muster Armies choice — the setup pairing UI stays as the
+    app's convenience). `RollRoles`/`SetAttacker` now enter `setup.step 'formations'`: each side
+    (Defender first, via whoActs) declares embarks (new `DeclareEmbark` intent — the rider unit
+    is created `embarkedIn: <transport ENTRY key>` BEFORE the transport is deployed; deploying
+    the transport later has the riders already inside), Reserves (`PlaceInReserves`, undoable
+    here), splits/Combat Squads/pairings/enhancement grants (gates widened to the new step),
+    then `FinishFormations`; both done → `step 'deploy'`, toDeploy = Defender. The deploy-step
+    ⇥ Embark select is REMOVED (start-embarked is a DBF declaration); ⤓ Reserves stays in the
+    deploy step as a no-legal-spot fallback (rules-soft, prevents wedges).
+  - **18.01's teeth**: a DEDICATED TRANSPORT with no unit embarked at the end of the step is
+    DESTROYED (no death triggers). `FinishFormations` carries the side's riderless entries
+    (the reducer has no roster — each is re-validated: dedicated, unplaced, riderless), records
+    them in `setup.destroyedEntries` (counts as handled for the deploy pool), and the UI warns +
+    `confirm()`s before letting a human finish. The AI fills every dedicated transport: best
+    whole-unit rider first, the Immolator's split rule when nothing fits whole (new — it
+    declares the split, and the on-foot half rides the SECOND Immolator on the next pass,
+    exactly as printed), a paired Bodyguard+Leader as a last resort.
+  - **Two latent transport-parser bugs fixed** (both would have turned fatal under 18.01, both
+    verified against the live 11e datasheets): "and"-joined capacity alternatives (Inquisitorial
+    Chimera: "13 INQUISITOR INFANTRY and INQUISITORIAL AGENT models" parsed as ONE unmatchable
+    phrase — nobody could ride) and singular/plural keyword folding ("INQUISITORIAL AGENT" vs
+    the Inquisitorial Agents keyword). An all-roster audit then showed exactly one 18.01-broken
+    list: **prebuilt Fleet Boarding Party carried an Inquisitorial Chimera nobody in it may
+    ride** — swapped for an Imperial Rhino (995 pts, regenerated; its Breachers ride).
+  - **Also**: a transport in Strategic Reserves may take declared riders (20.01 says so
+    explicitly — `DeclareSplit`'s "must be deployed first" rejection removed, test updated);
+    `UndeployUnit` extends to Reserves rows during the formations step and refuses to pull a
+    transport out from under its declared riders; `isEntryPlaced` treats destroyed entries as
+    handled; capacity math for undeployed transports is `declaredCapacityLeft`/
+    `canDeclareEmbark` (entry-key based, shared by UI + AI + reducer).
+  - **Decisions**: declarations are sequential Defender-first (the print says secret +
+    simultaneous — fine for a personal tool, noted here); the 20.01 reserves cap (≤50% of the
+    points limit) is still NOT enforced (pre-existing gap, now explicit); DeployUnit/
+    PlaceInReserves stay step-ungated in the reducer (whoActs + UI drive the flow, existing
+    direct-dispatch tests keep working); the AI's split wargear share is the even default.
+  - **Handoff nits**: the AI never declares embarks into AIRCRAFT transports (riders would sit
+    in reserves — policy); Combat Squad / split UI buttons now live in the formations step only;
+    v2 (`sim2`) untouched — whether its kernel enforces 18.01's destroy rule is a gap-register
+    candidate.
+
 - **[2026-08-16] — List Builder: detachment selection is now a MULTISELECT with the DP budget
   as the limiter (owner: "make the detachment selection a multiselect menu … so i can select a
   2 AND 1 DP detachment if the limit is 3"). Separate PR off main.** Closes the "List Builder
