@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-14T22:20:21Z",
+ "generated": "2026-08-16T09:17:14Z",
  "data_version": "2026-08-14",
  "armies": [
   {
@@ -82,51 +82,51 @@
   {
    "path": "batch.json",
    "label": "Alien Hunters Strike vs Siege Regiment Vanguard (12 games, 500pts)",
-   "generated": "2026-08-14"
+   "generated": "2026-08-16"
   },
   {
    "path": "heuristic_vs_random/batch.json",
    "label": "Alien Hunters Strike vs Siege Regiment Vanguard (20 games, 500pts)",
-   "generated": "2026-08-14"
+   "generated": "2026-08-16"
   }
  ],
  "optimizer": [
   {
    "path": "optimizer.json",
    "label": "optimizer AM vs Alien Hunters Strike",
-   "generated": "2026-08-14"
+   "generated": "2026-08-16"
   }
  ],
  "logs": [
   {
    "path": "heuristic_vs_random/logs/battle_500.json",
    "label": "Alien Hunters Strike vs Siege Regiment Vanguard \u2014 seed 500",
-   "generated": "2026-08-14"
+   "generated": "2026-08-16"
   },
   {
    "path": "heuristic_vs_random/logs/battle_501.json",
    "label": "Alien Hunters Strike vs Siege Regiment Vanguard \u2014 seed 501",
-   "generated": "2026-08-14"
+   "generated": "2026-08-16"
   },
   {
    "path": "heuristic_vs_random/logs/battle_502.json",
    "label": "Alien Hunters Strike vs Siege Regiment Vanguard \u2014 seed 502",
-   "generated": "2026-08-14"
+   "generated": "2026-08-16"
   },
   {
    "path": "logs/battle_100.json",
    "label": "Alien Hunters Strike vs Siege Regiment Vanguard \u2014 seed 100",
-   "generated": "2026-08-14"
+   "generated": "2026-08-16"
   },
   {
    "path": "logs/battle_101.json",
    "label": "Alien Hunters Strike vs Siege Regiment Vanguard \u2014 seed 101",
-   "generated": "2026-08-14"
+   "generated": "2026-08-16"
   },
   {
    "path": "logs/battle_102.json",
    "label": "Alien Hunters Strike vs Siege Regiment Vanguard \u2014 seed 102",
-   "generated": "2026-08-14"
+   "generated": "2026-08-16"
   }
  ]
 }

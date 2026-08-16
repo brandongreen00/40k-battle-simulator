@@ -1,7 +1,7 @@
 {
  "result_schema_version": "2.0.0",
  "kind": "optimizer",
- "generated": "2026-08-14T22:20:20Z",
+ "generated": "2026-08-16T09:17:14Z",
  "config": {
   "faction": "AM",
   "detachment": "am.grizzled_company",
@@ -13,7 +13,7 @@
   "agent": "heuristic"
  },
  "pool_size": 72,
- "duration_s": 81.0,
+ "duration_s": 80.7,
  "leaderboard": [
   {
    "name": "candidate-003",

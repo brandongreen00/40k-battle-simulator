@@ -17,7 +17,7 @@
 
 import type { Datasheet, GameState, Layout, TerrainArea, UnitInstance, Vec2 } from './types';
 import type { EngineContext } from './engine';
-import { baseRadius, distancePointToPolygon, pointInPolygon } from './geometry';
+import { baseRadius, distancePointToPolygon, gapBetweenBases, pointInPolygon } from './geometry';
 import { losBlocked as legacyLosBlocked, hasCover as legacyHasCover, segmentIntersectsPolygon } from './los';
 
 export const DEFAULT_DETECTION_RANGE = 15; // inches (13.09)
@@ -36,23 +36,33 @@ function modelWithin(p: Vec2, r: number, polygon: Vec2[]): boolean {
   return pointInPolygon(p, polygon) || (r > 0 && distancePointToPolygon(p, polygon) <= r);
 }
 
-/** Is the sight line a→b blocked (Obscuring areas + Solid dense features)? `aR`/`bR` are the
- *  two models' base radii — a base overlapping an area/feature sees out of it. */
-export function losBlocked11(a: Vec2, b: Vec2, layout: Layout, aR = 0, bR = 0): boolean {
+/** Which 11e terrain rule blocks the sight line a→b (if any). */
+export type LosBlock = 'obscuring_area' | 'dense_feature';
+
+/** Why the sight line a→b is blocked (Obscuring areas / Solid dense features), or null when it
+ *  is clear. `aR`/`bR` are the two models' base radii — a base overlapping an area/feature sees
+ *  out of it. */
+export function losBlockReason11(a: Vec2, b: Vec2, layout: Layout, aR = 0, bR = 0): LosBlock | null {
   for (const area of obscuringAreas(layout)) {
     // you can see into/out of an obscuring area, not through it
     if (modelWithin(a, aR, area.polygon) || modelWithin(b, bR, area.polygon)) continue;
-    if (segmentIntersectsPolygon(a, b, area.polygon)) return true;
+    if (segmentIntersectsPolygon(a, b, area.polygon)) return 'obscuring_area';
   }
   // Solid: dense features block even within/into an area (unless the model is on the feature).
   for (const area of layout.terrainAreas ?? []) {
     for (const f of area.features) {
       if (f.kind !== 'dense') continue;
       if (modelWithin(a, aR, f.polygon) || modelWithin(b, bR, f.polygon)) continue;
-      if (segmentIntersectsPolygon(a, b, f.polygon)) return true;
+      if (segmentIntersectsPolygon(a, b, f.polygon)) return 'dense_feature';
     }
   }
-  return false;
+  return null;
+}
+
+/** Is the sight line a→b blocked (Obscuring areas + Solid dense features)? `aR`/`bR` are the
+ *  two models' base radii — a base overlapping an area/feature sees out of it. */
+export function losBlocked11(a: Vec2, b: Vec2, layout: Layout, aR = 0, bR = 0): boolean {
+  return losBlockReason11(a, b, layout, aR, bR) !== null;
 }
 
 /** Layout-dispatching point LoS. Optional base radii let a model whose base overlaps a terrain
@@ -165,6 +175,67 @@ export function unitCoverIn(
   if (is11eLayout(state.layout)) return unitHasCover11(attackerPts, target, state, ctx);
   const tPts = target.models.filter((m) => m.alive).map((m) => m.pos);
   return tPts.some((b) => attackerPts.some((a) => !legacyLosBlocked(a, b, state.layout.terrain) && legacyHasCover(a, b, state.layout.terrain)));
+}
+
+/**
+ * Human-readable reason no weapon of `plan` can reach `target` — shown by the shooting UI so
+ * "out of range or not visible" names the actual rule (Obscuring area / Solid dense feature /
+ * Hidden / plain range). Diagnostic only: legality stays with validShootingTargets.
+ */
+export function explainNoReach(
+  attacker: UnitInstance,
+  plan: { fire: { weapon: { range?: number } }[] },
+  target: UnitInstance,
+  state: GameState,
+  ctx: EngineContext,
+): string {
+  const fallback = 'Out of range or not visible — no weapon can reach this unit.';
+  const layout = state.layout;
+  const aDs = ctx.datasheets.get(attacker.datasheetId);
+  const tDs = ctx.datasheets.get(target.datasheetId);
+  const aAlive = attacker.models.filter((m) => m.alive);
+  const tAlive = target.models.filter((m) => m.alive);
+  if (!aDs || !tDs || aAlive.length === 0 || tAlive.length === 0 || plan.fire.length === 0) return fallback;
+
+  // Closest base-to-base gap between the two units (merged Leader models use their own bases).
+  const shapeOf = (m: { datasheetId?: string }, own: Datasheet) =>
+    (m.datasheetId ? ctx.datasheets.get(m.datasheetId)?.baseShape : undefined) ?? own.baseShape;
+  let gap = Infinity;
+  let closest: { a: Vec2; aR: number; t: Vec2; tR: number } | null = null;
+  for (const am of aAlive) {
+    for (const tm of tAlive) {
+      const aShape = shapeOf(am, aDs);
+      const tShape = shapeOf(tm, tDs);
+      const g = gapBetweenBases(am.pos, aShape, tm.pos, tShape);
+      if (g < gap) {
+        gap = g;
+        closest = { a: am.pos, aR: baseRadius(aShape), t: tm.pos, tR: baseRadius(tShape) };
+      }
+    }
+  }
+  if (!closest) return fallback;
+
+  const maxRange = Math.max(...plan.fire.map((w) => w.weapon.range ?? 0));
+  if (gap > maxRange) {
+    return `Out of range — the closest model is ${gap.toFixed(1)}" away and the longest weapon reaches ${maxRange}".`;
+  }
+
+  // In range, so it's a visibility block. Name the rule on the closest sight line.
+  if (is11eLayout(layout)) {
+    const reason = losBlockReason11(closest.a, closest.t, layout, closest.aR, closest.tR);
+    if (reason === 'dense_feature') {
+      return 'Not visible — a dense ruin (green) blocks the sight line. Solid terrain cannot be seen through, even from inside the same terrain area.';
+    }
+    if (reason === 'obscuring_area') {
+      return 'Not visible — the sight line crosses a terrain area neither unit is inside. Terrain areas are Obscuring: you can see into one, not through it.';
+    }
+    if (isHidden(target, state, ctx)) {
+      return `Not visible — the target is Hidden (holding fire inside dense terrain): it can only be seen within ${DEFAULT_DETECTION_RANGE}". Move closer, or wait for it to shoot.`;
+    }
+  } else if (pointLosBlocked(closest.a, closest.t, layout)) {
+    return 'Not visible — a ruin blocks line of sight.';
+  }
+  return fallback;
 }
 
 /** Layout-dispatching unit visibility. `attackerR` = the attacker models' base radius (11e:

@@ -1449,6 +1449,19 @@ body {
     border-color: var(--accent);
   }
 
+  /* Shooting panel on the Board page: cap its height so the map stays usable; scroll inside. */
+  .shootbar {
+    flex: none;
+    max-height: 44%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .shootbar .btnrow button {
+    min-height: 44px;
+  }
+  /* (The 44px touch sizes for these panels live at the END of this file — the base rules for
+     .shoot-clear / .sb-close are declared after this media query and would otherwise win.) */
+
   /* ── List builder: three full-height pages (My list / Add units / Setup) ── */
   .lb-layout .sidebar {
     order: 1;
@@ -1697,6 +1710,278 @@ body {
   50% { box-shadow: 0 0 0 5px rgba(245, 158, 11, 0.08); }
 }
 
+/* ── Shooting from the map: weapon ranges + tap-to-target stat sheet ───────── */
+.shootbar {
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #171b22;
+  padding: 8px 10px;
+  font-size: 13px;
+  max-width: 100%;
+}
+.shoot-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.shoot-title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.shoot-clear {
+  flex: none;
+  min-width: 34px;
+  min-height: 34px;
+  border-radius: 8px;
+  background: #232936;
+  color: var(--text);
+  border: 1px solid var(--line);
+}
+.shoot-weapons {
+  margin: 4px 0;
+}
+.shoot-w {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 0;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.shoot-w.unreachable {
+  opacity: 0.45;
+}
+.shoot-w .wname {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.shoot-w .wstats {
+  color: var(--muted);
+  font-family: monospace;
+  font-size: 12px;
+}
+.shoot-w .wvs {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--accent);
+}
+.shoot-w .wvs.miss {
+  color: #fca5a5;
+}
+/* A weapon held out of the volley (saving a One Shot Hunter-killer, etc.). */
+.shoot-w.held .wname,
+.shoot-w.held .wstats,
+.shoot-w.held .wvs {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+.hold-btn {
+  margin-left: auto;
+  min-height: 32px;
+  padding: 2px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #232936;
+  color: var(--text);
+  font-size: 12px;
+}
+.hold-btn.on {
+  border-color: #fbbf24;
+  color: #fbbf24;
+}
+/* GamePanel fire-plan hold checkbox + held row. */
+.fire-plan li.weapon-held {
+  opacity: 0.55;
+}
+.fire-plan .hold-toggle {
+  margin-right: 6px;
+}
+.wdot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+  display: inline-block;
+}
+.shoot-target {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--line);
+}
+.shoot-target .tstats {
+  flex: none;
+  font-family: monospace;
+  color: var(--muted);
+}
+
+/* ── Unit stat block: tap a unit on the map to read its datasheet ──────────── */
+.statblock {
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #171b22;
+  padding: 8px 10px;
+  font-size: 13px;
+  max-width: 100%;
+  overflow-x: clip;
+}
+.sb-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* Sticks to the top of the scrolling sheet so ✕ stays reachable while reading a long rule. */
+  position: sticky;
+  top: -8px;
+  margin-top: -8px;
+  padding: 8px 0 4px;
+  background: #171b22;
+  z-index: 1;
+}
+.sb-dot {
+  flex: none;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+}
+.sb-title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.sb-close {
+  flex: none;
+  min-width: 34px;
+  min-height: 34px;
+  border-radius: 8px;
+  background: #232936;
+  color: var(--text);
+  border: 1px solid var(--line);
+}
+.sb-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 6px 0;
+}
+.sb-chip {
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #1f2530;
+  color: var(--muted);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+.sb-chip.side {
+  color: var(--text);
+}
+.sb-chip.hurt {
+  border-color: #b45309;
+  color: #fbbf24;
+}
+.sb-sub {
+  margin: 7px 0 3px;
+  color: var(--muted);
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+/* The datasheet stat line — wraps onto more rows rather than scrolling off screen. */
+.sb-statrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-family: monospace;
+  font-size: 12.5px;
+  padding: 2px 0;
+}
+.sb-statrow b {
+  color: var(--muted);
+  font-weight: 600;
+}
+.sb-statrow .inv {
+  color: var(--accent);
+}
+.sb-proflabel {
+  flex-basis: 100%;
+  font-family: inherit;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.sb-w {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  padding: 3px 0;
+  min-width: 0;
+  border-top: 1px dashed rgba(148, 163, 184, 0.18);
+}
+.sb-wname {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.sb-wstats {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--muted);
+}
+.sb-wkw {
+  flex-basis: 100%;
+  font-size: 11.5px;
+  color: var(--accent);
+  overflow-wrap: anywhere;
+}
+.sb-ability {
+  padding: 2px 0;
+}
+.sb-ability summary {
+  cursor: pointer;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.sb-ability p {
+  margin: 3px 0 5px;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.sb-keywords {
+  margin: 7px 0 0;
+  padding-top: 6px;
+  border-top: 1px dashed var(--line);
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  overflow-wrap: anywhere;
+}
+
+/* ── Phone overrides for the under-board panels ────────────────────────────────
+   These MUST come after the base rules above: same specificity, so source order
+   decides which min-height wins. Same breakpoint as the app-shell block. */
+@media (max-width: 880px), ((pointer: coarse) and (max-height: 520px)) {
+  /* Stat block on the Board page: a sheet under the map — capped so the map stays
+     visible, scrolling inside itself, with full-size touch targets. */
+  .statblock {
+    flex: none;
+    max-height: 48%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    font-size: 14px;
+  }
+  .sb-close,
+  .shoot-clear {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .sb-ability summary {
+    min-height: 34px;
+  }
 /* ===================================================================== */
 /* Auto Player (v2 simulator: run configurator, dashboard, replay)        */
 /* ===================================================================== */

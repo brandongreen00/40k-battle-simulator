@@ -224,32 +224,32 @@
    "id": "area-6",
    "polygon": [
     [
-     28.177,
-     29.94
+     28.566,
+     28.988
     ],
     [
-     27.791,
-     33.119
+     27.687,
+     32.067
     ],
     [
-     25.413,
-     32.636
+     25.429,
+     31.227
     ],
     [
-     18.605,
-     27.543
+     19.487,
+     25.123
     ],
     [
-     16.216,
-     27.073
+     17.201,
+     24.286
     ],
     [
-     16.216,
-     25.031
+     17.521,
+     22.269
     ],
     [
-     27.791,
-     25.031
+     28.953,
+     24.079
     ]
    ],
    "category": "dense",
@@ -400,6 +400,42 @@
    "id": "area-11",
    "polygon": [
     [
+     15.37,
+     31.06
+    ],
+    [
+     16.249,
+     27.98
+    ],
+    [
+     18.521,
+     28.829
+    ],
+    [
+     24.449,
+     34.924
+    ],
+    [
+     26.735,
+     35.762
+    ],
+    [
+     26.415,
+     37.778
+    ],
+    [
+     14.983,
+     35.968
+    ]
+   ],
+   "category": "dense",
+   "height": 5.0,
+   "group": ""
+  },
+  {
+   "id": "area-12",
+   "polygon": [
+    [
      5.014,
      46.023
     ],
@@ -433,7 +469,7 @@
    "group": ""
   },
   {
-   "id": "area-12",
+   "id": "area-13",
    "polygon": [
     [
      2.054,
@@ -462,42 +498,6 @@
     [
      2.054,
      25.971
-    ]
-   ],
-   "category": "dense",
-   "height": 5.0,
-   "group": ""
-  },
-  {
-   "id": "area-13",
-   "polygon": [
-    [
-     15.82,
-     30.008
-    ],
-    [
-     16.206,
-     26.829
-    ],
-    [
-     18.583,
-     27.312
-    ],
-    [
-     25.392,
-     32.405
-    ],
-    [
-     27.78,
-     32.874
-    ],
-    [
-     27.78,
-     34.916
-    ],
-    [
-     16.206,
-     34.916
     ]
    ],
    "category": "dense",
@@ -573,8 +573,8 @@
   {
    "id": "obj-0",
    "pos": [
-    22.017,
-    29.93
+    23.072,
+    25.829
    ],
    "kind": "central",
    "owner": null,
@@ -588,7 +588,7 @@
    ],
    "kind": "expansion",
    "owner": null,
-   "area_id": "area-12"
+   "area_id": "area-13"
   },
   {
    "id": "obj-2",
@@ -608,7 +608,7 @@
    ],
    "kind": "home",
    "owner": 0,
-   "area_id": "area-11"
+   "area_id": "area-12"
   },
   {
    "id": "obj-4",
@@ -619,6 +619,16 @@
    "kind": "expansion",
    "owner": null,
    "area_id": "area-1"
+  },
+  {
+   "id": "obj-5",
+   "pos": [
+    20.987,
+    34.157
+   ],
+   "kind": "central",
+   "owner": null,
+   "area_id": "area-11"
   }
  ],
  "deployment_zones": {
@@ -665,7 +675,7 @@
  },
  "provenance": {
   "source": "Warhammer Event Companion v1.0, layout page 14 (visual extraction)",
-  "retrieved": "2026-08-14",
+  "retrieved": "2026-08-16",
   "note": "converted from the repository's Event Companion vector/visual extraction; page-level provenance preserved for re-verification. Outlines simplified within 0.35\" of the traced footprint."
  }
 }

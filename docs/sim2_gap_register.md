@@ -122,7 +122,7 @@ wrong even if it passes tests.
 | Layouts | 45 Event Companion layouts, 3 per disposition pairing |
 | Logged gaps | 191 in `data2/gaps.json` |
 | Illegal actions | 0 across random + heuristic full games |
-| Heuristic vs random | 20–0 (100%), avg VP 57.6 : 43.2 |
+| Heuristic vs random | 19–1 (95.0%), avg VP 58.5 : 45.5 — exactly at the §8 bar, not above it |
 | Speed | ~12–16 s per 500 pt game, ~60 s per 1000 pt game (invulnerable saves keep units alive longer, so games run more actions — see E1) |
 
 ---
@@ -454,7 +454,7 @@ certainly be the first work done.**
 
 ### D. Agents and AI
 
-#### D1 — The heuristic does not play its own mission 🟠 high
+#### D1 — The heuristic does not play its own mission 🟠 high (now the binding constraint)
 
 * **Exists:** transparent scoring over objective proximity, analytic expected
   damage, overkill capping, charge probability, threat exposure
@@ -463,7 +463,10 @@ certainly be the first work done.**
   `PlayerState.primary_mission` or the secondary hand, so it never plays toward
   the specific card it is scoring.
 * **Why it matters:** this is the largest single strength gain available, and it
-  is a prerequisite for the search and RL agents being worth training.
+  is a prerequisite for the search and RL agents being worth training. It also
+  became urgent when main's corrected maps landed: the heuristic dropped from
+  20–0 to 19–1 against random, i.e. exactly at the §8 exit bar. More faithful
+  terrain punishes generic objective play.
 * **Done when:** mission-aware scoring exists and a heuristic-vs-heuristic batch
   shows the mission-aware variant beating the current one decisively.
 

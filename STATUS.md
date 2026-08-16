@@ -43,7 +43,9 @@ Reviews (mandate 2b): [`reviews/rules-kernel.md`](reviews/rules-kernel.md) ·
   6 Orders, 2 army rules) with printed text + provenance; **19 bound** to effect
   primitives, the rest text-only and listed as gaps
 * **45 Event Companion layouts**, 3 per disposition pairing, with typed
-  objectives and dense/light terrain areas
+  objectives and dense/light terrain areas — rebuilt from main's corrected
+  extraction (PDF v1.1, fixed territory dividers and area markers, recovered
+  mat features: 720 areas now read 545 dense / 175 light, was 553 / 167)
 * **44 mission cards** and the full asymmetric 5×5 disposition matrix
 * **191 logged `GAP` entries** — nothing was guessed
 * **47 datasheets carry an invulnerable save, 19 a transport capacity**, and the
@@ -61,7 +63,7 @@ Reviews (mandate 2b): [`reviews/rules-kernel.md`](reviews/rules-kernel.md) ·
 | Illegal actions, 12-game heuristic batch @500pts | 0 | **0** (`results/batch.json`) |
 | Illegal actions, 1000pt game | 0 | **0** (`test_thousand_point_game_is_legal`) |
 | Determinism: same seed → same game | byte-identical | **✅** (`test_battle_log_replays_identically`) |
-| Heuristic beats random | >95% | **met — 20 wins, 0 losses, 0 draws (100%)** over 20 games, avg VP 57.6 : 43.2 (`results/heuristic_vs_random/batch.json`, re-measured against the corrected datasheets) |
+| Heuristic beats random | >95% | **19 wins, 1 loss, 0 draws (95.0%)** over 20 games, avg VP 58.5 : 45.5 (`results/heuristic_vs_random/batch.json`). It was 20–0 before main's Event Companion map corrections landed; on the corrected maps it sits exactly at the bar, not comfortably above it |
 | Batch + optimizer produce dashboard artifacts | yes | **✅** `results/batch.json`, `results/optimizer.json` |
 | Tests | — | **64 passing** (`pytest tests_py`, incl. 7 full-game), **534** front-end (`pnpm test`) |
 | Speed | — | ~12-16s per 500pt game, ~60s per 1000pt game (slower since invulnerable saves landed: units survive longer, so games run more actions) |

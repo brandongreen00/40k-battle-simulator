@@ -9,6 +9,7 @@
 import type { Datasheet, DeclaredFormation, GameState, Roster, RosterUnit, Side, Vec2 } from '../types';
 import { otherSide } from '../setup';
 import { checkUnitDeployment, isEntryPlaced, zoneFor, type DeployAbility } from '../deployment';
+import { blockedByDense } from '../terrainmove';
 import { grantedDeployAbility } from '../enhancements';
 import { occupiedBases } from '../collision';
 import { formationPositions } from '../formation';
@@ -184,7 +185,7 @@ export function findDeployAnchor(
         const positions = formationPositions({
           anchor, count: entry.unit.modelCount, baseShape: entry.ds.baseShape, formation: 'block', rotation: 0,
         });
-        if (!checkUnitDeployment(positions, entry.ds.baseShape, layout, side, ability, enemies, occupied).legal) continue;
+        if (!checkUnitDeployment(positions, entry.ds.baseShape, layout, side, ability, enemies, occupied, blockedByDense(entry.ds)).legal) continue;
 
         const objDist = layout.objectives.length
           ? Math.min(...layout.objectives.map((o) => dist(anchor, o)))

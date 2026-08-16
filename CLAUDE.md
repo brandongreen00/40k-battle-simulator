@@ -378,6 +378,177 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-08-14] — Tap a unit on the map → a mobile-friendly stat block (owner: "a small PR that
+  opens a mobile friendly stat block if I tap on a unit in the map"). Separate PR off main.**
+  All gates green: `pnpm typecheck`, `pnpm test` (**550 tests**, +2 jsdom in
+  `tests/unitStatBlock.test.tsx`), `pnpm build`; a Playwright iPhone-13 drive (tap a unit → sheet
+  → expand an ability → scroll → ✕) plus a desktop drive (click opens, drag does NOT) both pass
+  with zero console errors, zero horizontal overflow (scrollWidth == 390) and a 44px ✕.
+  - **New `src/ui/UnitStatBlock.tsx`**, rendered under the board (same slot as the ShootingBar,
+    so the phone's Board page needs no tab-flip): the printed-datasheet content — profile line(s)
+    (M/T/Sv/Inv/W/Ld/OC, one block per datasheet so a merged Leader shows its own line), ranged
+    and melee weapons with full profiles + keywords (carrier counts via `availableUnitWeapons`,
+    so it shows what this unit actually carries), abilities as tap-to-expand `<details>` (phones
+    have no hover, so rule text is never a tooltip) and the keyword line — plus LIVE state:
+    models left ×alive/starting, wounds remaining, and this turn's status chips (Battle-shocked,
+    Moved, Advanced, Has shot, …). **Read-only by design — it never dispatches an intent**, so
+    tapping a unit is safe in any phase.
+  - **Tap ≠ drag**: `Board.onInspectUnit` fires on pointer-UP only when the press never wandered
+    past `TAP_SLOP_PX` (8px), so a model drag / group move / pinch never pops the sheet. Armed
+    before the mode branches so it survives their early returns, and disarmed by the second
+    finger. Suppressed while placing a ghost and in the Shooting mode (which has its own matchup
+    stat sheet); the sheet also closes itself when the unit leaves the board or Shooting starts.
+  - **CSS ordering bug found + fixed**: the phone `min-height: 44px` overrides for `.shoot-clear`
+    lived in the app-shell media query at line ~1460 while its base `min-height: 34px` is
+    declared at ~1740 — same specificity, so the LATER base rule was winning and the existing
+    shooting panel's ✕ was a 34px touch target. Both panels' phone overrides now live in a second
+    media query at the END of styles.css (measured 44×44 in the browser). The sheet header is
+    sticky inside the scrolling sheet so ✕ stays reachable in a long rule.
+  - **Decisions**: the sheet lives under the board (the proven ShootingBar slot) rather than as a
+    fixed overlay — an overlay steals board taps exactly where units sit; capped at 48% height on
+    phones so the map stays usable; only on-board units are inspectable (Reserves/embarked units
+    aren't tappable), so no transport/reserves plumbing.
+  - **Handoff nits**: no way to open the sheet from the sidebar's unit list (would cover
+    Reserves/embarked units — the component takes a `UnitInstance`, so it's a small addition);
+    the Shooting phase deliberately shows the matchup sheet instead of the full stat block.
+
+- **[2026-08-14] — LoS/visibility/terrain fixes (owner: Kroyle's missing tox-cycler · "why can't
+  my units see the Death Riders?" · deselect weapons/save the Hunter-killer · tanks+riders
+  can't move through dense terrain). Separate PR off main.** All gates green: `pnpm typecheck`,
+  `pnpm test` (**546 tests**, +18 in `tests/losTerrainFixes.test.ts` incl. a full Bane-vs-
+  Armoured-Spearhead AI game on an 11e map with zero rejected intents AND zero settled
+  tank/rider bases on dense terrain via the `observe` hook), `pnpm build`.
+  - **Kroyle's Jindarii tox-cycler was dropped by a Unicode mismatch**, not missing data: the
+    app export writes "tox‑cycler" with a U+2011 non-breaking hyphen, the Wahapedia datasheet
+    uses ASCII, and `weaponCarrierCount`'s exact-string compare returned "nobody carries it".
+    New `wargear.normalizeItemName` (folds Unicode hyphens/dashes/quotes/NBSP) now backs
+    `weaponItemName` + carrier matching and the wargear option parser — every fire plan shows
+    the 36" tox-cycler (with the Stubcarbine held as its Pistol pair).
+  - **Death Riders LoS verdict: the engine was RIGHT (11e terrain rules)** — screenshot 1's
+    sightline crossed an intervening terrain area (Obscuring, 13.10: see into an area, never
+    through one) and screenshot 2's Immolator had the green dense ruin between it and the
+    riders (Solid, 13.11: dense features block sight even within the same area). Instead of a
+    bare "out of range or not visible", the stat sheet now explains the block: new
+    `visibility.losBlockReason11` + `explainNoReach` name the rule (Obscuring area / dense
+    ruin / Hidden / plain range with the actual distances).
+  - **Per-weapon holds**: `ShootUnit.holdWeapons` (weapon keys) — held weapons are skipped,
+    logged, and NOT marked fired; all-held rejects instead of wasting the activation. UI:
+    ✓ firing/⏸ held toggle per weapon row in the from-map ShootingPanel, a fire/hold checkbox
+    per row in the GamePanel plan. **[ONE SHOT] is now enforced** (match mode): firing stamps
+    `status.oneShotFired` (survives turn resets), later plans drop the weapon with a note, and
+    the direct Attack path rejects a re-fire — the Hunter-killer really is once per battle.
+  - **Dense terrain movement (13.06)**: new pure `core/terrainmove.ts` — only INFANTRY/BEASTS/
+    SWARM move through dense (green) features, FLY over; everyone else (VEHICLE, MOUNTED,
+    MONSTER — tanks, Death Riders, Kroyle's Garralisk) can neither CROSS one nor END/set up on
+    one (light yellow features + plain grey areas stay free; edge contact legal; a model
+    already on a feature is grandfathered off so nothing wedges). Enforced at: `EndMove`
+    (reject + warning triangle + Confirm gate incl. the mobile move bar), `checkUnitDeployment`
+    + `deepStrikeArrivalLegal` (new `denseBlocked` param — reducer, ghosts, AI anchor searches
+    all pass it), the charge path search (`findChargeMove` predicate, so `chargePathExists`
+    agrees and the AI never declares a doomed charge), pile-in/consolidate clamping, and the
+    AI's move clamps (tick B, goal scoring, scout step). Legacy 10e labrador maps keep free
+    movement (no terrain areas — decision).
+  - **Decisions**: dense-blocking keys off "not I/B/S, not FLY" per the real 13.06 rather than
+    just VEHICLE/MOUNTED; movement paths are straight lines (matching the budget model), so
+    "crossing" = the start→end segment; the one-shot stamp lives in `resolveAttack` (single
+    chokepoint for volley + direct paths), match mode only (sandbox stays a free calculator).
+  - **Merge-time catch (post-#27 map refresh)**: the acceptance game's zero-reject pin caught a
+    LATENT AI/engine mismatch on the v1.1 maps — the AI's Fire Overwatch picker gated only on
+    gap ≤ 24" + `shootingEV`, whose sampled visibility reads the LEGACY `layout.terrain` list
+    (empty on 11e maps → everything "visible"), so it could declare overwatch at a terrain-
+    blocked target the reducer then rejects. Fixed in ai/react.ts: overwatch candidates must
+    also pass `validUnitShootingTargets` (the exact per-weapon range+LoS check the engine
+    resolves with). shootingEV's 11e-blind visibility remains for ranking only (normal shooting
+    already picks targets from the exact check) — a future candidate for `unitCanSeeIn`.
+  - **Known nits**: the AI never holds weapons (fires everything, incl. the HK missile at the
+    first target — an EV-based hold policy is a future profile knob); `pnpm sim` (headless)
+    still only loads legacy `data/layouts/` so dense rules are exercised there only via the
+    vitest acceptance game; explainNoReach reasons off the closest model pair (mixed per-bearer
+    blocks fall back to the generic line).
+
+- **[2026-08-14] — Event Companion maps: full 45-layout accuracy review against the official
+  v1.1 PDF (owner: "do a thorough review of all of the disposition based maps and see if their
+  layout is accurate"), refresh + three systematic extraction bugs fixed. Separate PR off
+  main.** All gates green: `pnpm typecheck`, `pnpm test` (**530 tests**, +2: divider pins for
+  all 45 + marker/groupId pins), `pnpm build`. Method: re-extracted the owner-linked PDF and
+  diffed against the committed data, then rendered geometry-on-page overlay images of all 45
+  pages and audited every element class with parallel vision reviewers (two full passes:
+  find, then re-verify after the fixes), with disputed badges settled by direct PDF crops.
+  - **The owner's PDF is v1.1 (July)** — the committed data was extracted from v1.0 (June).
+    v1.1's own changelog lists 8 updated layouts (Take and Hold vs Purge the Foe A/B/C,
+    Purge the Foe vs Disruption A/B/C, Reconnaissance vs Disruption A/C) and the
+    re-extraction diff matched exactly those 8 (the other 37 extract byte-identical from
+    both PDFs — cross-validating extractor and data). GW moved terrain areas/features and
+    objectives, added a SIXTH objective to six of those maps, and revised area markers.
+    All 45 regenerated from v1.1; `source` now records v1.1 (2026-07).
+  - **Bug 1 — every diagonal territory divider was MIRRORED** (all 34 of them; scoring
+    impact: `missions11.attackerSideOfDivider` + the secondaries' territory tests read this
+    line, so "enemy territory" primaries/secondaries mis-scored). The extractor paired bbox
+    corners `(x0,top)/(x1,bottom)` for line-type strokes — every printed diagonal rises
+    left-to-right, so every one flipped. Fixed to use the stroke's true endpoints
+    (`pts`); all 34 now match the print to <0.05", the 11 no-divider pages keep the correct
+    midline fallback. (The ~9" dashed circle some pages print around the centre is a
+    mission illustration, correctly ignored.)
+  - **Bug 2 — single/separate terrain-area markers were INVERTED on every badge of every
+    page** (gameplay impact: the loader merges two mats into ONE rules-area exactly where a
+    badge says "single" — every merge was happening at the wrong badges). Root cause: the
+    old "slash stroke" test actually matched the PLAIN badge's stroked eye outline; the
+    slashed badge draws its eye as two grey-FILLED halves and has no stroked path at all.
+    Classification now keys on those filled halves; verified by direct badge crops.
+  - **Bug 3 — features baked into mat photos were missed**: several mirrored bridge/walkway
+    pairs had gold rails on one copy only (the twin's rails live inside the neutral mat
+    photo, which the tint classifier rightly skips), and two p51 mats had a mat-sized
+    composite quad swallowing their barricades. Pixel recovery now runs for EVERY area:
+    per-connected-blob boxes (not one bbox per kind), printed badges masked out (teal
+    icons read as "dense"), blob centres required inside the area, real placed quads
+    win over recovered blobs. Mirrored pairs now carry matching features.
+  - **Verified clean everywhere else**: deployment zones (incl. quarter-arc cutouts, steps,
+    triangles), mat outlines, dense/light tints, home/central/expansion objective badges,
+    and the pairing headers all sit exactly on the printed art across the 45 pages; the
+    disposition→layout pairing matrix is unchanged.
+  - **Decisions**: regenerated all 45 from v1.1 (unchanged pages differ only in `source` +
+    the divider/marker/feature fixes); Combat Patrol maps are out of scope (different
+    pipeline from owner screenshots); recovered feature boxes remain axis-aligned bboxes
+    of the tinted blobs (the PDF has no per-ruin vector footprints — same ground-truth
+    limitation as before, now symmetric).
+
+- **[2026-08-14] — Shooting phase playable from the map (owner: "tapping on one of your units
+  brings up the weapons it can use; and a radius showing the range of each weapon. When tapping
+  an enemy within this radius, it shows a stat sheet of the weapon BS + strength, and the
+  enemy's toughness and save. Ensure that this is mobile friendly."). Separate PR off main.**
+  All gates green: `pnpm typecheck`, `pnpm test` (**528 tests**, +2 jsdom in
+  `tests/shootingFromMap.test.tsx`), `pnpm build`; a Playwright iPhone-13 touch drive of the
+  real app (tap shooter → rings + weapons panel → tap enemy → stat sheet → Shoot → tracer →
+  "already shot" on re-tap → out-of-range enemy shows no Shoot button) passes **12/12** with
+  zero console errors, zero horizontal overflow, the board keeping ≥50% of the screen and the
+  Shoot button at 44px.
+  - **New board mode** (`ShootingUI` in Board.tsx, active only on a HUMAN side's own Shooting
+    phase in a match): tapping your unit selects it as the shooter — the board draws a dashed
+    **range ring per distinct weapon range around every alive model** (radius = range + that
+    model's base radius, since 40k measures base-edge to base-edge; group-opacity fill keeps
+    the union flat), enemies the unit can legally target (range + per-bearer LoS via
+    `validUnitShootingTargets`) get amber ticks, and the existing cyan/red targeting rings +
+    firing line follow the selection. Taps never drag (no rejected mid-match MoveModel);
+    measuring is suppressed while the mode is on; pinch-zoom/pan unchanged.
+  - **New `src/ui/ShootingPanel.tsx`** (the under-board panel, so the phone's Board page covers
+    the whole phase without tab-flipping): the shooter's fire plan (`planUnitShooting`) with a
+    color dot matching each weapon's ring and its profile line (range · A · BS/auto-hit for
+    Torrent · S · AP · D); tapping an enemy adds the **matchup stat sheet** — the target's
+    T / Sv / invuln / W header plus per-weapon "hits X+ · wounds Y+" (`woundThreshold`), with
+    out-of-reach weapons dimmed "✗ can't reach" — and a **🔫 Shoot — all weapons** button that
+    dispatches the same `ShootUnit` intent as the game panel (tracer, AI defensive reactions,
+    the lot). An enemy no weapon reaches shows the sheet with "✗ out of range or not visible"
+    instead of the button; an ineligible shooter (already shot / Advanced / Fell Back) shows
+    the reason and still displays its ranges.
+  - **Decisions**: stat-sheet numbers are the raw profile values (modifiers — cover, stealth,
+    Orders — resolve in the dice as always; noted in the component); the board-tap selection is
+    separate state from the GamePanel's pickers (both dispatch the same intents; the board
+    selection wins the highlight while active); the whole volley fires at the tapped target —
+    per-weapon target splits stay in the game panel; rings key off the shooter's OWN base
+    radii (a target is in range when its base touches the ring).
+  - **Handoff nits**: tapping empty board clears the selection only when not zoomed in (zoomed
+    drags pan); the GamePanel's attacker/target selects don't mirror a board-tap selection.
+
 - **[2026-08-11] — V2: an independent 11th-edition simulator behind a new "Auto Player" tab
   (owner: "follow this brief to create a fully independent battle simulator… consider this a
   version 2… make this accessible via a new selection in the top bar").** v1 is untouched. All
@@ -427,6 +598,7 @@ ability-system design that these stages depend on.
     secondary missions have no scoring binding; transports/attached units/aircraft are not
     implemented; Fight-phase activation does not alternate between players; MFM points
     reconciliation was never performed.
+
 
 - **[2026-08-07] — Dead models leave the board + engaged/on-terrain LoS false blocks fixed
   (owner: "1. Dead units stay on the board… 2. My eversor assassin somehow can't target this

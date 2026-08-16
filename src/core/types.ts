@@ -282,6 +282,9 @@ export interface UnitStatus {
    *  abilities check for the key; once-per-turn abilities compare the value. Survives the
    *  per-turn status reset. */
   abilityUsed?: Record<string, number>;
+  /** [ONE SHOT] weapons this unit has already fired (weapon keys `${sourceDsId}|${name}`) —
+   *  usable once per battle, so this survives the per-turn status reset. */
+  oneShotFired?: string[];
   // ── Movement-phase activation (transient; set by BeginMove, cleared by EndMove/turn) ──
   /** The move mode chosen for the current activation. Undefined when not moving. */
   moveMode?: import('./movement').MoveMode;

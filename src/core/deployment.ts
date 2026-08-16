@@ -15,6 +15,7 @@
 import type { BaseShape, GameState, Layout, Side, Vec2 } from './types';
 import { baseRadius, basesOverlap, distancePointToPolygon, distancePointToSegment, gapBetweenBases, pointInPolygon } from './geometry';
 import type { OccupiedBase } from './collision';
+import { baseOnDense } from './terrainmove';
 
 /** A unit's deployment ability, derived from its datasheet keywords/abilities. */
 export type DeployAbility = 'standard' | 'infiltrators' | 'deep_strike';
@@ -84,9 +85,16 @@ export function checkUnitDeployment(
   ability: DeployAbility,
   enemyModels: { pos: Vec2; shape: BaseShape }[] = [],
   occupied: OccupiedBase[] = [],
+  /** Dense terrain (13.06): true for units whose models cannot enter dense features (tanks,
+   *  riders, monsters) — their bases may not be set up overlapping a dense (green) feature. */
+  denseBlocked = false,
 ): DeploymentCheck {
   const clearOfModels = (p: Vec2) => occupied.every((o) => !basesOverlap(p, baseShape, o.pos, o.shape));
   const stacked = positions.some((p) => !clearOfModels(p));
+  const r = baseRadius(baseShape);
+  const clearOfDense = (p: Vec2) => !denseBlocked || !baseOnDense(p, r, layout);
+  const onDense = positions.some((p) => !clearOfDense(p));
+  const DENSE_REASON = 'This unit cannot be set up on a dense (green) terrain feature — only Infantry, Beasts and Swarms can';
 
   if (ability === 'infiltrators') {
     const enemyZone = zoneFor(layout, side === 'player' ? 'ai' : 'player');
@@ -94,7 +102,7 @@ export function checkUnitDeployment(
       const farFromZone = enemyZone.length === 0 || distancePointToPolygon(p, enemyZone) > INFILTRATE_MIN;
       const farFromEnemies = enemyModels.every((e) => gapBetweenBases(p, baseShape, e.pos, e.shape) > INFILTRATE_MIN);
       const onBoard = p.x >= 0 && p.y >= 0 && p.x <= layout.boardWidth && p.y <= layout.boardHeight;
-      return onBoard && farFromZone && farFromEnemies && clearOfModels(p);
+      return onBoard && farFromZone && farFromEnemies && clearOfModels(p) && clearOfDense(p);
     });
     return {
       legal: perModel.every(Boolean),
@@ -103,12 +111,14 @@ export function checkUnitDeployment(
         ? undefined
         : stacked
           ? 'Models cannot be set up on top of other models'
-          : 'Infiltrators must be set up more than 8" from the enemy zone and enemy models',
+          : onDense
+            ? DENSE_REASON
+            : 'Infiltrators must be set up more than 8" from the enemy zone and enemy models',
     };
   }
 
   // Standard deployment: every model's base wholly within the side's own zone.
-  const perModel = positions.map((p) => whollyInOwnZone(p, baseShape, layout, side) && clearOfModels(p));
+  const perModel = positions.map((p) => whollyInOwnZone(p, baseShape, layout, side) && clearOfModels(p) && clearOfDense(p));
   return {
     legal: perModel.every(Boolean),
     perModel,
@@ -116,7 +126,9 @@ export function checkUnitDeployment(
       ? undefined
       : stacked
         ? 'Models cannot be set up on top of other models'
-        : 'All models must be wholly within your deployment zone',
+        : onDense
+          ? DENSE_REASON
+          : 'All models must be wholly within your deployment zone',
   };
 }
 
@@ -148,13 +160,17 @@ export function deepStrikeArrivalLegal(
   enemyModels: { pos: Vec2; shape: BaseShape }[],
   round: number,
   occupied: OccupiedBase[] = [],
-  opts: { deepStrike?: boolean; layout?: Layout; side?: Side; minEnemyDist?: number } = {},
+  opts: { deepStrike?: boolean; layout?: Layout; side?: Side; minEnemyDist?: number; denseBlocked?: boolean } = {},
 ): DeploymentCheck {
   if (round < 2) {
     return { legal: false, perModel: positions.map(() => false), reason: 'Reserves cannot arrive in the first battle round' };
   }
   const clearOfModels = (p: Vec2) => occupied.every((o) => !basesOverlap(p, baseShape, o.pos, o.shape));
   const stacked = positions.some((p) => !clearOfModels(p));
+  // Dense terrain (13.06): a dense-blocked unit's bases may not arrive on a dense feature.
+  const clearOfDense = (p: Vec2) =>
+    !opts.denseBlocked || !opts.layout || !baseOnDense(p, baseRadius(baseShape), opts.layout);
+  const onDense = positions.some((p) => !clearOfDense(p));
   const deepStrike = opts.deepStrike ?? true; // legacy callers treated every arrival as Deep Strike
   const layout = opts.layout;
   const enemyMin = opts.minEnemyDist ?? INGRESS_ENEMY_MIN; // Earth Caste Modifications: 6"
@@ -173,7 +189,7 @@ export function deepStrikeArrivalLegal(
 
   const perModel = positions.map((p) => {
     const farFromEnemies = enemyModels.every((e) => gapBetweenBases(p, baseShape, e.pos, e.shape) > enemyMin);
-    if (!farFromEnemies || !clearOfModels(p)) return false;
+    if (!farFromEnemies || !clearOfModels(p) || !clearOfDense(p)) return false;
     if (deepStrike) return true;
     if (!nearEdge(p)) return false;
     if (round < 3 && inEnemyZone(p)) return false;
@@ -186,10 +202,12 @@ export function deepStrikeArrivalLegal(
       ? undefined
       : stacked
         ? 'Models cannot be set up on top of other models'
-        : deepStrike
-          ? 'Deep Strike must arrive more than 8" from all enemy units'
-          : 'Reserves must arrive wholly within 6" of a battlefield edge, more than 8" from enemies' +
-            (round < 3 ? ', outside the enemy deployment zone' : ''),
+        : onDense
+          ? 'This unit cannot arrive on a dense (green) terrain feature — only Infantry, Beasts and Swarms can'
+          : deepStrike
+            ? 'Deep Strike must arrive more than 8" from all enemy units'
+            : 'Reserves must arrive wholly within 6" of a battlefield edge, more than 8" from enemies' +
+              (round < 3 ? ', outside the enemy deployment zone' : ''),
   };
 }
 
