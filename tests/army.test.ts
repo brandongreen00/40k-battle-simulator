@@ -6,6 +6,7 @@ import {
   defaultModelCount,
   listPoints,
   removeUnit,
+  setDetachments,
   setEnhancement,
   setModelCount,
   setWarlord,
@@ -177,6 +178,29 @@ describe('validation', () => {
     expect(validate(list, ix).some((x) => x.severity === 'warning' && /Warlord/.test(x.message))).toBe(true);
     list = setWarlord(list, list.units[0]!.uid);
     expect(validate(list, ix).some((x) => /Warlord/.test(x.message))).toBe(false);
+  });
+});
+
+describe('setDetachments (multi-detachment picker)', () => {
+  it('joins components canonically and prunes only stranded enhancements', () => {
+    let list = createArmyList('AM', 'Combined Arms', 'Strike Force');
+    list = addUnit(list, castellan);
+    list = setEnhancement(list, list.units[0]!.uid, 'e1'); // a Combined Arms enhancement
+    // Adding a second detachment keeps the pick — its detachment is still in the army.
+    list = setDetachments(list, ['Combined Arms', 'Bridgehead Strike'], ix);
+    expect(list.detachment).toBe('Combined Arms and Bridgehead Strike');
+    expect(list.units[0]!.enhancementId).toBe('e1');
+    // Dropping Combined Arms strands the pick — cleared; a pick from the surviving
+    // detachment would have stayed (e2 is Recon Element — stranded immediately).
+    list = setEnhancement(list, list.units[0]!.uid, 'e2');
+    list = setDetachments(list, ['Combined Arms', 'Bridgehead Strike'], ix);
+    expect(list.units[0]!.enhancementId).toBeUndefined();
+    list = setEnhancement(list, list.units[0]!.uid, 'e1');
+    list = setDetachments(list, ['Bridgehead Strike'], ix);
+    expect(list.detachment).toBe('Bridgehead Strike');
+    expect(list.units[0]!.enhancementId).toBeUndefined();
+    // Empty selection → no detachment (validate then flags the list).
+    expect(setDetachments(list, [], ix).detachment).toBe('');
   });
 });
 

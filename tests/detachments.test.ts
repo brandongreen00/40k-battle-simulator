@@ -7,6 +7,8 @@ import {
   checkDetachmentPoints,
   splitDetachments,
   armyHasDetachment,
+  joinDetachments,
+  isKnownDetachment,
 } from '../src/core/detachments';
 
 describe('detachment points', () => {
@@ -82,5 +84,26 @@ describe('multi-detachment armies (the GW app joins the names with "and")', () =
     expect(at1000.overBudgetLone).toBe(false);
     // Two 2 DP detachments bust the 3 DP budget at 2000 pts too.
     expect(checkDetachmentPoints('Imperialis Fleet and Ordo Xenos Alien Hunters', 'AoI', 2000).overBudgetMulti).toBe(true);
+  });
+
+  it('joinDetachments is the canonical inverse of splitDetachments', () => {
+    expect(joinDetachments(['Imperialis Fleet', 'Veiled Blade Elimination Force'])).toBe(combined);
+    expect(splitDetachments(joinDetachments(['Imperialis Fleet', 'Veiled Blade Elimination Force']))).toEqual([
+      'Imperialis Fleet',
+      'Veiled Blade Elimination Force',
+    ]);
+    // One part returns as-is; none returns ''; blanks and duplicates are dropped.
+    expect(joinDetachments(['Grizzled Company'])).toBe('Grizzled Company');
+    expect(joinDetachments([])).toBe('');
+    expect(joinDetachments(['', ' Imperialis Fleet ', 'imperialis fleet'])).toBe('Imperialis Fleet');
+  });
+
+  it('isKnownDetachment: curated 11e names combine; Grotmas/10e leftovers are lone-only', () => {
+    expect(isKnownDetachment('Imperialis Fleet')).toBe(true);
+    expect(isKnownDetachment('ordo hereticus, purgation force')).toBe(true); // punctuation/case-insensitive
+    // These exist in the enhancement catalog but not the printed 11e pack — a combined name
+    // containing one would never split back apart, so they can only be a lone detachment.
+    expect(isKnownDetachment('Tempestus Boarding Regiment')).toBe(false);
+    expect(isKnownDetachment("Voidship's Company")).toBe(false);
   });
 });
