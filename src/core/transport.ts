@@ -27,6 +27,9 @@ export interface TransportCapacity {
  * Parse a datasheet's transport-capacity rules text, e.g.
  * "This model has a transport capacity of 12 Astra Militarum Infantry models. Each Ogryn model
  *  takes up the space of 3 models. It cannot transport Artillery models."
+ *
+ * Alternatives are joined by "or" (Taurox Prime) or "and" (Inquisitorial Chimera 11e:
+ * "13 INQUISITOR INFANTRY and INQUISITORIAL AGENT models").
  */
 export function parseTransportCapacity(text?: string): TransportCapacity | null {
   if (!text) return null;
@@ -34,7 +37,7 @@ export function parseTransportCapacity(text?: string): TransportCapacity | null 
   if (!m) return null;
   const capacity = parseInt(m[1]!, 10);
   const allowed = m[2]!
-    .split(/\s+or\s+/i)
+    .split(/\s+or\s+|\s+and\s+/i)
     .map((phrase) => phrase.trim().toLowerCase())
     .filter(Boolean)
     .map((phrase) => phrase.split(/\s+/));
@@ -73,6 +76,11 @@ export function firingDeckX(ds: Datasheet | undefined): number {
 export const isAircraft = (ds: Datasheet | undefined): boolean =>
   !!ds?.keywords.some((k) => k.toLowerCase() === 'aircraft');
 
+/** DEDICATED TRANSPORT (18.01: it must have a unit embarked at the end of Declare Battle
+ *  Formations, or it is destroyed). */
+export const isDedicatedTransport = (ds: Datasheet | undefined): boolean =>
+  !!ds?.keywords.some((k) => k.toLowerCase() === 'dedicated transport');
+
 export const canFly = (ds: Datasheet | undefined): boolean =>
   !!ds?.keywords.some((k) => k.toLowerCase() === 'fly');
 
@@ -80,13 +88,16 @@ export const canFly = (ds: Datasheet | undefined): boolean =>
 /**
  * Does a keyword phrase (token list, lowercased) match a datasheet's keywords? The phrase must be
  * coverable by a sequence of the datasheet's keywords — e.g. tokens ["astra","militarum","infantry"]
- * are covered by keywords "Astra Militarum" + "Infantry".
+ * are covered by keywords "Astra Militarum" + "Infantry". Singular/plural mismatches are folded
+ * ("INQUISITORIAL AGENT models" vs the Inquisitorial Agents keyword).
  */
 function phraseMatches(tokens: string[], keywords: Set<string>): boolean {
   if (tokens.length === 0) return true;
+  const has = (head: string): boolean =>
+    keywords.has(head) || keywords.has(`${head}s`) || (head.endsWith('s') && keywords.has(head.slice(0, -1)));
   for (let take = tokens.length; take >= 1; take--) {
     const head = tokens.slice(0, take).join(' ');
-    if (keywords.has(head) && phraseMatches(tokens.slice(take), keywords)) return true;
+    if (has(head) && phraseMatches(tokens.slice(take), keywords)) return true;
   }
   return false;
 }
@@ -154,6 +165,52 @@ export function canEmbark(
   const space = unitSpace(unit, ctx, cap);
   if (!Number.isFinite(space)) return { ok: false, reason: 'unit may not ride this transport' };
   if (space > remainingCapacity(state, transport, ctx)) {
+    return { ok: false, reason: 'insufficient transport capacity' };
+  }
+  return { ok: true };
+}
+
+/** Capacity space still free in a transport identified by its roster ENTRY KEY — the transport
+ *  need not be materialized as a unit yet (Declare Battle Formations happens before deployment;
+ *  declared riders already carry `embarkedIn: <entry key>` and count against the capacity). */
+export function declaredCapacityLeft(
+  state: GameState,
+  transportKey: string,
+  transportDs: Datasheet | undefined,
+  ctx: EngineContext,
+): number {
+  const cap = transportCapacity(transportDs);
+  if (!cap) return 0;
+  let used = 0;
+  for (const u of embarkedUnits(state, transportKey)) {
+    const s = unitSpace(u, ctx, cap);
+    used += Number.isFinite(s) ? s : 0;
+  }
+  return cap.capacity - used;
+}
+
+/**
+ * Keyword + capacity legality for one or more rider units (e.g. a Bodyguard and its paired
+ * Leader) starting the battle embarked within a transport ENTRY (18.01, Declare Battle
+ * Formations). Works whether or not the transport has been materialized as a unit — ownership /
+ * alive checks are the caller's job.
+ */
+export function canDeclareEmbark(
+  state: GameState,
+  riders: UnitInstance[],
+  transportKey: string,
+  transportDs: Datasheet | undefined,
+  ctx: EngineContext,
+): { ok: boolean; reason?: string } {
+  const cap = transportCapacity(transportDs);
+  if (!cap) return { ok: false, reason: 'not a transport' };
+  let space = 0;
+  for (const r of riders) {
+    const s = unitSpace(r, ctx, cap);
+    if (!Number.isFinite(s)) return { ok: false, reason: 'unit may not ride this transport' };
+    space += s;
+  }
+  if (space > declaredCapacityLeft(state, transportKey, transportDs, ctx)) {
     return { ok: false, reason: 'insufficient transport capacity' };
   }
   return { ok: true };
