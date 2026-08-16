@@ -9,7 +9,7 @@
 
 import type { Datasheet, Enhancement, Roster } from './types';
 import { defensiveItemsInText, normalizeItemName, validateUnitLoadout, type Loadout } from './wargear';
-import { armyHasDetachment, checkDetachmentPoints, dpBudget } from './detachments';
+import { armyHasDetachment, checkDetachmentPoints, dpBudget, joinDetachments } from './detachments';
 import { EXTREMIS_IDS, extremisAbilityId } from './enhancements';
 
 // ── Battle size (points limit + datasheet copy limits) ───────────────────────
@@ -204,6 +204,23 @@ export function setModelCount(list: ArmyList, uid: string, modelCount: number): 
 }
 export function setEnhancement(list: ArmyList, uid: string, enhancementId?: string): ArmyList {
   return patch(list, uid, (u) => ({ ...u, enhancementId: enhancementId || undefined }));
+}
+/** Replace the army's detachment(s) with the given components (joined canonically — one entry
+ *  for a normal lone-detachment army). Enhancements are detachment-scoped: picks whose
+ *  detachment is no longer part of the army are cleared; picks that survive the change stay. */
+export function setDetachments(list: ArmyList, detachments: string[], ix: DataIndex): ArmyList {
+  const detachment = joinDetachments(detachments);
+  return {
+    ...list,
+    detachment,
+    units: list.units.map((u) => {
+      if (!u.enhancementId) return u;
+      const enh = ix.enhancements.get(u.enhancementId);
+      // Unknown ids (cpenh: cards on Combat Patrol lists) have no detachment scope here — keep.
+      if (!enh) return u;
+      return armyHasDetachment(detachment, enh.detachment) ? u : { ...u, enhancementId: undefined };
+    }),
+  };
 }
 export function setAttachedTo(list: ArmyList, uid: string, attachedTo?: string): ArmyList {
   return patch(list, uid, (u) => ({ ...u, attachedTo: attachedTo || undefined }));

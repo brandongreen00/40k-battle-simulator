@@ -183,19 +183,24 @@ describe('DeclareSplit (Immolator: half rides, half walks)', () => {
     expect(bad2.log.at(-1)).toMatch(/Split rejected: .*7× Boltgun.*only 5 models on foot/);
   });
 
-  it('rejects riding wargear the unit does not have, and a transport still in Reserves', () => {
+  it('rejects riding wargear the unit does not have; a transport in Strategic Reserves may carry the riders (20.01)', () => {
     const base = deployedImmolator();
     const bad = run(base, [declareSplit({ rideWargear: { Meltagun: 3 } })]);
     expect(bad.log.at(-1)).toMatch(/Split rejected: .*only has 2/);
 
+    // 20.01 explicitly allows Strategic Reserves transports with units embarked within them —
+    // the riding half joins the reserved Immolator and arrives with it.
     const withReserved = run(base, [
       {
         type: 'PlaceInReserves', unitId: 'player:3', owner: 'player', datasheetId: 'immolator',
         baseShape: bigBase, modelCount: 1, wounds: 11,
       },
     ]);
-    const bad2 = run(withReserved, [declareSplit({ transportUnitId: 'player:3' })]);
-    expect(bad2.log.at(-1)).toMatch(/Split rejected: .*deployed on the battlefield first/);
+    const ok = run(withReserved, [declareSplit({ transportUnitId: 'player:3' })]);
+    const riders = ok.units.find((u) => u.id === 'player:1#a')!;
+    expect(riders).toBeDefined();
+    expect(riders.embarkedIn).toBe('player:3');
+    expect(riders.inReserves).toBe(true);
   });
 
   it('ClearSplit removes both halves and restores the whole entry', () => {
@@ -237,6 +242,9 @@ describe('splits and the rest of the system', () => {
   it('an enhancement redeploy refuses to pull a transport carrying embarked units', () => {
     const s = run(deployedImmolator(), [
       declareSplit(),
+      // Redeploys are a deploy-step window — pass Declare Battle Formations first.
+      { type: 'FinishFormations', side: 'player' },
+      { type: 'FinishFormations', side: 'ai' },
       { type: 'UseEnhancementRedeploy', side: 'player', enhancementId: ENH.LIBER_HERESIUS },
       { type: 'EnhancementRedeploy', unitId: 'player:0' },
     ]);

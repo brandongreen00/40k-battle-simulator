@@ -113,10 +113,11 @@ describe('ai/deploy — full alternating deployment', () => {
     const deps = makeDeps(rng);
     let state = reduce(createInitialState(layout), { type: 'NewBattle' }, rng, ctx);
     state = reduce(state, { type: 'RollRoles' }, rng, ctx);
-    // The side's first action may be the battle-formations declaration — take actions until the
-    // first actual placement comes out.
+    // The sides resolve the whole Declare Battle Formations step first (secondary-mission picks,
+    // Leader pairings, embark/Reserves declarations, FinishFormations ×2) — take actions until
+    // the first actual placement comes out.
     let deployIntent;
-    for (let i = 0; i < 5 && !deployIntent; i++) {
+    for (let i = 0; i < 30 && !deployIntent; i++) {
       const d = whoActs(state, deps);
       expect(d.actor === 'player' || d.actor === 'ai').toBe(true);
       const action = aiAction(state, d.actor as 'player' | 'ai', 'balanced', deps)!;

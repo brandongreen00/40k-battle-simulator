@@ -95,6 +95,51 @@ textarea,
   font-size: 13px;
 }
 
+/* Detachment multiselect (11e multi-detachment armies): a bordered checkbox list
+   in the same visual language as the sidebar selects. */
+.detach-multi {
+  display: flex;
+  flex-direction: column;
+  background: #11141a;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.detach-opt {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 8px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  border-bottom: 1px solid var(--line);
+}
+.detach-opt:last-child {
+  border-bottom: none;
+}
+.detach-opt.on {
+  background: #1a2433;
+}
+.detach-opt.blocked {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+.detach-opt input {
+  margin: 0;
+  flex: none;
+}
+.detach-opt .detach-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.detach-opt .detach-dp {
+  flex: none;
+  font-size: 11px;
+  color: var(--muted);
+}
+
 .seg {
   display: flex;
   gap: 6px;
@@ -1989,6 +2034,11 @@ body {
   }
   .sb-ability summary {
     min-height: 34px;
+  }
+  /* Detachment multiselect rows grow to full touch size on phones. */
+  .detach-opt {
+    min-height: 44px;
+    font-size: 15px;
   }
 }
 

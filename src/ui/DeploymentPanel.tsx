@@ -147,7 +147,10 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
   }).filter((x): x is NonNullable<typeof x> => x !== null);
 
   // ── Warrant of Trade (after both armies have deployed) ──
-  const deploymentComplete = setup.attacker != null && remaining.player + remaining.ai === 0;
+  // Not during Declare Battle Formations: a fully-declared army (everything embarked/reserved)
+  // still has to pass through the deploy step before post-deployment windows open.
+  const deploymentComplete =
+    setup.attacker != null && setup.step !== 'formations' && remaining.player + remaining.ai === 0;
   const warrantSides = (['player', 'ai'] as const).filter((s) =>
     state.units.some((u) => u.owner === s && unitHasWarrant(u, ctx)),
   );
@@ -258,11 +261,30 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
         </div>
       )}
 
-      {/* Step 2 — Declare Battle Formations + Deploy */}
-      {setup.attacker && setup.step === 'deploy' && (
+      {/* Step 2 — Declare Battle Formations (before deployment) · Step 3 — Deploy */}
+      {setup.attacker && (setup.step === 'formations' || setup.step === 'deploy') && (
         <div className="dep-step">
-          <h3>2 · Deploy units</h3>
-          {remaining.player + remaining.ai === 0 ? (
+          <h3>{setup.step === 'formations' ? '2 · Declare Battle Formations' : '3 · Deploy units'}</h3>
+          {setup.step === 'formations' ? (
+            <>
+              <p className="hint">
+                Before anyone deploys, each side declares which units <strong>start embarked in
+                transports</strong> (“⇥ Embark…” in the unit list, 18.01) and which start in{' '}
+                <strong>Strategic Reserves</strong> (“⤓”, 20.01), pairs Leaders below, and then
+                finishes declaring in the unit list. A DEDICATED TRANSPORT with no unit embarked
+                when this step ends is <strong>destroyed</strong> (18.01).
+              </p>
+              <p className="muted">
+                {(['player', 'ai'] as const).map((s, i) => (
+                  <span key={s}>
+                    {i > 0 ? ' · ' : ''}
+                    <strong style={{ color: OWNER_COLOR[s].fill }}>{s}</strong>:{' '}
+                    {setup.formationsDone?.[s] ? '✓ declared' : 'declaring…'}
+                  </span>
+                ))}
+              </p>
+            </>
+          ) : remaining.player + remaining.ai === 0 ? (
             <p className="muted">✓ All units placed — attach Leaders below if you want, then finish deploying.</p>
           ) : (
             <>
@@ -271,13 +293,7 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
                 <strong style={{ color: OWNER_COLOR[effectiveSide(setup, remaining)].fill }}>{effectiveSide(setup, remaining)}</strong>
                 {' '}· remaining — player {remaining.player}, ai {remaining.ai}
               </p>
-              <p className="hint">Pick a unit on the left, drop it inside your zone (Infiltrators may deploy in no-man's-land). Use “Reserves” for Deep Strike.</p>
-              <p className="hint">
-                🚌 <strong>Riding in vehicles:</strong> deploy the transport first, then use the “⇥ Embark…”
-                picker next to an infantry unit to start the battle embarked. An Immolator can also
-                “⇆ Split” a Sisters of Battle Squad — half rides (you choose which wargear, e.g. the
-                meltas), half deploys on foot.
-              </p>
+              <p className="hint">Pick a unit on the left, drop it inside your zone (Infiltrators may deploy in no-man's-land). Deploying a transport brings its declared riders with it.</p>
             </>
           )}
 
@@ -508,32 +524,34 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
               );
             })}
 
-          <div className="btnrow">
-            <button
-              disabled={state.units.length === 0 || remaining.player + remaining.ai > 0 || warrantOpen || grantOpen || redeployOpen}
-              title={
-                remaining.player + remaining.ai > 0
-                  ? `Still to deploy — player ${remaining.player}, ai ${remaining.ai} (use Reserves ⤓ for units arriving later)`
-                  : grantOpen
-                    ? 'Resolve the Declare Battle Formations enhancement pick first (confirm or skip it)'
-                    : warrantOpen
-                      ? 'Resolve the Warrant of Trade redeploy first (use it or skip it)'
-                      : redeployOpen
-                        ? 'Resolve the enhancement redeploy first (use it or skip it)'
-                        : ''
-              }
-              onClick={() => dispatch({ type: 'RollFirstTurn' })}
-            >
-              Finish deploying →
-            </button>
-          </div>
+          {setup.step === 'deploy' && (
+            <div className="btnrow">
+              <button
+                disabled={state.units.length === 0 || remaining.player + remaining.ai > 0 || warrantOpen || grantOpen || redeployOpen}
+                title={
+                  remaining.player + remaining.ai > 0
+                    ? `Still to deploy — player ${remaining.player}, ai ${remaining.ai} (use Reserves ⤓ for units arriving later)`
+                    : grantOpen
+                      ? 'Resolve the Declare Battle Formations enhancement pick first (confirm or skip it)'
+                      : warrantOpen
+                        ? 'Resolve the Warrant of Trade redeploy first (use it or skip it)'
+                        : redeployOpen
+                          ? 'Resolve the enhancement redeploy first (use it or skip it)'
+                          : ''
+                }
+                onClick={() => dispatch({ type: 'RollFirstTurn' })}
+              >
+                Finish deploying →
+              </button>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Step 3 — First turn */}
+      {/* Step 4 — First turn */}
       {setup.firstTurnRoll && (
         <div className="dep-step">
-          <h3>3 · First turn</h3>
+          <h3>4 · First turn</h3>
           <RollOffDice {...setup.firstTurnRoll} label="first turn" />
           <p className="muted">
             <strong style={{ color: OWNER_COLOR[setup.firstTurn!].fill }}>{setup.firstTurn}</strong> takes the first turn.

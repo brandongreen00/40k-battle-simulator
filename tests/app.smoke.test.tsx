@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent, within } from '@testing-library/react';
 import { App } from '../src/ui/App';
 import { MeasuringBoard } from '../src/ui/MeasuringBoard';
@@ -56,8 +56,15 @@ describe('Deployment flow', () => {
     const humanButtons = within(container.querySelector('.ai-bar') as HTMLElement).getAllByText('Human');
     for (const b of humanButtons) fireEvent.click(b);
 
-    // The side that deploys first now has units offered for deployment.
+    // Declare Battle Formations comes first (18.01/20.01): each side finishes declaring.
+    // (The demo roster's Chimera has no declared rider — accept the 18.01 destruction warning.)
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
     const sidebar = container.querySelector('.sidebar')!;
+    expect(container.textContent).toMatch(/Declare Battle Formations/);
+    fireEvent.click(within(sidebar as HTMLElement).getByText(/✓ Finish declaring/));
+    fireEvent.click(within(sidebar as HTMLElement).getByText(/✓ Finish declaring/));
+
+    // The side that deploys first now has units offered for deployment.
     expect(within(sidebar as HTMLElement).getAllByText('+ Deploy').length).toBeGreaterThan(0);
   });
 });
