@@ -2,7 +2,7 @@
   "name": "Armoured Spearhead",
   "faction": "AM",
   "detachment": "Hammer of the Emperor",
-  "points": 960,
+  "points": 955,
   "units": [
     {
       "datasheetId": "000000680",

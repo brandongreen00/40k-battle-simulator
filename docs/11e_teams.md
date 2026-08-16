@@ -8,19 +8,27 @@ sim (`pnpm sim -- --dispA … --dispB …`) and the board default to.
 
 ## The lists
 
-| List | Pts | Detachment | Disposition | Profile | Anchor |
+*(Points and dispositions revised 2026-08-16 to the printed Faction Pack v1.1 values — the
+Wahapedia 11e pages now carry real 11e points, and each detachment's Force Disposition is
+printed on the pack, replacing the July review-era guesses.)*
+
+| List | Pts | Detachment | Disposition (printed) | Profile | Anchor |
 |---|---|---|---|---|---|
-| **Solar Spearpoint (2k)** | 1985 | Mechanised Assault | Purge the Foe | attrition | The "Moxley pattern" — 2nd place, first 11e GT (Commencing Armageddon): Lord Solar hub, 3× Kasrkin damage core, Rogal Dorn + Enginseer, Hellhound, Scions, Gaunt's Ghosts + Sly Marbo disruption, Rough/Death Riders counterpunch, Chimera/Taurox pressure |
-| **Grizzled Greatest Hits (2k)** | 1995 | Grizzled Company | Priority Assets | operative | The Vasquez toolbox that won the final 10th GT, trimmed per the 11e points review (one Dorn Commander + one Dorn, 6 Bullgryn, Kasrkin, Basilisk, double Scions) |
-| **Idavoll Vigil (2k)** | 1980 | Imperialis Fleet | Disruption | objective_rusher | The Nanaimo undefeated Agents list: 3× Deathwatch Kill Team + Watch Masters/Artemis, Rogue Trader warlord + Inquisitor suite, 2× Navy Breachers in Chimeras, 3× Subductors (Hidden-friendly shield walls), Vindicare (11e anti-Hidden tech) |
-| **Bridgehead Pattern (1k)** | 985 | Bridgehead Strike | Reconnaissance | operative | The reviewers' natural 1k skeleton: Scions + Kasrkin core, Taurox Prime, Scout Sentinel, Hellhound, Gaunt's Ghosts, Sly Marbo |
-| **Vigil Strike (1k)** | 990 | Imperialis Fleet | Disruption | objective_rusher | Idavoll Vigil scaled to 1k: DWKT ×2 + Watch Master, Breachers + Chimera, Subductors, Vindicare, cheap Inquisitorial activations |
+| **Solar Spearpoint (2k)** | 1960 | Mechanised Assault | Reconnaissance | operative | The "Moxley pattern" — 2nd place, first 11e GT (Commencing Armageddon): Lord Solar hub, 3× Kasrkin damage core, Rogal Dorn + Enginseer, Hellhound, Scions, Gaunt's Ghosts + Sly Marbo disruption, Rough/Death Riders counterpunch, Chimera/Taurox pressure |
+| **Grizzled Greatest Hits (2k)** | 1970 | Grizzled Company | Priority Assets | operative | The Vasquez toolbox that won the final 10th GT, trimmed per the 11e points review (one Dorn Commander + one Dorn, 6 Bullgryn, Kasrkin, Basilisk, double Scions) |
+| **Idavoll Vigil (2k)** | 1960 | Imperialis Fleet | Reconnaissance | operative | The Nanaimo undefeated Agents list: 3× Deathwatch Kill Team + Watch Masters/Artemis, Rogue Trader warlord + Inquisitor suite, 2× Navy Breachers in Chimeras, 3× Subductors (Hidden-friendly shield walls), Vindicare (11e anti-Hidden tech) |
+| **Bridgehead Pattern (1k)** | 970 | Bridgehead Strike | Priority Assets | operative | The reviewers' natural 1k skeleton: Scions + Kasrkin core, Taurox Prime, Scout Sentinel, Hellhound, Gaunt's Ghosts, Sly Marbo |
+| **Vigil Strike (1k)** | 980 | Imperialis Fleet | Reconnaissance | operative | Idavoll Vigil scaled to 1k: DWKT ×2 + Watch Master, Breachers + Chimera, Subductors, Vindicare, cheap Inquisitorial activations |
 
 The six original 1000pt sparring lists (Cadian Bulwark, Krieg Siege Echelon, Armoured
 Spearhead, Fleet Boarding Party, Deathwatch Vigil, Hereticus Purgation Force) remain in
 the pool.
 
 ## Research basis (July 2026, ~3 weeks into the edition)
+
+*(Historical — two claims below aged badly once the printed pack landed: Agents detachments
+cost 1–2 DP, not "the max 3", and Imperialis Fleet's printed disposition is Reconnaissance,
+not Disruption.)*
 
 - **AM** rated "Neutral" by the Goonhammer-team launch reviews: the new 1-DP detachments
   (Bridgehead Strike, Designation Force) are the hot picks; Grizzled Company keeps its
@@ -40,16 +48,19 @@ and the Spikey Bits "Commencing Armageddon" GT report.
 
 ## Caveats (documented, not hidden)
 
-1. **Datasheets and points are still the 10th-edition Wahapedia export.** Wahapedia has no
-   11e data yet (verified 2026-07-03: the `wh40k11ed` path is a stale 10e mirror), so
-   these lists use 10e stat blocks and points under the 11e *rules engine*. When Wahapedia
-   publishes 11e data, re-run `pnpm ingest` and re-check the tiers in `prebuilt.ts`.
+1. **Datasheet stats are still the 10th-edition Wahapedia export, but POINTS are 11e.**
+   As of 2026-08-16 the `wh40k11ed` pages carry real 11e data (Faction Pack v1.1) —
+   there are still no 11e CSV exports, so `pnpm ingest` converts 10e stats and
+   `pnpm apply:points11e` overlays the 11e points/costs (see `tools/ingest/README.md`).
+   These lists use 10e stat blocks with 11e points under the 11e *rules engine*.
 2. **Detachments are the 10e set** — Designation Force does not exist in the data, so the
-   Moxley list's second detachment is folded into Mechanised Assault. The 11e Detachment
-   Points system (1 detachment at 1k = 2 DP, multi-detachment armies) is NOT modelled;
-   each list uses one detachment as before.
+   Moxley list's second detachment is folded into Mechanised Assault. Multi-detachment
+   armies are NOT modelled; each list uses one detachment as before — even though the
+   v1.1 DP costs (all Imperial Agents at 1–2 DP) make a two-detachment Agents army legal
+   at 2000 pts (3 DP budget). See `docs/11e_detachment_points.md`.
 3. Detachment rules/stratagems have engine bindings only where the 10e set already did
    (Grizzled Company re-roll rider, Imperialis Fleet Eliminate/Acquire).
-4. At 1000 points, Imperial Agents are RAW-illegal in real 11e (3 DP > 2 DP budget) —
-   Vigil Strike ships anyway because GW has stated intent to allow any single lone
-   detachment, and the simulator does not model DP.
+4. ~~At 1000 points, Imperial Agents are RAW-illegal in real 11e~~ — resolved by the
+   v1.1 costs: every Agents detachment is 1–2 DP and fits the 1000 pt / 2 DP budget.
+   The only over-budget lone detachments left are Grizzled Company and Recon Element
+   (3 DP) at 1000 pts, which validate with a warning under GW's stated intent.

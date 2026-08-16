@@ -2,7 +2,7 @@
   "name": "Inquisitors",
   "faction": "AoI",
   "detachment": "Ordo Hereticus Purgation Force",
-  "points": 985,
+  "points": 965,
   "units": [
     {
       "datasheetId": "000002090",

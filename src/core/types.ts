@@ -42,11 +42,22 @@ export interface WeaponProfile {
   keywords: string[]; // ["Rapid Fire 1","Torrent","Melta 2", ...]
 }
 
-/** A points tier: a unit of `models` size costs `cost` points. */
+/** A points tier: a unit of `models` size costs `cost` points.
+ *  11e escalating squadron costs ("YOUR 3RD+ UNIT COSTS"): `copyFrom`/`copyTo` bound which
+ *  copies of the datasheet (1-based, in list order) the tier prices. Absent = every copy. */
 export interface PointsTier {
   models: number;
   cost: number;
-  note?: string; // e.g. "Assigned Agent", "Agents of the Imperium Detachment"
+  note?: string; // e.g. "Assigned Agent", "AGENTS OF THE IMPERIUM Detachment"
+  copyFrom?: number; // first copy this tier applies to (default 1)
+  copyTo?: number; // last copy this tier applies to (default unbounded)
+}
+
+/** An 11e priced wargear option ("per Demolisher battle cannon: 15 pts"). All other wargear
+ *  stays free; the cost applies per model that takes the item (matched against the loadout). */
+export interface WargearCost {
+  item: string;
+  cost: number;
 }
 
 /** A wargear swap option: a lead-in rule sentence plus the choices it offers. */
@@ -69,6 +80,7 @@ export interface Datasheet {
   /** Full ability list incl. the unit's *special* rules with their text (the per-unit specials). */
   abilities?: UnitAbility[];
   points?: PointsTier[]; // cost per model-count tier
+  wargearCosts?: WargearCost[]; // 11e priced wargear options (rare — most wargear is free)
   composition?: string[]; // valid unit compositions (plain text)
   wargearOptions?: WargearOption[]; // weapon swap options
   wargearNotes?: string[]; // footnotes constraining the options

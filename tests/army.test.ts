@@ -62,6 +62,47 @@ describe('points', () => {
     list = setEnhancement(list, charUid, 'e1'); // +20
     expect(listPoints(list, ix)).toBe(225);
   });
+
+  it('11e escalating copies: later copies read their copyFrom/copyTo tier', () => {
+    // The real Hellhound shape: 1st–2nd copies 125, 3rd+ 135.
+    const hellhound = ds({
+      id: 'hh',
+      name: 'Hellhound',
+      keywords: ['Vehicle'],
+      points: [
+        { models: 1, cost: 125, copyFrom: 1, copyTo: 2 },
+        { models: 1, cost: 135, copyFrom: 3 },
+      ],
+    });
+    expect(unitCost(hellhound, 1)).toBe(125); // default = 1st copy
+    expect(unitCost(hellhound, 1, 2)).toBe(125);
+    expect(unitCost(hellhound, 1, 3)).toBe(135);
+    expect(unitCost(hellhound, 1, 5)).toBe(135); // open-ended range
+
+    const hhIx: DataIndex = { datasheets: new Map([[hellhound.id, hellhound]]), enhancements: new Map() };
+    let list = createArmyList('AM', 'Hammer of the Emperor');
+    list = addUnit(list, hellhound);
+    list = addUnit(list, hellhound);
+    expect(listPoints(list, hhIx)).toBe(250); // 125 + 125
+    list = addUnit(list, hellhound);
+    expect(listPoints(list, hhIx)).toBe(385); // 125 + 125 + 135
+  });
+
+  it('11e priced wargear: wargearCosts items add points per bearer, everything else stays free', () => {
+    // The real Leman Russ Commander shape: per Demolisher battle cannon 15 pts.
+    const lrc = ds({
+      id: 'lrc',
+      name: 'Leman Russ Commander',
+      keywords: ['Vehicle', 'Character'],
+      points: [{ models: 1, cost: 215 }],
+      wargearCosts: [{ item: 'Demolisher battle cannon', cost: 15 }],
+    });
+    const lrcIx: DataIndex = { datasheets: new Map([[lrc.id, lrc]]), enhancements: new Map() };
+    let list = addUnit(createArmyList('AM', 'Hammer of the Emperor'), lrc);
+    expect(listPoints(list, lrcIx)).toBe(215);
+    list = { ...list, units: [{ ...list.units[0]!, loadout: { 'Demolisher battle cannon': 1, 'Hunter-killer missile': 1 } }] };
+    expect(listPoints(list, lrcIx)).toBe(230); // +15 for the cannon; the missile stays free
+  });
 });
 
 describe('list edits', () => {

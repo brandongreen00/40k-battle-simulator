@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "ingest": "tsx tools/ingest/convert.ts",
+    "apply:points11e": "tsx tools/ingest/apply-points11e.ts",
     "report:abilities": "tsx tools/ingest/abilities-report.ts",
     "extract:layouts": "tsx tools/layouts/extract-gw-ca-2025.ts",
     "preview:layouts": "tsx tools/layouts/preview.ts",

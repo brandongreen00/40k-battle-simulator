@@ -158,9 +158,12 @@ export const PREBUILT: PrebuiltDef[] = [
     },
   },
   // ── 11th edition teams (community-informed; see docs/11e_teams.md) ───────────
+  // Recommended dispositions are the detachment's PRINTED Force Disposition (Faction Pack
+  // v1.1, Wahapedia 11e 2026-08-16) — the pack binds disposition to detachment, replacing
+  // the July review-era guesses (e.g. Imperialis Fleet is Reconnaissance, not Disruption).
   {
     fileName: 'prebuilt_solar_spearpoint',
-    recommended: { disposition: 'purge_the_foe', profile: 'attrition' },
+    recommended: { disposition: 'reconnaissance', profile: 'operative' }, // Mechanised Assault
     list: {
       name: 'Solar Spearpoint (2k)',
       faction: 'AM',
@@ -225,7 +228,7 @@ export const PREBUILT: PrebuiltDef[] = [
   },
   {
     fileName: 'prebuilt_idavoll_vigil',
-    recommended: { disposition: 'disruption', profile: 'objective_rusher' },
+    recommended: { disposition: 'reconnaissance', profile: 'operative' }, // Imperialis Fleet
     list: {
       name: 'Idavoll Vigil (2k)',
       faction: 'AoI',
@@ -259,7 +262,7 @@ export const PREBUILT: PrebuiltDef[] = [
   },
   {
     fileName: 'prebuilt_bridgehead_1k',
-    recommended: { disposition: 'reconnaissance', profile: 'operative' },
+    recommended: { disposition: 'priority_assets', profile: 'operative' }, // Bridgehead Strike
     list: {
       name: 'Bridgehead Pattern (1k)',
       faction: 'AM',
@@ -283,7 +286,7 @@ export const PREBUILT: PrebuiltDef[] = [
   },
   {
     fileName: 'prebuilt_vigil_strike_1k',
-    recommended: { disposition: 'disruption', profile: 'objective_rusher' },
+    recommended: { disposition: 'reconnaissance', profile: 'operative' }, // Imperialis Fleet
     list: {
       name: 'Vigil Strike (1k)',
       faction: 'AoI',

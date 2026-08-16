@@ -9,9 +9,30 @@ consume the same pipe-delimited CSV exports rather than scraping HTML.
 ```bash
 pnpm ingest            # downloads (and caches) CSVs, writes data/game/*.json
 REFRESH=1 pnpm ingest  # force re-download even if data/raw/*.csv exist
+pnpm apply:points11e   # REQUIRED after every ingest — overlays the 11e points (see below)
 ```
 
 The converter is a single dependency-free TypeScript file (`convert.ts`) run via `tsx`.
+
+## 11th-edition points overlay (`apply-points11e.ts` + `points11e.json`)
+
+Wahapedia's 11e section has **no CSV exports** — the 11e data is HTML-only — so datasheet
+*stats* still come from the 10e CSVs while **points, priced wargear and enhancement costs are
+11e values** (Faction Pack v1.1) extracted from the `wh40k11ed` faction pages into
+`points11e.json` (2026-08-16). `pnpm apply:points11e` overwrites those fields in
+`data/game/datasheets.json` / `enhancements.json`; running `pnpm ingest` alone REVERTS points
+to 10e, so always re-apply. The file's `detachments` block is the provenance record for the DP
+cost table in `src/core/detachments.ts`. 11e points features carried by the overlay:
+
+- **Per-copy escalation** (`copyFrom`/`copyTo` on a tier): e.g. "YOUR 3RD+ UNIT COSTS" — a 3rd
+  Hellhound costs 135, the first two 125. `army.ts unitCost/listPoints` price copies in list
+  order.
+- **Priced wargear** (`Datasheet.wargearCosts`): 11e prices five wargear options ("per
+  Demolisher battle cannon: 15 pts"); all other wargear remains free.
+- **Agents dual pricing**: the AGENTS OF THE IMPERIUM Detachment price vs the higher
+  "Assigned Agent" (allied) price, kept as the existing tier `note` convention.
+- The 11e-only datasheet **Tarantula Battery** (AM, Legends) has no 10e datasheet to patch and
+  is omitted.
 
 ## Source
 

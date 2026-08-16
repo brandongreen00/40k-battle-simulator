@@ -2,7 +2,7 @@
   "name": "Vigil Strike (1k)",
   "faction": "AoI",
   "detachment": "Imperialis Fleet",
-  "points": 990,
+  "points": 980,
   "units": [
     {
       "datasheetId": "000002762",
@@ -54,7 +54,7 @@
   ],
   "note": "Prebuilt AI sparring list — a legal 1000pt Incursion army generated from the converted data by tools/rosters/build-prebuilt.ts (edit tools/rosters/prebuilt.ts and re-run pnpm build:rosters). Not one of the three owned lists.",
   "recommended": {
-    "disposition": "disruption",
-    "profile": "objective_rusher"
+    "disposition": "reconnaissance",
+    "profile": "operative"
   }
 }
