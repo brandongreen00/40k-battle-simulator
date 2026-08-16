@@ -13,6 +13,22 @@ Commands to reproduce each measurement are given.
 > genuinely print one statline per sheet, verified across all 179 pages. The
 > remaining register is unchanged and still the plan of record.
 
+> **Update 2026-08-16 — two points-ingest defects found and fixed** (discovered
+> during the v1 points overhaul, by re-extracting the live pages and diffing
+> against the snapshot). In `tools2/ingest_wahapedia.py parse_points`:
+> (1) a **"YOUR 1ST UNIT COSTS"** header (no TO, no +) was read as copies 1–99
+> instead of exactly 1, so a 2nd Basilisk/Stormlord priced at the 1st-copy rate
+> (15 sheets); (2) **"WARGEAR OPTIONS"** rows ("per Demolisher battle cannon |
+> 15") were read as unit tiers, giving 5 sheets a phantom 5–15 pt tier — which
+> `cheapest_tier`/`_fill_army` then *picked*, so the committed sample armies
+> fielded a 1-model, 5-pt Grey Knights Terminator Squad. Both parser paths are
+> fixed, the 20 affected `data2/datasheets.json` records are corrected in place
+> (provenance notes say so), the five sample armies are regenerated, and the
+> priced-wargear values are logged as `wargear_cost` gaps (no schema slot yet —
+> unit points exclude them). Also gap-logged: `am.tarantula_battery`, an
+> 11e-only Legends sheet the 2026-08-14 per-page fetch missed entirely.
+> All 65 tests + the determinism lint stay green.
+
 ---
 
 ## Part 1 — Orientation

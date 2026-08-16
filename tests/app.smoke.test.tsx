@@ -69,14 +69,14 @@ describe('ListBuilder', () => {
     // empty list starts at 0 points
     expect(container.querySelector('.points-text')!.textContent).toMatch(/^0 \/ 1000/);
 
-    // find the Cadian Shock Troops catalog entry (65 pts) and add it
+    // find the Cadian Shock Troops catalog entry (75 pts in the 11e Faction Pack) and add it
     const names = [...container.querySelectorAll('.catalog-item .ci-name')];
     const cadian = names.find((n) => n.textContent === 'Cadian Shock Troops')!;
     expect(cadian).toBeTruthy();
     fireEvent.click(cadian.closest('button')!);
 
-    // the unit appears in the list and points update to 65
+    // the unit appears in the list and points update to 75
     expect(container.querySelector('.lb-list')!.textContent).toContain('Cadian Shock Troops');
-    expect(container.querySelector('.points-text')!.textContent).toMatch(/^65 \/ 1000/);
+    expect(container.querySelector('.points-text')!.textContent).toMatch(/^75 \/ 1000/);
   });
 });

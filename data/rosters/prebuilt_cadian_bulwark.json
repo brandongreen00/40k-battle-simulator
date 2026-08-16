@@ -2,7 +2,7 @@
   "name": "Cadian Bulwark",
   "faction": "AM",
   "detachment": "Grizzled Company",
-  "points": 980,
+  "points": 970,
   "units": [
     {
       "datasheetId": "000002607",

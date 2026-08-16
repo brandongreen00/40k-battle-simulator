@@ -2,7 +2,7 @@
   "name": "Krieg Siege Echelon",
   "faction": "AM",
   "detachment": "Siege Regiment",
-  "points": 980,
+  "points": 950,
   "units": [
     {
       "datasheetId": "000003889",

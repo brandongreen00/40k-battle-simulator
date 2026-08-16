@@ -378,6 +378,55 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-08-16] — 11e points + Detachment Point overhaul, both simulators (owner: "completely
+  revise the point values and disposition costs for Imperial Agents and Astra Militarum teams…
+  do a thorough overhaul of the data", with the wh40k11ed URLs).** Wahapedia's 11e pages are
+  now REAL 11e data (Faction Pack v1.1) — no CSV exports, HTML only. All gates green:
+  `pnpm typecheck`, `pnpm test` (**565 tests**, +15: new `tests/points11e.test.ts` data pins +
+  escalation/priced-wargear pricing tests), `pnpm build`, `pytest tests_py` (**65**),
+  `tools2/lint_determinism.py`.
+  - **v1 points are now 11e** via a committed overlay: `tools/ingest/points11e.json` (all 180
+    sheets, extracted from the owner's URLs + the two sheets published only as individual pages)
+    applied by **`pnpm apply:points11e`** on top of `pnpm ingest` (which still converts 10e CSVs
+    for stats — running ingest WITHOUT the overlay reverts points; README + a test pin guard it).
+  - **Two new 11e pricing mechanics implemented in `army.ts`**: per-copy escalation (38 AM
+    sheets — `PointsTier.copyFrom/copyTo`, "YOUR 3RD+ UNIT COSTS"; `unitCost(ds, n, copyIndex)` +
+    `listPoints` price copies in list order) and **priced wargear** (5 sheets —
+    `Datasheet.wargearCosts`, e.g. Leman Russ Commander's Demolisher battle cannon 15 pts;
+    `unitWargearPoints` prices the loadout, everything else stays free). Agents dual pricing
+    (detachment vs Assigned Agent column) keeps the existing tier-note convention.
+  - **DP costs corrected from the printed pack** (`core/detachments.ts` + doc): the reviews'
+    "all Agents 3 DP" was wrong — **Imperialis Fleet/Hereticus/Malleus/Xenos = 2 DP, Veiled
+    Blade = 1 DP**, and AM's Combined Arms is 2 (not 3). Every Agents detachment now fits the
+    1000 pt budget; at 2000 pts (3 DP) TWO Agents detachments are legal per the owner's note —
+    **multi-detachment lists are still not modelled** (flagged in docs/11e_detachment_points.md).
+  - **Printed Force Dispositions** now drive the prebuilt `recommended` values (the pack binds
+    disposition to detachment): Imperialis Fleet lists are Reconnaissance (was Disruption guess),
+    Bridgehead Priority Assets, Mechanised Assault Reconnaissance. Enhancement costs re-priced
+    (6 changes — mostly Veiled Blade cuts, e.g. Micromelta 45→20; the 11e pack also DROPPED
+    Bridgehead's Advance Augury + Shroud Projector — kept in data, noted as unreachable).
+  - **All rosters regenerated/re-imported** under 11e prices: Bane 985→935 (Stormlord 430→395),
+    Rogue Trader's 985→975, Inquisitors 985→965, all 11 prebuilts still legal, docs/11e_teams.md
+    totals updated. Combat Patrol untouched (fixed boxes, no points).
+  - **v2 (`sim2`/`data2`) audited against the same live pages — two points-ingest defects found
+    and fixed** in `tools2/ingest_wahapedia.py parse_points`: "YOUR 1ST UNIT COSTS" read as
+    copies 1–99 (a 2nd Basilisk priced at the 1st-copy rate; 15 sheets) and WARGEAR OPTIONS rows
+    read as unit tiers (phantom 5–15 pt tiers on 5 sheets — the optimizer's cheapest-tier pick
+    had fielded a 1-model 5 pt Grey Knights Terminator Squad in the committed sample armies).
+    20 `data2/datasheets.json` records corrected in place (provenance notes), the 5 sample
+    armies regenerated via `tools2/build_data.py`, priced wargear + the snapshot-missing
+    `am.tarantula_battery` (11e-only Legends sheet) logged in gaps; register updated.
+  - **Decisions**: unlisted-detachment DP fallback is now a flat 2 (the old "Agents default 3"
+    pattern died with v1.1); the Tarantula Battery is NOT added to v1 (points-only overhaul —
+    it has no 10e datasheet to patch); v1 does not track the Legends flag (79 of 180 sheets are
+    Legends in 11e — a future List Builder filter if wanted); escalated tiers are hidden by
+    ListUnitCard's first-row-per-size dedupe (the card shows the 1st-copy price; the total is
+    copy-aware).
+  - **Handoff**: multi-detachment army support is the natural next feature (data is ready —
+    detachmentPoints + budgets); the AI's unit valuation (`evaluate.ts`) reads `points[0]` so
+    it prices every copy at the 1st-copy rate (minor); v2's schema still has no wargear-cost
+    slot (gap-logged).
+
 - **[2026-08-14] — Tap a unit on the map → a mobile-friendly stat block (owner: "a small PR that
   opens a mobile friendly stat block if I tap on a unit in the map"). Separate PR off main.**
   All gates green: `pnpm typecheck`, `pnpm test` (**550 tests**, +2 jsdom in

@@ -18,5 +18,65 @@
   ],
   "estimate": "1",
   "basis": "first printed capacity; full wording preserved in transport_text"
+ },
+ {
+  "id": "ds:am.field_ordnance_battery:wargear_cost:bombast_field_gun",
+  "what": "priced wargear option",
+  "why": "the 11e pack prices this wargear option per model; the schema has no wargear-cost slot, so unit points exclude it",
+  "attempted": [
+   "WARGEAR OPTIONS rows of the unit cost table"
+  ],
+  "estimate": "10",
+  "basis": "printed price per Bombast field gun"
+ },
+ {
+  "id": "ds:am.krieg_heavy_weapons_squad:wargear_cost:krieg_heavy_flamer",
+  "what": "priced wargear option",
+  "why": "the 11e pack prices this wargear option per model; the schema has no wargear-cost slot, so unit points exclude it",
+  "attempted": [
+   "WARGEAR OPTIONS rows of the unit cost table"
+  ],
+  "estimate": "5",
+  "basis": "printed price per Krieg heavy flamer"
+ },
+ {
+  "id": "ds:am.leman_russ_commander:wargear_cost:demolisher_battle_cannon",
+  "what": "priced wargear option",
+  "why": "the 11e pack prices this wargear option per model; the schema has no wargear-cost slot, so unit points exclude it",
+  "attempted": [
+   "WARGEAR OPTIONS rows of the unit cost table"
+  ],
+  "estimate": "15",
+  "basis": "printed price per Demolisher battle cannon"
+ },
+ {
+  "id": "ds:ia.grey_knights_terminator_squad:wargear_cost:psycannon",
+  "what": "priced wargear option",
+  "why": "the 11e pack prices this wargear option per model; the schema has no wargear-cost slot, so unit points exclude it",
+  "attempted": [
+   "WARGEAR OPTIONS rows of the unit cost table"
+  ],
+  "estimate": "5",
+  "basis": "printed price per Psycannon"
+ },
+ {
+  "id": "ds:ia.sisters_of_battle_immolator:wargear_cost:twin_multi_melta",
+  "what": "priced wargear option",
+  "why": "the 11e pack prices this wargear option per model; the schema has no wargear-cost slot, so unit points exclude it",
+  "attempted": [
+   "WARGEAR OPTIONS rows of the unit cost table"
+  ],
+  "estimate": "15",
+  "basis": "printed price per Twin multi-melta"
+ },
+ {
+  "id": "ds:am.tarantula_battery",
+  "what": "datasheet missing from the snapshot",
+  "why": "the per-datasheet fetch that fed the 2026-08-14 ingest did not include this page; it appears on the combined datasheets list (Legends)",
+  "attempted": [
+   "compared the combined datasheets.html against the ingested snapshot, 2026-08-16"
+  ],
+  "estimate": "40/80/120",
+  "basis": "live page 2026-08-16: 1/2/3 models cost 40/80/120 pts"
  }
 ]

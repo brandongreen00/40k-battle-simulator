@@ -2114,22 +2114,8 @@
     "column": "army_faction"
    },
    {
-    "models": 1,
-    "points": 5,
-    "copy_from": 1,
-    "copy_to": 99,
-    "column": "army_faction"
-   },
-   {
     "models": 5,
     "points": 190,
-    "copy_from": 1,
-    "copy_to": 99,
-    "column": "assigned_agent"
-   },
-   {
-    "models": 1,
-    "points": 5,
     "copy_from": 1,
     "copy_to": 99,
     "column": "assigned_agent"
@@ -2143,7 +2129,8 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Grey-Knights-Terminator-Squad.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-14"
+   "retrieved": "2026-08-14",
+   "note": "points corrected 2026-08-16: WARGEAR OPTIONS rows are not unit tiers"
   }
  },
  {
@@ -5682,13 +5669,6 @@
    },
    {
     "models": 1,
-    "points": 15,
-    "copy_from": 4,
-    "copy_to": 99,
-    "column": "army_faction"
-   },
-   {
-    "models": 1,
     "points": 105,
     "copy_from": 1,
     "copy_to": 3,
@@ -5697,13 +5677,6 @@
    {
     "models": 1,
     "points": 115,
-    "copy_from": 4,
-    "copy_to": 99,
-    "column": "assigned_agent"
-   },
-   {
-    "models": 1,
-    "points": 15,
     "copy_from": 4,
     "copy_to": 99,
     "column": "assigned_agent"
@@ -5717,7 +5690,8 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/imperial-agents/ds-imperial-agents-Sisters-of-Battle-Immolator.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-14"
+   "retrieved": "2026-08-14",
+   "note": "points corrected 2026-08-16: WARGEAR OPTIONS rows are not unit tiers"
   }
  },
  {
@@ -8619,7 +8593,7 @@
     "models": 1,
     "points": 415,
     "copy_from": 1,
-    "copy_to": 99,
+    "copy_to": 1,
     "column": "army_faction"
    },
    {
@@ -8638,7 +8612,8 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Baneblade.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-14"
+   "retrieved": "2026-08-14",
+   "note": "points corrected 2026-08-16: 'YOUR 1ST UNIT COSTS' bounds the copy range to 1..1"
   }
  },
  {
@@ -8751,7 +8726,7 @@
     "models": 1,
     "points": 385,
     "copy_from": 1,
-    "copy_to": 99,
+    "copy_to": 1,
     "column": "army_faction"
    },
    {
@@ -8770,7 +8745,8 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Banehammer.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-14"
+   "retrieved": "2026-08-14",
+   "note": "points corrected 2026-08-16: 'YOUR 1ST UNIT COSTS' bounds the copy range to 1..1"
   }
  },
  {
@@ -8882,7 +8858,7 @@
     "models": 1,
     "points": 415,
     "copy_from": 1,
-    "copy_to": 99,
+    "copy_to": 1,
     "column": "army_faction"
    },
    {
@@ -8901,7 +8877,8 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Banesword.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-14"
+   "retrieved": "2026-08-14",
+   "note": "points corrected 2026-08-16: 'YOUR 1ST UNIT COSTS' bounds the copy range to 1..1"
   }
  },
  {
@@ -9013,7 +8990,7 @@
     "models": 1,
     "points": 115,
     "copy_from": 1,
-    "copy_to": 99,
+    "copy_to": 1,
     "column": "army_faction"
    },
    {
@@ -9032,7 +9009,8 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Basilisk.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-14"
+   "retrieved": "2026-08-14",
+   "note": "points corrected 2026-08-16: 'YOUR 1ST UNIT COSTS' bounds the copy range to 1..1"
   }
  },
  {
@@ -9114,14 +9092,14 @@
     "models": 3,
     "points": 90,
     "copy_from": 1,
-    "copy_to": 99,
+    "copy_to": 1,
     "column": "army_faction"
    },
    {
     "models": 6,
     "points": 200,
     "copy_from": 1,
-    "copy_to": 99,
+    "copy_to": 1,
     "column": "army_faction"
    },
    {
@@ -9147,7 +9125,8 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Bullgryn-Squad.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-14"
+   "retrieved": "2026-08-14",
+   "note": "points corrected 2026-08-16: 'YOUR 1ST UNIT COSTS' bounds the copy range to 1..1"
   }
  },
  {
@@ -12873,7 +12852,7 @@
     "models": 1,
     "points": 125,
     "copy_from": 1,
-    "copy_to": 99,
+    "copy_to": 1,
     "column": "army_faction"
    },
    {
@@ -12892,7 +12871,8 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Deathstrike.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-14"
+   "retrieved": "2026-08-14",
+   "note": "points corrected 2026-08-16: 'YOUR 1ST UNIT COSTS' bounds the copy range to 1..1"
   }
  },
  {
@@ -13175,7 +13155,7 @@
     "models": 1,
     "points": 380,
     "copy_from": 1,
-    "copy_to": 99,
+    "copy_to": 1,
     "column": "army_faction"
    },
    {
@@ -13194,7 +13174,8 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Doomhammer.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-14"
+   "retrieved": "2026-08-14",
+   "note": "points corrected 2026-08-16: 'YOUR 1ST UNIT COSTS' bounds the copy range to 1..1"
   }
  },
  {
@@ -13710,13 +13691,6 @@
     "copy_from": 1,
     "copy_to": 99,
     "column": "army_faction"
-   },
-   {
-    "models": 1,
-    "points": 10,
-    "copy_from": 1,
-    "copy_to": 99,
-    "column": "army_faction"
    }
   ],
   "transport_capacity": 0,
@@ -13727,7 +13701,8 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Field-Ordnance-Battery.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-14"
+   "retrieved": "2026-08-14",
+   "note": "points corrected 2026-08-16: WARGEAR OPTIONS rows are not unit tiers"
   }
  },
  {
@@ -14732,7 +14707,7 @@
     "models": 1,
     "points": 385,
     "copy_from": 1,
-    "copy_to": 99,
+    "copy_to": 1,
     "column": "army_faction"
    },
    {
@@ -14751,7 +14726,8 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Hellhammer.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-14"
+   "retrieved": "2026-08-14",
+   "note": "points corrected 2026-08-16: 'YOUR 1ST UNIT COSTS' bounds the copy range to 1..1"
   }
  },
  {
@@ -16287,13 +16263,6 @@
     "copy_from": 1,
     "copy_to": 99,
     "column": "army_faction"
-   },
-   {
-    "models": 1,
-    "points": 5,
-    "copy_from": 1,
-    "copy_to": 99,
-    "column": "army_faction"
    }
   ],
   "transport_capacity": 0,
@@ -16304,7 +16273,8 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Krieg-Heavy-Weapons-Squad.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-14"
+   "retrieved": "2026-08-14",
+   "note": "points corrected 2026-08-16: WARGEAR OPTIONS rows are not unit tiers"
   }
  },
  {
@@ -16806,13 +16776,6 @@
     "copy_from": 3,
     "copy_to": 99,
     "column": "army_faction"
-   },
-   {
-    "models": 1,
-    "points": 15,
-    "copy_from": 3,
-    "copy_to": 99,
-    "column": "army_faction"
    }
   ],
   "transport_capacity": 0,
@@ -16823,7 +16786,8 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Leman-Russ-Commander.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-14"
+   "retrieved": "2026-08-14",
+   "note": "points corrected 2026-08-16: WARGEAR OPTIONS rows are not unit tiers"
   }
  },
  {
@@ -19787,7 +19751,7 @@
     "models": 1,
     "points": 150,
     "copy_from": 1,
-    "copy_to": 99,
+    "copy_to": 1,
     "column": "army_faction"
    },
    {
@@ -19806,7 +19770,8 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Manticore.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-14"
+   "retrieved": "2026-08-14",
+   "note": "points corrected 2026-08-16: 'YOUR 1ST UNIT COSTS' bounds the copy range to 1..1"
   }
  },
  {
@@ -22244,7 +22209,7 @@
     "models": 1,
     "points": 260,
     "copy_from": 1,
-    "copy_to": 99,
+    "copy_to": 1,
     "column": "army_faction"
    },
    {
@@ -22263,7 +22228,8 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Rogal-Dorn-Battle-Tank.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-14"
+   "retrieved": "2026-08-14",
+   "note": "points corrected 2026-08-16: 'YOUR 1ST UNIT COSTS' bounds the copy range to 1..1"
   }
  },
  {
@@ -22439,7 +22405,7 @@
     "models": 1,
     "points": 290,
     "copy_from": 1,
-    "copy_to": 99,
+    "copy_to": 1,
     "column": "army_faction"
    },
    {
@@ -22458,7 +22424,8 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Rogal-Dorn-Commander.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-14"
+   "retrieved": "2026-08-14",
+   "note": "points corrected 2026-08-16: 'YOUR 1ST UNIT COSTS' bounds the copy range to 1..1"
   }
  },
  {
@@ -23331,7 +23298,7 @@
     "models": 1,
     "points": 375,
     "copy_from": 1,
-    "copy_to": 99,
+    "copy_to": 1,
     "column": "army_faction"
    },
    {
@@ -23350,7 +23317,8 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Shadowsword.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-14"
+   "retrieved": "2026-08-14",
+   "note": "points corrected 2026-08-16: 'YOUR 1ST UNIT COSTS' bounds the copy range to 1..1"
   }
  },
  {
@@ -23892,7 +23860,7 @@
     "models": 1,
     "points": 395,
     "copy_from": 1,
-    "copy_to": 99,
+    "copy_to": 1,
     "column": "army_faction"
    },
    {
@@ -23911,7 +23879,8 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Stormlord.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-14"
+   "retrieved": "2026-08-14",
+   "note": "points corrected 2026-08-16: 'YOUR 1ST UNIT COSTS' bounds the copy range to 1..1"
   }
  },
  {
@@ -24023,7 +23992,7 @@
     "models": 1,
     "points": 430,
     "copy_from": 1,
-    "copy_to": 99,
+    "copy_to": 1,
     "column": "army_faction"
    },
    {
@@ -24042,7 +24011,8 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Stormsword.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-14"
+   "retrieved": "2026-08-14",
+   "note": "points corrected 2026-08-16: 'YOUR 1ST UNIT COSTS' bounds the copy range to 1..1"
   }
  },
  {
@@ -26340,7 +26310,7 @@
     "models": 1,
     "points": 95,
     "copy_from": 1,
-    "copy_to": 99,
+    "copy_to": 1,
     "column": "army_faction"
    },
    {
@@ -26359,7 +26329,8 @@
   "provenance": {
    "source": "wahapedia.ru/wh40k11ed/factions/astra-militarum/ds-astra-militarum-Wyvern.html",
    "pack_version": "11th edition, version 1.1",
-   "retrieved": "2026-08-14"
+   "retrieved": "2026-08-14",
+   "note": "points corrected 2026-08-16: 'YOUR 1ST UNIT COSTS' bounds the copy range to 1..1"
   }
  }
 ]
