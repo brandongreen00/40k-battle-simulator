@@ -6,6 +6,7 @@
 
 import type { GameState, Side, UnitInstance } from '../types';
 import { unitIsOfficer, AM_ORDERS } from '../orders';
+import { armyHasDetachment } from '../detachments';
 import { extraOrderCount } from '../enhancements';
 import { orderableUnits, isOnBoard, engagedEnemies } from '../phases';
 import { objectiveControl, availableUnitWeapons } from '../engine';
@@ -73,7 +74,7 @@ export function aiCommandAction(state: GameState, side: Side, profile: AiProfile
 
   // AM Orders (Voice of Command): one per Officer, +1 for Grizzled Company, +1 for a Grand
   // Strategist (Combined Arms) bearer.
-  const baseOrdersPerOfficer = detachment === 'Grizzled Company' ? 2 : 1;
+  const baseOrdersPerOfficer = armyHasDetachment(detachment, 'Grizzled Company') ? 2 : 1;
   const ordered = new Set<string>();
   for (const officer of myUnits) {
     // unitIsOfficer sees through the Leader merge: Yarrick attached to a Death Korps squad
@@ -96,7 +97,7 @@ export function aiCommandAction(state: GameState, side: Side, profile: AiProfile
       issued++;
       intents.push({ intent: { type: 'IssueOrder', unitId: t.id, effectId } });
       // Grizzled Company (Ruthless Discipline): an Order also grants re-roll Hit rolls of 1.
-      if (detachment === 'Grizzled Company') {
+      if (armyHasDetachment(detachment, 'Grizzled Company')) {
         intents.push({ intent: { type: 'IssueOrder', unitId: t.id, effectId: 'reroll_hits_1' } });
       }
       notes.push(`${effectId.replace('order:', '')} → ${ctx.datasheets.get(t.datasheetId)?.name ?? t.id}`);
@@ -104,7 +105,7 @@ export function aiCommandAction(state: GameState, side: Side, profile: AiProfile
   }
 
   // Imperialis Fleet "At all Costs": Eliminate the scariest enemy, Acquire a unit on an objective.
-  if (detachment === 'Imperialis Fleet') {
+  if (armyHasDetachment(detachment, 'Imperialis Fleet')) {
     const enemies = state.units
       .filter((e) => e.owner !== side && isOnBoard(e))
       .sort((a, b) => unitThreat(b, ctx) - unitThreat(a, ctx) || a.id.localeCompare(b.id));

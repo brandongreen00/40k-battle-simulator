@@ -190,8 +190,8 @@ export function ListBuilder({ onOpenInBoard }: Props) {
             {list.detachment && !isCP && (() => {
               const dp = checkDetachmentPoints(list.detachment, list.faction, BATTLE_SIZES[list.battleSize].points);
               return (
-                <span className="muted" title="Detachment Points (11e): 2 DP budget at 1000 pts, 3 DP at 2000. A lone detachment over budget is legal per GW's stated intent.">
-                  {' '}· {dp.cost}/{dp.budget.dp} DP{dp.overBudgetLone ? ' (lone-detachment allowance)' : ''}
+                <span className="muted" title="Detachment Points (11e): 2 DP budget at 1000 pts, 3 DP at 2000. An army may combine detachments within the budget; a lone detachment over budget is legal per GW's stated intent.">
+                  {' '}· {dp.cost}/{dp.budget.dp} DP{dp.overBudgetLone ? ' (lone-detachment allowance)' : dp.overBudgetMulti ? ' (over budget)' : ''}
                 </span>
               );
             })()}
@@ -204,6 +204,14 @@ export function ListBuilder({ onOpenInBoard }: Props) {
           ) : (
             <select value={list.detachment} onChange={(e) => setDetachment(e.target.value)}>
               <option value="">— select —</option>
+              {/* An imported multi-detachment army carries a combined name ("A and B") that
+                  isn't in the single-detachment catalog — keep it selectable so the import
+                  displays (and validates) as-is. */}
+              {list.detachment && !detachmentsForFaction(list.faction).includes(list.detachment) && (
+                <option value={list.detachment}>
+                  {list.detachment} ({detachmentPoints(list.detachment, list.faction)} DP)
+                </option>
+              )}
               {detachmentsForFaction(list.faction).map((d) => (
                 <option key={d} value={d}>
                   {d} ({detachmentPoints(d, list.faction)} DP)

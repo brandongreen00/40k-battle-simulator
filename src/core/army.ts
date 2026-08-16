@@ -9,7 +9,7 @@
 
 import type { Datasheet, Enhancement, Roster } from './types';
 import { defensiveItemsInText, normalizeItemName, validateUnitLoadout, type Loadout } from './wargear';
-import { checkDetachmentPoints, dpBudget } from './detachments';
+import { armyHasDetachment, checkDetachmentPoints, dpBudget } from './detachments';
 
 // ── Battle size (points limit + datasheet copy limits) ───────────────────────
 export type BattleSize = 'Combat Patrol' | 'Incursion' | 'Strike Force';
@@ -258,11 +258,19 @@ export function validate(list: ArmyList, ix: DataIndex): Violation[] {
   } else {
     // Detachment Points (11e): a lone detachment over the budget is legal by GW's stated
     // lone-detachment allowance (not yet errata'd) — surface it as a warning, not an error.
+    // A MULTI-detachment army ("Imperialis Fleet and Veiled Blade Elimination Force") sums its
+    // components' DP; the lone allowance doesn't apply, so over-budget is a real error.
     const dp = checkDetachmentPoints(list.detachment, list.faction, rule.points);
     if (dp.overBudgetLone) {
       v.push({
         severity: 'warning',
         message: `${list.detachment} costs ${dp.cost} DP — over the ${dp.budget.dp} DP budget at ${rule.points} pts. Legal as a lone detachment (GW stated intent, pending errata).`,
+      });
+    }
+    if (dp.overBudgetMulti) {
+      v.push({
+        severity: 'error',
+        message: `Detachments cost ${dp.cost} DP together (${dp.detachments.join(' + ')}) — over the ${dp.budget.dp} DP budget at ${rule.points} pts.`,
       });
     }
   }
@@ -305,7 +313,9 @@ export function validate(list: ArmyList, ix: DataIndex): Violation[] {
         if (isEpicHero(ds)) {
           v.push({ severity: 'error', uid: u.uid, message: `${ds.name} is an Epic Hero and cannot take an enhancement.` });
         }
-        if (list.detachment && enh.detachment && enh.detachment !== list.detachment) {
+        // Detachment scope: legal when the enhancement's detachment is ANY of the army's
+        // (possibly multiple) detachments.
+        if (list.detachment && enh.detachment && !armyHasDetachment(list.detachment, enh.detachment)) {
           v.push({ severity: 'error', uid: u.uid, message: `Enhancement "${enh.name}" is from ${enh.detachment}, not ${list.detachment}.` });
         }
       }

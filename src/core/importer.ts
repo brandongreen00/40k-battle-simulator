@@ -20,6 +20,7 @@ import {
   type ListUnit,
 } from './army';
 import type { Loadout } from './wargear';
+import { DISPOSITIONS } from './missions11';
 
 export interface ImportResult {
   list: ArmyList;
@@ -148,9 +149,12 @@ export function parseArmyText(text: string, deps: ImportDeps): ImportResult {
   for (const line of preamble) {
     const f = factionFromText(line);
     const bs = line.match(/\b(combat patrol|incursion|strike force)\b/i);
-    // 11e app exports carry the chosen Force Disposition ("Force Dispositions: Purge the Foe").
+    // 11e app exports carry the chosen Force Disposition — either prefixed ("Force
+    // Dispositions: Purge the Foe") or as a bare line ("Reconnaissance", newer exports).
     const disp = line.match(/^force dispositions?:\s*(.+)$/i);
+    const bareDisp = DISPOSITIONS.find((d) => d.name.toLowerCase() === line.trim().toLowerCase());
     if (disp) disposition = disp[1]!.trim();
+    else if (bareDisp) disposition = bareDisp.name;
     else if (f) faction = f;
     else if (bs) battleSize = BATTLE_SIZE_BY_NAME[bs[1]!.toLowerCase()] ?? battleSize;
     else leftover.push(line);
@@ -225,12 +229,25 @@ function pickDetachment(candidates: string[], deps: ImportDeps): string {
   for (const e of deps.enhancements) {
     if (e.detachment) byNorm.set(normalizeDetachment(e.detachment), e.detachment);
   }
-  // Prefer a candidate that matches a known detachment (punctuation/DP-suffix-insensitive);
-  // else the longest non-faction line, with the DP suffix stripped.
+  // Prefer a candidate that matches a known detachment (punctuation/DP-suffix-insensitive).
   for (const c of candidates) {
     const known = byNorm.get(normalizeDetachment(c));
     if (known) return known;
   }
+  // A multi-detachment army (11e): the app joins the detachments in one header line —
+  // "Imperialis Fleet and Veiled Blade Elimination Force (3 Detachment Points)". Split on
+  // "and" and accept the line when EVERY part is a known detachment, re-joined canonically.
+  for (const c of candidates) {
+    const parts = c
+      .replace(/\(\s*\d+\s*detachment points?\s*\)/i, '')
+      .split(/\s+(?:and|&)\s+/i)
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0);
+    if (parts.length > 1 && parts.every((p) => byNorm.has(normalizeDetachment(p)))) {
+      return parts.map((p) => byNorm.get(normalizeDetachment(p))!).join(' and ');
+    }
+  }
+  // Else the longest non-faction line, with the DP suffix stripped.
   const nonFaction = candidates.filter((c) => !factionFromText(c));
   const raw = nonFaction.sort((a, b) => b.length - a.length)[0] ?? '';
   return raw.replace(/\s*\(\s*\d+\s*detachment points?\s*\)/i, '').trim();

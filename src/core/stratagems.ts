@@ -10,6 +10,8 @@
 // Reactive stratagems (turn: 'opponent') are intentionally usable on the *other* player's turn —
 // the engine never gates Stratagems by the active player (architecture rule #3).
 
+import { armyHasDetachment } from './detachments';
+
 export type StratTurn = 'either' | 'your' | 'opponent';
 
 export interface Stratagem {
@@ -102,7 +104,9 @@ export interface StratagemQuery {
 export function usableStratagems(all: Stratagem[], q: StratagemQuery): Stratagem[] {
   return all.filter((s) => {
     if (q.battleType === 'combat_patrol' && CP_BANNED_CORE.has(s.id)) return false;
-    if (s.detachment && s.detachment !== q.detachment) return false;
+    // Membership, not equality: a multi-detachment army's combined name ("A and B") offers
+    // BOTH components' stratagem sets. (Patrol names pass through as a 1-element list.)
+    if (s.detachment && !armyHasDetachment(q.detachment, s.detachment)) return false;
     if (!phaseMatches(s.phase, q.phase)) return false;
     if (!turnMatches(s.turn, q.isYourTurn)) return false;
     return true;
