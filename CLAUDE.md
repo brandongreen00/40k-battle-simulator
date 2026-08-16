@@ -378,6 +378,61 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-08-16] — MULTI-DETACHMENT ARMIES + two wargear-validation false positives (owner:
+  imported "HOLD OBJECTIVES", a 2000 pt Imperial Agents army with detachment "Imperialis Fleet
+  and Veiled Blade Elimination Force (3 Detachment Points)"; got enhancement-scope errors,
+  Sanctifiers hand-flamer cap errors and an Inquisitorial Chimera heavy-flamer cap error; the
+  list is app-legal). Separate PR off main.** All gates green: `pnpm typecheck`, `pnpm test`
+  (**576 tests**, +25: multi-detachment split/DP/membership, both-detachments stratagem offer,
+  default-wargear credits, the imported list's round-trip), `pnpm build`; a Playwright drive of
+  the real app (paste the export → 1985/2000, ZERO validation errors, combined detachment at
+  3/3 DP, enhancement picker offering BOTH detachments' cards, no over-cap wargear group,
+  zero console errors) passes **9/9**.
+  - **Multi-detachment armies are now modelled** (the 11e rule the DP doc recorded: multiple
+    detachments within the budget, army-wide enhancement cap). No schema change — the app's
+    combined header string stays the single `detachment` field; new pure
+    `detachments.splitDetachments` derives the components (split on "and", accepted only when
+    EVERY part is a known detachment, so names containing "and" can never break), with
+    `armyHasDetachment` + `normalizeDetachmentName` for membership tests. `detachmentPoints`
+    sums components; `checkDetachmentPoints` returns `overBudgetMulti` (a hard error — the
+    lone-detachment allowance is single-only) alongside `overBudgetLone`.
+  - **Scoping is membership everywhere**: `validate` accepts an enhancement from ANY component
+    (the owner's ask); `usableStratagems` offers both components' cards;
+    `loaders.enhancementsForDetachment`, the AI's Command seams (Grizzled Company order count +
+    Ruthless Discipline, Imperialis Fleet At all Costs) and GamePanel's detachment-rule blocks
+    all use `armyHasDetachment`, so a combined army plays BOTH detachments' rules in-game.
+    The importer recognises the combined header (each part matched against the catalog,
+    canonically re-joined) and a BARE Force Disposition line ("Reconnaissance" — v2.4.0 exports
+    drop the "Force Dispositions:" prefix); the List Builder keeps a combined value selectable
+    (with summed DP) but does not offer composing new pairs — import is the entry path.
+  - **Wargear false positive #1 — default wargear charged the option caps.** The app's export
+    lists FULL equipment: 4 of the Sanctifiers' 5 hand flamers are the 4 Sanctifier models'
+    DEFAULT weapons (Wahapedia 11e confirms the options verbatim; the 5th is the legal melee-
+    weapon swap). New `wargear.defaultLoadoutCounts` parses the datasheet loadout text
+    ("Every Sanctifier is equipped with: …" resolved via unit composition, scaled on integer
+    size multiples, compound subjects summed) and `validateUnitLoadout`/`groupFits`/the
+    ListUnitCard steppers charge only picks BEYOND the default bearers (violation messages say
+    "beyond the default wargear"). Best-effort by design: it only ever credits.
+  - **Wargear false positive #2 — the footnote asterisk.** The Chimera's turret option prints
+    "1 Heavy flamer*" (the * = "cannot be replaced" note); the unstripped name didn't pool with
+    the hull option's "heavy flamer", so the two-flamer loadout charged one option's 1-model
+    cap. Item extraction now strips trailing `*`/`†` and matches via `normalizeItemName`
+    (also fixing case-mismatch lookups like the export's "Simulacrum Imperialis"); the two
+    options group and hull+turret heavy flamers (or keeping the hull heavy bolter + adding the
+    turret one) validate legal, while a third is still flagged.
+  - **The list itself is committed**: `tools/rosters/imports/hold_objectives.txt` →
+    `pnpm import:roster` → `data/rosters/hold_objectives.json` (20 units, 1985 pts, 0 warnings,
+    0 errors, Kroyle Warlord, both enhancements, `recommended: reconnaissance/operative`).
+  - **Points discrepancy flagged, not "fixed"**: the app (Data Version v925) prints 2000 by
+    pricing the Callidus Assassin at **115**; Wahapedia 11e (Faction Pack v1.1, re-checked live
+    this session) still prints **100**, which our data pins — hence 1985. Every other unit,
+    both enhancement costs (Digital Weapons 10, Clandestine Operation 15) and the Immolators'
+    105 (90 base + 15 priced twin multi-melta) reconcile exactly. If the app is a newer MFM,
+    the fix is a one-line edit in `tools/ingest/points11e.json` + `pnpm apply:points11e`.
+  - **Handoff nits**: the List Builder can't COMPOSE a multi-detachment pair from the dropdown
+    (import-only); `ai/types.detachments` still carries one string per side (the combined name —
+    correct via membership checks); v2 (`sim2`) is untouched (single-detachment armies there).
+
 - **[2026-08-16] — Standard (Event Companion) maps now use REAL terrain shapes, not squares
   (owner, comparing a standard map to a Combat Patrol one: "the first use squares, where the
   second uses actual terrain shapes. Could you edit the first maps to actually use terrain

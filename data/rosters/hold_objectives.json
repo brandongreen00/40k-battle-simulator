@@ -1,0 +1,226 @@
+{
+  "name": "HOLD OBJECTIVES",
+  "faction": "AoI",
+  "detachment": "Imperialis Fleet and Veiled Blade Elimination Force",
+  "points": 1985,
+  "units": [
+    {
+      "datasheetId": "000003815",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Vigil spear": 1
+      },
+      "enhancementId": "000009138004"
+    },
+    {
+      "datasheetId": "000003816",
+      "modelCount": 10,
+      "wargearCounts": {
+        "Combi-weapon": 1,
+        "Xenophase blade": 1,
+        "Astartes shield": 3,
+        "Black Shield blades": 1,
+        "Boltgun": 1,
+        "Deathwatch thunder hammer": 4,
+        "Power weapon": 4
+      }
+    },
+    {
+      "datasheetId": "000000877",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Combi-weapon": 1,
+        "Force weapon": 1,
+        "Psychic Gifts": 1,
+        "Psychic Shock Wave": 1
+      }
+    },
+    {
+      "datasheetId": "000004074",
+      "modelCount": 9,
+      "wargearCounts": {
+        "Burning hands": 1,
+        "Holy fire": 2,
+        "Close combat weapon": 3,
+        "Salvationist Medikit": 1,
+        "Death Cult blades": 1,
+        "Ministorum flamer": 1,
+        "Plasma gun": 1,
+        "Sanctifier melee weapon": 4,
+        "Ministorum hand flamer": 5,
+        "Simulacrum Imperialis": 1
+      }
+    },
+    {
+      "datasheetId": "000000877",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Combi-weapon": 1,
+        "Force weapon": 1,
+        "Psychic Gifts": 1,
+        "Psychic Shock Wave": 1
+      },
+      "enhancementId": "000009138002"
+    },
+    {
+      "datasheetId": "000004074",
+      "modelCount": 9,
+      "wargearCounts": {
+        "Burning hands": 1,
+        "Holy fire": 2,
+        "Close combat weapon": 3,
+        "Salvationist Medikit": 1,
+        "Death Cult blades": 1,
+        "Ministorum flamer": 1,
+        "Plasma gun": 1,
+        "Sanctifier melee weapon": 4,
+        "Ministorum hand flamer": 5,
+        "Simulacrum Imperialis": 1
+      }
+    },
+    {
+      "datasheetId": "000000871",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Neural shredder": 1,
+        "Phase sword and poison blades": 1
+      }
+    },
+    {
+      "datasheetId": "000002090",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Dirgesinger": 1,
+        "Power fist": 1,
+        "Psychic Tempest": 1
+      }
+    },
+    {
+      "datasheetId": "000004214",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Butcher blade": 1,
+        "Garralisk’s claws and teeth": 1,
+        "Jindarii tox‑cycler": 1,
+        "Stubcarbine": 1
+      }
+    },
+    {
+      "datasheetId": "000003830",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Armoured tracks": 1,
+        "Hunter-killer missile": 1,
+        "Storm bolter": 1
+      }
+    },
+    {
+      "datasheetId": "000003820",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Armoured tracks": 1,
+        "Heavy flamer": 2,
+        "Heavy stubber": 1,
+        "Hunter-killer missile": 1,
+        "Lasgun array": 1
+      }
+    },
+    {
+      "datasheetId": "000003819",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Armoured tracks": 1,
+        "Heavy bolter": 1,
+        "Hunter-killer missile": 1,
+        "Twin multi-melta": 1
+      }
+    },
+    {
+      "datasheetId": "000003819",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Armoured tracks": 1,
+        "Heavy bolter": 1,
+        "Hunter-killer missile": 1,
+        "Twin multi-melta": 1
+      }
+    },
+    {
+      "datasheetId": "000003813",
+      "modelCount": 5,
+      "wargearCounts": {
+        "Nemesis force weapon": 5,
+        "Storm bolter": 3,
+        "Incinerator": 1,
+        "Narthecium": 1
+      }
+    },
+    {
+      "datasheetId": "000003813",
+      "modelCount": 5,
+      "wargearCounts": {
+        "Nemesis force weapon": 5,
+        "Storm bolter": 3,
+        "Incinerator": 1,
+        "Narthecium": 1
+      }
+    },
+    {
+      "datasheetId": "000002767",
+      "modelCount": 6,
+      "wargearCounts": {
+        "Tome‐skull": 1,
+        "Agent firearm": 5,
+        "Agent melee weapon": 6,
+        "Eviscerator": 1,
+        "Mystic stave": 1,
+        "Plasma pistol": 1,
+        "Multi-melta": 1
+      }
+    },
+    {
+      "datasheetId": "000003818",
+      "modelCount": 10,
+      "wargearCounts": {
+        "Bolt pistol": 10,
+        "Close combat weapon": 10,
+        "Inferno pistol": 1,
+        "Boltgun": 7,
+        "Meltagun": 1,
+        "Multi-melta": 1
+      }
+    },
+    {
+      "datasheetId": "000002684",
+      "modelCount": 11,
+      "wargearCounts": {
+        "Arbites shotpistol": 10,
+        "Shock maul": 10,
+        "Mechanical bite": 1
+      }
+    },
+    {
+      "datasheetId": "000002684",
+      "modelCount": 11,
+      "wargearCounts": {
+        "Arbites shotpistol": 10,
+        "Shock maul": 10,
+        "Mechanical bite": 1
+      }
+    },
+    {
+      "datasheetId": "000002684",
+      "modelCount": 11,
+      "wargearCounts": {
+        "Arbites shotpistol": 10,
+        "Shock maul": 10,
+        "Mechanical bite": 1
+      }
+    }
+  ],
+  "recommended": {
+    "disposition": "reconnaissance",
+    "profile": "operative"
+  },
+  "note": "Imported from the 40k-app text export hold_objectives.txt via pnpm import:roster."
+}

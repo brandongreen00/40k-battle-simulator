@@ -46,6 +46,12 @@ describe('imported owner lists', () => {
     // v2.0.5 (11e) export format: ATTACHED UNITS sections, "Attached as:" bullets, a detachment
     // line with a DP suffix and comma variant, and a Force Dispositions line.
     { txt: 'inquisitors.txt', json: 'inquisitors.json', name: 'Inquisitors', units: 11, points: 965 },
+    // v2.4.0 (11e) MULTI-DETACHMENT export: two detachments joined with "and" in the header, a
+    // bare disposition line ("Reconnaissance"), enhancements from BOTH detachments. Our total is
+    // 1985 vs the app's printed 2000 — the app (Data Version v925) prices the Callidus Assassin
+    // at 115 where Wahapedia 11e (Faction Pack v1.1) still prints 100; we pin the Wahapedia
+    // value, and the list stays legal either way.
+    { txt: 'hold_objectives.txt', json: 'hold_objectives.json', name: 'HOLD OBJECTIVES', units: 20, points: 1985 },
   ];
 
   for (const c of cases) {
@@ -90,6 +96,32 @@ describe('imported owner lists', () => {
       .map((u) => u.enhancementId && dataIndex.enhancements.get(u.enhancementId)?.name)
       .filter(Boolean);
     expect(enhNames.sort()).toEqual(['Ignis Judicium', 'Liber Heresius']);
+  });
+
+  it('HOLD OBJECTIVES (multi-detachment): both detachments parsed, both enhancements legal', () => {
+    const text = readFileSync(join(root, 'tools', 'rosters', 'imports', 'hold_objectives.txt'), 'utf-8');
+    const { list, warnings, disposition } = parseArmyText(normalizeExport(text), deps);
+    expect(warnings).toEqual([]);
+    expect(list.detachment).toBe('Imperialis Fleet and Veiled Blade Elimination Force');
+    expect(disposition).toBe('Reconnaissance'); // bare disposition line (no "Force Dispositions:" prefix)
+    // Enhancements resolve from BOTH component detachments and validate clean.
+    const enhNames = list.units
+      .map((u) => u.enhancementId && dataIndex.enhancements.get(u.enhancementId)?.name)
+      .filter(Boolean)
+      .sort();
+    expect(enhNames).toEqual(['Clandestine Operation', 'Digital Weapons']);
+    expect(validate(list, dataIndex).filter((v) => v.severity === 'error')).toEqual([]);
+    // The former false positives stay dead: no wargear-cap or enhancement-scope errors on the
+    // Sanctifiers' 5 hand flamers or the Chimera's twin heavy flamers.
+    const kroyle = list.units.find((u) => dataIndex.datasheets.get(u.datasheetId)?.name === 'Inquisitor Kroyle');
+    expect(kroyle?.warlord).toBe(true);
+    // An enhancement from a detachment NOT in the army is still flagged.
+    const draxus = list.units.find((u) => dataIndex.datasheets.get(u.datasheetId)?.name === 'Inquisitor Draxus')!;
+    const foreign = [...dataIndex.enhancements.values()].find((e) => e.detachment === 'Ordo Xenos Alien Hunters')!;
+    const tampered = { ...list, units: list.units.map((u) => (u.uid === draxus.uid ? { ...u, enhancementId: foreign.id } : u)) };
+    expect(
+      validate(tampered, dataIndex).some((v) => v.severity === 'error' && v.message.includes(foreign.name)),
+    ).toBe(true);
   });
 
   it('Bane carries the full per-model wargear through normalization (the glyphless lines)', () => {
