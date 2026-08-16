@@ -19,6 +19,7 @@ data/raw/
 # headless simulator output (pnpm sim)
 out/
 
-# python bytecode from the offline extractors
+# Python bytecode + pytest cache (offline extractors, v2 simulator)
 __pycache__/
 *.pyc
+.pytest_cache/

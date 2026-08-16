@@ -308,6 +308,54 @@ Stub their state fields if convenient, but implement no behavior.
 
 ---
 
+## 7b. THE SECOND SIMULATOR (`sim2/`) — read this before touching anything
+
+There are now **two systems in this repository**, and they are deliberately
+independent:
+
+* **v1 — this document's subject.** TypeScript, `src/core/` + `src/ui/`, the
+  measuring board, List Builder and Combat Patrol flow. Everything in sections
+  1–9 of this file describes v1.
+* **v2 — the Auto Player.** A Python 11th-edition matched-play engine in
+  `sim2/`, its data snapshot in `data2/`, its tools in `tools2/`, its tests in
+  `tests_py/`, and a browser surface at `src/ui/autoplayer/` reachable from the
+  top bar. Built to a separate written brief; see **`docs/sim2_architecture.md`**
+  and **`STATUS.md`**.
+
+**Do not merge the two.** v2 does not import v1 code and v1 does not import v2.
+v2 reuses only *data* (the Event Companion layout extraction and the mission
+dossier). Refactoring one to serve the other is not wanted.
+
+**Which one to work in:** a request about the measuring board, the List Builder,
+Combat Patrol or the 10e/11e TypeScript core is v1. A request about playing
+whole games automatically, agents, batches, list optimisation, battle-log replay
+or the Auto Player tab is v2.
+
+**v2's own non-negotiables** (they mirror rules #1–#6 above but are enforced
+differently):
+
+1. **The kernel knows no faction.** Datasheet abilities, stratagems,
+   enhancements, detachment rules and Orders are data records in `data2/`, bound
+   to effect primitives in `tools2/bindings.py`. Writing a unit's rule into
+   `sim2/kernel/*.py` is a design violation.
+2. **One RNG.** All randomness goes through `sim2/rng.py`;
+   `python3 tools2/lint_determinism.py` fails the build otherwise.
+3. **Agents choose, never construct.** `sim2/kernel/legal.py` enumerates legal
+   actions and `Engine.apply` re-validates. Every batch publishes a count of
+   refused actions; it is 0 and must stay 0.
+4. **Transcribe, never reconstruct.** A value the source does not carry becomes
+   an entry in `data2/gaps.json`, never a guess.
+
+**v2 commands:** `python3 -m sim2.cli {data,armies,play,batch,optimize}` ·
+`python3 -m pytest tests_py -q` · `python3 tools2/sync_results.py` ·
+`python3 tools2/build_data.py`.
+
+**The v2 backlog is written up in full** in `docs/sim2_gap_register.md` — every
+known gap with evidence, file locations and acceptance criteria. Start there
+rather than re-deriving it.
+
+---
+
 ## 8. Roadmap beyond Stage 1 (context only — do not build yet)
 
 - **Stage 2 — Deterministic combat core:** phase/turn state machine, hit→wound→save→damage
@@ -387,6 +435,55 @@ ability-system design that these stages depend on.
     two touching pieces becomes one polygon (union — correct footprint, coarser grouping); the
     Combat Patrol maps were already traced and are untouched; legacy 10e `data/layouts/` maps
     still use their labrador rectangles (different pipeline, no photos to trace).
+
+- **[2026-08-16] — 11e points + Detachment Point overhaul, both simulators (owner: "completely
+  revise the point values and disposition costs for Imperial Agents and Astra Militarum teams…
+  do a thorough overhaul of the data", with the wh40k11ed URLs).** Wahapedia's 11e pages are
+  now REAL 11e data (Faction Pack v1.1) — no CSV exports, HTML only. All gates green:
+  `pnpm typecheck`, `pnpm test` (**565 tests**, +15: new `tests/points11e.test.ts` data pins +
+  escalation/priced-wargear pricing tests), `pnpm build`, `pytest tests_py` (**65**),
+  `tools2/lint_determinism.py`.
+  - **v1 points are now 11e** via a committed overlay: `tools/ingest/points11e.json` (all 180
+    sheets, extracted from the owner's URLs + the two sheets published only as individual pages)
+    applied by **`pnpm apply:points11e`** on top of `pnpm ingest` (which still converts 10e CSVs
+    for stats — running ingest WITHOUT the overlay reverts points; README + a test pin guard it).
+  - **Two new 11e pricing mechanics implemented in `army.ts`**: per-copy escalation (38 AM
+    sheets — `PointsTier.copyFrom/copyTo`, "YOUR 3RD+ UNIT COSTS"; `unitCost(ds, n, copyIndex)` +
+    `listPoints` price copies in list order) and **priced wargear** (5 sheets —
+    `Datasheet.wargearCosts`, e.g. Leman Russ Commander's Demolisher battle cannon 15 pts;
+    `unitWargearPoints` prices the loadout, everything else stays free). Agents dual pricing
+    (detachment vs Assigned Agent column) keeps the existing tier-note convention.
+  - **DP costs corrected from the printed pack** (`core/detachments.ts` + doc): the reviews'
+    "all Agents 3 DP" was wrong — **Imperialis Fleet/Hereticus/Malleus/Xenos = 2 DP, Veiled
+    Blade = 1 DP**, and AM's Combined Arms is 2 (not 3). Every Agents detachment now fits the
+    1000 pt budget; at 2000 pts (3 DP) TWO Agents detachments are legal per the owner's note —
+    **multi-detachment lists are still not modelled** (flagged in docs/11e_detachment_points.md).
+  - **Printed Force Dispositions** now drive the prebuilt `recommended` values (the pack binds
+    disposition to detachment): Imperialis Fleet lists are Reconnaissance (was Disruption guess),
+    Bridgehead Priority Assets, Mechanised Assault Reconnaissance. Enhancement costs re-priced
+    (6 changes — mostly Veiled Blade cuts, e.g. Micromelta 45→20; the 11e pack also DROPPED
+    Bridgehead's Advance Augury + Shroud Projector — kept in data, noted as unreachable).
+  - **All rosters regenerated/re-imported** under 11e prices: Bane 985→935 (Stormlord 430→395),
+    Rogue Trader's 985→975, Inquisitors 985→965, all 11 prebuilts still legal, docs/11e_teams.md
+    totals updated. Combat Patrol untouched (fixed boxes, no points).
+  - **v2 (`sim2`/`data2`) audited against the same live pages — two points-ingest defects found
+    and fixed** in `tools2/ingest_wahapedia.py parse_points`: "YOUR 1ST UNIT COSTS" read as
+    copies 1–99 (a 2nd Basilisk priced at the 1st-copy rate; 15 sheets) and WARGEAR OPTIONS rows
+    read as unit tiers (phantom 5–15 pt tiers on 5 sheets — the optimizer's cheapest-tier pick
+    had fielded a 1-model 5 pt Grey Knights Terminator Squad in the committed sample armies).
+    20 `data2/datasheets.json` records corrected in place (provenance notes), the 5 sample
+    armies regenerated via `tools2/build_data.py`, priced wargear + the snapshot-missing
+    `am.tarantula_battery` (11e-only Legends sheet) logged in gaps; register updated.
+  - **Decisions**: unlisted-detachment DP fallback is now a flat 2 (the old "Agents default 3"
+    pattern died with v1.1); the Tarantula Battery is NOT added to v1 (points-only overhaul —
+    it has no 10e datasheet to patch); v1 does not track the Legends flag (79 of 180 sheets are
+    Legends in 11e — a future List Builder filter if wanted); escalated tiers are hidden by
+    ListUnitCard's first-row-per-size dedupe (the card shows the 1st-copy price; the total is
+    copy-aware).
+  - **Handoff**: multi-detachment army support is the natural next feature (data is ready —
+    detachmentPoints + budgets); the AI's unit valuation (`evaluate.ts`) reads `points[0]` so
+    it prices every copy at the 1st-copy rate (minor); v2's schema still has no wargear-cost
+    slot (gap-logged).
 
 - **[2026-08-14] — Tap a unit on the map → a mobile-friendly stat block (owner: "a small PR that
   opens a mobile friendly stat block if I tap on a unit in the map"). Separate PR off main.**
@@ -558,6 +655,57 @@ ability-system design that these stages depend on.
     radii (a target is in range when its base touches the ring).
   - **Handoff nits**: tapping empty board clears the selection only when not zoomed in (zoomed
     drags pan); the GamePanel's attacker/target selects don't mirror a board-tap selection.
+
+- **[2026-08-11] — V2: an independent 11th-edition simulator behind a new "Auto Player" tab
+  (owner: "follow this brief to create a fully independent battle simulator… consider this a
+  version 2… make this accessible via a new selection in the top bar").** v1 is untouched. All
+  gates green: `pnpm typecheck`, `pnpm test` (**534**), `pnpm build`, `pytest tests_py` (**57**,
+  incl. 8 full-game tests), `tools2/lint_determinism.py`. Full status: **`STATUS.md`**;
+  architecture: **`docs/sim2_architecture.md`**; backlog: **`docs/sim2_gap_register.md`**;
+  per-area adversarial reviews in **`reviews/`**. Orientation for future sessions is §7b above.
+  - **Engine (`sim2/`, Python 3.11, stdlib only).** Continuous 2D + height geometry (base-to-base
+    distance, the 2"/5" engagement cylinder, coherency, Obscuring/Solid line of sight, cover as an
+    11e *hit* penalty, Hidden/Gone to Ground with a modifiable detection range); the full attack
+    sequence (allocation groups with CHARACTER last and [PRECISION] promotion, Devastating Wounds
+    capped per critical, FNP, Hazardous, the S-vs-T table transcribed from the PDF because
+    Wahapedia strips its numerals); phase machine, battle-shock, CP economy, stratagem usage
+    limits, Actions, the Voice of Command Order subsystem, objectives and mission scoring under
+    the 45/45/10 caps.
+  - **Rules as data.** An effect interpreter with a selector algebra
+    (`unit(DEATHWATCH & INFANTRY & !engaged & from_my_army)`) and a primitive vocabulary; unknown
+    predicates RAISE rather than silently matching. 175 effect records carry their printed text +
+    provenance; 19 are bound to primitives so far.
+  - **Data ingested from source** (`tools2/ingest_wahapedia.py`, raw HTML NOT committed): 179
+    datasheets (46 IA / 133 AM, 78 flagged Legends), all 16 detachments with Force Disposition and
+    DP matching the brief's verified strip (**Imperialis Fleet = Reconnaissance**, pinned by a
+    test), 45 Event Companion layouts, the asymmetric 5×5 mission matrix. The documented parsing
+    traps are handled and tested: duplicated weapon rows, per-word keyword spans, the Agents dual
+    points column (Eversor 100/110), escalating squadron costs (3rd Hellhound 135), Boarding
+    Actions contamination. 189 missing values are logged in `data2/gaps.json`, none guessed.
+  - **Agents + harness.** Random and heuristic agents choosing only from the enumerated legal
+    actions; batch runner, list optimizer over every tournament-legal datasheet, an MCTS rollout
+    scaffold, and a self-play loop that runs (RL to strength is explicitly out of scope).
+    Measured: **0 illegal actions**, byte-identical replays per seed, heuristic beats random
+    **20–0**, ~8s per 500pt game and ~40s per 1000pt game.
+  - **Auto Player tab** (`src/ui/autoplayer/`): run configurator (copyable CLI command or a
+    GitHub Actions `workflow_dispatch` using a token kept in browser storage — never committed),
+    results dashboard, and a turn-by-turn replay viewer that draws terrain, base-accurate models
+    and the event feed straight from a battle log. GitHub Pages cannot execute the engine; that
+    split is stated in the UI rather than hidden.
+  - **Two bugs worth remembering, both found by playing games rather than reading code:** primary
+    missions never scored (layout pages print mission names in caps, cards are stored under
+    normalised ids), and threshold clauses ("you control one or more objectives") were scored
+    per objective, so every card saturated the 15VP/round cap and the agent-strength metric
+    measured nothing. Both fixed with regression tests.
+  - **Handoff / known gaps (full register in `docs/sim2_gap_register.md`):** four ingester defects
+    found while writing that register are the highest-value next work — invulnerable saves are
+    captured on 1 of 179 sheets, core abilities (Deep Strike/Leader/Infiltrators/Scouts/Stealth/
+    FNP/Fights First) are inert because they are stored under a single "CORE" key, multi-profile
+    statlines collapse to one profile, and transport capacity parses as 0. Also: 16 of 18
+    secondary missions have no scoring binding; transports/attached units/aircraft are not
+    implemented; Fight-phase activation does not alternate between players; MFM points
+    reconciliation was never performed.
+
 
 - **[2026-08-07] — Dead models leave the board + engaged/on-terrain LoS false blocks fixed
   (owner: "1. Dead units stay on the board… 2. My eversor assassin somehow can't target this

@@ -2,7 +2,7 @@
   "name": "Solar Spearpoint (2k)",
   "faction": "AM",
   "detachment": "Mechanised Assault",
-  "points": 1985,
+  "points": 1960,
   "units": [
     {
       "datasheetId": "000002605",
@@ -95,7 +95,7 @@
   ],
   "note": "Prebuilt AI sparring list — a legal 1000pt Incursion army generated from the converted data by tools/rosters/build-prebuilt.ts (edit tools/rosters/prebuilt.ts and re-run pnpm build:rosters). Not one of the three owned lists.",
   "recommended": {
-    "disposition": "purge_the_foe",
-    "profile": "attrition"
+    "disposition": "reconnaissance",
+    "profile": "operative"
   }
 }

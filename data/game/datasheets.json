@@ -1301,7 +1301,7 @@
       },
       {
         "models": 2,
-        "cost": 130
+        "cost": 120
       }
     ],
     "composition": [
@@ -1820,11 +1820,25 @@
     "points": [
       {
         "models": 5,
-        "cost": 60
+        "cost": 60,
+        "copyFrom": 1,
+        "copyTo": 2
       },
       {
         "models": 10,
-        "cost": 120
+        "cost": 120,
+        "copyFrom": 1,
+        "copyTo": 2
+      },
+      {
+        "models": 5,
+        "cost": 65,
+        "copyFrom": 3
+      },
+      {
+        "models": 10,
+        "cost": 125,
+        "copyFrom": 3
       }
     ],
     "composition": [
@@ -2107,7 +2121,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 450
+        "cost": 415,
+        "copyFrom": 1,
+        "copyTo": 1
+      },
+      {
+        "models": 1,
+        "cost": 450,
+        "copyFrom": 2
       }
     ],
     "composition": [
@@ -2249,7 +2270,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 420
+        "cost": 385,
+        "copyFrom": 1,
+        "copyTo": 1
+      },
+      {
+        "models": 1,
+        "cost": 420,
+        "copyFrom": 2
       }
     ],
     "composition": [
@@ -2385,7 +2413,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 450
+        "cost": 415,
+        "copyFrom": 1,
+        "copyTo": 1
+      },
+      {
+        "models": 1,
+        "cost": 450,
+        "copyFrom": 2
       }
     ],
     "composition": [
@@ -2526,7 +2561,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 140
+        "cost": 115,
+        "copyFrom": 1,
+        "copyTo": 1
+      },
+      {
+        "models": 1,
+        "cost": 135,
+        "copyFrom": 2
       }
     ],
     "composition": [
@@ -2636,11 +2678,25 @@
     "points": [
       {
         "models": 3,
-        "cost": 100
+        "cost": 90,
+        "copyFrom": 1,
+        "copyTo": 1
       },
       {
         "models": 6,
-        "cost": 200
+        "cost": 200,
+        "copyFrom": 1,
+        "copyTo": 1
+      },
+      {
+        "models": 3,
+        "cost": 105,
+        "copyFrom": 2
+      },
+      {
+        "models": 6,
+        "cost": 215,
+        "copyFrom": 2
       }
     ],
     "composition": [
@@ -3130,7 +3186,7 @@
     "points": [
       {
         "models": 5,
-        "cost": 65
+        "cost": 60
       }
     ],
     "composition": [
@@ -3785,11 +3841,11 @@
     "points": [
       {
         "models": 10,
-        "cost": 65
+        "cost": 75
       },
       {
         "models": 20,
-        "cost": 120
+        "cost": 145
       }
     ],
     "composition": [
@@ -4519,7 +4575,7 @@
     "points": [
       {
         "models": 5,
-        "cost": 65
+        "cost": 60
       }
     ],
     "composition": [
@@ -4860,11 +4916,11 @@
     "points": [
       {
         "models": 10,
-        "cost": 65
+        "cost": 75
       },
       {
         "models": 20,
-        "cost": 120
+        "cost": 145
       }
     ],
     "composition": [
@@ -5092,7 +5148,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 85
+        "cost": 65,
+        "copyFrom": 1,
+        "copyTo": 3
+      },
+      {
+        "models": 1,
+        "cost": 75,
+        "copyFrom": 4
       }
     ],
     "composition": [
@@ -5271,7 +5334,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 85
+        "cost": 75,
+        "copyFrom": 1,
+        "copyTo": 3
+      },
+      {
+        "models": 1,
+        "cost": 85,
+        "copyFrom": 4
       }
     ],
     "composition": [
@@ -5731,7 +5801,7 @@
     "points": [
       {
         "models": 1,
-        "cost": 110
+        "cost": 125
       }
     ],
     "composition": [
@@ -6000,7 +6070,7 @@
     "points": [
       {
         "models": 1,
-        "cost": 150
+        "cost": 120
       }
     ],
     "composition": [
@@ -6523,7 +6593,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 25
+        "cost": 40,
+        "copyFrom": 1,
+        "copyTo": 2
+      },
+      {
+        "models": 1,
+        "cost": 45,
+        "copyFrom": 3
       }
     ],
     "composition": [
@@ -7418,7 +7495,7 @@
     "points": [
       {
         "models": 10,
-        "cost": 65
+        "cost": 75
       },
       {
         "models": 20,
@@ -7700,7 +7777,7 @@
       },
       {
         "models": 10,
-        "cost": 120
+        "cost": 110
       }
     ],
     "composition": [
@@ -7840,7 +7917,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 145
+        "cost": 125,
+        "copyFrom": 1,
+        "copyTo": 1
+      },
+      {
+        "models": 1,
+        "cost": 135,
+        "copyFrom": 2
       }
     ],
     "composition": [
@@ -8070,13 +8154,7 @@
       },
       {
         "models": 10,
-        "cost": 190,
-        "note": "AGENTS OF THE IMPERIUM Detachment"
-      },
-      {
-        "models": 10,
-        "cost": 200,
-        "note": "Assigned Agent"
+        "cost": 190
       }
     ],
     "composition": [
@@ -8720,7 +8798,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 415
+        "cost": 380,
+        "copyFrom": 1,
+        "copyTo": 1
+      },
+      {
+        "models": 1,
+        "cost": 410,
+        "copyFrom": 2
       }
     ],
     "composition": [
@@ -9280,12 +9365,12 @@
     "points": [
       {
         "models": 1,
-        "cost": 110,
+        "cost": 100,
         "note": "AGENTS OF THE IMPERIUM Detachment"
       },
       {
         "models": 1,
-        "cost": 120,
+        "cost": 110,
         "note": "Assigned Agent"
       }
     ],
@@ -9481,7 +9566,13 @@
     "points": [
       {
         "models": 11,
-        "cost": 90
+        "cost": 90,
+        "note": "AGENTS OF THE IMPERIUM Detachment"
+      },
+      {
+        "models": 11,
+        "cost": 85,
+        "note": "Assigned Agent"
       }
     ],
     "composition": [
@@ -9651,7 +9742,7 @@
     "points": [
       {
         "models": 2,
-        "cost": 110
+        "cost": 90
       }
     ],
     "composition": [
@@ -9664,6 +9755,12 @@
           "1 bombast field gun",
           "1 heavy lascannon"
         ]
+      }
+    ],
+    "wargearCosts": [
+      {
+        "item": "Bombast field gun",
+        "cost": 10
       }
     ]
   },
@@ -10173,7 +10270,7 @@
     "points": [
       {
         "models": 6,
-        "cost": 100
+        "cost": 95
       }
     ],
     "composition": [
@@ -10493,12 +10590,12 @@
     "points": [
       {
         "models": 5,
-        "cost": 190,
+        "cost": 175,
         "note": "AGENTS OF THE IMPERIUM Detachment"
       },
       {
         "models": 5,
-        "cost": 210,
+        "cost": 190,
         "note": "Assigned Agent"
       }
     ],
@@ -10531,6 +10628,12 @@
       "000002760",
       "000000876",
       "000000877"
+    ],
+    "wargearCosts": [
+      {
+        "item": "Psycannon",
+        "cost": 5
+      }
     ]
   },
   {
@@ -11267,7 +11370,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 420
+        "cost": 385,
+        "copyFrom": 1,
+        "copyTo": 1
+      },
+      {
+        "models": 1,
+        "cost": 415,
+        "copyFrom": 2
       }
     ],
     "composition": [
@@ -11448,7 +11558,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 125
+        "cost": 125,
+        "copyFrom": 1,
+        "copyTo": 2
+      },
+      {
+        "models": 1,
+        "cost": 135,
+        "copyFrom": 3
       }
     ],
     "composition": [
@@ -11763,7 +11880,7 @@
     "points": [
       {
         "models": 1,
-        "cost": 95
+        "cost": 90
       }
     ],
     "composition": [
@@ -12272,7 +12389,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 75
+        "cost": 65,
+        "copyFrom": 1,
+        "copyTo": 3
+      },
+      {
+        "models": 1,
+        "cost": 75,
+        "copyFrom": 4
       }
     ],
     "composition": [
@@ -13770,13 +13894,7 @@
     "points": [
       {
         "models": 1,
-        "cost": 100,
-        "note": "AGENTS OF THE IMPERIUM Detachment"
-      },
-      {
-        "models": 1,
-        "cost": 100,
-        "note": "Assigned Agent"
+        "cost": 100
       }
     ],
     "composition": [
@@ -14368,7 +14486,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 70
+        "cost": 60,
+        "copyFrom": 1,
+        "copyTo": 3
+      },
+      {
+        "models": 1,
+        "cost": 70,
+        "copyFrom": 4
       }
     ],
     "composition": [
@@ -14891,7 +15016,14 @@
     "points": [
       {
         "models": 10,
-        "cost": 110
+        "cost": 105,
+        "copyFrom": 1,
+        "copyTo": 2
+      },
+      {
+        "models": 10,
+        "cost": 120,
+        "copyFrom": 3
       }
     ],
     "composition": [
@@ -15473,11 +15605,25 @@
     "points": [
       {
         "models": 5,
-        "cost": 60
+        "cost": 65,
+        "copyFrom": 1,
+        "copyTo": 2
       },
       {
         "models": 10,
-        "cost": 95
+        "cost": 95,
+        "copyFrom": 1,
+        "copyTo": 2
+      },
+      {
+        "models": 5,
+        "cost": 75,
+        "copyFrom": 3
+      },
+      {
+        "models": 10,
+        "cost": 105,
+        "copyFrom": 3
       }
     ],
     "composition": [
@@ -15823,7 +15969,7 @@
     "points": [
       {
         "models": 6,
-        "cost": 65
+        "cost": 60
       }
     ],
     "composition": [
@@ -15989,7 +16135,7 @@
     "points": [
       {
         "models": 4,
-        "cost": 75
+        "cost": 60
       }
     ],
     "composition": [
@@ -16003,6 +16149,12 @@
           "1 Krieg heavy flamer",
           "1 twin Krieg heavy stubber"
         ]
+      }
+    ],
+    "wargearCosts": [
+      {
+        "item": "Krieg heavy flamer",
+        "cost": 5
       }
     ]
   },
@@ -16202,7 +16354,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 185
+        "cost": 185,
+        "copyFrom": 1,
+        "copyTo": 2
+      },
+      {
+        "models": 1,
+        "cost": 195,
+        "copyFrom": 3
       }
     ],
     "composition": [
@@ -16517,7 +16676,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 235
+        "cost": 215,
+        "copyFrom": 1,
+        "copyTo": 2
+      },
+      {
+        "models": 1,
+        "cost": 230,
+        "copyFrom": 3
       }
     ],
     "composition": [
@@ -16561,6 +16727,12 @@
       {
         "text": "This model can be equipped with 1 hunter-killer missile.",
         "choices": []
+      }
+    ],
+    "wargearCosts": [
+      {
+        "item": "Demolisher battle cannon",
+        "cost": 15
       }
     ]
   },
@@ -16760,7 +16932,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 190
+        "cost": 180,
+        "copyFrom": 1,
+        "copyTo": 2
+      },
+      {
+        "models": 1,
+        "cost": 190,
+        "copyFrom": 3
       }
     ],
     "composition": [
@@ -16993,7 +17172,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 170
+        "cost": 170,
+        "copyFrom": 1,
+        "copyTo": 2
+      },
+      {
+        "models": 1,
+        "cost": 180,
+        "copyFrom": 3
       }
     ],
     "composition": [
@@ -17239,7 +17425,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 170
+        "cost": 170,
+        "copyFrom": 1,
+        "copyTo": 2
+      },
+      {
+        "models": 1,
+        "cost": 180,
+        "copyFrom": 3
       }
     ],
     "composition": [
@@ -17472,7 +17665,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 180
+        "cost": 180,
+        "copyFrom": 1,
+        "copyTo": 2
+      },
+      {
+        "models": 1,
+        "cost": 190,
+        "copyFrom": 3
       }
     ],
     "composition": [
@@ -17702,7 +17902,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 150
+        "cost": 150,
+        "copyFrom": 1,
+        "copyTo": 2
+      },
+      {
+        "models": 1,
+        "cost": 160,
+        "copyFrom": 3
       }
     ],
     "composition": [
@@ -17934,7 +18141,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 145
+        "cost": 150,
+        "copyFrom": 1,
+        "copyTo": 2
+      },
+      {
+        "models": 1,
+        "cost": 160,
+        "copyFrom": 3
       }
     ],
     "composition": [
@@ -18083,7 +18297,7 @@
     "points": [
       {
         "models": 1,
-        "cost": 100
+        "cost": 75
       }
     ],
     "composition": [
@@ -19855,7 +20069,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 165
+        "cost": 150,
+        "copyFrom": 1,
+        "copyTo": 1
+      },
+      {
+        "models": 1,
+        "cost": 170,
+        "copyFrom": 2
       }
     ],
     "composition": [
@@ -20554,7 +20775,14 @@
     "points": [
       {
         "models": 5,
-        "cost": 85
+        "cost": 85,
+        "copyFrom": 1,
+        "copyTo": 2
+      },
+      {
+        "models": 5,
+        "cost": 95,
+        "copyFrom": 3
       }
     ],
     "composition": [
@@ -21871,7 +22099,7 @@
       },
       {
         "models": 6,
-        "cost": 130
+        "cost": 120
       }
     ],
     "composition": [
@@ -23450,7 +23678,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 260
+        "cost": 260,
+        "copyFrom": 1,
+        "copyTo": 1
+      },
+      {
+        "models": 1,
+        "cost": 275,
+        "copyFrom": 2
       }
     ],
     "composition": [
@@ -23661,7 +23896,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 290
+        "cost": 290,
+        "copyFrom": 1,
+        "copyTo": 1
+      },
+      {
+        "models": 1,
+        "cost": 305,
+        "copyFrom": 2
       }
     ],
     "composition": [
@@ -24770,7 +25012,7 @@
       },
       {
         "models": 2,
-        "cost": 110
+        "cost": 100
       }
     ],
     "composition": [
@@ -25108,7 +25350,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 410
+        "cost": 375,
+        "copyFrom": 1,
+        "copyTo": 1
+      },
+      {
+        "models": 1,
+        "cost": 405,
+        "copyFrom": 2
       }
     ],
     "composition": [
@@ -25271,13 +25520,29 @@
     "points": [
       {
         "models": 1,
+        "cost": 90,
+        "note": "AGENTS OF THE IMPERIUM Detachment",
+        "copyFrom": 1,
+        "copyTo": 3
+      },
+      {
+        "models": 1,
         "cost": 100,
-        "note": "AGENTS OF THE IMPERIUM Detachment"
+        "note": "AGENTS OF THE IMPERIUM Detachment",
+        "copyFrom": 4
+      },
+      {
+        "models": 1,
+        "cost": 105,
+        "note": "Assigned Agent",
+        "copyFrom": 1,
+        "copyTo": 3
       },
       {
         "models": 1,
         "cost": 115,
-        "note": "Assigned Agent"
+        "note": "Assigned Agent",
+        "copyFrom": 4
       }
     ],
     "composition": [
@@ -25296,7 +25561,13 @@
         "choices": []
       }
     ],
-    "transport": "This model has a transport capacity of 6 ORDO HERETICUS INFANTRy models.At the start of the Declare Battle Formations step, you can select one SISTERS OF BATTlE SQUAD from your army. If you do, that unit is split into two units, each containing as equal a number of models as possible (when splitting a unit in this way, make a note of which models form each of the two new units). One of these units must start the battle embarked within this TRANSPORT; the other can start the battle embarked within another TRANSPORT, or it can be deployed as a separate unit."
+    "transport": "This model has a transport capacity of 6 ORDO HERETICUS INFANTRy models.At the start of the Declare Battle Formations step, you can select one SISTERS OF BATTlE SQUAD from your army. If you do, that unit is split into two units, each containing as equal a number of models as possible (when splitting a unit in this way, make a note of which models form each of the two new units). One of these units must start the battle embarked within this TRANSPORT; the other can start the battle embarked within another TRANSPORT, or it can be deployed as a separate unit.",
+    "wargearCosts": [
+      {
+        "item": "Twin multi-melta",
+        "cost": 15
+      }
+    ]
   },
   {
     "id": "000003818",
@@ -25588,8 +25859,8 @@
         "note": "AGENTS OF THE IMPERIUM Detachment"
       },
       {
-        "models": 1,
-        "cost": 115,
+        "models": 10,
+        "cost": 110,
         "note": "Assigned Agent"
       }
     ],
@@ -26562,7 +26833,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 430
+        "cost": 395,
+        "copyFrom": 1,
+        "copyTo": 1
+      },
+      {
+        "models": 1,
+        "cost": 430,
+        "copyFrom": 2
       }
     ],
     "composition": [
@@ -26698,7 +26976,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 465
+        "cost": 430,
+        "copyFrom": 1,
+        "copyTo": 1
+      },
+      {
+        "models": 1,
+        "cost": 465,
+        "copyFrom": 2
       }
     ],
     "composition": [
@@ -27432,7 +27717,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 75
+        "cost": 65,
+        "copyFrom": 1,
+        "copyTo": 3
+      },
+      {
+        "models": 1,
+        "cost": 75,
+        "copyFrom": 4
       }
     ],
     "composition": [
@@ -27602,7 +27894,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 90
+        "cost": 75,
+        "copyFrom": 1,
+        "copyTo": 3
+      },
+      {
+        "models": 1,
+        "cost": 85,
+        "copyFrom": 4
       }
     ],
     "composition": [
@@ -27973,7 +28272,7 @@
     "points": [
       {
         "models": 10,
-        "cost": 100
+        "cost": 95
       }
     ],
     "composition": [
@@ -28276,11 +28575,25 @@
     "points": [
       {
         "models": 5,
-        "cost": 70
+        "cost": 75,
+        "copyFrom": 1,
+        "copyTo": 2
       },
       {
         "models": 10,
-        "cost": 140
+        "cost": 150,
+        "copyFrom": 1,
+        "copyTo": 2
+      },
+      {
+        "models": 5,
+        "cost": 85,
+        "copyFrom": 3
+      },
+      {
+        "models": 10,
+        "cost": 160,
+        "copyFrom": 3
       }
     ],
     "composition": [
@@ -28974,7 +29287,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 190
+        "cost": 170,
+        "copyFrom": 1,
+        "copyTo": 2
+      },
+      {
+        "models": 1,
+        "cost": 180,
+        "copyFrom": 3
       }
     ],
     "composition": [
@@ -30324,13 +30644,7 @@
     "points": [
       {
         "models": 1,
-        "cost": 95,
-        "note": "AGENTS OF THE IMPERIUM Detachment"
-      },
-      {
-        "models": 1,
-        "cost": 105,
-        "note": "Assigned Agent"
+        "cost": 95
       }
     ],
     "composition": [
@@ -30470,7 +30784,14 @@
     "points": [
       {
         "models": 1,
-        "cost": 110
+        "cost": 95,
+        "copyFrom": 1,
+        "copyTo": 1
+      },
+      {
+        "models": 1,
+        "cost": 115,
+        "copyFrom": 2
       }
     ],
     "composition": [

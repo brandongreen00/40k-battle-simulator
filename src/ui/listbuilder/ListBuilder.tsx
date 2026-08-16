@@ -16,6 +16,7 @@ import {
   setWarlord,
   toRoster,
   unitCost,
+  unitWargearPoints,
   validate,
   type ArmyList,
   type BattleSize,
@@ -310,10 +311,15 @@ export function ListBuilder({ onOpenInBoard }: Props) {
             Your list — {list.units.length} unit{list.units.length === 1 ? '' : 's'}
           </h2>
           {list.units.length === 0 && <p className="muted">Add units from the catalog to begin.</p>}
-          {list.units.map((u) => {
+          {list.units.map((u, i) => {
             const ds = getDatasheet(u.datasheetId);
             if (!ds) return null;
-            const pts = unitCost(ds, u.modelCount) + enhancementCost(u.enhancementId, dataIndex);
+            // Copy index in list order — escalating 11e tiers price a 3rd Hellhound higher.
+            const copyIndex = list.units.slice(0, i).filter((x) => x.datasheetId === u.datasheetId).length + 1;
+            const pts =
+              unitCost(ds, u.modelCount, copyIndex) +
+              unitWargearPoints(ds, u.loadout) +
+              enhancementCost(u.enhancementId, dataIndex);
             return (
               <ListUnitCard
                 key={u.uid}

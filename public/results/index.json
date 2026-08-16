@@ -1,0 +1,164 @@
+{
+ "generated": "2026-08-16T09:25:50Z",
+ "data_version": "2026-08-14",
+ "armies": [
+  {
+   "name": "Alien Hunters Strike",
+   "faction": "IA",
+   "detachment": "ia.ordo_xenos_alien_hunters",
+   "disposition": "Purge the Foe",
+   "points": 485,
+   "units": 8,
+   "battle_size": 500
+  },
+  {
+   "name": "Bane",
+   "faction": "AM",
+   "detachment": "am.grizzled_company",
+   "disposition": "Priority Assets",
+   "points": 935,
+   "units": 7,
+   "battle_size": 1000
+  },
+  {
+   "name": "Combined Arms Battlegroup",
+   "faction": "AM",
+   "detachment": "am.combined_arms",
+   "disposition": "Take and Hold",
+   "points": 1905,
+   "units": 31,
+   "battle_size": 2000
+  },
+  {
+   "name": "Grizzled Company Line",
+   "faction": "AM",
+   "detachment": "am.grizzled_company",
+   "disposition": "Priority Assets",
+   "points": 980,
+   "units": 17,
+   "battle_size": 1000
+  },
+  {
+   "name": "Imperialis Fleet Patrol",
+   "faction": "IA",
+   "detachment": "ia.imperialis_fleet",
+   "disposition": "Reconnaissance",
+   "points": 970,
+   "units": 14,
+   "battle_size": 1000
+  },
+  {
+   "name": "Inquisitors",
+   "faction": "IA",
+   "detachment": "ia.ordo_hereticus_purgation_force",
+   "disposition": "Take and Hold",
+   "points": 940,
+   "units": 11,
+   "battle_size": 1000
+  },
+  {
+   "name": "Rogue Trader\u2019s Army",
+   "faction": "IA",
+   "detachment": "ia.imperialis_fleet",
+   "disposition": "Reconnaissance",
+   "points": 960,
+   "units": 10,
+   "battle_size": 1000
+  },
+  {
+   "name": "Siege Regiment Vanguard",
+   "faction": "AM",
+   "detachment": "am.siege_regiment",
+   "disposition": "Disruption",
+   "points": 500,
+   "units": 10,
+   "battle_size": 500
+  }
+ ],
+ "coverage": {
+  "datasheets": 179,
+  "effects": 175,
+  "effects_by_kind": {
+   "stratagem": {
+    "total": 97,
+    "bound": 13
+   },
+   "enhancement": {
+    "total": 54,
+    "bound": 0
+   },
+   "detachment_rule": {
+    "total": 16,
+    "bound": 0
+   },
+   "order": {
+    "total": 6,
+    "bound": 6
+   },
+   "army_rule": {
+    "total": 2,
+    "bound": 0
+   }
+  },
+  "detachments": 16,
+  "layouts": 45,
+  "missions": 44,
+  "gaps": 191
+ },
+ "batches": [
+  {
+   "path": "batch.json",
+   "label": "Alien Hunters Strike vs Siege Regiment Vanguard (12 games, 500pts)",
+   "generated": "2026-08-16"
+  },
+  {
+   "path": "heuristic_vs_random/batch.json",
+   "label": "Alien Hunters Strike vs Siege Regiment Vanguard (20 games, 500pts)",
+   "generated": "2026-08-16"
+  }
+ ],
+ "optimizer": [
+  {
+   "path": "optimizer.json",
+   "label": "optimizer AM vs Alien Hunters Strike",
+   "generated": "2026-08-16"
+  }
+ ],
+ "logs": [
+  {
+   "path": "heuristic_vs_random/logs/battle_500.json",
+   "label": "Alien Hunters Strike vs Siege Regiment Vanguard \u2014 seed 500",
+   "generated": "2026-08-16"
+  },
+  {
+   "path": "heuristic_vs_random/logs/battle_501.json",
+   "label": "Alien Hunters Strike vs Siege Regiment Vanguard \u2014 seed 501",
+   "generated": "2026-08-16"
+  },
+  {
+   "path": "heuristic_vs_random/logs/battle_502.json",
+   "label": "Alien Hunters Strike vs Siege Regiment Vanguard \u2014 seed 502",
+   "generated": "2026-08-16"
+  },
+  {
+   "path": "logs/bane_vs_rogue_trader.json",
+   "label": "Bane vs Rogue Trader\u2019s Army \u2014 seed 1",
+   "generated": "2026-08-16"
+  },
+  {
+   "path": "logs/battle_100.json",
+   "label": "Alien Hunters Strike vs Siege Regiment Vanguard \u2014 seed 100",
+   "generated": "2026-08-16"
+  },
+  {
+   "path": "logs/battle_101.json",
+   "label": "Alien Hunters Strike vs Siege Regiment Vanguard \u2014 seed 101",
+   "generated": "2026-08-16"
+  },
+  {
+   "path": "logs/battle_102.json",
+   "label": "Alien Hunters Strike vs Siege Regiment Vanguard \u2014 seed 102",
+   "generated": "2026-08-16"
+  }
+ ]
+}

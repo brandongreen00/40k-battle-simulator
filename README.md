@@ -61,3 +61,39 @@ to `/40k-battle-simulator/`, so the site serves from
 
 All 40k rules and IP belong to Games Workshop; Wahapedia data is personal-use only. This repo is
 private and non-commercial — do not publish it or host the rules text publicly.
+
+
+---
+
+## Auto Player — the v2 simulator
+
+The top bar's **Auto Player** tab is the surface of a second, independent
+simulator: a Python rules kernel for Warhammer 40,000 **11th edition** matched
+play that plays complete games between two army lists, built to the project
+brief in `docs/sim2_architecture.md`.
+
+* **Rules as data.** Datasheets, stratagems, enhancements, detachment rules and
+  Orders are structured records in `data2/`, interpreted by a generic engine.
+  Adding a faction rule is a data edit, never a kernel change.
+* **Ingested from source.** 179 datasheets and all 16 Imperial Agents / Astra
+  Militarum detachments were transcribed from the current faction packs, with
+  the pack version and retrieval date on every record. Nothing is filled in from
+  memory: 193 missing values are logged in `data2/gaps.json`.
+* **Deterministic.** One seeded RNG service; `(lists, layout, seed)` replays
+  byte-identically, which is what makes the replay viewer possible.
+
+**GitHub Pages cannot execute the engine** — it serves static files. So the tab
+does three things: builds the exact CLI command for a run, optionally dispatches
+it to GitHub Actions (with a fine-grained token you paste at runtime, kept in
+your browser), and reads the committed JSON artifacts to draw dashboards and
+replay any battle turn by turn.
+
+```bash
+python3 -m sim2.cli armies                   # what's available
+python3 -m sim2.cli batch --a "Imperialis Fleet Patrol" \
+                          --b "Grizzled Company Line" --games 20
+python3 tools2/sync_results.py               # publish artifacts to the app
+python3 -m pytest tests_py -q -m "not slow"  # rules + data tests
+```
+
+Current state, metrics and the honest gap list: **[`STATUS.md`](STATUS.md)**.

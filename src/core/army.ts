@@ -1,12 +1,14 @@
 // Army list construction: points + validation + pure list edits. PURE — no React/DOM/I/O.
 // Lookups (datasheets, enhancements) are passed in as a DataIndex so this stays framework-free.
 //
-// 10th-edition points model: a unit's cost is set by its model-count tier; wargear is FREE;
-// enhancements are the only other points. So points move when you add a unit, change its size,
-// or add/remove an enhancement — never when you swap weapons.
+// 11th-edition points model: a unit's cost is set by its model-count tier, and some tiers
+// escalate for later copies of the same datasheet ("YOUR 3RD+ UNIT COSTS" — copyFrom/copyTo on
+// the tier); a handful of wargear options are priced (Datasheet.wargearCosts — e.g. the Leman
+// Russ Commander's Demolisher battle cannon at 15 pts); enhancements are the only other points.
+// Everything else about wargear stays free.
 
 import type { Datasheet, Enhancement, Roster } from './types';
-import { defensiveItemsInText, validateUnitLoadout, type Loadout } from './wargear';
+import { defensiveItemsInText, normalizeItemName, validateUnitLoadout, type Loadout } from './wargear';
 import { checkDetachmentPoints, dpBudget } from './detachments';
 
 // ── Battle size (points limit + datasheet copy limits) ───────────────────────
@@ -36,7 +38,8 @@ export interface ListUnit {
   warlord?: boolean;
   attachedTo?: string; // uid of the bodyguard unit a leader is attached to
   /** Chosen wargear as an item→count map (e.g. {"Deathwatch thunder hammer": 4}). Validated
-   *  against the datasheet's option caps; does NOT affect points (wargear is free in 10e). */
+   *  against the datasheet's option caps. Almost all wargear is free — only the items in the
+   *  datasheet's 11e `wargearCosts` list add points (see unitWargearPoints). */
   loadout?: Loadout;
 }
 
@@ -75,21 +78,46 @@ export const isBattleline = (ds?: Datasheet): boolean => hasKeyword(ds, 'Battlel
 
 // ── points ───────────────────────────────────────────────────────────────────
 export function modelCountOptions(ds?: Datasheet): number[] {
-  return (ds?.points ?? []).map((t) => t.models);
+  return [...new Set((ds?.points ?? []).map((t) => t.models))];
 }
 export function defaultModelCount(ds?: Datasheet): number {
   return ds?.points?.[0]?.models ?? 1;
 }
-export function unitCost(ds: Datasheet | undefined, modelCount: number): number {
-  return ds?.points?.find((t) => t.models === modelCount)?.cost ?? 0;
+/**
+ * Points for the `copyIndex`-th copy (1-based) of a datasheet at a given size. Escalating
+ * tiers carry copyFrom/copyTo; tiers are ordered first-copies-first, so the first tier whose
+ * size AND copy range match is the printed price. Falls back to any size match so a stray
+ * copy index can never zero a unit's cost.
+ */
+export function unitCost(ds: Datasheet | undefined, modelCount: number, copyIndex = 1): number {
+  const tiers = ds?.points ?? [];
+  const hit = tiers.find(
+    (t) => t.models === modelCount && copyIndex >= (t.copyFrom ?? 1) && copyIndex <= (t.copyTo ?? Infinity),
+  );
+  return hit?.cost ?? tiers.find((t) => t.models === modelCount)?.cost ?? 0;
+}
+/** Points for a unit's priced wargear (11e — e.g. "per Demolisher battle cannon: 15 pts"). */
+export function unitWargearPoints(ds: Datasheet | undefined, loadout?: Loadout): number {
+  if (!ds?.wargearCosts?.length || !loadout) return 0;
+  let total = 0;
+  for (const [item, count] of Object.entries(loadout)) {
+    const priced = ds.wargearCosts.find((w) => normalizeItemName(w.item) === normalizeItemName(item));
+    if (priced) total += priced.cost * count;
+  }
+  return total;
 }
 export function enhancementCost(enhId: string | undefined, ix: DataIndex): number {
   return enhId ? (ix.enhancements.get(enhId)?.cost ?? 0) : 0;
 }
 export function listPoints(list: ArmyList, ix: DataIndex): number {
   let total = 0;
+  const copies = new Map<string, number>();
   for (const u of list.units) {
-    total += unitCost(ix.datasheets.get(u.datasheetId), u.modelCount);
+    const copyIndex = (copies.get(u.datasheetId) ?? 0) + 1;
+    copies.set(u.datasheetId, copyIndex);
+    const ds = ix.datasheets.get(u.datasheetId);
+    total += unitCost(ds, u.modelCount, copyIndex);
+    total += unitWargearPoints(ds, u.loadout);
     total += enhancementCost(u.enhancementId, ix);
   }
   return total;

@@ -1,0 +1,303 @@
+{
+ "result_schema_version": "2.0.0",
+ "kind": "optimizer",
+ "generated": "2026-08-16T09:17:14Z",
+ "config": {
+  "faction": "AM",
+  "detachment": "am.grizzled_company",
+  "opponent": "Alien Hunters Strike",
+  "candidates": 8,
+  "games_per_candidate": 2,
+  "battle_size": 500,
+  "seed": 7,
+  "agent": "heuristic"
+ },
+ "pool_size": 72,
+ "duration_s": 80.7,
+ "leaderboard": [
+  {
+   "name": "candidate-003",
+   "points": 455,
+   "detachment": "am.grizzled_company",
+   "units": [
+    {
+     "datasheet": "am.rogal_dorn_commander",
+     "models": 1
+    },
+    {
+     "datasheet": "am.taurox_prime",
+     "models": 1
+    },
+    {
+     "datasheet": "am.hydra",
+     "models": 1
+    }
+   ],
+   "score": 0.0,
+   "wins": 1,
+   "games": 2,
+   "avg_vp_for": 59.0,
+   "avg_vp_against": 59.0
+  },
+  {
+   "name": "candidate-006",
+   "points": 470,
+   "detachment": "am.grizzled_company",
+   "units": [
+    {
+     "datasheet": "am.primaris_psyker",
+     "models": 1
+    },
+    {
+     "datasheet": "am.cadian_shock_troops",
+     "models": 10
+    },
+    {
+     "datasheet": "am.cadian_shock_troops",
+     "models": 10
+    },
+    {
+     "datasheet": "am.cadian_shock_troops",
+     "models": 10
+    },
+    {
+     "datasheet": "am.leman_russ_battle_tank",
+     "models": 1
+    }
+   ],
+   "score": 0.0,
+   "wins": 0,
+   "games": 2,
+   "avg_vp_for": 55.0,
+   "avg_vp_against": 55.0
+  },
+  {
+   "name": "candidate-001",
+   "points": 470,
+   "detachment": "am.grizzled_company",
+   "units": [
+    {
+     "datasheet": "am.tech_priest_enginseer",
+     "models": 1
+    },
+    {
+     "datasheet": "am.death_korps_of_krieg",
+     "models": 10
+    },
+    {
+     "datasheet": "am.death_korps_of_krieg",
+     "models": 10
+    },
+    {
+     "datasheet": "am.catachan_jungle_fighters",
+     "models": 10
+    },
+    {
+     "datasheet": "am.catachan_jungle_fighters",
+     "models": 10
+    },
+    {
+     "datasheet": "am.scout_sentinels",
+     "models": 1
+    },
+    {
+     "datasheet": "am.taurox",
+     "models": 1
+    },
+    {
+     "datasheet": "am.krieg_heavy_weapons_squad",
+     "models": 1
+    }
+   ],
+   "score": -2.0,
+   "wins": 1,
+   "games": 2,
+   "avg_vp_for": 59.0,
+   "avg_vp_against": 61.0
+  },
+  {
+   "name": "candidate-004",
+   "points": 495,
+   "detachment": "am.grizzled_company",
+   "units": [
+    {
+     "datasheet": "am.commissar_graves",
+     "models": 1
+    },
+    {
+     "datasheet": "am.cadian_shock_troops",
+     "models": 10
+    },
+    {
+     "datasheet": "am.catachan_jungle_fighters",
+     "models": 10
+    },
+    {
+     "datasheet": "am.catachan_jungle_fighters",
+     "models": 10
+    },
+    {
+     "datasheet": "am.aegis_defence_line",
+     "models": 1
+    }
+   ],
+   "score": -2.0,
+   "wins": 1,
+   "games": 2,
+   "avg_vp_for": 57.0,
+   "avg_vp_against": 59.0
+  },
+  {
+   "name": "candidate-007",
+   "points": 490,
+   "detachment": "am.grizzled_company",
+   "units": [
+    {
+     "datasheet": "am.commissar",
+     "models": 1
+    },
+    {
+     "datasheet": "am.catachan_jungle_fighters",
+     "models": 10
+    },
+    {
+     "datasheet": "am.catachan_jungle_fighters",
+     "models": 10
+    },
+    {
+     "datasheet": "am.death_korps_of_krieg",
+     "models": 10
+    },
+    {
+     "datasheet": "am.cadian_shock_troops",
+     "models": 10
+    },
+    {
+     "datasheet": "am.wyvern",
+     "models": 1
+    },
+    {
+     "datasheet": "am.armoured_sentinels",
+     "models": 1
+    }
+   ],
+   "score": -2.0,
+   "wins": 1,
+   "games": 2,
+   "avg_vp_for": 59.0,
+   "avg_vp_against": 61.0
+  },
+  {
+   "name": "candidate-000",
+   "points": 500,
+   "detachment": "am.grizzled_company",
+   "units": [
+    {
+     "datasheet": "am.lord_solar_leontus",
+     "models": 1
+    },
+    {
+     "datasheet": "am.cadian_shock_troops",
+     "models": 10
+    },
+    {
+     "datasheet": "am.cadian_shock_troops",
+     "models": 10
+    },
+    {
+     "datasheet": "am.krieg_combat_engineers",
+     "models": 5
+    },
+    {
+     "datasheet": "am.tempestus_aquilons",
+     "models": 10
+    },
+    {
+     "datasheet": "am.catachan_command_squad",
+     "models": 5
+    }
+   ],
+   "score": -3.0,
+   "wins": 1,
+   "games": 2,
+   "avg_vp_for": 58.0,
+   "avg_vp_against": 61.0
+  },
+  {
+   "name": "candidate-002",
+   "points": 450,
+   "detachment": "am.grizzled_company",
+   "units": [
+    {
+     "datasheet": "am.commissar_graves",
+     "models": 1
+    },
+    {
+     "datasheet": "am.death_korps_of_krieg",
+     "models": 10
+    },
+    {
+     "datasheet": "am.catachan_jungle_fighters",
+     "models": 10
+    },
+    {
+     "datasheet": "am.catachan_jungle_fighters",
+     "models": 10
+    },
+    {
+     "datasheet": "am.death_riders",
+     "models": 5
+    },
+    {
+     "datasheet": "am.cyclops_demolition_vehicle",
+     "models": 1
+    }
+   ],
+   "score": -5.0,
+   "wins": 0,
+   "games": 2,
+   "avg_vp_for": 57.0,
+   "avg_vp_against": 62.0
+  },
+  {
+   "name": "candidate-005",
+   "points": 500,
+   "detachment": "am.grizzled_company",
+   "units": [
+    {
+     "datasheet": "am.primaris_psyker",
+     "models": 1
+    },
+    {
+     "datasheet": "am.cadian_shock_troops",
+     "models": 10
+    },
+    {
+     "datasheet": "am.catachan_jungle_fighters",
+     "models": 10
+    },
+    {
+     "datasheet": "am.cadian_shock_troops",
+     "models": 10
+    },
+    {
+     "datasheet": "am.centaur_rsv",
+     "models": 1
+    },
+    {
+     "datasheet": "am.wyvern",
+     "models": 1
+    },
+    {
+     "datasheet": "am.scout_sentinels",
+     "models": 1
+    }
+   ],
+   "score": -8.0,
+   "wins": 0,
+   "games": 2,
+   "avg_vp_for": 55.0,
+   "avg_vp_against": 63.0
+  }
+ ]
+}

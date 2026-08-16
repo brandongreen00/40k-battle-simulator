@@ -1,0 +1,82 @@
+name: Simulate battles
+
+# One artifact contract, three executors (brief §11): this workflow runs the
+# same CLI a laptop would, and commits the same JSON the Pages app reads.
+# Dispatchable from the Auto Player tab with a fine-grained token.
+
+on:
+  workflow_dispatch:
+    inputs:
+      army_a:
+        description: Army A (name as listed by `python3 -m sim2.cli armies`)
+        required: true
+        default: Imperialis Fleet Patrol
+      army_b:
+        description: Army B
+        required: true
+        default: Grizzled Company Line
+      games:
+        description: Number of games
+        required: true
+        default: '20'
+      battle_size:
+        description: Points (500 / 1000 / 2000)
+        required: true
+        default: '1000'
+      seed:
+        description: Base seed
+        required: true
+        default: '1'
+      agent_a:
+        description: Agent for A (random / heuristic / search)
+        required: true
+        default: heuristic
+      agent_b:
+        description: Agent for B
+        required: true
+        default: heuristic
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sim-results
+  cancel-in-progress: false
+
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330      # chunked well inside the 6-hour job limit
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run the batch
+        run: |
+          python3 -m sim2.cli batch \
+            --a "${{ inputs.army_a }}" \
+            --b "${{ inputs.army_b }}" \
+            --games "${{ inputs.games }}" \
+            --battle-size "${{ inputs.battle_size }}" \
+            --seed "${{ inputs.seed }}" \
+            --agent-a "${{ inputs.agent_a }}" \
+            --agent-b "${{ inputs.agent_b }}" \
+            --out results
+
+      - name: Publish artifacts to the site
+        run: python3 tools2/sync_results.py
+
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add results public/results
+          if git diff --staged --quiet; then
+            echo "no result changes"
+          else
+            git commit -m "Simulate ${{ inputs.army_a }} vs ${{ inputs.army_b }} (${{ inputs.games }} games)"
+            git push
+          fi

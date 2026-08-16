@@ -39,11 +39,13 @@ describe('normalizeExport', () => {
 
 describe('imported owner lists', () => {
   const cases = [
-    { txt: 'bane.txt', json: 'bane.json', name: 'Bane', units: 7, points: 985 },
-    { txt: 'rogue_traders_army.txt', json: 'rogue_traders_army.json', name: 'Rogue Trader’s Army', units: 10, points: 985 },
+    // Point totals are the 11e (Faction Pack v1.1) prices — the exports' printed "985 Points"
+    // header is the 10e-app total and is informational only.
+    { txt: 'bane.txt', json: 'bane.json', name: 'Bane', units: 7, points: 935 },
+    { txt: 'rogue_traders_army.txt', json: 'rogue_traders_army.json', name: 'Rogue Trader’s Army', units: 10, points: 975 },
     // v2.0.5 (11e) export format: ATTACHED UNITS sections, "Attached as:" bullets, a detachment
     // line with a DP suffix and comma variant, and a Force Dispositions line.
-    { txt: 'inquisitors.txt', json: 'inquisitors.json', name: 'Inquisitors', units: 11, points: 985 },
+    { txt: 'inquisitors.txt', json: 'inquisitors.json', name: 'Inquisitors', units: 11, points: 965 },
   ];
 
   for (const c of cases) {
