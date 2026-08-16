@@ -71,19 +71,40 @@ describe('AI seats in the real UI (jsdom)', () => {
     }
     expect(container.textContent).not.toMatch(/is Attacker/);
 
-    // Make the human the Attacker, so the AI (Defender) owns the FIRST deployment slot.
+    // Make the human the Attacker, so the AI (Defender) owns the FIRST declaration slot.
     fireEvent.click(getByText('player attacks'));
-    expect(container.textContent).toMatch(/Now placing: ai/);
+    expect(container.textContent).toMatch(/Declare formations · ai/);
 
-    // The AI takes exactly its own slot (one drop) and then waits for the human's alternating
-    // turn — it must not deploy the human's units or keep placing out of turn. (The dice log is
-    // not rendered during setup, so assert on the panel's remaining counter + board tokens.)
+    // The AI (Defender) resolves its Declare Battle Formations by itself, then waits for the
+    // human to declare — it must never declare or place the human's units.
+    for (let tick = 0; tick < 40 && !/Declare formations · player/.test(container.textContent ?? ''); tick++) {
+      await act(async () => {
+        vi.advanceTimersByTime(400);
+      });
+    }
+    expect(container.textContent).toMatch(/Declare formations · player/);
+
+    // The human embarks a squad into the Chimera (18.01) and finishes declaring.
+    const sidebar = container.querySelector('.sidebar') as HTMLElement;
+    const embarkSel = [...sidebar.querySelectorAll('select.embark-select')].find((s) =>
+      [...(s as HTMLSelectElement).options].some((o) => /Chimera/.test(o.text)),
+    ) as HTMLSelectElement;
+    expect(embarkSel).toBeTruthy();
+    const chimeraOpt = [...embarkSel.options].find((o) => /Chimera/.test(o.text))!;
+    fireEvent.change(embarkSel, { target: { value: chimeraOpt.value } });
+    const finishBtn = [...sidebar.querySelectorAll('button')].find((b) => /✓ Finish declaring — player/.test(b.textContent ?? ''))!;
+    fireEvent.click(finishBtn);
+
+    // Deployment begins (Defender = ai first): the AI takes exactly its own slots and then
+    // waits for the human's alternating turn — it must not deploy the human's units. (The dice
+    // log is not rendered during setup, so assert on the panel's remaining counter + tokens.)
     for (let tick = 0; tick < 40; tick++) {
       await act(async () => {
         vi.advanceTimersByTime(400);
       });
     }
-    expect(container.textContent).toMatch(/remaining — player 13, ai 12/);
+    // 13 human entries − the embarked squad = 12, untouched by the AI.
+    expect(container.textContent).toMatch(/remaining — player 12, ai \d+/);
     expect(container.textContent).toMatch(/Now placing: player/);
     expect(container.querySelectorAll('.model-token').length).toBeGreaterThan(0);
   }, 120_000);

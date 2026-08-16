@@ -27,24 +27,26 @@ describe('deployment guards (the "AI never deploys" wedges)', () => {
     for (const o of nonEmpty) expect(o.disabled).toBe(false);
   });
 
-  it("the AI's deployment slot offers no manual placement (a held ghost pauses auto-play)", async () => {
+  it("the AI's declaration/deployment slot offers no manual controls (a held ghost pauses auto-play)", async () => {
     vi.useFakeTimers();
     const { container, getByText } = render(
       <MeasuringBoard extraRosters={[cadian as Roster, fleet as Roster]} initialRosterName="Cadian Bulwark" />,
     );
     fireEvent.click(container.querySelector('.newbattle')!);
-    fireEvent.click(getByText('player attacks')); // AI = Defender -> deploys first
-    expect(container.textContent).toMatch(/Now placing: ai/);
+    fireEvent.click(getByText('player attacks')); // AI = Defender -> declares first
+    expect(container.textContent).toMatch(/Declare formations · ai/);
 
-    // The sidebar must NOT offer "+ Deploy" for the computer's units — instead, the hint.
+    // The sidebar must NOT offer manual declaration/placement controls for the computer's side.
     const sidebar = container.querySelector('.sidebar')!;
     expect(within(sidebar as HTMLElement).queryAllByText('+ Deploy')).toHaveLength(0);
+    expect(within(sidebar as HTMLElement).queryAllByText(/⤓ Reserves/)).toHaveLength(0);
     expect(container.textContent).toMatch(/The computer controls this side/);
 
-    // Switching the seat to Human hands the slot over: manual buttons return.
+    // Switching the seat to Human hands the declarations over: manual controls return.
     const seatRows = container.querySelectorAll('.ai-seat');
     fireEvent.click(seatRows[1]!.querySelector('.seg button:nth-child(1)')!); // ai seat -> Human
-    expect(within(sidebar as HTMLElement).queryAllByText('+ Deploy').length).toBeGreaterThan(0);
+    expect(within(sidebar as HTMLElement).queryAllByText(/⤓ Reserves/).length).toBeGreaterThan(0);
+    expect(within(sidebar as HTMLElement).queryAllByText(/✓ Finish declaring/).length).toBe(1);
   });
 
   it('a deployment ghost held when its side flips to AI is dropped, and auto-play resumes', async () => {
@@ -53,11 +55,29 @@ describe('deployment guards (the "AI never deploys" wedges)', () => {
       <MeasuringBoard extraRosters={[cadian as Roster, fleet as Roster]} initialRosterName="Cadian Bulwark" />,
     );
     fireEvent.click(container.querySelector('.newbattle')!);
-    fireEvent.click(getByText('ai attacks')); // human (player) = Defender -> deploys first
+    fireEvent.click(getByText('ai attacks')); // human (player) = Defender -> declares first
+
+    // Declare Battle Formations: the human embarks a squad into the Chimera (18.01 — a rider
+    // keeps the dedicated transport alive) and finishes; the AI then declares via auto-play.
+    const sidebar = container.querySelector('.sidebar') as HTMLElement;
+    expect(container.textContent).toMatch(/Declare formations · player/);
+    const embarkSel = [...sidebar.querySelectorAll('select.embark-select')].find((s) =>
+      [...(s as HTMLSelectElement).options].some((o) => /Chimera/.test(o.text)),
+    ) as HTMLSelectElement;
+    expect(embarkSel).toBeTruthy();
+    const chimeraOpt = [...embarkSel.options].find((o) => /Chimera/.test(o.text))!;
+    fireEvent.change(embarkSel, { target: { value: chimeraOpt.value } });
+    expect(container.textContent).toMatch(/⇥ Chimera/);
+    fireEvent.click(within(sidebar).getByText(/✓ Finish declaring — player/));
+    for (let tick = 0; tick < 30 && !/Now placing: player/.test(container.textContent ?? ''); tick++) {
+      await act(async () => {
+        vi.advanceTimersByTime(400);
+      });
+    }
+    expect(container.textContent).toMatch(/Now placing: player/);
 
     // Human picks a unit up — the ghost is live.
-    const sidebar = container.querySelector('.sidebar')!;
-    fireEvent.click(within(sidebar as HTMLElement).getAllByText('+ Deploy')[0]!);
+    fireEvent.click(within(sidebar).getAllByText('+ Deploy')[0]!);
     expect(container.querySelector('.board-hud.placing')).toBeTruthy();
 
     // Seat the AI on the player side mid-placement: the ghost must drop (it would otherwise gate
@@ -68,11 +88,12 @@ describe('deployment guards (the "AI never deploys" wedges)', () => {
     });
     expect(container.querySelector('.board-hud.placing')).toBeNull();
 
-    for (let tick = 0; tick < 20 && !/remaining — player 12/.test(container.textContent ?? ''); tick++) {
+    // 13 entries − 1 embarked at Declare Battle Formations = 12; the AI's first drop → 11.
+    for (let tick = 0; tick < 20 && !/remaining — player 11/.test(container.textContent ?? ''); tick++) {
       await act(async () => {
         vi.advanceTimersByTime(400);
       });
     }
-    expect(container.textContent).toMatch(/remaining — player 12/);
+    expect(container.textContent).toMatch(/remaining — player 11/);
   }, 60_000);
 });

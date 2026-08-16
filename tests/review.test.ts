@@ -401,6 +401,9 @@ describe('7 · pre-deployment Leader pairing + Warrant of Trade', () => {
   it('Warrant of Trade: D3 redeploys of IMPERIUM BATTLELINE units, others refused', () => {
     const pz = zoneAnchor('player');
     let s = setupWithRoles();
+    // The Warrant is a deploy-step window — pass Declare Battle Formations first.
+    s = reduce(s, { type: 'FinishFormations', side: 'player' }, rng, realCtx);
+    s = reduce(s, { type: 'FinishFormations', side: 'ai' }, rng, realCtx);
     s = reduce(s, { type: 'DeployUnit', unitId: 'p:0', owner: 'player', datasheetId: ROGUE_TRADER, baseShape: { kind: 'circle', radius: 0.63 }, modelCount: 4, wounds: 4, anchor: { x: pz.x, y: pz.y }, ability: 'standard' }, rng, realCtx);
     s = reduce(s, { type: 'DeployUnit', unitId: 'p:1', owner: 'player', datasheetId: BREACHERS, baseShape: { kind: 'circle', radius: 0.5 }, modelCount: 10, wounds: 1, anchor: { x: pz.x, y: pz.y - 6 }, ability: 'standard' }, rng, realCtx);
     s = reduce(s, { type: 'DeployUnit', unitId: 'p:2', owner: 'player', datasheetId: VINDICARE, baseShape: { kind: 'circle', radius: 0.63 }, modelCount: 1, wounds: 4, anchor: { x: pz.x, y: pz.y + 6 }, ability: 'standard' }, rng, realCtx);
