@@ -11,6 +11,7 @@ import {
   patrolArmyList,
   removeUnit,
   setAttachedTo,
+  setDetachments,
   setEnhancement,
   setLoadoutCount,
   setModelCount,
@@ -32,7 +33,14 @@ import {
   patrolEnhancements,
   rosters,
 } from '../../data/loaders';
-import { checkDetachmentPoints, detachmentPoints } from '../../core/detachments';
+import {
+  checkDetachmentPoints,
+  detachmentPoints,
+  dpBudget,
+  isKnownDetachment,
+  normalizeDetachmentName,
+  splitDetachments,
+} from '../../core/detachments';
 import { Catalog } from './Catalog';
 import { ListUnitCard } from './ListUnitCard';
 import { ImportPanel } from './ImportPanel';
@@ -109,9 +117,37 @@ export function ListBuilder({ onOpenInBoard }: Props) {
     }
     setList({ ...list, battleSize: size });
   }
-  function setDetachment(detachment: string) {
-    // enhancements are detachment-scoped; clear them so none are left stranded
-    setList({ ...list, detachment, units: list.units.map((u) => ({ ...u, enhancementId: undefined })) });
+  // ── multi-detachment picker (11e: several detachments may share the DP budget) ──
+  // The army's single `detachment` string stays the storage format (a combined name joins with
+  // " and ", exactly what the GW app exports) — the checkboxes just compose/decompose it.
+  const selectedDetachments = list.detachment ? splitDetachments(list.detachment) : [];
+  const selectedNorms = new Set(selectedDetachments.map(normalizeDetachmentName));
+  // Catalog detachments for the faction, plus any selected component the catalog doesn't
+  // carry (an imported combined/unknown name stays visible and un-checkable).
+  const detachmentOptions = (() => {
+    const catalog = isCP ? [] : detachmentsForFaction(list.faction);
+    const catalogNorms = new Set(catalog.map(normalizeDetachmentName));
+    return [...selectedDetachments.filter((d) => !catalogNorms.has(normalizeDetachmentName(d))), ...catalog];
+  })();
+  const dpLimit = dpBudget(BATTLE_SIZES[list.battleSize].points).dp;
+  const selectedCost = list.detachment ? detachmentPoints(list.detachment, list.faction) : 0;
+  function toggleDetachment(name: string) {
+    const on = selectedNorms.has(normalizeDetachmentName(name));
+    const next = on
+      ? selectedDetachments.filter((d) => normalizeDetachmentName(d) !== normalizeDetachmentName(name))
+      : [...selectedDetachments, name];
+    // setDetachments joins canonically and clears only the enhancements whose detachment left.
+    setList(setDetachments(list, next, dataIndex));
+  }
+  /** Why an UNCHECKED option can't join the current selection (undefined = it can). */
+  function detachmentBlockReason(name: string): string | undefined {
+    if (selectedDetachments.length === 0) return undefined; // any lone pick is legal (lone allowance)
+    if (!isKnownDetachment(name)) return 'legacy detachment — lone pick only';
+    if (selectedDetachments.some((d) => !isKnownDetachment(d)))
+      return 'the selected legacy detachment cannot be combined';
+    if (selectedCost + detachmentPoints(name, list.faction) > dpLimit)
+      return `over the ${dpLimit} DP budget`;
+    return undefined;
   }
 
   // ── persistence / export ──
@@ -185,9 +221,9 @@ export function ListBuilder({ onOpenInBoard }: Props) {
             </select>
           )}
         </label>
-        <label className="field">
+        <div className="field">
           <span>
-            Detachment
+            Detachment{selectedDetachments.length > 1 ? 's' : ''}
             {list.detachment && !isCP && (() => {
               const dp = checkDetachmentPoints(list.detachment, list.faction, BATTLE_SIZES[list.battleSize].points);
               return (
@@ -203,24 +239,36 @@ export function ListBuilder({ onOpenInBoard }: Props) {
               <option value={list.detachment}>{list.detachment || '— pick a Combat Patrol above —'}</option>
             </select>
           ) : (
-            <select value={list.detachment} onChange={(e) => setDetachment(e.target.value)}>
-              <option value="">— select —</option>
-              {/* An imported multi-detachment army carries a combined name ("A and B") that
-                  isn't in the single-detachment catalog — keep it selectable so the import
-                  displays (and validates) as-is. */}
-              {list.detachment && !detachmentsForFaction(list.faction).includes(list.detachment) && (
-                <option value={list.detachment}>
-                  {list.detachment} ({detachmentPoints(list.detachment, list.faction)} DP)
-                </option>
-              )}
-              {detachmentsForFaction(list.faction).map((d) => (
-                <option key={d} value={d}>
-                  {d} ({detachmentPoints(d, list.faction)} DP)
-                </option>
-              ))}
-            </select>
+            <>
+              {/* Multiselect: check several detachments within the DP budget (11e). A single
+                  detachment may exceed it (the printed lone-detachment allowance), so with
+                  nothing checked every option is open; once one is checked, options that
+                  would bust the budget are disabled. */}
+              <div className="detach-multi" role="group" aria-label="Detachments">
+                {detachmentOptions.map((d) => {
+                  const checked = selectedNorms.has(normalizeDetachmentName(d));
+                  const blocked = checked ? undefined : detachmentBlockReason(d);
+                  return (
+                    <label key={d} className={`detach-opt${checked ? ' on' : ''}${blocked ? ' blocked' : ''}`} title={blocked}>
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        disabled={!!blocked}
+                        onChange={() => toggleDetachment(d)}
+                      />
+                      <span className="detach-name">{d}</span>
+                      <span className="detach-dp">{detachmentPoints(d, list.faction)} DP</span>
+                    </label>
+                  );
+                })}
+              </div>
+              <span className="hint">
+                Combine detachments up to {dpLimit} DP ({BATTLE_SIZES[list.battleSize].points} pts) — e.g. a 2 DP and a
+                1 DP detachment at 3 DP. A lone detachment may exceed the budget.
+              </span>
+            </>
           )}
-        </label>
+        </div>
         <label className="field">
           <span>Battle size</span>
           <select value={list.battleSize} onChange={(e) => setBattleSize(e.target.value as BattleSize)}>
