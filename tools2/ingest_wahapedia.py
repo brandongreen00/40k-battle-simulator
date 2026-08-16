@@ -121,7 +121,7 @@ def parse_datasheet(path: str, slug: str) -> Optional[Datasheet]:
     models = parse_profiles(block, name)
     weapons = parse_weapons(block)
     keywords = parse_keywords(block)
-    points = parse_points(block)
+    points, priced_wargear = parse_points(block)
     abilities = parse_abilities(block)
     inv_note = parse_invuln_note(block)
     if inv_note:
@@ -137,6 +137,12 @@ def parse_datasheet(path: str, slug: str) -> Optional[Datasheet]:
             basis="first printed capacity; full wording preserved in transport_text")
 
     ds_id = f"{faction.lower()}.{slug_id(name)}"
+    for item, cost in priced_wargear:
+        gap(f"ds:{ds_id}:wargear_cost:{slug_id(item)}", "priced wargear option",
+            "the 11e pack prices this wargear option per model; the schema has no wargear-cost "
+            "slot, so unit points exclude it",
+            ["WARGEAR OPTIONS rows of the unit cost table"],
+            estimate=str(cost), basis=f"printed price per {item}")
     if not models:
         gap(f"ds:{ds_id}", "model profile", "no characteristic block parsed",
             ["dsCharName/dsCharValue scan"])
@@ -363,7 +369,7 @@ def _kw_group(seg: str) -> List[str]:
     return words
 
 
-def parse_points(block: str) -> List[PointsTier]:
+def parse_points(block: str) -> Tuple[List[PointsTier], List[Tuple[str, int]]]:
     """Trap §6.5 (dual columns) and §6.6 (per-copy escalation).
 
     Agents datasheets print TWO cost tables — the AGENTS OF THE IMPERIUM Army
@@ -372,27 +378,46 @@ def parse_points(block: str) -> List[PointsTier]:
     UNIT COSTS"). Both facts live in header rows, so the table is walked in
     order, carrying the current column and copy range. Prices sit inside
     tooltip spans, so each cell is read as text rather than as a raw number.
+
+    Two header forms found the hard way (2026-08-16, the first ingest run
+    captured them wrong):
+
+    * "YOUR 1ST UNIT COSTS" (no TO, no +) bounds the range to exactly that
+      copy — reading it as 1..99 made a 2nd Basilisk cost the 1st-copy price.
+    * "WARGEAR OPTIONS" starts a priced-wargear section ("per Demolisher
+      battle cannon | 15") whose rows are NOT unit tiers — reading them as
+      tiers gave five sheets a phantom 5–15 pt tier. The rows are returned
+      separately as (item, cost) pairs so the caller can gap-log them
+      (priced wargear has no schema slot yet).
     """
     out: List[PointsTier] = []
+    wargear: List[Tuple[str, int]] = []
     for table in re.findall(r'dsUnitCostHeader.*?</table>', block, re.S):
         column = "army_faction"
         copy_from, copy_to = 1, 99
+        in_wargear = False
         for row in re.findall(r"<tr>(.*?)</tr>", "<tr>" + table, re.S):
             if "dsUnitCostHeader" in row:
                 header = text_of(row).upper()
+                if "WARGEAR OPTIONS" in header:
+                    in_wargear = True
+                    continue
+                in_wargear = False
                 if "ASSIGNED AGENT" in header:
                     column = "assigned_agent"
                 elif "DETACHMENT" in header:
                     column = "army_faction"
                 span = re.search(r"YOUR (\d+)(?:ST|ND|RD|TH) TO (\d+)(?:ST|ND|RD|TH)", header)
+                nth_plus = re.search(r"YOUR (\d+)(?:ST|ND|RD|TH)\s*\+", header)
+                nth_only = re.search(r"YOUR (\d+)(?:ST|ND|RD|TH) UNITS? COSTS?", header)
                 if span:
                     copy_from, copy_to = int(span.group(1)), int(span.group(2))
-                else:
-                    nth = re.search(r"YOUR (\d+)(?:ST|ND|RD|TH)\s*\+", header)
-                    if nth:
-                        copy_from, copy_to = int(nth.group(1)), 99
-                    elif "YOUR UNIT COSTS" in header:
-                        copy_from, copy_to = 1, 99
+                elif nth_plus:
+                    copy_from, copy_to = int(nth_plus.group(1)), 99
+                elif nth_only:
+                    copy_from = copy_to = int(nth_only.group(1))
+                elif "YOUR UNIT COSTS" in header:
+                    copy_from, copy_to = 1, 99
                 continue
             cell = re.search(r"<td>([^<]*)</td>\s*<td><div class=\"PriceTag\">(.*?)</div>", row, re.S)
             if not cell:
@@ -400,6 +425,12 @@ def parse_points(block: str) -> List[PointsTier]:
             label, price_html = cell.group(1), cell.group(2)
             m_price = re.search(r"\d+", text_of(price_html))
             if not m_price:
+                continue
+            if in_wargear:
+                item = re.sub(r"^per\s+", "", html.unescape(label).strip(), flags=re.I)
+                pair = (item, int(m_price.group(0)))
+                if pair not in wargear:  # both Agents columns print the same row
+                    wargear.append(pair)
                 continue
             models_m = re.search(r"(\d+)\s*model", label, re.I)
             out.append(PointsTier(
@@ -409,7 +440,7 @@ def parse_points(block: str) -> List[PointsTier]:
                 copy_to=copy_to,
                 column=column,
             ))
-    return out
+    return out, wargear
 
 
 #: Ability lines the datasheet prints as one comma-separated run.

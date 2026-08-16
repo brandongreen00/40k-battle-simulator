@@ -6,7 +6,7 @@
  ],
  "units": [
   {
-   "datasheet_id": "am.leman_russ_commander",
+   "datasheet_id": "am.commissar",
    "models": 1,
    "warlord": true,
    "key": "0"
@@ -42,28 +42,16 @@
    "key": "5"
   },
   {
-   "datasheet_id": "am.krieg_heavy_weapons_squad",
+   "datasheet_id": "am.cyclops_demolition_vehicle",
    "models": 1,
    "warlord": false,
    "key": "6"
   },
   {
-   "datasheet_id": "am.field_ordnance_battery",
-   "models": 1,
-   "warlord": false,
-   "key": "7"
-  },
-  {
-   "datasheet_id": "am.cyclops_demolition_vehicle",
-   "models": 1,
-   "warlord": false,
-   "key": "8"
-  },
-  {
    "datasheet_id": "am.scout_sentinels",
    "models": 1,
    "warlord": false,
-   "key": "9"
+   "key": "7"
   }
  ],
  "battle_size": 500,
