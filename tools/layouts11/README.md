@@ -28,12 +28,24 @@ board inches (origin bottom-left, y up):
 - **Terrain areas** — the 16 grey (20% black) polygons per layout; these are the
   five canonical footprint mats (4x 6"x4", 2x 10"x2.5", 4x 6"x2", 4x 7"x11.5",
   2x 8"x11.5" polygon). Organic outlines kept, Douglas-Peucker at 0.06".
-- **Terrain features** — the tinted photos placed on the mats, recovered as true
-  rotated quads via pdfium image matrices; green tint = `dense`, gold = `light`
-  (11e terrain categories). Where a mat's features are baked into a composite
-  photo, they are recovered from the page render by colour masking
-  (`"recovered": true`). Feature polygons are the photo placements — the PDF has
-  no exact per-ruin footprint outlines, so this is the best available ground truth.
+- **Terrain features** — the printed silhouettes, **traced** off a 46 px/inch page
+  render: the green (`dense`) and gold (`light`) tinted pixels are masked, closed,
+  labelled and contour-traced, then simplified at 0.09" (`trace_features`). The
+  tinted art is *placed* as rectangular photo quads, so reading the placement
+  matrices — what the extraction did until 2026-08-16 — squared off every L-shaped
+  ruin, bridge span and barricade run; the render is the only place the real
+  footprint exists. The placements are still read, purely to assert that tracing
+  found a silhouette on every one of them.
+  Printed icons (objectives, AB/CD/EF/GH roundels, area markers, the territory
+  divider roundels) are punched out of the mask first — the teal ones read as
+  "dense" — and the hole is then inpainted from its rim, so a silhouette running
+  behind a badge carries straight through while a badge on bare mat stays bare.
+  Tinted blobs under 0.35 sq in (rubble flecks smaller than a 25 mm base) are
+  dropped as print noise: ~5 sq in per layout, ~2.5% of the traced terrain.
+- **Area binding** — features and objectives bind to the terrain area they sit
+  *deepest* inside (the mats are printed overlapping, so a point near a shared
+  edge falls inside two of them and a first-match rule flips on hundredths of an
+  inch).
 - **Objectives** — home (red/blue castle circle, `owner` recorded), central
   (teal skull circle), expansion (teal skull diamond). Each is bound to the
   terrain area whose polygon contains it (`areaId`) — under 11e rules that whole
@@ -50,9 +62,12 @@ board inches (origin bottom-left, y up):
 ## Run
 
 ```sh
-pip install pdfplumber pypdfium2 pillow
+pip install pdfplumber pypdfium2 pillow numpy scipy scikit-image
 python3 tools/layouts11/extract_event_companion.py /path/to/event_companion.pdf
 ```
+
+Takes ~25 s per page (the feature tracing renders each page at scale 6), ~20 min
+for the 45 layouts.
 
 Output: `data/layouts11/ec2026-<pairingA>_vs_<pairingB>-<a|b|c>.json` + `index.json`.
 
@@ -90,3 +105,26 @@ Output: `data/layouts11/ec2026-<pairingA>_vs_<pairingB>-<a|b|c>.json` + `index.j
   of some triangle/strip mats is part of the mat's outline art (the footprint
   polygon traces its silhouette) and is deliberately NOT a terrain feature —
   it appears identically on ~38 pages.
+- **Feature tracing (2026-08-16):** features are traced silhouettes now, not
+  photo-placement quads (see Method). Checks over the regenerated 45:
+  - all 45 pages keep 16 areas / 5-6 objectives / 1+1 zones / a divider, and
+    every one of the ~30 tinted photo placements per page has a traced
+    silhouette on it (the extractor prints a warning otherwise: none fired).
+  - **pixel ground truth** (10 layouts re-rendered and compared against the
+    polygons): dense recall 93.7%, light 89.9%; the ~7 sq in per page not
+    covered is 1/3 anti-aliased edge slivers (≤0.05 sq in each) and 2/3
+    tinted specks under the 0.35 sq in noise floor. Precision (85% / 89%) is
+    deliberately below 100: a traced footprint is filled, while the printed
+    art has interior gaps (windows, texture, the badge disks).
+  - **180-degree symmetry**: the companion mirrors each layout about the board
+    centre; traced dense+light coverage matches its own mirror to within 0.3"
+    on a median 98.6% of its area (worst page 84.9%) — the residue is print
+    registration plus the badges, which sit on one copy of a mirrored pair but
+    not the other.
+  - pages 9, 22, 28, 35 and 51 (the composite-photo and buried-badge cases from
+    the v1.1 review) re-checked crop-by-crop against the print.
+  Two central objectives (`take-and-hold_vs_reconnaissance` A and B) moved
+  `areaId` between two OVERLAPPING mats — they are printed within 0.1" of the
+  shared edge, and both mats carry a "single terrain area" badge, so they are
+  one rules-area either way. Binding now picks the area a point sits deepest
+  inside instead of whichever was parsed first.

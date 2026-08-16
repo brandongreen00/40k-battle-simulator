@@ -130,6 +130,38 @@ describe('Event Companion layouts', () => {
     const mixed = at('ec2026-purge-the-foe_vs_purge-the-foe-c');
     expect(mixed.terrainAreas!.filter((a) => a.groupId).length).toBe(4);
   });
+
+  it('terrain features are traced silhouettes, not photo-placement rectangles', () => {
+    // Until 2026-08-16 a feature was the bounding quad of the tinted photo that prints it,
+    // so every L-shaped ruin, bridge and barricade run was a rectangle on the board. They
+    // are now traced off the printed art (as the Combat Patrol maps always were). Pin the
+    // shape: real outlines, on the board, none of them an axis-aligned box.
+    let features = 0;
+    let vertices = 0;
+    let boxes = 0;
+    for (const l of layouts11) {
+      expect(l.terrainAreas!.some((a) => a.features.length > 0), l.id).toBe(true);
+      for (const a of l.terrainAreas!) {
+        for (const f of a.features) {
+          features++;
+          vertices += f.polygon.length;
+          expect(f.polygon.length, `${l.id}/${a.id}`).toBeGreaterThanOrEqual(3);
+          for (const p of f.polygon) {
+            expect(p.x).toBeGreaterThanOrEqual(-0.01);
+            expect(p.x).toBeLessThanOrEqual(l.boardWidth + 0.01);
+            expect(p.y).toBeGreaterThanOrEqual(-0.01);
+            expect(p.y).toBeLessThanOrEqual(l.boardHeight + 0.01);
+          }
+          const xs = new Set(f.polygon.map((p) => p.x.toFixed(2)));
+          const ys = new Set(f.polygon.map((p) => p.y.toFixed(2)));
+          if (f.polygon.length === 4 && xs.size <= 2 && ys.size <= 2) boxes++;
+        }
+      }
+    }
+    expect(features).toBeGreaterThan(1200);
+    expect(boxes, 'no feature may be an axis-aligned rectangle again').toBe(0);
+    expect(vertices / features).toBeGreaterThan(10);
+  });
 });
 
 describe('disposition → mission matrix', () => {

@@ -378,6 +378,64 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-08-16] — Standard (Event Companion) maps now use REAL terrain shapes, not squares
+  (owner, comparing a standard map to a Combat Patrol one: "the first use squares, where the
+  second uses actual terrain shapes. Could you edit the first maps to actually use terrain
+  shapes?"). Separate PR off main.** All gates green: `pnpm typecheck`, `pnpm test` (**551
+  tests**, +1 pinning organic feature outlines), `pnpm build`; a Playwright drive of the real
+  app on `take-and-hold_vs_take-and-hold-a` shows the L-shaped ruins/bridges/barricades on the
+  board with zero console errors.
+  - **Root cause**: the companion prints each terrain feature as a tinted PHOTO of the real kit
+    dropped on a mat, and the extractor recorded the photo's *placement quad* (pdfium image
+    matrix) — a rectangle. So every L-shaped ruin, bridge span and barricade run rendered as a
+    green/gold box, while the Combat Patrol maps (traced from pixels) had real outlines.
+  - **Fix — `trace_features()` in `tools/layouts11/extract_event_companion.py`**: each page is
+    rendered at ~46 px/inch, the green (`dense`) / gold (`light`) pixels are masked, closed,
+    labelled and contour-traced (marching squares), then simplified at 0.09" — the same ground
+    truth the CP pipeline uses. Placements are still read, now purely to assert tracing found a
+    silhouette on every one (0 misses across all 45 pages). **1382 features** (was 1222),
+    ~23 vertices each (was 4).
+  - **Printed icons are punched out and inpainted back**: objective/letter/marker badges (teal
+    reads as "dense") and the red/blue **territory-divider roundels** (whose warm rim was being
+    traced as a ~0.9" "light" feature — one phantom per layout) are masked, then each hole is
+    filled from its rim by nearest-neighbour, so a ruin running BEHIND a badge carries through
+    while a badge on bare mat stays bare (an opening at 0.15" trims the wedges a grazing
+    silhouette would otherwise fan across a disk).
+  - **Latent bug found + fixed: `simplify()` never simplified anything.** It ran Douglas-Peucker
+    on a ring whose first and last point coincide — a zero-length baseline, so every vertex
+    measures zero deviation, the ring collapses to one point and the `len < 3` guard returned
+    the INPUT. That is why the shipped area outlines carried 200-300 raw vertices each. Now the
+    ring is cut at two opposite vertices and each chain simplified: area outlines are 14-26
+    points (same shape, 0.06" tolerance) and **`data/layouts11` fell from 6.8 MB to 2.2 MB**
+    (the app bundle drops with it).
+  - **Area binding by deepest containment**: the five footprint mats print OVERLAPPING, so a
+    point near a shared edge is inside two of them and a first-match rule flips on hundredths of
+    an inch. Features and objectives now bind to the area they sit deepest inside. Two central
+    objectives changed `areaId` as a result (take-and-hold_vs_reconnaissance A/B) — both are
+    printed within 0.1" of a shared edge and both mats carry a "single terrain area" badge, so
+    they are one rules-area either way; no scoring change.
+  - **Verification** (full detail in `tools/layouts11/README.md`): pixel ground-truth audit over
+    10 layouts (dense recall 93.7% / light 89.9%; the uncovered ~7 sq in per page is 1/3 anti-
+    alias slivers and 2/3 specks under the 0.35 sq in noise floor), 180° mirror coverage matching
+    to within 0.3" on a median 98.6% of traced area, geometry sanity over all 45 (on-board,
+    non-degenerate, non-self-intersecting, bound to a mat), and byte-identical zones/dividers/
+    markers/objective positions vs the previous extraction. Pages 9/22/28/35/51 re-checked
+    crop-by-crop.
+  - **Gameplay impact is real, not cosmetic**: dense features block LoS (13.11) and bar
+    tanks/riders (13.06), so a ruin's true L-shape now decides sightlines and movement instead
+    of its bounding box. The `losTerrainFixes` acceptance game (full Bane vs Armoured Spearhead
+    on an 11e map) still ends with zero rejected intents and zero settled tank bases on dense
+    terrain, and the suite runtime is unchanged (~35 s) despite ~6× more polygon vertices.
+  - **Decisions**: tinted blobs under 0.35 sq in (rubble flecks smaller than a 25 mm base) are
+    dropped as print noise — ~5 sq in per layout, ~2.5% of traced terrain; features are filled
+    silhouettes (interior windows/gaps are closed) since a footprint is solid for rules purposes;
+    tracing needs numpy/scipy/scikit-image (build-time tool only, the app gains no dependency);
+    extraction now takes ~25 s per page (~20 min for the 45).
+  - **Handoff nits**: the traced outline is a single outer ring per blob, so a ruin printed as
+    two touching pieces becomes one polygon (union — correct footprint, coarser grouping); the
+    Combat Patrol maps were already traced and are untouched; legacy 10e `data/layouts/` maps
+    still use their labrador rectangles (different pipeline, no photos to trace).
+
 - **[2026-08-16] — 11e points + Detachment Point overhaul, both simulators (owner: "completely
   revise the point values and disposition costs for Imperial Agents and Astra Militarum teams…
   do a thorough overhaul of the data", with the wh40k11ed URLs).** Wahapedia's 11e pages are

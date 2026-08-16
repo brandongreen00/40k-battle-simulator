@@ -39,12 +39,23 @@ import re
 import sys
 from collections import defaultdict
 
+import numpy as np
 import pdfplumber
 import pypdfium2 as pdfium
 import pypdfium2.raw as pdfium_c
 from PIL import Image
+from scipy import ndimage
+from skimage import measure
 
 PAGES = range(9, 54)  # 1-indexed layout pages
+
+# terrain-feature tracing (see trace_features)
+FEATURE_RENDER_SCALE = 6.0  # page render scale -> ~46 px per board inch
+FEATURE_MIN_AREA_IN2 = 0.35  # smaller tinted blobs are print noise, not terrain
+FEATURE_CLOSE_IN = 0.07  # morphological closing radius (bridges printed hairlines)
+FEATURE_SIMPLIFY_TOL = 0.09  # Douglas-Peucker tolerance on the traced outline
+BADGE_PAD_IN = 0.18  # icon-disk margin (their white outline ring also hides terrain)
+BADGE_INPAINT_OPEN_IN = 0.15  # opening radius applied to what is inpainted under a badge
 OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "data", "layouts11")
 
 RED = (0.0, 1.0, 1.0, 0.4)
@@ -171,12 +182,59 @@ def point_in_poly(p, poly):
     return inside
 
 
+def dist_to_poly(p, poly):
+    """Shortest distance from a point to a polygon's boundary (inches)."""
+    x, y = p
+    best = 1e9
+    n = len(poly)
+    for i in range(n):
+        x1, y1 = poly[i]
+        x2, y2 = poly[(i + 1) % n]
+        dx, dy = x2 - x1, y2 - y1
+        L2 = dx * dx + dy * dy
+        t = 0.0 if L2 == 0 else max(0.0, min(1.0, ((x - x1) * dx + (y - y1) * dy) / L2))
+        best = min(best, math.hypot(x - (x1 + t * dx), y - (y1 + t * dy)))
+    return best
+
+
+def area_for_point(pt, area_objs, max_gap=0.0):
+    """Which terrain area owns this point?
+
+    The five footprint mats are printed overlapping, so a point near a shared edge
+    can fall inside two of them: take the one it sits DEEPEST inside, rather than
+    whichever the parse happened to reach first (a first-match rule flips as soon
+    as an outline moves by a hundredth of an inch). With `max_gap`, a point inside
+    none of them binds to the nearest area within that distance.
+    """
+    inside, nearest = [], (None, 1e9)
+    for a in area_objs:
+        poly = [(x, y) for x, y in a["polygon"]]
+        d = dist_to_poly(pt, poly)
+        if point_in_poly(pt, poly):
+            inside.append((d, a))
+        elif d < nearest[1]:
+            nearest = (a, d)
+    if inside:
+        return max(inside, key=lambda t: t[0])[1]
+    if max_gap and nearest[0] is not None and nearest[1] <= max_gap:
+        return nearest[0]
+    return None
+
+
 def clamp_poly(pts, w, h):
     return [(min(max(x, 0.0), w), min(max(y, 0.0), h)) for (x, y) in pts]
 
 
 def simplify(pts, tol=0.06):
-    """Douglas-Peucker on a closed polygon (inches)."""
+    """Douglas-Peucker on a closed polygon (inches).
+
+    The ring is cut at two opposite vertices and each chain simplified on its
+    own. Running DP straight down a ring whose first and last point coincide
+    degenerates - the baseline has zero length, so every vertex measures zero
+    deviation from it, the whole ring collapses to a single point and the
+    guard below hands back the INPUT untouched (which is why the shipped area
+    polygons carry 200-300 raw vertices each).
+    """
     if len(pts) <= 8:
         return pts
 
@@ -198,8 +256,13 @@ def simplify(pts, tol=0.06):
         right = dp(seg[best_i:])
         return left[:-1] + right
 
-    closed = pts + [pts[0]]
-    out = dp(closed)[:-1]
+    far = max(
+        range(len(pts)),
+        key=lambda i: (pts[i][0] - pts[0][0]) ** 2 + (pts[i][1] - pts[0][1]) ** 2,
+    )
+    head = dp(pts[: far + 1])
+    tail = dp(pts[far:] + [pts[0]])
+    out = head[:-1] + tail[:-1]
     return out if len(out) >= 3 else pts
 
 
@@ -333,6 +396,122 @@ def dedupe(polys, tol=0.35):
     return [p for p, _ in out]
 
 
+def _disk_close(mask, r_px):
+    """Binary closing by a disk of radius r_px, via distance transforms (O(N))."""
+    if r_px < 1:
+        return mask
+    dilated = ndimage.distance_transform_edt(~mask) <= r_px
+    return ndimage.distance_transform_edt(dilated) > r_px
+
+
+def _disk_open(mask, r_px):
+    """Binary opening by a disk of radius r_px, via distance transforms (O(N))."""
+    if r_px < 1:
+        return mask
+    eroded = ndimage.distance_transform_edt(mask) > r_px
+    return ndimage.distance_transform_edt(~eroded) <= r_px
+
+
+def trace_features(doc, page_no, cal, badges):
+    """Trace the printed terrain-feature silhouettes off a high-resolution render.
+
+    Every feature is printed as a tinted photo of the real kit - an L-shaped
+    ruin, a bridge span, a barricade run - dropped onto a mat. The photo's
+    PLACEMENT is a rectangle, so reading the placement quad (what the earlier
+    extraction did) squares off every organic footprint. Instead the page is
+    rendered at ~46 px/inch and the green (dense) / gold (light) pixels are
+    traced into polygons, the same ground truth the Combat Patrol maps use.
+
+    `badges` are the printed icons (objectives, letter roundels, area markers)
+    as (x_in, y_in, radius_in): they are punched out of the mask first (the
+    teal ones read as "dense"), then whatever the silhouette implies underneath
+    them is closed back in, so a badge printed on a ruin doesn't bite a hole in
+    it. Returns [{kind, polygon}] in board inches, CCW.
+    """
+    render = doc[page_no - 1].render(scale=FEATURE_RENDER_SCALE).to_pil().convert("RGB")
+    arr = np.asarray(render).astype(np.int16)
+    r, g, b = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
+    # same colour tests the audited quad classifier / pixel recovery used
+    tints = {
+        "dense": (g > r * 1.15) & (g > b * 1.08) & ((g - np.minimum(r, b)) > 20),
+        "light": (r > b * 1.3)
+        & (g > b * 1.2)
+        & (r >= g * 0.92)
+        & ((np.maximum(np.maximum(r, g), b) - b) > 30),
+    }
+    ppi = (cal.x1 - cal.x0) * FEATURE_RENDER_SCALE / cal.w_in
+    h_px, w_px = r.shape
+    board = np.zeros(r.shape, bool)
+    board[
+        max(int(cal.top * FEATURE_RENDER_SCALE), 0) : int(cal.bottom * FEATURE_RENDER_SCALE),
+        max(int(cal.x0 * FEATURE_RENDER_SCALE), 0) : int(cal.x1 * FEATURE_RENDER_SCALE),
+    ] = True
+
+    def to_in(px, py):
+        return (
+            (px / FEATURE_RENDER_SCALE - cal.x0) * cal.sx,
+            (cal.bottom - py / FEATURE_RENDER_SCALE) * cal.sy,
+        )
+
+    out = []
+    for kind, tint in tints.items():
+        mask = tint & board
+        for bx, by, br in badges:
+            r_px = br * ppi
+            cx = (cal.x0 + bx / cal.sx) * FEATURE_RENDER_SCALE
+            cy = (cal.bottom - by / cal.sy) * FEATURE_RENDER_SCALE
+            pad = int(r_px * 2.4)
+            x0, x1 = max(int(cx) - pad, 0), min(int(cx) + pad, w_px)
+            y0, y1 = max(int(cy) - pad, 0), min(int(cy) + pad, h_px)
+            if x1 - x0 < 3 or y1 - y0 < 3:
+                continue
+            yy, xx = np.ogrid[y0:y1, x0:x1]
+            disk = (xx - cx) ** 2 + (yy - cy) ** 2 <= (r_px + 1) ** 2
+            win = mask[y0:y1, x0:x1] & ~disk
+            # inpaint the disk from its rim: each hidden pixel takes the value of the
+            # nearest visible one, so a silhouette running behind a badge carries
+            # straight through it while a badge on bare mat stays bare
+            _, (iy, ix) = ndimage.distance_transform_edt(
+                disk, return_distances=True, return_indices=True
+            )
+            visible = win.copy()
+            win[disk] = win[iy[disk], ix[disk]]
+            # a silhouette merely GRAZING the badge would otherwise fan a thin wedge
+            # across it: keep only what survives an opening inside the disk
+            win = visible | (_disk_open(win, BADGE_INPAINT_OPEN_IN * ppi) & disk)
+            mask[y0:y1, x0:x1] = win
+        # bridge the hairline dimension lines printed across a silhouette, then drop
+        # single-pixel photo noise and close interior holes (windows, texture)
+        mask = _disk_close(mask, max(FEATURE_CLOSE_IN * ppi, 1.0))
+        mask = ndimage.binary_opening(mask, np.ones((3, 3), bool))
+        mask = ndimage.binary_fill_holes(mask)
+        labels, n = ndimage.label(mask, structure=np.ones((3, 3), bool))
+        for i, sl in enumerate(ndimage.find_objects(labels), start=1):
+            if sl is None:
+                continue
+            comp = labels[sl] == i
+            if comp.sum() / (ppi * ppi) < FEATURE_MIN_AREA_IN2:
+                continue  # noise speck / stray tinted decal
+            contours = measure.find_contours(np.pad(comp, 1).astype(float), 0.5)
+            if not contours:
+                continue
+            ring = max(contours, key=len)
+            pts = [
+                to_in(sl[1].start - 1 + cx, sl[0].start - 1 + cy) for cy, cx in ring
+            ]
+            pts = simplify(clamp_poly(pts, cal.w_in, cal.h_in), tol=FEATURE_SIMPLIFY_TOL)
+            if len(pts) < 3 or abs(poly_area(pts)) < FEATURE_MIN_AREA_IN2:
+                continue
+            if sum(
+                (pts[(k + 1) % len(pts)][0] - pts[k][0])
+                * (pts[(k + 1) % len(pts)][1] + pts[k][1])
+                for k in range(len(pts))
+            ) > 0:
+                pts = pts[::-1]  # counter-clockwise in board coords
+            out.append({"kind": kind, "polygon": [[round(x, 2), round(y, 2)] for x, y in pts]})
+    return out
+
+
 def classify_image_tint(render, rscale, cal, bbox):
     """Average hue of the page render inside a shrunk bbox -> dense/light/mat."""
     x0, t, x1, b = bbox
@@ -375,6 +554,9 @@ def extract_page(pdf, doc, page_no):
     markers = []
     eye_halves = []  # grey-filled halves of the slashed "separate" badge (page pts)
     letter_badges = []  # (pos_in, ())
+    # every printed icon disk as (x_in, y_in, radius_in) - punched out of the feature
+    # tint masks before tracing (the teal ones read as "dense"), then closed back in
+    badge_disks = []
     divider = None
 
     # deployment zones drawn as plain rectangles (straight bands)
@@ -412,35 +594,48 @@ def extract_page(pdf, doc, page_no):
                 if a > 40:
                     zones["attacker"].append(clamp_poly(p, cal.w_in, cal.h_in))
                 elif 2.5 < w * cal.sx < 4.5 and abs(w - h) < 2 and len(c["pts"]) <= 6:
-                    objectives.append(
-                        {"kind": "home", "owner": "attacker",
-                         "pos": cal.pt(*centroid((c["x0"], c["top"], c["x1"], c["bottom"])))}
-                    )
+                    pos = cal.pt(*centroid((c["x0"], c["top"], c["x1"], c["bottom"])))
+                    objectives.append({"kind": "home", "owner": "attacker", "pos": pos})
+                    badge_disks.append((pos[0], pos[1], w * cal.sx / 2 + BADGE_PAD_IN))
+                elif 0.6 < w * cal.sx < 2.0 and abs(w - h) < 2 and len(c["pts"]) <= 6:
+                    # the attacker's territory-divider roundel (two printed sizes): not an
+                    # objective, but its warm rim traces as a "light" feature unless masked
+                    badge_disks.append((*cal.pt(*centroid((c["x0"], c["top"], c["x1"], c["bottom"]))),
+                                        w * cal.sx / 2 + BADGE_PAD_IN))
             elif col_eq(ns, BLUE):
                 p = poly_pts(c, cal)
                 a = poly_area(p)
                 if a > 40:
                     zones["defender"].append(clamp_poly(p, cal.w_in, cal.h_in))
                 elif 2.5 < w * cal.sx < 4.5 and abs(w - h) < 2 and len(c["pts"]) <= 6:
-                    objectives.append(
-                        {"kind": "home", "owner": "defender",
-                         "pos": cal.pt(*centroid((c["x0"], c["top"], c["x1"], c["bottom"])))}
-                    )
+                    pos = cal.pt(*centroid((c["x0"], c["top"], c["x1"], c["bottom"])))
+                    objectives.append({"kind": "home", "owner": "defender", "pos": pos})
+                    badge_disks.append((pos[0], pos[1], w * cal.sx / 2 + BADGE_PAD_IN))
+                elif 0.6 < w * cal.sx < 2.0 and abs(w - h) < 2 and len(c["pts"]) <= 6:
+                    # the defender's territory-divider roundel (two printed sizes): not an
+                    # objective, but its warm rim traces as a "light" feature unless masked
+                    badge_disks.append((*cal.pt(*centroid((c["x0"], c["top"], c["x1"], c["bottom"]))),
+                                        w * cal.sx / 2 + BADGE_PAD_IN))
             elif col_eq(ns, TEAL):
                 d_in = w * cal.sx
                 pos = cal.pt(*centroid((c["x0"], c["top"], c["x1"], c["bottom"])))
                 if 2.6 < d_in < 4.2 and len(c["pts"]) <= 6:
                     objectives.append({"kind": "central", "pos": pos})
+                    badge_disks.append((pos[0], pos[1], d_in / 2 + BADGE_PAD_IN))
                 elif 1.6 <= d_in <= 2.6 and len(c["pts"]) <= 6:
                     letter_badges.append(pos)
+                    badge_disks.append((pos[0], pos[1], d_in / 2 + BADGE_PAD_IN))
             elif col_eq(ns, TEAL_DARK) and big and len(c["pts"]) <= 6:
                 pos = cal.pt(*centroid((c["x0"], c["top"], c["x1"], c["bottom"])))
                 objectives.append({"kind": "expansion", "pos": pos})
+                badge_disks.append((pos[0], pos[1], w * cal.sx / 2 + BADGE_PAD_IN))
             elif col_eq(ns, GREY_ICON) and big and 1.4 < w * cal.sx < 2.6:
                 pos_pt = centroid((c["x0"], c["top"], c["x1"], c["bottom"]))
                 if len(c["pts"]) <= 6:
                     # the 15.9pt badge circle itself
-                    markers.append({"kind": "single", "pos": cal.pt(*pos_pt), "_pt": pos_pt})
+                    pos = cal.pt(*pos_pt)
+                    markers.append({"kind": "single", "pos": pos, "_pt": pos_pt})
+                    badge_disks.append((pos[0], pos[1], w * cal.sx / 2 + BADGE_PAD_IN))
                 else:
                     # a grey-filled eye HALF (npts > 6): only the slashed "separate
                     # terrain areas" badge draws these (its eye is split by the white
@@ -507,8 +702,27 @@ def extract_page(pdf, doc, page_no):
                 best = (d, w["text"])
         badge_letters.append((bx, by, best[1] if best and best[0] < 2.5 else None))
 
-    # terrain features: tinted photo images inside the board (quads, may be rotated)
-    features = []
+    areas = dedupe(areas)
+    areas = [
+        simplify(snap_to_edges(clamp_poly(p, cal.w_in, cal.h_in), cal.w_in, cal.h_in))
+        for p in areas
+    ]
+    area_objs = [
+        {
+            "id": f"area-{i}",
+            "polygon": [[round(x, 3), round(y, 3)] for x, y in p],
+            "features": [],
+        }
+        for i, p in enumerate(areas)
+    ]
+
+    # Terrain features: the printed silhouettes, traced off a high-resolution render
+    # (see trace_features). The tinted photos are also PLACED as image quads, which is
+    # what earlier extractions recorded - but a placement quad is the photo's bounding
+    # rectangle, so every L-shaped ruin, bridge span and barricade run came out square.
+    # The placements are still read here, purely to cross-check that tracing found a
+    # silhouette wherever the page places a tinted photo.
+    placements = []
     for quad in image_quads(doc, page_no, page.height):
         xs = [p[0] for p in quad]
         ys = [p[1] for p in quad]
@@ -524,213 +738,55 @@ def extract_page(pdf, doc, page_no):
         kind = classify_image_tint(render, rscale, cal, bb)
         if kind == "mat":
             continue
-        poly = [cal.pt(x, y) for (x, y) in quad]
-        # ensure counter-clockwise in board coords
-        if sum(
-            (poly[(i + 1) % 4][0] - poly[i][0]) * (poly[(i + 1) % 4][1] + poly[i][1])
-            for i in range(4)
-        ) > 0:
-            poly = poly[::-1]
-        feat = {
-            "kind": kind,
-            "polygon": [[round(x, 3), round(y, 3)] for x, y in poly],
-        }
-        for bx, by, letter in badge_letters:
-            if letter and point_in_poly((bx, by), poly):
-                feat["letter"] = letter
-                break
-        features.append(feat)
+        placements.append({"kind": kind, "polygon": [list(cal.pt(x, y)) for (x, y) in quad]})
 
-    # dedupe features: overlapping same-kind quads collapse (keep the larger)
-    def fbbox(f):
-        xs = [p[0] for p in f["polygon"]]
-        ys = [p[1] for p in f["polygon"]]
-        return [min(xs), min(ys), max(xs) - min(xs), max(ys) - min(ys)]
-
-    features.sort(key=lambda f: -(fbbox(f)[2] * fbbox(f)[3]))
-    merged = []
-    for f in features:
-        fb = fbbox(f)
-        hit = None
-        for g in merged:
-            if g["kind"] != f["kind"]:
-                continue
-            if rect_overlap(fb, fbbox(g)) > 0.55 * fb[2] * fb[3]:
-                hit = g
-                break
-        if hit:
-            if not hit.get("letter") and f.get("letter"):
-                hit["letter"] = f["letter"]
-        else:
-            merged.append(dict(f))
-    features = merged
-
-    areas = dedupe(areas)
-    areas = [
-        simplify(snap_to_edges(clamp_poly(p, cal.w_in, cal.h_in), cal.w_in, cal.h_in))
-        for p in areas
-    ]
+    features = trace_features(doc, page_no, cal, badge_disks)
 
     # attach features + objectives to areas
-    area_objs = []
-    for i, p in enumerate(areas):
-        area_objs.append({"id": f"area-{i}", "polygon": [[round(x, 3), round(y, 3)] for x, y in p], "features": []})
-    composite_ids = set()  # areas whose "feature" was a whole-mat composite photo
     for f in features:
         cx = sum(p[0] for p in f["polygon"]) / len(f["polygon"])
         cy = sum(p[1] for p in f["polygon"]) / len(f["polygon"])
+        owner = area_for_point((cx, cy), area_objs, max_gap=3.5)
+        if owner is not None:
+            owner["features"].append(f)
+        # a silhouette matching no mat (shouldn't happen) is dropped
+
+    # the printed AB/CD/EF/GH roundel labels the ruin it sits on
+    for bx, by, letter in badge_letters:
+        if not letter:
+            continue
         best, bestd = None, 1e9
         for a in area_objs:
-            poly = [(x, y) for x, y in a["polygon"]]
-            if point_in_poly((cx, cy), poly):
-                best, bestd = a, 0
-                break
-            d = min(math.hypot(cx - x, cy - y) for x, y in poly)
-            if d < bestd:
-                best, bestd = a, d
-        if best is not None and bestd < 3.5:
-            # A tinted quad covering (nearly) the WHOLE mat is the mat's composite photo,
-            # not a feature footprint (seen on the two bridge mats of priority-assets vs
-            # priority-assets A: a mat-sized "dense" quad swallowing the gold barricades).
-            # Drop it and recover the real tinted regions from the render instead.
-            fxs = [p[0] for p in f["polygon"]]
-            fys = [p[1] for p in f["polygon"]]
-            axs = [x for x, _ in best["polygon"]]
-            ays = [y for _, y in best["polygon"]]
-            f_area = (max(fxs) - min(fxs)) * (max(fys) - min(fys))
-            a_area = (max(axs) - min(axs)) * (max(ays) - min(ays))
-            if a_area > 0 and f_area >= 0.85 * a_area:
-                composite_ids.add(best["id"])
-            else:
-                best["features"].append(f)
-        # features that match no area (shouldn't happen) are dropped with a note
-    # Recover tinted features baked into the mat photos from the render pixels. Some mats
-    # carry their rails/ruins inside the neutral mat photo (no separate tinted placement) —
-    # e.g. one copy of a mirrored bridge-strip pair has placed gold-rail quads while its
-    # 180-degree twin bakes the same rails into the mat art. Recovery therefore runs for
-    # EVERY area: blobs already covered by a placed quad are skipped, printed badges
-    # (objectives / letter badges / area markers — teal reads as "dense") are masked out,
-    # each connected blob becomes its own box, and a blob's centre must lie inside the
-    # area's polygon (the bbox crop can clip a neighbouring mat's art).
-    masks = [(o["pos"][0], o["pos"][1], 1.8) for o in objectives]
-    masks += [(bx, by, 1.5) for bx, by, _ in badge_letters]
-    masks += [(m["pos"][0], m["pos"][1], 1.4) for m in markers]
-    for a in area_objs:
-        poly = [(x, y) for x, y in a["polygon"]]
-        xs = [p[0] for p in poly]
-        ys = [p[1] for p in poly]
-        px0 = (cal.x0 + min(xs) / cal.sx) * rscale
-        px1 = (cal.x0 + max(xs) / cal.sx) * rscale
-        py0 = (cal.bottom - max(ys) / cal.sy) * rscale
-        py1 = (cal.bottom - min(ys) / cal.sy) * rscale
-        crop = render.crop((int(px0), int(py0), int(px1), int(py1))).convert("RGB")
-        w_px, h_px = crop.size
-        if w_px < 4 or h_px < 4:
-            continue
-        data = list(crop.getdata())
-        in_x0, in_x1 = min(xs), max(xs)
-        in_y0, in_y1 = min(ys), max(ys)
+            for f in a["features"]:
+                poly = [(x, y) for x, y in f["polygon"]]
+                d = 0.0 if point_in_poly((bx, by), poly) else min(
+                    math.hypot(bx - x, by - y) for x, y in poly
+                )
+                if d < bestd and not f.get("letter"):
+                    best, bestd = f, d
+        if best is not None and bestd < 2.0:
+            best["letter"] = letter
 
-        def to_in(hx, hy):
-            return (
-                in_x0 + hx / w_px * (in_x1 - in_x0),
-                in_y1 - hy / h_px * (in_y1 - in_y0),
-            )
-
-        def emit(kind, hpx):
-            hx0 = min(h[0] for h in hpx)
-            hx1 = max(h[0] for h in hpx)
-            hy0 = min(h[1] for h in hpx)
-            hy1 = max(h[1] for h in hpx)
-            fx0, _ = to_in(hx0, 0)
-            fx1, _ = to_in(hx1 + 1, 0)
-            _, fy1 = to_in(0, hy0)
-            _, fy0 = to_in(0, hy1 + 1)
-            if (fx1 - fx0) * (fy1 - fy0) < 0.6:
-                return  # noise speck
-            # the blob must belong to THIS area (the bbox crop can clip a neighbour's art)
-            mx = sum(h[0] for h in hpx) / len(hpx)
-            my = sum(h[1] for h in hpx) / len(hpx)
-            if not point_in_poly(to_in(mx, my), poly):
-                return
-            # a real placed-photo feature already covering this blob wins (a composite mat
-            # can carry both: p51's top-right bridge mat has its gold quads placed for real)
-            bb = [fx0, fy0, fx1 - fx0, fy1 - fy0]
-            for g in a["features"]:
-                if g["kind"] != kind:
-                    continue
-                gx = [p[0] for p in g["polygon"]]
-                gy = [p[1] for p in g["polygon"]]
-                gb = [min(gx), min(gy), max(gx) - min(gx), max(gy) - min(gy)]
-                if rect_overlap(bb, gb) > 0.5 * bb[2] * bb[3]:
-                    return
-            a["features"].append(
-                {
-                    "kind": kind,
-                    "polygon": [
-                        [round(fx0, 2), round(fy0, 2)],
-                        [round(fx1, 2), round(fy0, 2)],
-                        [round(fx1, 2), round(fy1, 2)],
-                        [round(fx0, 2), round(fy1, 2)],
-                    ],
-                    "recovered": True,
-                }
-            )
-
-        for kind, test in (
-            ("light", lambda r, g, b: r > b * 1.3 and g > b * 1.2 and r >= g * 0.92 and max(r, g, b) - b > 30),
-            ("dense", lambda r, g, b: g > r * 1.15 and g > b * 1.08 and g - min(r, b) > 20),
+    # cross-check: every tinted photo placement should have a traced silhouette on it
+    traced = [f for a in area_objs for f in a["features"]]
+    missed = 0
+    for pl in placements:
+        pxs = [p[0] for p in pl["polygon"]]
+        pys = [p[1] for p in pl["polygon"]]
+        box = (min(pxs) - 0.3, min(pys) - 0.3, max(pxs) + 0.3, max(pys) + 0.3)
+        if not any(
+            box[0] <= sum(q[0] for q in f["polygon"]) / len(f["polygon"]) <= box[2]
+            and box[1] <= sum(q[1] for q in f["polygon"]) / len(f["polygon"]) <= box[3]
+            for f in traced
         ):
-            hits = [
-                (i % w_px, i // w_px)
-                for i, (r, g, b) in enumerate(data)
-                if test(r, g, b)
-            ]
-            # mask out printed badges (teal objective/letter icons read as "dense")
-            pmasks = []
-            for mxm, mym, mr in masks:
-                if in_x0 - 2 <= mxm <= in_x1 + 2 and in_y0 - 2 <= mym <= in_y1 + 2:
-                    pmx = (mxm - in_x0) / (in_x1 - in_x0) * w_px
-                    pmy = (in_y1 - mym) / (in_y1 - in_y0) * h_px
-                    pr = mr * max(w_px / (in_x1 - in_x0), h_px / (in_y1 - in_y0))
-                    pmasks.append((pmx, pmy, pr * pr))
-            if pmasks:
-                hits = [
-                    h for h in hits
-                    if not any((h[0] - qx) ** 2 + (h[1] - qy) ** 2 <= r2 for qx, qy, r2 in pmasks)
-                ]
-            if len(hits) < w_px * h_px * 0.015:
-                continue
-            # Split the mask into connected blobs on a coarse grid and emit one box per
-            # blob — a mat can hold several distinct tinted features (two barricade runs
-            # + a bridge), and one bbox would swallow the whole mat.
-            CELL = 4
-            cells = {(x // CELL, y // CELL) for x, y in hits}
-            seen = set()
-            for c0 in cells:
-                if c0 in seen:
-                    continue
-                stack, comp = [c0], set()
-                seen.add(c0)
-                while stack:
-                    ccx, ccy = stack.pop()
-                    comp.add((ccx, ccy))
-                    for dx in (-1, 0, 1):
-                        for dy in (-1, 0, 1):
-                            nb = (ccx + dx, ccy + dy)
-                            if nb in cells and nb not in seen:
-                                seen.add(nb)
-                                stack.append(nb)
-                hpx = [h for h in hits if (h[0] // CELL, h[1] // CELL) in comp]
-                if len(hpx) >= w_px * h_px * 0.01:
-                    emit(kind, hpx)
+            missed += 1
+    if missed:
+        print(f"  ! p{page_no}: {missed}/{len(placements)} tinted placements with no traced silhouette")
 
     for o in objectives:
-        for a in area_objs:
-            poly = [(x, y) for x, y in a["polygon"]]
-            if point_in_poly(tuple(o["pos"]), poly):
-                o["areaId"] = a["id"]
-                break
+        owner = area_for_point(tuple(o["pos"]), area_objs)
+        if owner is not None:
+            o["areaId"] = owner["id"]
         o["pos"] = [round(o["pos"][0], 3), round(o["pos"][1], 3)]
 
     zones = {
