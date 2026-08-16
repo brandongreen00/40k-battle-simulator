@@ -3,6 +3,8 @@
 
 import type { Datasheet, Enhancement, Layout, Roster } from '../core/types';
 import type { DataIndex } from '../core/army';
+import { armyHasDetachment } from '../core/detachments';
+import { EXTREMIS_IDS } from '../core/enhancements';
 import { deployAbilityFromKeywords, type DeployAbility } from '../core/deployment';
 import { CORE_STRATAGEMS, DETACHMENT_STRAT_EFFECTS, parseTurn, type Stratagem } from '../core/stratagems';
 import datasheetsJson from '../../data/game/datasheets.json';
@@ -175,10 +177,13 @@ export function detachmentsForFaction(faction: string): string[] {
   ].sort((a, b) => a.localeCompare(b));
 }
 
-/** Enhancements offered by a given detachment. */
+/** Enhancements offered by a given detachment — or by ANY component of a multi-detachment
+ *  army's combined name ("Imperialis Fleet and Veiled Blade Elimination Force"). Veiled Blade's
+ *  four cards are Extremis ABILITIES (auto-granted + auto-priced by Extremis Sanction), never
+ *  pickable enhancements, so they are excluded here. */
 export function enhancementsForDetachment(detachment: string): Enhancement[] {
   return enhancements
-    .filter((e) => e.detachment === detachment)
+    .filter((e) => armyHasDetachment(detachment, e.detachment) && !EXTREMIS_IDS.has(e.id))
     .sort((a, b) => a.cost - b.cost || a.name.localeCompare(b.name));
 }
 

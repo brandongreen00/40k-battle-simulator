@@ -38,7 +38,7 @@ export const DETACHMENT_POINTS: Record<string, number> = {
   'Grizzled Company': 3, // Priority Assets
   'Recon Element': 3, // Reconnaissance
   // ── Imperial Agents (v1.1 prices every Agents detachment at 1–2 DP, so a 2000 pt /
-  // 3 DP army could legally field TWO Agents detachments — not yet modelled here) ──
+  // 3 DP army can legally field TWO Agents detachments — see splitDetachments below) ──
   'Imperialis Fleet': 2, // Reconnaissance
   'Ordo Hereticus Purgation Force': 2, // Take and Hold
   'Ordo Malleus Daemon Hunters': 2, // Priority Assets
@@ -46,23 +46,85 @@ export const DETACHMENT_POINTS: Record<string, number> = {
   'Veiled Blade Elimination Force': 1, // Disruption
 };
 
-/** DP cost of a detachment. Unlisted detachments (Grotmas/10e leftovers in the data) default to
- *  2 DP — the modal cost of both factions' printed packs. (The faction parameter is kept for
- *  callers; since v1.1 the fallback no longer differs by faction.) */
+/** DP cost of a detachment — or the SUM for a combined multi-detachment name ("A and B").
+ *  Unlisted detachments (Grotmas/10e leftovers in the data) default to 2 DP — the modal cost of
+ *  both factions' printed packs. (The faction parameter is kept for callers; since v1.1 the
+ *  fallback no longer differs by faction.) */
 export function detachmentPoints(name: string, _faction?: string): number {
-  return DETACHMENT_POINTS[name] ?? 2;
+  return splitDetachments(name).reduce((s, d) => s + (DETACHMENT_POINTS[d] ?? 2), 0);
+}
+
+// ── Multi-detachment armies (11e) ────────────────────────────────────────────
+// An army may take MULTIPLE detachments within the DP budget (2+1 at 2000 pts). The GW app
+// exports such an army with the detachments joined in one header line — "Imperialis Fleet and
+// Veiled Blade Elimination Force (3 Detachment Points)" — and that combined string is what an
+// ArmyList/Roster carries as its `detachment`. These helpers split it back into its component
+// detachments wherever a rule is detachment-scoped (enhancements, stratagems, detachment rules).
+
+/** Punctuation/case-insensitive canonical form for comparing detachment names across sources
+ *  (the app writes "Ordo Hereticus, Purgation Force" where the data says
+ *  "Ordo Hereticus Purgation Force"). */
+export function normalizeDetachmentName(s: string): string {
+  return s
+    .replace(/\(\s*\d+\s*detachment points?\s*\)/i, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+/**
+ * Split an army's detachment string into its component detachment names. A single known name
+ * (or any unrecognised string — Combat Patrol names, Grotmas leftovers) returns as-is; a
+ * combined "<A> and <B>" line splits only when EVERY part matches a known detachment, so a
+ * detachment whose own name contained "and" could never be broken apart by accident.
+ */
+export function splitDetachments(name: string): string[] {
+  const known = new Map(Object.keys(DETACHMENT_POINTS).map((k) => [normalizeDetachmentName(k), k]));
+  const whole = known.get(normalizeDetachmentName(name));
+  if (whole) return [whole];
+  const parts = name
+    .replace(/\(\s*\d+\s*detachment points?\s*\)/i, '')
+    .split(/\s+(?:and|&)\s+/i)
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+  if (parts.length > 1 && parts.every((p) => known.has(normalizeDetachmentName(p)))) {
+    return parts.map((p) => known.get(normalizeDetachmentName(p))!);
+  }
+  return [name];
+}
+
+/** Does an army whose (possibly combined) detachment string is `armyDetachment` include the
+ *  detachment `name`? Used for enhancement/stratagem scoping and detachment rules. */
+export function armyHasDetachment(armyDetachment: string | undefined, name: string): boolean {
+  if (!armyDetachment) return false;
+  const target = normalizeDetachmentName(name);
+  return splitDetachments(armyDetachment).some((d) => normalizeDetachmentName(d) === target);
 }
 
 export interface DpCheck {
   cost: number;
   budget: DpBudget;
-  /** RAW-over-budget, permitted by GW's stated lone-detachment allowance. */
+  /** The component detachments (1 entry for a normal lone-detachment army). */
+  detachments: string[];
+  /** A LONE detachment RAW-over-budget — permitted by GW's stated lone-detachment allowance. */
   overBudgetLone: boolean;
+  /** MULTIPLE detachments whose summed cost exceeds the budget — a hard error (the lone
+   *  allowance is explicitly about single detachments). */
+  overBudgetMulti: boolean;
 }
 
-/** Check one army list's lone detachment against the DP budget for its points limit. */
+/** Check an army's detachment(s) — possibly a combined "<A> and <B>" string — against the DP
+ *  budget for its points limit. Multiple detachments sum their costs. */
 export function checkDetachmentPoints(detachment: string, faction: string | undefined, pointsLimit: number): DpCheck {
+  const detachments = splitDetachments(detachment);
   const cost = detachmentPoints(detachment, faction);
   const budget = dpBudget(pointsLimit);
-  return { cost, budget, overBudgetLone: cost > budget.dp };
+  const over = cost > budget.dp;
+  return {
+    cost,
+    budget,
+    detachments,
+    overBudgetLone: over && detachments.length === 1,
+    overBudgetMulti: over && detachments.length > 1,
+  };
 }

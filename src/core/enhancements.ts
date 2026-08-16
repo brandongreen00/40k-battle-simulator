@@ -21,6 +21,7 @@
 import type { Datasheet, GameState, UnitInstance } from './types';
 import type { EngineContext } from './engine';
 import { gapBetweenBases } from './geometry';
+import { armyHasDetachment } from './detachments';
 
 // ── ids (names in comments; see data/game/enhancements.json) ─────────────────
 export const ENH = {
@@ -104,6 +105,37 @@ export const ENH = {
   HEIRLOOM_BLADE: '000009360003', // text-only (once-per-battle weapon buff)
   LATHIMONS_FLOCK: '000009360002',
 } as const;
+
+// ── Veiled Blade "Extremis Sanction" (detachment rule, Faction Pack v1.1) ─────
+// The four Veiled Blade cards in the catalog are NOT pickable enhancements: the printed
+// detachment rule says "each OFFICIO ASSASSINORUM unit from your army has the relevant Extremis
+// ability shown on the right, and you must increase the points cost of each of those units by
+// the amount shown". So in an army that includes Veiled Blade Elimination Force, every assassin
+// AUTOMATICALLY carries its temple's card and pays its catalog cost as a mandatory surcharge
+// (Callidus +15, Culexus +10, Eversor +15, Vindicare +20 — Wahapedia 11e, retrieved 2026-08-16).
+// Assassins are Epic Heroes (never legal enhancement bearers), so `toRoster` stamps the card
+// into the unit's free `enhancementId` slot and the whole in-game enhancement machinery above
+// (Micromelta's weapon grant, ability text display) applies unchanged. The rule's other half —
+// Overkill / Soulless Horror / Shieldbreaker usable twice per battle — stays text-only (those
+// datasheet abilities have no engine binding yet; see docs/ai_unit_roles.md §2).
+
+/** Datasheet name (lowercase) → the Extremis ability granted by Extremis Sanction. */
+export const EXTREMIS_ABILITIES: Record<string, string> = {
+  'callidus assassin': ENH.DECOY_TARGETS,
+  'culexus assassin': ENH.ESOTERIC_EXPLOSIVES,
+  'eversor assassin': ENH.INTRANEURAL_BIOTECH,
+  'vindicare assassin': ENH.MICROMELTA_ROUNDS,
+};
+
+/** The catalog ids of the four Extremis cards (excluded from enhancement pickers/validation). */
+export const EXTREMIS_IDS: ReadonlySet<string> = new Set(Object.values(EXTREMIS_ABILITIES));
+
+/** The Extremis ability this datasheet auto-gains in an army whose (possibly combined)
+ *  detachment includes Veiled Blade Elimination Force — else null. */
+export function extremisAbilityId(ds: Datasheet | undefined, armyDetachment: string | undefined): string | null {
+  if (!ds || !armyHasDetachment(armyDetachment, 'Veiled Blade Elimination Force')) return null;
+  return EXTREMIS_ABILITIES[ds.name.toLowerCase()] ?? null;
+}
 
 /** Every enhancement id carried by this live unit (its own + merged Leaders'). */
 export function enhancementIdsOf(unit: UnitInstance): string[] {

@@ -93,13 +93,15 @@ function stripLeadingCount(s: string): string {
   return s.replace(/^\s*(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+/i, '').trim();
 }
 
-/** Split a clause like "1 power weapon and 1 Astartes shield" into its item names. */
+/** Split a clause like "1 power weapon and 1 Astartes shield" into its item names. Trailing
+ *  footnote markers ("1 Heavy flamer*" — the * points at a wargear note) are stripped so the
+ *  item matches the real weapon name and pools with other options granting the same item. */
 function itemsInClause(clause: string): string[] {
   return clause
     .replace(/\.$/, '')
     .split(/\s+and\s+/i)
     .map((s) => stripLeadingCount(s))
-    .map((s) => s.trim())
+    .map((s) => s.replace(/[*†]+\s*$/, '').trim())
     .filter((s) => s.length > 0 && !/^one of the following/i.test(s));
 }
 
@@ -113,7 +115,7 @@ function signatureOf(clause: string, weaponNames: string[]): string | undefined 
   const items = itemsInClause(clause);
   const special = items.find((it) => !GENERIC_WEAPONS.has(it.toLowerCase()));
   if (!special) return undefined;
-  const hit = weaponNames.find((w) => w.toLowerCase() === special.toLowerCase());
+  const hit = weaponNames.find((w) => norm(w) === norm(special));
   return hit ?? special;
 }
 
@@ -206,6 +208,101 @@ export function defensiveItemsInText(text: string): string[] {
     .map((key) => key.replace(/\b\w/g, (c) => c.toUpperCase()));
 }
 
+// ── Default wargear counts (from the datasheet's loadout text) ──────────────────
+// The GW app's export lists a unit's FULL equipment — default wargear included ("4x Sanctifiers"
+// each carry a Ministorum hand flamer by default, so the export says "5x Ministorum hand flamer"
+// when one more is added via an option). Option caps must therefore only be charged for picks
+// BEYOND the default bearers, or every default item that is also option-grantable false-positives
+// ("5 models take Ministorum hand flamer but only 1 may").
+
+/** Sum of the loadout's counts for entries matching `item` (name-normalized — the app's export
+ *  casing/punctuation can differ from the datasheet's). */
+export function loadoutCount(loadout: Loadout | undefined, item: string): number {
+  if (!loadout) return 0;
+  const target = norm(item);
+  let sum = 0;
+  for (const [k, v] of Object.entries(loadout)) if (norm(k) === target) sum += v;
+  return sum;
+}
+
+/** Singular/plural-insensitive canonical form for model-type names ("Missionaries" ↔
+ *  "Missionary", "Sanctifiers" ↔ "Sanctifier"). */
+function singularType(s: string): string {
+  const n = norm(s);
+  return n.endsWith('ies') ? `${n.slice(0, -3)}y` : n.replace(/s$/, '');
+}
+
+/**
+ * Parse a datasheet's default-loadout text ("Every Sanctifier is equipped with: Ministorum hand
+ * flamer; Sanctifier melee weapon.") into an item→count map of DEFAULT bearers, resolving
+ * "Every <Type>" against the unit composition (scaled when the unit is fielded at a multiple of
+ * the minimum size). Unknown subjects fall back to 1 bearer; every count is capped at the model
+ * count. Best-effort by design — it only ever *credits* default bearers against option caps.
+ */
+export function defaultLoadoutCounts(ds: Datasheet, modelCount: number): Loadout {
+  const text = ds.loadout ?? '';
+  if (!text) return {};
+
+  const comp: { count: number; name: string }[] = [];
+  for (const entry of ds.composition ?? []) {
+    // "4 Sanctifiers", "2 Missionaries", "1 Callidus Assassin – EPIC HERO", "4-9 Veterans"
+    const m = entry.match(/^\s*(\d+)(?:\s*[-–]\s*\d+)?\s+(.+?)(?:\s+[–—].*)?$/);
+    if (m) comp.push({ count: parseInt(m[1]!, 10), name: m[2]!.trim() });
+  }
+  const compTotal = comp.reduce((s, c) => s + c.count, 0);
+  const scale = compTotal > 0 && modelCount > compTotal && modelCount % compTotal === 0 ? modelCount / compTotal : 1;
+
+  const typeCount = (name: string): number | undefined => {
+    const target = singularType(name);
+    let sum = 0;
+    let found = false;
+    for (const c of comp) {
+      if (singularType(c.name) === target) {
+        sum += c.count;
+        found = true;
+      }
+    }
+    return found ? Math.round(sum * scale) : undefined;
+  };
+
+  const subjectCount = (subjectRaw: string): number => {
+    const s = subjectRaw.trim();
+    if (/^every model$/i.test(s)) return modelCount;
+    if (/^(this model|the\s+.+)$/i.test(s)) return 1; // "This model", "The Miraculist"
+    const lead = s.match(/^(\d+)\s+/); // "1 Missionary"
+    if (lead) return parseInt(lead[1]!, 10);
+    const every = s.match(/^every\s+(.+)$/i); // "Every Sanctifier", "Every Proctor-Subductor and Subductor"
+    if (every) {
+      let sum = 0;
+      for (const t of every[1]!.split(/\s+and\s+/i)) {
+        const c = typeCount(t);
+        if (c == null) return modelCount; // unknown type — credit generously (validation only relaxes)
+        sum += c;
+      }
+      return sum;
+    }
+    return 1;
+  };
+
+  const out: Loadout = {};
+  // Each sentence "<Subject> is/are equipped with: a; b; c." — subjects can't span a period.
+  const rx = /([^.]*?)\s+(?:is|are)\s+equipped with:/gi;
+  const matches = [...text.matchAll(rx)];
+  for (let i = 0; i < matches.length; i++) {
+    const m = matches[i]!;
+    const n = Math.min(modelCount, subjectCount(m[1]!));
+    if (n <= 0) continue;
+    const start = m.index! + m[0].length;
+    const end = i + 1 < matches.length ? matches[i + 1]!.index! : text.length;
+    for (const raw of text.slice(start, end).split(';')) {
+      const item = raw.trim().replace(/\.\s*$/, '').replace(/\.$/, '').trim();
+      if (item.length === 0) continue;
+      out[item] = (out[item] ?? 0) + n;
+    }
+  }
+  return out;
+}
+
 // ── Option groups (overlapping choice lists) ────────────────────────────────────
 // Some datasheets list the same swap more than once with overlapping choices — the Sisters of
 // Battle Squad has TWO "1 Battle Sister's boltgun can be replaced with…" options, and a meltagun
@@ -260,18 +357,20 @@ export function wargearOptionGroups(ds: Datasheet, modelCount: number): WargearO
  * Try to assign every picked item in the group to an option that grants it, without exceeding any
  * option's cap (bipartite max-flow; the graphs are tiny). Returns null when everything fits, else
  * the min-cut certificate: the over-taken items together with the combined cap of every option
- * that could supply them.
+ * that could supply them. `defaults` (from `defaultLoadoutCounts`) credits models that carry an
+ * item as DEFAULT wargear — only the picks beyond them charge the option caps.
  */
 function groupOverflow(
   group: WargearOptionGroup,
   loadout: Loadout,
+  defaults: Loadout = {},
 ): { items: string[]; used: number; cap: number } | null {
   const items = group.choices
-    .map((c) => ({ item: c.item, count: loadout[c.item] ?? 0 }))
+    .map((c) => ({ item: c.item, count: Math.max(0, loadoutCount(loadout, c.item) - loadoutCount(defaults, c.item)) }))
     .filter((e) => e.count > 0);
   if (items.length === 0) return null;
   const offers = items.map((e) =>
-    group.options.flatMap((o, oi) => (o.choices.some((c) => c.item.toLowerCase() === e.item.toLowerCase()) ? [oi] : [])),
+    group.options.flatMap((o, oi) => (o.choices.some((c) => norm(c.item) === norm(e.item)) ? [oi] : [])),
   );
   const spare = group.options.map((o) => o.max);
   const assigned: Map<number, number>[] = items.map(() => new Map()); // item → (option → units)
@@ -330,9 +429,10 @@ function groupOverflow(
   };
 }
 
-/** True when the loadout's picks from this group can all be assigned within the option caps. */
-export function groupFits(group: WargearOptionGroup, loadout: Loadout): boolean {
-  return groupOverflow(group, loadout) === null;
+/** True when the loadout's picks from this group can all be assigned within the option caps
+ *  (default-wargear bearers credited via `defaults` — see `defaultLoadoutCounts`). */
+export function groupFits(group: WargearOptionGroup, loadout: Loadout, defaults: Loadout = {}): boolean {
+  return groupOverflow(group, loadout, defaults) === null;
 }
 
 // ── Loadout validation ──────────────────────────────────────────────────────────
@@ -349,12 +449,14 @@ export interface LoadoutViolation {
 export function validateUnitLoadout(ds: Datasheet, modelCount: number, loadout: Loadout | undefined): LoadoutViolation[] {
   if (!loadout) return [];
   const violations: LoadoutViolation[] = [];
+  const defaults = defaultLoadoutCounts(ds, modelCount);
   for (const group of wargearOptionGroups(ds, modelCount)) {
-    const over = groupOverflow(group, loadout);
+    const over = groupOverflow(group, loadout, defaults);
     if (!over) continue;
+    const credited = over.items.some((it) => loadoutCount(defaults, it) > 0);
     violations.push({
       optionIndex: group.options[0]!.optionIndex,
-      message: `${ds.name}: ${over.used} models take ${over.items.join(' / ')} but only ${over.cap} may (for ${modelCount} models).`,
+      message: `${ds.name}: ${over.used} models take ${over.items.join(' / ')}${credited ? ' beyond the default wargear' : ''} but only ${over.cap} may (for ${modelCount} models).`,
     });
   }
   return violations;

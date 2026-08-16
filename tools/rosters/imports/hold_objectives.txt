@@ -1,0 +1,211 @@
+HOLD OBJECTIVES (2,000 Points)
+
+Imperial Agents
+Imperialis Fleet and Veiled Blade Elimination Force (3 Detachment Points)
+Reconnaissance
+Strike Force (2,000 Points)
+
+ATTACHED UNITS
+
+Attached unit 1
+
+Watch Master (105 Points)
+  • Attached as: Leader (Character)
+  • 1x Vigil spear
+  • Enhancements: Digital Weapons
+
+Deathwatch Kill Team (190 Points)
+  • Attached as: Bodyguard (Battleline)
+  • 1x Watch Sergeant
+     ◦ 1x Combi-weapon
+     ◦ 1x Xenophase blade
+  • 9x Deathwatch Veterans
+     ◦ 3x Astartes shield
+     ◦ 1x Black Shield blades
+     ◦ 1x Boltgun
+     ◦ 4x Deathwatch thunder hammer
+     ◦ 4x Power weapon
+
+Attached unit 2
+
+Inquisitor (55 Points)
+  • Attached as: Leader (Character)
+  • 1x Combi-weapon
+  • 1x Force weapon
+  • 1x Psychic Gifts
+  • 1x Psychic Shock Wave
+
+Sanctifiers (100 Points)
+  • Attached as: Bodyguard ()
+  • 1x Miraculist
+     ◦ 1x Burning hands
+     ◦ 1x Holy fire
+  • 1x Salvationist
+     ◦ 1x Close combat weapon
+     ◦ 1x Salvationist Medikit
+  • 1x Death Cult Assassin
+     ◦ 1x Death Cult blades
+  • 2x Missionary
+     ◦ 1x Holy fire
+     ◦ 1x Ministorum flamer
+     ◦ 1x Plasma gun
+     ◦ 2x Sanctifier melee weapon
+  • 4x Sanctifier
+     ◦ 2x Close combat weapon
+     ◦ 5x Ministorum hand flamer
+     ◦ 2x Sanctifier melee weapon
+     ◦ 1x Simulacrum Imperialis
+
+Attached unit 3
+
+Inquisitor (70 Points)
+  • Attached as: Leader (Character)
+  • 1x Combi-weapon
+  • 1x Force weapon
+  • 1x Psychic Gifts
+  • 1x Psychic Shock Wave
+  • Enhancements: Clandestine Operation
+
+Sanctifiers (100 Points)
+  • Attached as: Bodyguard ()
+  • 1x Miraculist
+     ◦ 1x Burning hands
+     ◦ 1x Holy fire
+  • 1x Salvationist
+     ◦ 1x Close combat weapon
+     ◦ 1x Salvationist Medikit
+  • 1x Death Cult Assassin
+     ◦ 1x Death Cult blades
+  • 2x Missionary
+     ◦ 1x Holy fire
+     ◦ 1x Ministorum flamer
+     ◦ 1x Plasma gun
+     ◦ 2x Sanctifier melee weapon
+  • 4x Sanctifier
+     ◦ 2x Close combat weapon
+     ◦ 5x Ministorum hand flamer
+     ◦ 2x Sanctifier melee weapon
+     ◦ 1x Simulacrum Imperialis
+
+CHARACTERS
+
+Callidus Assassin (115 Points)
+  • 1x Neural shredder
+  • 1x Phase sword and poison blades
+
+Inquisitor Draxus (75 Points)
+  • 1x Dirgesinger
+  • 1x Power fist
+  • 1x Psychic Tempest
+
+Inquisitor Kroyle (100 Points)
+  • Warlord
+  • 1x Butcher blade
+  • 1x Garralisk’s claws and teeth
+  • 1x Jindarii tox‑cycler
+  • 1x Stubcarbine
+
+DEDICATED TRANSPORTS
+
+Imperial Rhino (65 Points)
+  • 1x Armoured tracks
+  • 1x Hunter-killer missile
+  • 1x Storm bolter
+
+Inquisitorial Chimera (60 Points)
+  • 1x Armoured tracks
+  • 1x Heavy flamer
+  • 1x Heavy flamer
+  • 1x Heavy stubber
+  • 1x Hunter-killer missile
+  • 1x Lasgun array
+
+Sisters of Battle Immolator (105 Points)
+  • 1x Armoured tracks
+  • 1x Heavy bolter
+  • 1x Hunter-killer missile
+  • 1x Twin multi-melta
+
+Sisters of Battle Immolator (105 Points)
+  • 1x Armoured tracks
+  • 1x Heavy bolter
+  • 1x Hunter-killer missile
+  • 1x Twin multi-melta
+
+OTHER DATASHEETS
+
+Grey Knights Terminator Squad (175 Points)
+  • 1x Terminator Justicar
+     ◦ 1x Nemesis force weapon
+     ◦ 1x Storm bolter
+  • 4x Grey Knights Terminators
+     ◦ 1x Incinerator
+     ◦ 1x Narthecium
+     ◦ 4x Nemesis force weapon
+     ◦ 2x Storm bolter
+
+Grey Knights Terminator Squad (175 Points)
+  • 1x Terminator Justicar
+     ◦ 1x Nemesis force weapon
+     ◦ 1x Storm bolter
+  • 4x Grey Knights Terminators
+     ◦ 1x Incinerator
+     ◦ 1x Narthecium
+     ◦ 4x Nemesis force weapon
+     ◦ 2x Storm bolter
+
+Inquisitorial Agents (50 Points)
+  • 1x Tome‐skull
+  • 5x Inquisitorial Agent
+     ◦ 5x Agent firearm
+     ◦ 5x Agent melee weapon
+     ◦ 1x Eviscerator
+     ◦ 1x Mystic stave
+     ◦ 1x Plasma pistol
+  • 1x Gun Servitor
+     ◦ 1x Agent melee weapon
+     ◦ 1x Multi-melta
+
+Sisters of Battle Squad (100 Points)
+  • 1x Sister Superior
+     ◦ 1x Bolt pistol
+     ◦ 1x Close combat weapon
+     ◦ 1x Inferno pistol
+  • 9x Battle Sister
+     ◦ 9x Bolt pistol
+     ◦ 7x Boltgun
+     ◦ 9x Close combat weapon
+     ◦ 1x Meltagun
+     ◦ 1x Multi-melta
+
+Subductor Squad (85 Points)
+  • 1x Proctor-Subductor
+     ◦ 1x Arbites shotpistol
+     ◦ 1x Shock maul
+  • 9x Subductor
+     ◦ 9x Arbites shotpistol
+     ◦ 9x Shock maul
+  • 1x Cyber-mastiff
+     ◦ 1x Mechanical bite
+
+Subductor Squad (85 Points)
+  • 1x Proctor-Subductor
+     ◦ 1x Arbites shotpistol
+     ◦ 1x Shock maul
+  • 9x Subductor
+     ◦ 9x Arbites shotpistol
+     ◦ 9x Shock maul
+  • 1x Cyber-mastiff
+     ◦ 1x Mechanical bite
+
+Subductor Squad (85 Points)
+  • 1x Proctor-Subductor
+     ◦ 1x Arbites shotpistol
+     ◦ 1x Shock maul
+  • 9x Subductor
+     ◦ 9x Arbites shotpistol
+     ◦ 9x Shock maul
+  • 1x Cyber-mastiff
+     ◦ 1x Mechanical bite
+
+Exported with App Version: v2.4.0 (1), Data Version: v925

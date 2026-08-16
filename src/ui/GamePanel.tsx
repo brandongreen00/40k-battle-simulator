@@ -3,6 +3,7 @@ import type { Datasheet, GameState, UnitInstance } from '../core/types';
 import type { Intent } from '../core/state';
 import { availableUnitWeapons, planUnitFight, planUnitShooting, type EngineContext } from '../core/engine';
 import { unitOverlaps } from '../core/collision';
+import { armyHasDetachment } from '../core/detachments';
 import { unitDenseViolation } from '../core/terrainmove';
 import type { MoveMode } from '../core/movement';
 import { EFFECT_REGISTRY } from '../core/effects';
@@ -165,7 +166,7 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
   /** Issue an Order; Grizzled Company also grants re-roll Hit 1s while a unit is under an Order. */
   function issueOrder(unitId: string, effectId: string) {
     dispatch({ type: 'IssueOrder', unitId, effectId });
-    if (activeDetachment === 'Grizzled Company') dispatch({ type: 'IssueOrder', unitId, effectId: 'reroll_hits_1' });
+    if (armyHasDetachment(activeDetachment, 'Grizzled Company')) dispatch({ type: 'IssueOrder', unitId, effectId: 'reroll_hits_1' });
   }
 
   const offensiveEffects = Object.values(EFFECT_REGISTRY).filter((e) => e.side === 'attacker');
@@ -368,7 +369,7 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
       {/* Command phase — Orders (Voice of Command) */}
       {phase === 'Command' && officers.length > 0 && (
         <div className="phase-block">
-          <h3>Orders {activeDetachment === 'Grizzled Company' ? '· Ruthless Discipline (+1 order, re-roll Hit 1s)' : ''}</h3>
+          <h3>Orders {armyHasDetachment(activeDetachment, 'Grizzled Company') ? '· Ruthless Discipline (+1 order, re-roll Hit 1s)' : ''}</h3>
           {officers.map((off) => {
             const targets = orderableUnits(off, state, ctx);
             return (
@@ -397,7 +398,7 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
       )}
 
       {/* Command phase — Imperialis Fleet "At all Costs" */}
-      {phase === 'Command' && activeDetachment === 'Imperialis Fleet' && (
+      {phase === 'Command' && armyHasDetachment(activeDetachment, 'Imperialis Fleet') && (
         <div className="phase-block">
           <h3>At all Costs</h3>
           <div className="order-row">

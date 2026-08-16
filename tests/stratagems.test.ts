@@ -50,4 +50,19 @@ describe('usableStratagems', () => {
       expect(usableStratagems(CORE_STRATAGEMS, { phase: ph, isYourTurn: true }).some((s) => s.name === 'Command Re-roll')).toBe(true);
     }
   });
+
+  it('a multi-detachment army is offered BOTH components’ stratagems, and no third set', () => {
+    const fleet: Stratagem = { id: 'f1', name: 'Masters of the Void', cp: 1, phase: 'Shooting phase', turn: 'your', detachment: 'Imperialis Fleet' };
+    const veiled: Stratagem = { id: 'v1', name: 'Nowhere to Hide', cp: 1, phase: 'Shooting phase', turn: 'your', detachment: 'Veiled Blade Elimination Force' };
+    const xenos: Stratagem = { id: 'x1', name: 'Purge Order', cp: 1, phase: 'Shooting phase', turn: 'your', detachment: 'Ordo Xenos Alien Hunters' };
+    const offered = usableStratagems([...CORE_STRATAGEMS, fleet, veiled, xenos], {
+      phase: 'Shooting',
+      isYourTurn: true,
+      detachment: 'Imperialis Fleet and Veiled Blade Elimination Force',
+    });
+    const names = offered.map((s) => s.name);
+    expect(names).toContain('Masters of the Void');
+    expect(names).toContain('Nowhere to Hide');
+    expect(names).not.toContain('Purge Order');
+  });
 });
