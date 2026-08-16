@@ -9,6 +9,7 @@
 
 import type { Datasheet, UnitInstance } from './types';
 import { extraOrderIdsFor, grantsOfficer } from './enhancements';
+import { armyHasDetachment } from './detachments';
 
 export interface OrderDef {
   id: string;
@@ -101,4 +102,36 @@ export function unitIsOfficer(
 export function canReceiveOrders(ds: Datasheet | undefined, u: UnitInstance): boolean {
   if (!ds || u.status.battleShocked) return false;
   return ds.keywords.some((k) => k.toLowerCase() === 'regiment');
+}
+
+// ── Abhuman Auxiliaries — "Absolutist Principles" (11e detachment rule) ───────
+// Printed rule (Wahapedia 11e, Faction Pack v1.1): friendly BULLGRYN SQUAD / OGRYN SQUAD /
+// RATLINGS units have ABHUMAN; friendly COMMISSAR models can issue the Take Aim! Order —
+// 1 Order, to a friendly ABHUMAN unit. Bound as a target extension: in an Abhuman Auxiliaries
+// army, ABHUMAN units become orderable by COMMISSAR officers (the Commissar datasheet already
+// carries OFFICER), and Orders issued to a unit that qualifies ONLY as ABHUMAN are restricted
+// to Take Aim! at the decision sites (GamePanel / AI).
+
+const ABHUMAN_KEYWORDS = ['bullgryn squad', 'ogryn squad', 'ratlings'];
+
+/** Does the army's (possibly combined) detachment include Abhuman Auxiliaries? */
+export function isAbhumanArmy(detachment: string | undefined): boolean {
+  return armyHasDetachment(detachment, 'Abhuman Auxiliaries');
+}
+
+/** A unit granted the ABHUMAN keyword by Absolutist Principles. */
+export function isAbhumanUnit(ds: Datasheet | undefined): boolean {
+  return !!ds?.keywords.some((k) => ABHUMAN_KEYWORDS.includes(k.toLowerCase()));
+}
+
+/** Does this live unit contain a COMMISSAR model (its own datasheet or a merged Leader's)? */
+export function unitHasCommissar(u: UnitInstance, ctx: { datasheets: Map<string, Datasheet> }): boolean {
+  const commissar = (id: string): boolean =>
+    !!ctx.datasheets.get(id)?.keywords.some((k) => k.toLowerCase() === 'commissar');
+  return commissar(u.datasheetId) || (u.attachedLeaders ?? []).some((l) => commissar(l.datasheetId));
+}
+
+/** An order TARGET that qualifies only via the Abhuman rule — restricted to Take Aim!. */
+export function abhumanOnlyOrderTarget(ds: Datasheet | undefined): boolean {
+  return isAbhumanUnit(ds) && !ds!.keywords.some((k) => k.toLowerCase() === 'regiment');
 }

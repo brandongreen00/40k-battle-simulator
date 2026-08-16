@@ -13,6 +13,7 @@
 
 import type { BaseShape, Datasheet, Vec2 } from './types';
 import { baseRadius, gapBetweenBases } from './geometry';
+import { leaderGrantTargets } from './enhancements';
 
 const dedupe = (xs: string[] | undefined): string[] => [...new Set(xs ?? [])];
 
@@ -72,13 +73,19 @@ export function isCharacter(ds: Datasheet | undefined): boolean {
 }
 
 /** Can `leader` attach to `bodyguard`? Both must exist, leader must be a Character, and the data
- *  must pair them in at least one direction. */
-export function canAttach(leader: Datasheet | undefined, bodyguard: Datasheet | undefined): boolean {
+ *  must pair them in at least one direction — or the leader's enhancement must grant the pairing
+ *  (Exemplar of Duty / Abhuman Detail: "LEADER: OGRYN SQUAD, BULLGRYN SQUAD"). */
+export function canAttach(
+  leader: Datasheet | undefined,
+  bodyguard: Datasheet | undefined,
+  leaderEnhancementId?: string,
+): boolean {
   if (!leader || !bodyguard || leader.id === bodyguard.id) return false;
   if (!isCharacter(leader)) return false;
   const byLead = dedupe(leader.canLead).includes(bodyguard.id);
   const byLedBy = dedupe(bodyguard.canBeLedBy).includes(leader.id);
-  return byLead || byLedBy;
+  const byGrant = leaderGrantTargets(leaderEnhancementId).includes(bodyguard.name.toLowerCase());
+  return byLead || byLedBy || byGrant;
 }
 
 /** Datasheet ids of every bodyguard `leader` may join. */

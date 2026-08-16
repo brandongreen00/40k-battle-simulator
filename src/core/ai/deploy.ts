@@ -90,7 +90,7 @@ export function pendingLeaderAttaches(state: GameState, side: Side, ctx: EngineC
         !taken.has(b.id) &&
         (b.attachedLeaders?.length ?? 0) === 0 &&
         !isCharacter(ctx.datasheets.get(b.datasheetId)) &&
-        canAttach(ds, ctx.datasheets.get(b.datasheetId)),
+        canAttach(ds, ctx.datasheets.get(b.datasheetId), u.enhancementId),
     );
     if (!bodyguard) continue;
     taken.add(bodyguard.id);
@@ -254,7 +254,7 @@ export function desiredFormations(state: GameState, side: Side, deps: AiDeps): A
         !isCharacter(e.ds) &&
         !takenBodyguards.has(e.key) &&
         e.key !== leader.key &&
-        canAttach(leader.ds, e.ds),
+        canAttach(leader.ds, e.ds, leader.unit.enhancementId),
     );
     if (candidates.length === 0) continue;
     const wantBattleline = hasBackroomDeals(leader.ds);
@@ -279,6 +279,7 @@ export function desiredFormations(state: GameState, side: Side, deps: AiDeps): A
         leaderDsId: leader.ds.id,
         bodyguardKey,
         bodyguardDsId: pick.ds.id,
+        ...(leader.unit.enhancementId ? { leaderEnhancementId: leader.unit.enhancementId } : {}),
       },
       skipIf: (s) =>
         (s.setup?.formations ?? []).some((f) => f.leaderKey === leaderKey || f.bodyguardKey === bodyguardKey) ||

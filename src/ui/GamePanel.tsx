@@ -13,7 +13,7 @@ import {
   gapBetween, type Eligibility,
 } from '../core/phases';
 import { disembarkMode, embarkOptions } from '../core/transport';
-import { ordersAvailableTo, unitIsOfficer } from '../core/orders';
+import { abhumanOnlyOrderTarget, ordersAvailableTo, unitIsOfficer } from '../core/orders';
 import { secondaryCard } from '../core/secondaries';
 import { dispositionName, MISSION_NAMES, PRIMARY_CAP, actionsForSide, objectivePoints } from '../core/missions11';
 import { CP_MISSIONS } from '../core/cpmissions';
@@ -371,25 +371,30 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
         <div className="phase-block">
           <h3>Orders {armyHasDetachment(activeDetachment, 'Grizzled Company') ? '· Ruthless Discipline (+1 order, re-roll Hit 1s)' : ''}</h3>
           {officers.map((off) => {
-            const targets = orderableUnits(off, state, ctx);
+            const targets = orderableUnits(off, state, ctx, activeDetachment);
             return (
               <div key={off.id} className="order-officer">
                 <strong>{nameOf(off.id)}</strong>
                 {targets.length === 0 ? (
                   <span className="muted"> — no orderable units in range</span>
                 ) : (
-                  targets.map((t) => (
-                    <div key={t.id} className="order-row">
-                      <span>{nameOf(t.id)}{(t.status.activeEffects ?? []).some((e) => e.startsWith('order:')) ? ' ✓' : ''}</span>
-                      <select
-                        value=""
-                        onChange={(e) => { if (e.target.value) issueOrder(t.id, e.target.value); }}
-                      >
-                        <option value="">— issue order —</option>
-                        {ordersAvailableTo(off).map((o) => <option key={o.id} value={o.effectId} title={o.desc}>{o.name} — {o.desc}</option>)}
-                      </select>
-                    </div>
-                  ))
+                  targets.map((t) => {
+                    // Absolutist Principles targets (ABHUMAN, no REGIMENT) only receive Take Aim!.
+                    const abhumanOnly = abhumanOnlyOrderTarget(datasheetsById.get(t.datasheetId));
+                    const options = ordersAvailableTo(off).filter((o) => !abhumanOnly || o.id === 'take_aim');
+                    return (
+                      <div key={t.id} className="order-row">
+                        <span>{nameOf(t.id)}{(t.status.activeEffects ?? []).some((e) => e.startsWith('order:')) ? ' ✓' : ''}</span>
+                        <select
+                          value=""
+                          onChange={(e) => { if (e.target.value) issueOrder(t.id, e.target.value); }}
+                        >
+                          <option value="">— issue order —</option>
+                          {options.map((o) => <option key={o.id} value={o.effectId} title={o.desc}>{o.name} — {o.desc}</option>)}
+                        </select>
+                      </div>
+                    );
+                  })
                 )}
               </div>
             );

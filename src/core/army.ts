@@ -267,17 +267,12 @@ export function validate(list: ArmyList, ix: DataIndex): Violation[] {
   if (!list.detachment) {
     v.push({ severity: 'error', message: 'No detachment selected — enhancements and stratagems are detachment-scoped.' });
   } else {
-    // Detachment Points (11e): a lone detachment over the budget is legal by GW's stated
-    // lone-detachment allowance (not yet errata'd) — surface it as a warning, not an error.
-    // A MULTI-detachment army ("Imperialis Fleet and Veiled Blade Elimination Force") sums its
-    // components' DP; the lone allowance doesn't apply, so over-budget is a real error.
+    // Detachment Points (11e): a lone over-budget detachment is legal — the core rules now
+    // PRINT the allowance ("If you are playing an Incursion battle, you can select a 3DP
+    // detachment as your only detachment"), so no warning. A MULTI-detachment army
+    // ("Imperialis Fleet and Veiled Blade Elimination Force") sums its components' DP; the
+    // lone allowance doesn't apply, so over-budget is a real error.
     const dp = checkDetachmentPoints(list.detachment, list.faction, rule.points);
-    if (dp.overBudgetLone) {
-      v.push({
-        severity: 'warning',
-        message: `${list.detachment} costs ${dp.cost} DP — over the ${dp.budget.dp} DP budget at ${rule.points} pts. Legal as a lone detachment (GW stated intent, pending errata).`,
-      });
-    }
     if (dp.overBudgetMulti) {
       v.push({
         severity: 'error',
@@ -326,7 +321,26 @@ export function validate(list: ArmyList, ix: DataIndex): Violation[] {
       if (!enh) {
         v.push({ severity: 'error', uid: u.uid, message: `${ds.name}: unknown enhancement.` });
       } else {
-        if (!isCharacter(ds)) {
+        const kws = ds.keywords.map((k) => k.toLowerCase());
+        // Steel Hammer's KEYWORDS rule: an AM TITANIC unit in a Steel Hammer army can be
+        // selected to gain CHARACTER ("the selected units can be given Enhancements, and one
+        // of them can be selected as your WARLORD"). Taking an enhancement IS the opt-in.
+        const steelHammerTitanic =
+          kws.includes('titanic') && kws.includes('astra militarum') && armyHasDetachment(list.detachment, 'Steel Hammer');
+        if (enh.upgrade) {
+          // 11e Upgrade-tagged enhancements may sit on non-CHARACTER units — but only on their
+          // printed bearers ("COMMISSAR model only", "RATLINGS unit only").
+          const fits =
+            !enh.bearerKeywords?.length ||
+            enh.bearerKeywords.some((b) => kws.includes(b) || ds.name.toLowerCase() === b);
+          if (!fits) {
+            v.push({
+              severity: 'error',
+              uid: u.uid,
+              message: `"${enh.name}" is an Upgrade for ${enh.bearerKeywords!.join(' / ').toUpperCase()} units — ${ds.name} cannot take it.`,
+            });
+          }
+        } else if (!isCharacter(ds) && !steelHammerTitanic) {
           v.push({ severity: 'error', uid: u.uid, message: `${ds.name} is not a Character and cannot take an enhancement.` });
         }
         if (isEpicHero(ds)) {
@@ -342,11 +356,25 @@ export function validate(list: ArmyList, ix: DataIndex): Violation[] {
   }
 
   // 11e: the enhancement budget scales with battle size (2 at 1000 pts, 4 at 2000 pts).
-  const totalEnh = [...enhUsed.values()].reduce((a, b) => a + b, 0);
+  // Upgrade-tagged enhancements: up to THREE copies of the same Upgrade, and only the first
+  // counts against the budget (printed core rule); normal enhancements stay one-per-army.
   const enhMax = dpBudget(rule.points).enhancements;
-  if (totalEnh > enhMax) v.push({ severity: 'error', message: `Too many enhancements: ${totalEnh} (max ${enhMax} at ${rule.points} pts).` });
+  let budgetCount = 0;
   for (const [id, c] of enhUsed) {
-    if (c > 1) v.push({ severity: 'error', message: `Enhancement "${ix.enhancements.get(id)?.name ?? id}" used ${c} times (max once).` });
+    const enh = ix.enhancements.get(id);
+    if (enh?.upgrade) {
+      budgetCount += 1;
+      if (c > 3) v.push({ severity: 'error', message: `Upgrade "${enh.name}" used ${c} times (max 3 per army).` });
+    } else {
+      budgetCount += c;
+      if (c > 1) v.push({ severity: 'error', message: `Enhancement "${enh?.name ?? id}" used ${c} times (max once).` });
+    }
+  }
+  if (budgetCount > enhMax) {
+    v.push({
+      severity: 'error',
+      message: `Too many enhancements: ${budgetCount} (max ${enhMax} at ${rule.points} pts; extra copies of the same Upgrade don't count).`,
+    });
   }
 
   for (const [id, c] of dsCounts) {

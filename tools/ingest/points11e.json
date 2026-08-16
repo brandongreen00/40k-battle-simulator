@@ -1,2771 +1,2825 @@
 {
-  "source": "https://wahapedia.ru/wh40k11ed/factions/{imperial-agents,astra-militarum}/ + .../datasheets.html (plus the two sheets published only as individual pages: Commissar-Graves-on-Foot, Inquisitor-In-Terminator-Armour)",
-  "packVersion": "11th edition, version 1.1",
-  "retrieved": "2026-08-16",
-  "note": "11e points/costs patch applied on top of the 10e-CSV ingest by tools/ingest/apply-points11e.ts. Tier copyFrom/copyTo express the 11e per-copy escalation (\"YOUR 3RD+ UNIT COSTS\"); wargearCosts are the priced WARGEAR OPTIONS rows (11e prices some wargear; everything else stays free). The 11e-only datasheet 'Tarantula Battery' (AM, Legends) is omitted - it has no 10e datasheet to patch.",
-  "detachments": [
+ "source": "https://wahapedia.ru/wh40k11ed/factions/{imperial-agents,astra-militarum}/ + .../datasheets.html (plus the two sheets published only as individual pages: Commissar-Graves-on-Foot, Inquisitor-In-Terminator-Armour)",
+ "packVersion": "11th edition, version 1.1",
+ "retrieved": "2026-08-16",
+ "note": "11e points/costs patch applied on top of the 10e-CSV ingest by tools/ingest/apply-points11e.ts. Tier copyFrom/copyTo express the 11e per-copy escalation (\"YOUR 3RD+ UNIT COSTS\"); wargearCosts are the priced WARGEAR OPTIONS rows (11e prices some wargear; everything else stays free). The 11e-only datasheet 'Tarantula Battery' (AM, Legends) is omitted - it has no 10e datasheet to patch.",
+ "detachments": [
+  {
+   "faction": "AM",
+   "name": "Abhuman Auxiliaries",
+   "dp": 1,
+   "disposition": "Take and Hold"
+  },
+  {
+   "faction": "AM",
+   "name": "Armoured Infantry",
+   "dp": 2,
+   "disposition": "Take and Hold"
+  },
+  {
+   "faction": "AM",
+   "name": "Bridgehead Strike",
+   "dp": 1,
+   "disposition": "Priority Assets"
+  },
+  {
+   "faction": "AM",
+   "name": "Combined Arms",
+   "dp": 2,
+   "disposition": "Take and Hold"
+  },
+  {
+   "faction": "AM",
+   "name": "Designation Force",
+   "dp": 1,
+   "disposition": "Reconnaissance"
+  },
+  {
+   "faction": "AM",
+   "name": "Grizzled Company",
+   "dp": 3,
+   "disposition": "Priority Assets"
+  },
+  {
+   "faction": "AM",
+   "name": "Hammer of the Emperor",
+   "dp": 2,
+   "disposition": "Purge the Foe"
+  },
+  {
+   "faction": "AM",
+   "name": "Mechanised Assault",
+   "dp": 2,
+   "disposition": "Reconnaissance"
+  },
+  {
+   "faction": "AM",
+   "name": "Recon Element",
+   "dp": 3,
+   "disposition": "Reconnaissance"
+  },
+  {
+   "faction": "AM",
+   "name": "Siege Regiment",
+   "dp": 2,
+   "disposition": "Disruption"
+  },
+  {
+   "faction": "AM",
+   "name": "Steel Hammer",
+   "dp": 2,
+   "disposition": "Purge the Foe"
+  },
+  {
+   "faction": "AoI",
+   "name": "Imperialis Fleet",
+   "dp": 2,
+   "disposition": "Reconnaissance"
+  },
+  {
+   "faction": "AoI",
+   "name": "Ordo Hereticus Purgation Force",
+   "dp": 2,
+   "disposition": "Take and Hold"
+  },
+  {
+   "faction": "AoI",
+   "name": "Ordo Malleus Daemon Hunters",
+   "dp": 2,
+   "disposition": "Priority Assets"
+  },
+  {
+   "faction": "AoI",
+   "name": "Ordo Xenos Alien Hunters",
+   "dp": 2,
+   "disposition": "Purge the Foe"
+  },
+  {
+   "faction": "AoI",
+   "name": "Veiled Blade Elimination Force",
+   "dp": 1,
+   "disposition": "Disruption"
+  }
+ ],
+ "enhancements": [
+  {
+   "faction": "AM",
+   "detachment": "Armoured Infantry",
+   "name": "Exemplary Officer",
+   "cost": 20
+  },
+  {
+   "faction": "AM",
+   "detachment": "Armoured Infantry",
+   "name": "Grand Strategist",
+   "cost": 25
+  },
+  {
+   "faction": "AM",
+   "detachment": "Armoured Infantry",
+   "name": "Master Manoeuvrist",
+   "cost": 15
+  },
+  {
+   "faction": "AM",
+   "detachment": "Armoured Infantry",
+   "name": "Omnissian Unguents  (Aura)",
+   "cost": 35
+  },
+  {
+   "faction": "AM",
+   "detachment": "Bridgehead Strike",
+   "name": "Bombast-class Vox-array",
+   "cost": 15
+  },
+  {
+   "faction": "AM",
+   "detachment": "Bridgehead Strike",
+   "name": "Priority drop Beacon",
+   "cost": 25
+  },
+  {
+   "faction": "AM",
+   "detachment": "Combined Arms",
+   "name": "Death Mask of Ollanius",
+   "cost": 10
+  },
+  {
+   "faction": "AM",
+   "detachment": "Combined Arms",
+   "name": "Drill Commander",
+   "cost": 20
+  },
+  {
+   "faction": "AM",
+   "detachment": "Combined Arms",
+   "name": "Grand Strategist",
+   "cost": 15
+  },
+  {
+   "faction": "AM",
+   "detachment": "Combined Arms",
+   "name": "Reactive Command",
+   "cost": 15
+  },
+  {
+   "faction": "AM",
+   "detachment": "Grizzled Company",
+   "name": "Abhuman Detail",
+   "cost": 20
+  },
+  {
+   "faction": "AM",
+   "detachment": "Grizzled Company",
+   "name": "Aquilan Eye",
+   "cost": 20
+  },
+  {
+   "faction": "AM",
+   "detachment": "Grizzled Company",
+   "name": "Laud Hailer",
+   "cost": 10
+  },
+  {
+   "faction": "AM",
+   "detachment": "Grizzled Company",
+   "name": "Spec Ops Veteran",
+   "cost": 15
+  },
+  {
+   "faction": "AM",
+   "detachment": "Hammer of the Emperor",
+   "name": "Calm Under Fire",
+   "cost": 15
+  },
+  {
+   "faction": "AM",
+   "detachment": "Hammer of the Emperor",
+   "name": "Indomitable Steed",
+   "cost": 15
+  },
+  {
+   "faction": "AM",
+   "detachment": "Hammer of the Emperor",
+   "name": "Regimental Banner",
+   "cost": 20
+  },
+  {
+   "faction": "AM",
+   "detachment": "Hammer of the Emperor",
+   "name": "Veteran Crew",
+   "cost": 20
+  },
+  {
+   "faction": "AM",
+   "detachment": "Mechanised Assault",
+   "name": "Bold Leadership",
+   "cost": 25
+  },
+  {
+   "faction": "AM",
+   "detachment": "Mechanised Assault",
+   "name": "Sacred Unguents",
+   "cost": 10
+  },
+  {
+   "faction": "AM",
+   "detachment": "Mechanised Assault",
+   "name": "Smoke Grenades",
+   "cost": 10
+  },
+  {
+   "faction": "AM",
+   "detachment": "Mechanised Assault",
+   "name": "Vanguard Honours",
+   "cost": 15
+  },
+  {
+   "faction": "AM",
+   "detachment": "Recon Element",
+   "name": "Guerrilla Honours",
+   "cost": 25
+  },
+  {
+   "faction": "AM",
+   "detachment": "Recon Element",
+   "name": "Scare Gas Grenades",
+   "cost": 5
+  },
+  {
+   "faction": "AM",
+   "detachment": "Recon Element",
+   "name": "Survival Gear",
+   "cost": 5
+  },
+  {
+   "faction": "AM",
+   "detachment": "Recon Element",
+   "name": "Tripwires",
+   "cost": 20
+  },
+  {
+   "faction": "AM",
+   "detachment": "Siege Regiment",
+   "name": "Eager Advance",
+   "cost": 20
+  },
+  {
+   "faction": "AM",
+   "detachment": "Siege Regiment",
+   "name": "Flash Grenades",
+   "cost": 20
+  },
+  {
+   "faction": "AM",
+   "detachment": "Siege Regiment",
+   "name": "Legacy Sidearm",
+   "cost": 10
+  },
+  {
+   "faction": "AM",
+   "detachment": "Siege Regiment",
+   "name": "Stalwart\u2019s Honours",
+   "cost": 15
+  },
+  {
+   "faction": "AM",
+   "detachment": "Steel Hammer",
+   "name": "Assault Hatches",
+   "cost": 25
+  },
+  {
+   "faction": "AM",
+   "detachment": "Steel Hammer",
+   "name": "Battalion Commander",
+   "cost": 30
+  },
+  {
+   "faction": "AM",
+   "detachment": "Steel Hammer",
+   "name": "Engine Speaker",
+   "cost": 15
+  },
+  {
+   "faction": "AM",
+   "detachment": "Steel Hammer",
+   "name": "Titan Killer",
+   "cost": 20
+  },
+  {
+   "faction": "AoI",
+   "detachment": "Imperialis Fleet",
+   "name": "Clandestine Operation",
+   "cost": 15
+  },
+  {
+   "faction": "AoI",
+   "detachment": "Imperialis Fleet",
+   "name": "Combat Landers",
+   "cost": 10
+  },
+  {
+   "faction": "AoI",
+   "detachment": "Imperialis Fleet",
+   "name": "Digital Weapons",
+   "cost": 10
+  },
+  {
+   "faction": "AoI",
+   "detachment": "Imperialis Fleet",
+   "name": "Fleetmaster",
+   "cost": 20
+  },
+  {
+   "faction": "AoI",
+   "detachment": "Ordo Hereticus Purgation Force",
+   "name": "Ignis Judicium",
+   "cost": 10
+  },
+  {
+   "faction": "AoI",
+   "detachment": "Ordo Hereticus Purgation Force",
+   "name": "Liber Heresius",
+   "cost": 10
+  },
+  {
+   "faction": "AoI",
+   "detachment": "Ordo Hereticus Purgation Force",
+   "name": "No Escape (Aura)",
+   "cost": 25
+  },
+  {
+   "faction": "AoI",
+   "detachment": "Ordo Hereticus Purgation Force",
+   "name": "Witch Hunter",
+   "cost": 15
+  },
+  {
+   "faction": "AoI",
+   "detachment": "Ordo Malleus Daemon Hunters",
+   "name": "Daemon Slayer",
+   "cost": 10
+  },
+  {
+   "faction": "AoI",
+   "detachment": "Ordo Malleus Daemon Hunters",
+   "name": "Formidable Resolve",
+   "cost": 5
+  },
+  {
+   "faction": "AoI",
+   "detachment": "Ordo Malleus Daemon Hunters",
+   "name": "Gift of the Prescient",
+   "cost": 20
+  },
+  {
+   "faction": "AoI",
+   "detachment": "Ordo Malleus Daemon Hunters",
+   "name": "Grimoire of True Names (Aura)",
+   "cost": 10
+  },
+  {
+   "faction": "AoI",
+   "detachment": "Ordo Xenos Alien Hunters",
+   "name": "Amulet of Auto-Chastisement",
+   "cost": 25
+  },
+  {
+   "faction": "AoI",
+   "detachment": "Ordo Xenos Alien Hunters",
+   "name": "Beacon Angelis",
+   "cost": 30
+  },
+  {
+   "faction": "AoI",
+   "detachment": "Ordo Xenos Alien Hunters",
+   "name": "Blackweave Shroud",
+   "cost": 15
+  },
+  {
+   "faction": "AoI",
+   "detachment": "Ordo Xenos Alien Hunters",
+   "name": "Universal Anathema",
+   "cost": 10
+  },
+  {
+   "faction": "AoI",
+   "detachment": "Veiled Blade Elimination Force",
+   "name": "Decoy Targets",
+   "cost": 15
+  },
+  {
+   "faction": "AoI",
+   "detachment": "Veiled Blade Elimination Force",
+   "name": "Esoteric Explosives",
+   "cost": 10
+  },
+  {
+   "faction": "AoI",
+   "detachment": "Veiled Blade Elimination Force",
+   "name": "Intraneural Biotech",
+   "cost": 15
+  },
+  {
+   "faction": "AoI",
+   "detachment": "Veiled Blade Elimination Force",
+   "name": "Micromelta Rounds",
+   "cost": 20
+  }
+ ],
+ "datasheets": [
+  {
+   "faction": "AM",
+   "name": "Aegis Defence Line",
+   "points": [
     {
-      "faction": "AM",
-      "name": "Abhuman Auxiliaries",
-      "dp": 1,
-      "disposition": "Take and Hold"
-    },
-    {
-      "faction": "AM",
-      "name": "Armoured Infantry",
-      "dp": 2,
-      "disposition": "Take and Hold"
-    },
-    {
-      "faction": "AM",
-      "name": "Bridgehead Strike",
-      "dp": 1,
-      "disposition": "Priority Assets"
-    },
-    {
-      "faction": "AM",
-      "name": "Combined Arms",
-      "dp": 2,
-      "disposition": "Take and Hold"
-    },
-    {
-      "faction": "AM",
-      "name": "Designation Force",
-      "dp": 1,
-      "disposition": "Reconnaissance"
-    },
-    {
-      "faction": "AM",
-      "name": "Grizzled Company",
-      "dp": 3,
-      "disposition": "Priority Assets"
-    },
-    {
-      "faction": "AM",
-      "name": "Hammer of the Emperor",
-      "dp": 2,
-      "disposition": "Purge the Foe"
-    },
-    {
-      "faction": "AM",
-      "name": "Mechanised Assault",
-      "dp": 2,
-      "disposition": "Reconnaissance"
-    },
-    {
-      "faction": "AM",
-      "name": "Recon Element",
-      "dp": 3,
-      "disposition": "Reconnaissance"
-    },
-    {
-      "faction": "AM",
-      "name": "Siege Regiment",
-      "dp": 2,
-      "disposition": "Disruption"
-    },
-    {
-      "faction": "AM",
-      "name": "Steel Hammer",
-      "dp": 2,
-      "disposition": "Purge the Foe"
-    },
-    {
-      "faction": "AoI",
-      "name": "Imperialis Fleet",
-      "dp": 2,
-      "disposition": "Reconnaissance"
-    },
-    {
-      "faction": "AoI",
-      "name": "Ordo Hereticus Purgation Force",
-      "dp": 2,
-      "disposition": "Take and Hold"
-    },
-    {
-      "faction": "AoI",
-      "name": "Ordo Malleus Daemon Hunters",
-      "dp": 2,
-      "disposition": "Priority Assets"
-    },
-    {
-      "faction": "AoI",
-      "name": "Ordo Xenos Alien Hunters",
-      "dp": 2,
-      "disposition": "Purge the Foe"
-    },
-    {
-      "faction": "AoI",
-      "name": "Veiled Blade Elimination Force",
-      "dp": 1,
-      "disposition": "Disruption"
+     "models": 1,
+     "cost": 145
     }
-  ],
-  "enhancements": [
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Aquila Lander",
+   "points": [
     {
-      "faction": "AM",
-      "detachment": "Armoured Infantry",
-      "name": "Exemplary Officer",
-      "cost": 20
-    },
-    {
-      "faction": "AM",
-      "detachment": "Armoured Infantry",
-      "name": "Grand Strategist",
-      "cost": 25
-    },
-    {
-      "faction": "AM",
-      "detachment": "Armoured Infantry",
-      "name": "Master Manoeuvrist",
-      "cost": 15
-    },
-    {
-      "faction": "AM",
-      "detachment": "Armoured Infantry",
-      "name": "Omnissian Unguents  (Aura)",
-      "cost": 35
-    },
-    {
-      "faction": "AM",
-      "detachment": "Bridgehead Strike",
-      "name": "Bombast-class Vox-array",
-      "cost": 15
-    },
-    {
-      "faction": "AM",
-      "detachment": "Bridgehead Strike",
-      "name": "Priority drop Beacon",
-      "cost": 25
-    },
-    {
-      "faction": "AM",
-      "detachment": "Combined Arms",
-      "name": "Death Mask of Ollanius",
-      "cost": 10
-    },
-    {
-      "faction": "AM",
-      "detachment": "Combined Arms",
-      "name": "Drill Commander",
-      "cost": 20
-    },
-    {
-      "faction": "AM",
-      "detachment": "Combined Arms",
-      "name": "Grand Strategist",
-      "cost": 15
-    },
-    {
-      "faction": "AM",
-      "detachment": "Combined Arms",
-      "name": "Reactive Command",
-      "cost": 15
-    },
-    {
-      "faction": "AM",
-      "detachment": "Grizzled Company",
-      "name": "Abhuman Detail",
-      "cost": 20
-    },
-    {
-      "faction": "AM",
-      "detachment": "Grizzled Company",
-      "name": "Aquilan Eye",
-      "cost": 20
-    },
-    {
-      "faction": "AM",
-      "detachment": "Grizzled Company",
-      "name": "Laud Hailer",
-      "cost": 10
-    },
-    {
-      "faction": "AM",
-      "detachment": "Grizzled Company",
-      "name": "Spec Ops Veteran",
-      "cost": 15
-    },
-    {
-      "faction": "AM",
-      "detachment": "Hammer of the Emperor",
-      "name": "Calm Under Fire",
-      "cost": 15
-    },
-    {
-      "faction": "AM",
-      "detachment": "Hammer of the Emperor",
-      "name": "Indomitable Steed",
-      "cost": 15
-    },
-    {
-      "faction": "AM",
-      "detachment": "Hammer of the Emperor",
-      "name": "Regimental Banner",
-      "cost": 20
-    },
-    {
-      "faction": "AM",
-      "detachment": "Hammer of the Emperor",
-      "name": "Veteran Crew",
-      "cost": 20
-    },
-    {
-      "faction": "AM",
-      "detachment": "Mechanised Assault",
-      "name": "Bold Leadership",
-      "cost": 25
-    },
-    {
-      "faction": "AM",
-      "detachment": "Mechanised Assault",
-      "name": "Sacred Unguents",
-      "cost": 10
-    },
-    {
-      "faction": "AM",
-      "detachment": "Mechanised Assault",
-      "name": "Smoke Grenades",
-      "cost": 10
-    },
-    {
-      "faction": "AM",
-      "detachment": "Mechanised Assault",
-      "name": "Vanguard Honours",
-      "cost": 15
-    },
-    {
-      "faction": "AM",
-      "detachment": "Recon Element",
-      "name": "Guerrilla Honours",
-      "cost": 25
-    },
-    {
-      "faction": "AM",
-      "detachment": "Recon Element",
-      "name": "Scare Gas Grenades",
-      "cost": 5
-    },
-    {
-      "faction": "AM",
-      "detachment": "Recon Element",
-      "name": "Survival Gear",
-      "cost": 5
-    },
-    {
-      "faction": "AM",
-      "detachment": "Recon Element",
-      "name": "Tripwires",
-      "cost": 20
-    },
-    {
-      "faction": "AM",
-      "detachment": "Siege Regiment",
-      "name": "Eager Advance",
-      "cost": 20
-    },
-    {
-      "faction": "AM",
-      "detachment": "Siege Regiment",
-      "name": "Flash Grenades",
-      "cost": 20
-    },
-    {
-      "faction": "AM",
-      "detachment": "Siege Regiment",
-      "name": "Legacy Sidearm",
-      "cost": 10
-    },
-    {
-      "faction": "AM",
-      "detachment": "Siege Regiment",
-      "name": "Stalwart’s Honours",
-      "cost": 15
-    },
-    {
-      "faction": "AM",
-      "detachment": "Steel Hammer",
-      "name": "Assault Hatches",
-      "cost": 25
-    },
-    {
-      "faction": "AM",
-      "detachment": "Steel Hammer",
-      "name": "Battalion Commander",
-      "cost": 30
-    },
-    {
-      "faction": "AM",
-      "detachment": "Steel Hammer",
-      "name": "Engine Speaker",
-      "cost": 15
-    },
-    {
-      "faction": "AM",
-      "detachment": "Steel Hammer",
-      "name": "Titan Killer",
-      "cost": 20
-    },
-    {
-      "faction": "AoI",
-      "detachment": "Imperialis Fleet",
-      "name": "Clandestine Operation",
-      "cost": 15
-    },
-    {
-      "faction": "AoI",
-      "detachment": "Imperialis Fleet",
-      "name": "Combat Landers",
-      "cost": 10
-    },
-    {
-      "faction": "AoI",
-      "detachment": "Imperialis Fleet",
-      "name": "Digital Weapons",
-      "cost": 10
-    },
-    {
-      "faction": "AoI",
-      "detachment": "Imperialis Fleet",
-      "name": "Fleetmaster",
-      "cost": 20
-    },
-    {
-      "faction": "AoI",
-      "detachment": "Ordo Hereticus Purgation Force",
-      "name": "Ignis Judicium",
-      "cost": 10
-    },
-    {
-      "faction": "AoI",
-      "detachment": "Ordo Hereticus Purgation Force",
-      "name": "Liber Heresius",
-      "cost": 10
-    },
-    {
-      "faction": "AoI",
-      "detachment": "Ordo Hereticus Purgation Force",
-      "name": "No Escape (Aura)",
-      "cost": 25
-    },
-    {
-      "faction": "AoI",
-      "detachment": "Ordo Hereticus Purgation Force",
-      "name": "Witch Hunter",
-      "cost": 15
-    },
-    {
-      "faction": "AoI",
-      "detachment": "Ordo Malleus Daemon Hunters",
-      "name": "Daemon Slayer",
-      "cost": 10
-    },
-    {
-      "faction": "AoI",
-      "detachment": "Ordo Malleus Daemon Hunters",
-      "name": "Formidable Resolve",
-      "cost": 5
-    },
-    {
-      "faction": "AoI",
-      "detachment": "Ordo Malleus Daemon Hunters",
-      "name": "Gift of the Prescient",
-      "cost": 20
-    },
-    {
-      "faction": "AoI",
-      "detachment": "Ordo Malleus Daemon Hunters",
-      "name": "Grimoire of True Names (Aura)",
-      "cost": 10
-    },
-    {
-      "faction": "AoI",
-      "detachment": "Ordo Xenos Alien Hunters",
-      "name": "Amulet of Auto-Chastisement",
-      "cost": 25
-    },
-    {
-      "faction": "AoI",
-      "detachment": "Ordo Xenos Alien Hunters",
-      "name": "Beacon Angelis",
-      "cost": 30
-    },
-    {
-      "faction": "AoI",
-      "detachment": "Ordo Xenos Alien Hunters",
-      "name": "Blackweave Shroud",
-      "cost": 15
-    },
-    {
-      "faction": "AoI",
-      "detachment": "Ordo Xenos Alien Hunters",
-      "name": "Universal Anathema",
-      "cost": 10
-    },
-    {
-      "faction": "AoI",
-      "detachment": "Veiled Blade Elimination Force",
-      "name": "Decoy Targets",
-      "cost": 15
-    },
-    {
-      "faction": "AoI",
-      "detachment": "Veiled Blade Elimination Force",
-      "name": "Esoteric Explosives",
-      "cost": 10
-    },
-    {
-      "faction": "AoI",
-      "detachment": "Veiled Blade Elimination Force",
-      "name": "Intraneural Biotech",
-      "cost": 15
-    },
-    {
-      "faction": "AoI",
-      "detachment": "Veiled Blade Elimination Force",
-      "name": "Micromelta Rounds",
-      "cost": 20
+     "models": 1,
+     "cost": 120
     }
-  ],
-  "datasheets": [
-    {
-      "faction": "AM",
-      "name": "Aegis Defence Line",
-      "points": [
-        {
-          "models": 1,
-          "cost": 145
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Aquila Lander",
-      "points": [
-        {
-          "models": 1,
-          "cost": 120
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Arkurian Stormhammer",
-      "points": [
-        {
-          "models": 1,
-          "cost": 480
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Armageddon-pattern Medusa",
-      "points": [
-        {
-          "models": 1,
-          "cost": 105
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Armoured Sentinels",
-      "points": [
-        {
-          "models": 1,
-          "cost": 65
-        },
-        {
-          "models": 2,
-          "cost": 120
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Artillery Team",
-      "points": [
-        {
-          "models": 1,
-          "cost": 95
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Arvus Lighter",
-      "points": [
-        {
-          "models": 1,
-          "cost": 95
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Atlas Recovery Vehicle",
-      "points": [
-        {
-          "models": 1,
-          "cost": 80
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Attilan Rough Riders",
-      "points": [
-        {
-          "models": 5,
-          "cost": 60,
-          "copyFrom": 1,
-          "copyTo": 2
-        },
-        {
-          "models": 10,
-          "cost": 120,
-          "copyFrom": 1,
-          "copyTo": 2
-        },
-        {
-          "models": 5,
-          "cost": 65,
-          "copyFrom": 3
-        },
-        {
-          "models": 10,
-          "cost": 125,
-          "copyFrom": 3
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Avenger Strike Fighter",
-      "points": [
-        {
-          "models": 1,
-          "cost": 130
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Baneblade",
-      "points": [
-        {
-          "models": 1,
-          "cost": 415,
-          "copyFrom": 1,
-          "copyTo": 1
-        },
-        {
-          "models": 1,
-          "cost": 450,
-          "copyFrom": 2
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Banehammer",
-      "points": [
-        {
-          "models": 1,
-          "cost": 385,
-          "copyFrom": 1,
-          "copyTo": 1
-        },
-        {
-          "models": 1,
-          "cost": 420,
-          "copyFrom": 2
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Banesword",
-      "points": [
-        {
-          "models": 1,
-          "cost": 415,
-          "copyFrom": 1,
-          "copyTo": 1
-        },
-        {
-          "models": 1,
-          "cost": 450,
-          "copyFrom": 2
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Basilisk",
-      "points": [
-        {
-          "models": 1,
-          "cost": 115,
-          "copyFrom": 1,
-          "copyTo": 1
-        },
-        {
-          "models": 1,
-          "cost": 135,
-          "copyFrom": 2
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Bullgryn Squad",
-      "points": [
-        {
-          "models": 3,
-          "cost": 90,
-          "copyFrom": 1,
-          "copyTo": 1
-        },
-        {
-          "models": 6,
-          "cost": 200,
-          "copyFrom": 1,
-          "copyTo": 1
-        },
-        {
-          "models": 3,
-          "cost": 105,
-          "copyFrom": 2
-        },
-        {
-          "models": 6,
-          "cost": 215,
-          "copyFrom": 2
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Cadian Castellan",
-      "points": [
-        {
-          "models": 1,
-          "cost": 55
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Cadian Command Squad",
-      "points": [
-        {
-          "models": 5,
-          "cost": 60
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Cadian Heavy Weapons Squad",
-      "points": [
-        {
-          "models": 3,
-          "cost": 65
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Cadian Recon Squad",
-      "points": [
-        {
-          "models": 10,
-          "cost": 80
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Cadian Shock Troops",
-      "points": [
-        {
-          "models": 10,
-          "cost": 75
-        },
-        {
-          "models": 20,
-          "cost": 145
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Carnodon",
-      "points": [
-        {
-          "models": 1,
-          "cost": 160
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Catachan Command Squad",
-      "points": [
-        {
-          "models": 5,
-          "cost": 60
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Catachan Heavy Weapons Squad",
-      "points": [
-        {
-          "models": 3,
-          "cost": 65
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Catachan Jungle Fighters",
-      "points": [
-        {
-          "models": 10,
-          "cost": 75
-        },
-        {
-          "models": 20,
-          "cost": 145
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Centaur Light Carrier",
-      "points": [
-        {
-          "models": 1,
-          "cost": 40
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Centaur RSV",
-      "points": [
-        {
-          "models": 1,
-          "cost": 65,
-          "copyFrom": 1,
-          "copyTo": 3
-        },
-        {
-          "models": 1,
-          "cost": 75,
-          "copyFrom": 4
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Chimera",
-      "points": [
-        {
-          "models": 1,
-          "cost": 75,
-          "copyFrom": 1,
-          "copyTo": 3
-        },
-        {
-          "models": 1,
-          "cost": 85,
-          "copyFrom": 4
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Colossus",
-      "points": [
-        {
-          "models": 1,
-          "cost": 160
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Commissar",
-      "points": [
-        {
-          "models": 1,
-          "cost": 30
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Commissar Graves",
-      "points": [
-        {
-          "models": 1,
-          "cost": 125
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Commissar Graves on Foot",
-      "points": [
-        {
-          "models": 1,
-          "cost": 65
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Commissar Yarrick",
-      "points": [
-        {
-          "models": 1,
-          "cost": 120
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Crassus",
-      "points": [
-        {
-          "models": 1,
-          "cost": 180
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Cyclops Demolition Vehicle",
-      "points": [
-        {
-          "models": 1,
-          "cost": 40,
-          "copyFrom": 1,
-          "copyTo": 2
-        },
-        {
-          "models": 1,
-          "cost": 45,
-          "copyFrom": 3
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Death Korps Grenadier Squad",
-      "points": [
-        {
-          "models": 10,
-          "cost": 110
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Death Korps Of Krieg",
-      "points": [
-        {
-          "models": 10,
-          "cost": 75
-        },
-        {
-          "models": 20,
-          "cost": 145
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Death Rider Commissar",
-      "points": [
-        {
-          "models": 1,
-          "cost": 35
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Death Riders",
-      "points": [
-        {
-          "models": 5,
-          "cost": 60
-        },
-        {
-          "models": 10,
-          "cost": 110
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Deathstrike",
-      "points": [
-        {
-          "models": 1,
-          "cost": 125,
-          "copyFrom": 1,
-          "copyTo": 1
-        },
-        {
-          "models": 1,
-          "cost": 135,
-          "copyFrom": 2
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Dominus Armoured Siege Bombard",
-      "points": [
-        {
-          "models": 1,
-          "cost": 325
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Doomhammer",
-      "points": [
-        {
-          "models": 1,
-          "cost": 380,
-          "copyFrom": 1,
-          "copyTo": 1
-        },
-        {
-          "models": 1,
-          "cost": 410,
-          "copyFrom": 2
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Earthshaker Carriage Battery",
-      "points": [
-        {
-          "models": 1,
-          "cost": 120
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Earthshaker Platform",
-      "points": [
-        {
-          "models": 1,
-          "cost": 110
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Elysian Drop Sentinel",
-      "points": [
-        {
-          "models": 1,
-          "cost": 85
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Elysian Sniper Squad",
-      "points": [
-        {
-          "models": 3,
-          "cost": 65
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Field Ordnance Battery",
-      "points": [
-        {
-          "models": 2,
-          "cost": 90
-        }
-      ],
-      "wargearCosts": [
-        {
-          "item": "Bombast field gun",
-          "cost": 10
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Gaunt’s Ghosts",
-      "points": [
-        {
-          "models": 6,
-          "cost": 95
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Gorgon Heavy Transport",
-      "points": [
-        {
-          "models": 1,
-          "cost": 275
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Griffon Mortar Carrier",
-      "points": [
-        {
-          "models": 1,
-          "cost": 115
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Hades Breaching Drill",
-      "points": [
-        {
-          "models": 1,
-          "cost": 110
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Heavy Mortar Team",
-      "points": [
-        {
-          "models": 1,
-          "cost": 50
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Heavy Quad Launcher Team",
-      "points": [
-        {
-          "models": 1,
-          "cost": 50
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Hellhammer",
-      "points": [
-        {
-          "models": 1,
-          "cost": 385,
-          "copyFrom": 1,
-          "copyTo": 1
-        },
-        {
-          "models": 1,
-          "cost": 415,
-          "copyFrom": 2
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Hellhound",
-      "points": [
-        {
-          "models": 1,
-          "cost": 125,
-          "copyFrom": 1,
-          "copyTo": 2
-        },
-        {
-          "models": 1,
-          "cost": 135,
-          "copyFrom": 3
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Hell’s Last",
-      "points": [
-        {
-          "models": 5,
-          "cost": 80
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Hippogriff AFV",
-      "points": [
-        {
-          "models": 1,
-          "cost": 70
-        },
-        {
-          "models": 2,
-          "cost": 140
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Hydra",
-      "points": [
-        {
-          "models": 1,
-          "cost": 90
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Hydra Platform",
-      "points": [
-        {
-          "models": 1,
-          "cost": 95
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Kasrkin",
-      "points": [
-        {
-          "models": 10,
-          "cost": 105,
-          "copyFrom": 1,
-          "copyTo": 2
-        },
-        {
-          "models": 10,
-          "cost": 120,
-          "copyFrom": 3
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Krieg Combat Engineers",
-      "points": [
-        {
-          "models": 5,
-          "cost": 65,
-          "copyFrom": 1,
-          "copyTo": 2
-        },
-        {
-          "models": 10,
-          "cost": 95,
-          "copyFrom": 1,
-          "copyTo": 2
-        },
-        {
-          "models": 5,
-          "cost": 75,
-          "copyFrom": 3
-        },
-        {
-          "models": 10,
-          "cost": 105,
-          "copyFrom": 3
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Krieg Command Squad",
-      "points": [
-        {
-          "models": 6,
-          "cost": 60
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Krieg Heavy Weapons Squad",
-      "points": [
-        {
-          "models": 4,
-          "cost": 60
-        }
-      ],
-      "wargearCosts": [
-        {
-          "item": "Krieg heavy flamer",
-          "cost": 5
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Leman Russ Battle Tank",
-      "points": [
-        {
-          "models": 1,
-          "cost": 185,
-          "copyFrom": 1,
-          "copyTo": 2
-        },
-        {
-          "models": 1,
-          "cost": 195,
-          "copyFrom": 3
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Leman Russ Commander",
-      "points": [
-        {
-          "models": 1,
-          "cost": 215,
-          "copyFrom": 1,
-          "copyTo": 2
-        },
-        {
-          "models": 1,
-          "cost": 230,
-          "copyFrom": 3
-        }
-      ],
-      "wargearCosts": [
-        {
-          "item": "Demolisher battle cannon",
-          "cost": 15
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Leman Russ Demolisher",
-      "points": [
-        {
-          "models": 1,
-          "cost": 180,
-          "copyFrom": 1,
-          "copyTo": 2
-        },
-        {
-          "models": 1,
-          "cost": 190,
-          "copyFrom": 3
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Leman Russ Eradicator",
-      "points": [
-        {
-          "models": 1,
-          "cost": 170,
-          "copyFrom": 1,
-          "copyTo": 2
-        },
-        {
-          "models": 1,
-          "cost": 180,
-          "copyFrom": 3
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Leman Russ Executioner",
-      "points": [
-        {
-          "models": 1,
-          "cost": 170,
-          "copyFrom": 1,
-          "copyTo": 2
-        },
-        {
-          "models": 1,
-          "cost": 180,
-          "copyFrom": 3
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Leman Russ Exterminator",
-      "points": [
-        {
-          "models": 1,
-          "cost": 180,
-          "copyFrom": 1,
-          "copyTo": 2
-        },
-        {
-          "models": 1,
-          "cost": 190,
-          "copyFrom": 3
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Leman Russ Punisher",
-      "points": [
-        {
-          "models": 1,
-          "cost": 150,
-          "copyFrom": 1,
-          "copyTo": 2
-        },
-        {
-          "models": 1,
-          "cost": 160,
-          "copyFrom": 3
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Leman Russ Vanquisher",
-      "points": [
-        {
-          "models": 1,
-          "cost": 150,
-          "copyFrom": 1,
-          "copyTo": 2
-        },
-        {
-          "models": 1,
-          "cost": 160,
-          "copyFrom": 3
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Lord Marshal Dreir",
-      "points": [
-        {
-          "models": 1,
-          "cost": 75
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Lord Solar Leontus",
-      "points": [
-        {
-          "models": 1,
-          "cost": 130
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Macharius",
-      "points": [
-        {
-          "models": 1,
-          "cost": 310
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Macharius Omega",
-      "points": [
-        {
-          "models": 1,
-          "cost": 310
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Macharius Vanquisher",
-      "points": [
-        {
-          "models": 1,
-          "cost": 285
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Macharius Vulcan",
-      "points": [
-        {
-          "models": 1,
-          "cost": 310
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Malcador",
-      "points": [
-        {
-          "models": 1,
-          "cost": 250
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Malcador Annihilator",
-      "points": [
-        {
-          "models": 1,
-          "cost": 270
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Malcador Defender",
-      "points": [
-        {
-          "models": 1,
-          "cost": 310
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Malcador Infernus",
-      "points": [
-        {
-          "models": 1,
-          "cost": 235
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Manticore",
-      "points": [
-        {
-          "models": 1,
-          "cost": 150,
-          "copyFrom": 1,
-          "copyTo": 1
-        },
-        {
-          "models": 1,
-          "cost": 170,
-          "copyFrom": 2
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Manticore Platform",
-      "points": [
-        {
-          "models": 1,
-          "cost": 95
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Marauder Bomber",
-      "points": [
-        {
-          "models": 1,
-          "cost": 345
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Marauder Destroyer",
-      "points": [
-        {
-          "models": 1,
-          "cost": 375
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Medusa Carriage Battery",
-      "points": [
-        {
-          "models": 1,
-          "cost": 125
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Militarum Tempestus Command Squad",
-      "points": [
-        {
-          "models": 5,
-          "cost": 85,
-          "copyFrom": 1,
-          "copyTo": 2
-        },
-        {
-          "models": 5,
-          "cost": 95,
-          "copyFrom": 3
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Ministorum Priest",
-      "points": [
-        {
-          "models": 1,
-          "cost": 35
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Minotaur",
-      "points": [
-        {
-          "models": 1,
-          "cost": 225
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Mukaali Riders",
-      "points": [
-        {
-          "models": 3,
-          "cost": 110
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Munitorum Servitors",
-      "points": [
-        {
-          "models": 4,
-          "cost": 35
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Nork Deddog",
-      "points": [
-        {
-          "models": 1,
-          "cost": 60
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Ogryn Bodyguard",
-      "points": [
-        {
-          "models": 1,
-          "cost": 40
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Ogryn Squad",
-      "points": [
-        {
-          "models": 3,
-          "cost": 60
-        },
-        {
-          "models": 6,
-          "cost": 120
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Praetor",
-      "points": [
-        {
-          "models": 1,
-          "cost": 275
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Primaris Psyker",
-      "points": [
-        {
-          "models": 1,
-          "cost": 60
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Provisionally Prepared",
-      "points": [
-        {
-          "models": 1,
-          "cost": 40
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Quartermaster Cadre Squad",
-      "points": [
-        {
-          "models": 5,
-          "cost": 45
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Rapier Laser Destroyer Battery",
-      "points": [
-        {
-          "models": 1,
-          "cost": 35
-        },
-        {
-          "models": 2,
-          "cost": 70
-        },
-        {
-          "models": 3,
-          "cost": 105
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Ratlings",
-      "points": [
-        {
-          "models": 5,
-          "cost": 60
-        },
-        {
-          "models": 10,
-          "cost": 100
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Regimental Attachés",
-      "points": [
-        {
-          "models": 3,
-          "cost": 40
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Rein And Raus",
-      "points": [
-        {
-          "models": 2,
-          "cost": 50
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Rogal Dorn Battle Tank",
-      "points": [
-        {
-          "models": 1,
-          "cost": 260,
-          "copyFrom": 1,
-          "copyTo": 1
-        },
-        {
-          "models": 1,
-          "cost": 275,
-          "copyFrom": 2
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Rogal Dorn Commander",
-      "points": [
-        {
-          "models": 1,
-          "cost": 290,
-          "copyFrom": 1,
-          "copyTo": 1
-        },
-        {
-          "models": 1,
-          "cost": 305,
-          "copyFrom": 2
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Sabre Weapons Battery",
-      "points": [
-        {
-          "models": 1,
-          "cost": 45
-        },
-        {
-          "models": 2,
-          "cost": 90
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Salamander Command Vehicle",
-      "points": [
-        {
-          "models": 1,
-          "cost": 80
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Salamander Scout Vehicle",
-      "points": [
-        {
-          "models": 1,
-          "cost": 95
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Scout Sentinels",
-      "points": [
-        {
-          "models": 1,
-          "cost": 55
-        },
-        {
-          "models": 2,
-          "cost": 100
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Sentinel Powerlifter",
-      "points": [
-        {
-          "models": 1,
-          "cost": 55
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Sergeant Harker",
-      "points": [
-        {
-          "models": 1,
-          "cost": 40
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Shadowsword",
-      "points": [
-        {
-          "models": 1,
-          "cost": 375,
-          "copyFrom": 1,
-          "copyTo": 1
-        },
-        {
-          "models": 1,
-          "cost": 405,
-          "copyFrom": 2
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Sly Marbo",
-      "points": [
-        {
-          "models": 1,
-          "cost": 55
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Storm Chimera",
-      "points": [
-        {
-          "models": 1,
-          "cost": 90
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Stormblade",
-      "points": [
-        {
-          "models": 1,
-          "cost": 415
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Stormlord",
-      "points": [
-        {
-          "models": 1,
-          "cost": 395,
-          "copyFrom": 1,
-          "copyTo": 1
-        },
-        {
-          "models": 1,
-          "cost": 430,
-          "copyFrom": 2
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Stormsword",
-      "points": [
-        {
-          "models": 1,
-          "cost": 430,
-          "copyFrom": 1,
-          "copyTo": 1
-        },
-        {
-          "models": 1,
-          "cost": 465,
-          "copyFrom": 2
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Stygies Destroyer Tank Hunter",
-      "points": [
-        {
-          "models": 1,
-          "cost": 180
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Tarantula Battery",
-      "points": [
-        {
-          "models": 1,
-          "cost": 40
-        },
-        {
-          "models": 2,
-          "cost": 80
-        },
-        {
-          "models": 3,
-          "cost": 120
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Tauros Assault Vehicle",
-      "points": [
-        {
-          "models": 1,
-          "cost": 50
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Tauros Venator",
-      "points": [
-        {
-          "models": 1,
-          "cost": 50
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Taurox",
-      "points": [
-        {
-          "models": 1,
-          "cost": 65,
-          "copyFrom": 1,
-          "copyTo": 3
-        },
-        {
-          "models": 1,
-          "cost": 75,
-          "copyFrom": 4
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Taurox Prime",
-      "points": [
-        {
-          "models": 1,
-          "cost": 75,
-          "copyFrom": 1,
-          "copyTo": 3
-        },
-        {
-          "models": 1,
-          "cost": 85,
-          "copyFrom": 4
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Tech-Priest Enginseer",
-      "points": [
-        {
-          "models": 1,
-          "cost": 45
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Tempestus Aquilons",
-      "points": [
-        {
-          "models": 10,
-          "cost": 95
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Tempestus Scions",
-      "points": [
-        {
-          "models": 5,
-          "cost": 75,
-          "copyFrom": 1,
-          "copyTo": 2
-        },
-        {
-          "models": 10,
-          "cost": 150,
-          "copyFrom": 1,
-          "copyTo": 2
-        },
-        {
-          "models": 5,
-          "cost": 85,
-          "copyFrom": 3
-        },
-        {
-          "models": 10,
-          "cost": 160,
-          "copyFrom": 3
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Trojan Support Vehicle",
-      "points": [
-        {
-          "models": 1,
-          "cost": 80
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Ursula Creed",
-      "points": [
-        {
-          "models": 1,
-          "cost": 85
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Valdor",
-      "points": [
-        {
-          "models": 1,
-          "cost": 285
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Valkyrie",
-      "points": [
-        {
-          "models": 1,
-          "cost": 170,
-          "copyFrom": 1,
-          "copyTo": 2
-        },
-        {
-          "models": 1,
-          "cost": 180,
-          "copyFrom": 3
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Valkyrie Sky Talon",
-      "points": [
-        {
-          "models": 1,
-          "cost": 185
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Vendetta Gunship",
-      "points": [
-        {
-          "models": 1,
-          "cost": 255
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Voss-pattern Lightning",
-      "points": [
-        {
-          "models": 1,
-          "cost": 130
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Vulture Gunship",
-      "points": [
-        {
-          "models": 1,
-          "cost": 225
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "Wyvern",
-      "points": [
-        {
-          "models": 1,
-          "cost": 95,
-          "copyFrom": 1,
-          "copyTo": 1
-        },
-        {
-          "models": 1,
-          "cost": 115,
-          "copyFrom": 2
-        }
-      ]
-    },
-    {
-      "faction": "AM",
-      "name": "‘Iron Hand’ Straken",
-      "points": [
-        {
-          "models": 1,
-          "cost": 55
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Aquila Kill Team",
-      "points": [
-        {
-          "models": 5,
-          "cost": 100
-        },
-        {
-          "models": 10,
-          "cost": 200
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Callidus Assassin",
-      "points": [
-        {
-          "models": 1,
-          "cost": 100
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Corvus Blackstar",
-      "points": [
-        {
-          "models": 1,
-          "cost": 180
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Culexus Assassin",
-      "points": [
-        {
-          "models": 1,
-          "cost": 85
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Daemonhost",
-      "points": [
-        {
-          "models": 1,
-          "cost": 40
-        },
-        {
-          "models": 2,
-          "cost": 80
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Damned Legionnaires",
-      "points": [
-        {
-          "models": 5,
-          "cost": 90
-        },
-        {
-          "models": 10,
-          "cost": 180
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Deathwatch Kill Team",
-      "points": [
-        {
-          "models": 5,
-          "cost": 100
-        },
-        {
-          "models": 10,
-          "cost": 190
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Deathwatch Terminator Squad",
-      "points": [
-        {
-          "models": 5,
-          "cost": 210
-        },
-        {
-          "models": 10,
-          "cost": 420
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Eversor Assassin",
-      "points": [
-        {
-          "models": 1,
-          "cost": 100,
-          "note": "AGENTS OF THE IMPERIUM Detachment"
-        },
-        {
-          "models": 1,
-          "cost": 110,
-          "note": "Assigned Agent"
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Exaction Squad",
-      "points": [
-        {
-          "models": 11,
-          "cost": 90,
-          "note": "AGENTS OF THE IMPERIUM Detachment"
-        },
-        {
-          "models": 11,
-          "cost": 85,
-          "note": "Assigned Agent"
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Fortis Kill Team",
-      "points": [
-        {
-          "models": 5,
-          "cost": 100
-        },
-        {
-          "models": 10,
-          "cost": 200
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Grey Knights Terminator Squad",
-      "points": [
-        {
-          "models": 5,
-          "cost": 175,
-          "note": "AGENTS OF THE IMPERIUM Detachment"
-        },
-        {
-          "models": 5,
-          "cost": 190,
-          "note": "Assigned Agent"
-        }
-      ],
-      "wargearCosts": [
-        {
-          "item": "Psycannon",
-          "cost": 5
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Imperial Navy Breachers",
-      "points": [
-        {
-          "models": 10,
-          "cost": 90
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Imperial Rhino",
-      "points": [
-        {
-          "models": 1,
-          "cost": 65,
-          "copyFrom": 1,
-          "copyTo": 3
-        },
-        {
-          "models": 1,
-          "cost": 75,
-          "copyFrom": 4
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Indomitor Kill Team",
-      "points": [
-        {
-          "models": 5,
-          "cost": 120
-        },
-        {
-          "models": 10,
-          "cost": 240
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Inquisitor",
-      "points": [
-        {
-          "models": 1,
-          "cost": 55,
-          "note": "AGENTS OF THE IMPERIUM Detachment"
-        },
-        {
-          "models": 1,
-          "cost": 65,
-          "note": "Assigned Agent"
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Inquisitor Coteaz",
-      "points": [
-        {
-          "models": 1,
-          "cost": 75,
-          "note": "AGENTS OF THE IMPERIUM Detachment"
-        },
-        {
-          "models": 1,
-          "cost": 95,
-          "note": "Assigned Agent"
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Inquisitor Draxus",
-      "points": [
-        {
-          "models": 1,
-          "cost": 75,
-          "note": "AGENTS OF THE IMPERIUM Detachment"
-        },
-        {
-          "models": 1,
-          "cost": 110,
-          "note": "Assigned Agent"
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Inquisitor Eisenhorn",
-      "points": [
-        {
-          "models": 1,
-          "cost": 65
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Inquisitor Greyfax",
-      "points": [
-        {
-          "models": 1,
-          "cost": 65
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Inquisitor In Terminator Armour",
-      "points": [
-        {
-          "models": 1,
-          "cost": 70
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Inquisitor Karamazov",
-      "points": [
-        {
-          "models": 1,
-          "cost": 140
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Inquisitor Kroyle",
-      "points": [
-        {
-          "models": 1,
-          "cost": 100
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Inquisitor Ostromandeus",
-      "points": [
-        {
-          "models": 2,
-          "cost": 65
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Inquisitorial Agents",
-      "points": [
-        {
-          "models": 6,
-          "cost": 50,
-          "note": "AGENTS OF THE IMPERIUM Detachment"
-        },
-        {
-          "models": 12,
-          "cost": 100,
-          "note": "AGENTS OF THE IMPERIUM Detachment"
-        },
-        {
-          "models": 6,
-          "cost": 60,
-          "note": "Assigned Agent"
-        },
-        {
-          "models": 12,
-          "cost": 120,
-          "note": "Assigned Agent"
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Inquisitorial Chimera",
-      "points": [
-        {
-          "models": 1,
-          "cost": 60,
-          "copyFrom": 1,
-          "copyTo": 3
-        },
-        {
-          "models": 1,
-          "cost": 70,
-          "copyFrom": 4
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Janus Draik",
-      "points": [
-        {
-          "models": 1,
-          "cost": 40
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Jokaero Weaponsmith",
-      "points": [
-        {
-          "models": 1,
-          "cost": 30
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Kill Team Cassius",
-      "points": [
-        {
-          "models": 11,
-          "cost": 220
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Ministorum Priest",
-      "points": [
-        {
-          "models": 1,
-          "cost": 40
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Navigator",
-      "points": [
-        {
-          "models": 1,
-          "cost": 60,
-          "note": "AGENTS OF THE IMPERIUM Detachment"
-        },
-        {
-          "models": 1,
-          "cost": 75,
-          "note": "Assigned Agent"
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Neyam Shai Murad",
-      "points": [
-        {
-          "models": 1,
-          "cost": 40
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Proteus Kill Team",
-      "points": [
-        {
-          "models": 5,
-          "cost": 160
-        },
-        {
-          "models": 10,
-          "cost": 320
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Rogue Trader Entourage",
-      "points": [
-        {
-          "models": 4,
-          "cost": 75,
-          "note": "AGENTS OF THE IMPERIUM Detachment"
-        },
-        {
-          "models": 4,
-          "cost": 105,
-          "note": "Assigned Agent"
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Sanctifiers",
-      "points": [
-        {
-          "models": 9,
-          "cost": 100
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Sisters of Battle Immolator",
-      "points": [
-        {
-          "models": 1,
-          "cost": 90,
-          "note": "AGENTS OF THE IMPERIUM Detachment",
-          "copyFrom": 1,
-          "copyTo": 3
-        },
-        {
-          "models": 1,
-          "cost": 100,
-          "note": "AGENTS OF THE IMPERIUM Detachment",
-          "copyFrom": 4
-        },
-        {
-          "models": 1,
-          "cost": 105,
-          "note": "Assigned Agent",
-          "copyFrom": 1,
-          "copyTo": 3
-        },
-        {
-          "models": 1,
-          "cost": 115,
-          "note": "Assigned Agent",
-          "copyFrom": 4
-        }
-      ],
-      "wargearCosts": [
-        {
-          "item": "Twin multi-melta",
-          "cost": 15
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Sisters of Battle Squad",
-      "points": [
-        {
-          "models": 10,
-          "cost": 100,
-          "note": "AGENTS OF THE IMPERIUM Detachment"
-        },
-        {
-          "models": 10,
-          "cost": 110,
-          "note": "Assigned Agent"
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Spectrus Kill Team",
-      "points": [
-        {
-          "models": 5,
-          "cost": 90
-        },
-        {
-          "models": 10,
-          "cost": 180
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Subductor Squad",
-      "points": [
-        {
-          "models": 11,
-          "cost": 85,
-          "note": "AGENTS OF THE IMPERIUM Detachment"
-        },
-        {
-          "models": 11,
-          "cost": 100,
-          "note": "Assigned Agent"
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "UR-025",
-      "points": [
-        {
-          "models": 1,
-          "cost": 55
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Veteran Bike Squad",
-      "points": [
-        {
-          "models": 3,
-          "cost": 70
-        },
-        {
-          "models": 6,
-          "cost": 140
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Vigilant Squad",
-      "points": [
-        {
-          "models": 11,
-          "cost": 85
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Vindicare Assassin",
-      "points": [
-        {
-          "models": 1,
-          "cost": 110,
-          "note": "AGENTS OF THE IMPERIUM Detachment"
-        },
-        {
-          "models": 1,
-          "cost": 125,
-          "note": "Assigned Agent"
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Voidsmen-at-arms",
-      "points": [
-        {
-          "models": 6,
-          "cost": 50,
-          "note": "AGENTS OF THE IMPERIUM Detachment"
-        },
-        {
-          "models": 6,
-          "cost": 70,
-          "note": "Assigned Agent"
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Watch Captain Artemis",
-      "points": [
-        {
-          "models": 1,
-          "cost": 65
-        }
-      ]
-    },
-    {
-      "faction": "AoI",
-      "name": "Watch Master",
-      "points": [
-        {
-          "models": 1,
-          "cost": 95
-        }
-      ]
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Arkurian Stormhammer",
+   "points": [
+    {
+     "models": 1,
+     "cost": 480
     }
-  ]
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Armageddon-pattern Medusa",
+   "points": [
+    {
+     "models": 1,
+     "cost": 105
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Armoured Sentinels",
+   "points": [
+    {
+     "models": 1,
+     "cost": 65
+    },
+    {
+     "models": 2,
+     "cost": 120
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Artillery Team",
+   "points": [
+    {
+     "models": 1,
+     "cost": 95
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Arvus Lighter",
+   "points": [
+    {
+     "models": 1,
+     "cost": 95
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Atlas Recovery Vehicle",
+   "points": [
+    {
+     "models": 1,
+     "cost": 80
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Attilan Rough Riders",
+   "points": [
+    {
+     "models": 5,
+     "cost": 60,
+     "copyFrom": 1,
+     "copyTo": 2
+    },
+    {
+     "models": 10,
+     "cost": 120,
+     "copyFrom": 1,
+     "copyTo": 2
+    },
+    {
+     "models": 5,
+     "cost": 65,
+     "copyFrom": 3
+    },
+    {
+     "models": 10,
+     "cost": 125,
+     "copyFrom": 3
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Avenger Strike Fighter",
+   "points": [
+    {
+     "models": 1,
+     "cost": 130
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Baneblade",
+   "points": [
+    {
+     "models": 1,
+     "cost": 415,
+     "copyFrom": 1,
+     "copyTo": 1
+    },
+    {
+     "models": 1,
+     "cost": 450,
+     "copyFrom": 2
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Banehammer",
+   "points": [
+    {
+     "models": 1,
+     "cost": 385,
+     "copyFrom": 1,
+     "copyTo": 1
+    },
+    {
+     "models": 1,
+     "cost": 420,
+     "copyFrom": 2
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Banesword",
+   "points": [
+    {
+     "models": 1,
+     "cost": 415,
+     "copyFrom": 1,
+     "copyTo": 1
+    },
+    {
+     "models": 1,
+     "cost": 450,
+     "copyFrom": 2
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Basilisk",
+   "points": [
+    {
+     "models": 1,
+     "cost": 115,
+     "copyFrom": 1,
+     "copyTo": 1
+    },
+    {
+     "models": 1,
+     "cost": 135,
+     "copyFrom": 2
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Bullgryn Squad",
+   "points": [
+    {
+     "models": 3,
+     "cost": 90,
+     "copyFrom": 1,
+     "copyTo": 1
+    },
+    {
+     "models": 6,
+     "cost": 200,
+     "copyFrom": 1,
+     "copyTo": 1
+    },
+    {
+     "models": 3,
+     "cost": 105,
+     "copyFrom": 2
+    },
+    {
+     "models": 6,
+     "cost": 215,
+     "copyFrom": 2
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Cadian Castellan",
+   "points": [
+    {
+     "models": 1,
+     "cost": 55
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Cadian Command Squad",
+   "points": [
+    {
+     "models": 5,
+     "cost": 60
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Cadian Heavy Weapons Squad",
+   "points": [
+    {
+     "models": 3,
+     "cost": 65
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Cadian Recon Squad",
+   "points": [
+    {
+     "models": 10,
+     "cost": 80
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Cadian Shock Troops",
+   "points": [
+    {
+     "models": 10,
+     "cost": 75
+    },
+    {
+     "models": 20,
+     "cost": 145
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Carnodon",
+   "points": [
+    {
+     "models": 1,
+     "cost": 160
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Catachan Command Squad",
+   "points": [
+    {
+     "models": 5,
+     "cost": 60
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Catachan Heavy Weapons Squad",
+   "points": [
+    {
+     "models": 3,
+     "cost": 65
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Catachan Jungle Fighters",
+   "points": [
+    {
+     "models": 10,
+     "cost": 75
+    },
+    {
+     "models": 20,
+     "cost": 145
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Centaur Light Carrier",
+   "points": [
+    {
+     "models": 1,
+     "cost": 40
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Centaur RSV",
+   "points": [
+    {
+     "models": 1,
+     "cost": 65,
+     "copyFrom": 1,
+     "copyTo": 3
+    },
+    {
+     "models": 1,
+     "cost": 75,
+     "copyFrom": 4
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Chimera",
+   "points": [
+    {
+     "models": 1,
+     "cost": 75,
+     "copyFrom": 1,
+     "copyTo": 3
+    },
+    {
+     "models": 1,
+     "cost": 85,
+     "copyFrom": 4
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Colossus",
+   "points": [
+    {
+     "models": 1,
+     "cost": 160
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Commissar",
+   "points": [
+    {
+     "models": 1,
+     "cost": 30
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Commissar Graves",
+   "points": [
+    {
+     "models": 1,
+     "cost": 125
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Commissar Graves on Foot",
+   "points": [
+    {
+     "models": 1,
+     "cost": 65
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Commissar Yarrick",
+   "points": [
+    {
+     "models": 1,
+     "cost": 120
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Crassus",
+   "points": [
+    {
+     "models": 1,
+     "cost": 180
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Cyclops Demolition Vehicle",
+   "points": [
+    {
+     "models": 1,
+     "cost": 40,
+     "copyFrom": 1,
+     "copyTo": 2
+    },
+    {
+     "models": 1,
+     "cost": 45,
+     "copyFrom": 3
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Death Korps Grenadier Squad",
+   "points": [
+    {
+     "models": 10,
+     "cost": 110
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Death Korps Of Krieg",
+   "points": [
+    {
+     "models": 10,
+     "cost": 75
+    },
+    {
+     "models": 20,
+     "cost": 145
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Death Rider Commissar",
+   "points": [
+    {
+     "models": 1,
+     "cost": 35
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Death Riders",
+   "points": [
+    {
+     "models": 5,
+     "cost": 60
+    },
+    {
+     "models": 10,
+     "cost": 110
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Deathstrike",
+   "points": [
+    {
+     "models": 1,
+     "cost": 125,
+     "copyFrom": 1,
+     "copyTo": 1
+    },
+    {
+     "models": 1,
+     "cost": 135,
+     "copyFrom": 2
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Dominus Armoured Siege Bombard",
+   "points": [
+    {
+     "models": 1,
+     "cost": 325
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Doomhammer",
+   "points": [
+    {
+     "models": 1,
+     "cost": 380,
+     "copyFrom": 1,
+     "copyTo": 1
+    },
+    {
+     "models": 1,
+     "cost": 410,
+     "copyFrom": 2
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Earthshaker Carriage Battery",
+   "points": [
+    {
+     "models": 1,
+     "cost": 120
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Earthshaker Platform",
+   "points": [
+    {
+     "models": 1,
+     "cost": 110
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Elysian Drop Sentinel",
+   "points": [
+    {
+     "models": 1,
+     "cost": 85
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Elysian Sniper Squad",
+   "points": [
+    {
+     "models": 3,
+     "cost": 65
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Field Ordnance Battery",
+   "points": [
+    {
+     "models": 2,
+     "cost": 90
+    }
+   ],
+   "wargearCosts": [
+    {
+     "item": "Bombast field gun",
+     "cost": 10
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Gaunt\u2019s Ghosts",
+   "points": [
+    {
+     "models": 6,
+     "cost": 95
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Gorgon Heavy Transport",
+   "points": [
+    {
+     "models": 1,
+     "cost": 275
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Griffon Mortar Carrier",
+   "points": [
+    {
+     "models": 1,
+     "cost": 115
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Hades Breaching Drill",
+   "points": [
+    {
+     "models": 1,
+     "cost": 110
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Heavy Mortar Team",
+   "points": [
+    {
+     "models": 1,
+     "cost": 50
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Heavy Quad Launcher Team",
+   "points": [
+    {
+     "models": 1,
+     "cost": 50
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Hellhammer",
+   "points": [
+    {
+     "models": 1,
+     "cost": 385,
+     "copyFrom": 1,
+     "copyTo": 1
+    },
+    {
+     "models": 1,
+     "cost": 415,
+     "copyFrom": 2
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Hellhound",
+   "points": [
+    {
+     "models": 1,
+     "cost": 125,
+     "copyFrom": 1,
+     "copyTo": 2
+    },
+    {
+     "models": 1,
+     "cost": 135,
+     "copyFrom": 3
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Hell\u2019s Last",
+   "points": [
+    {
+     "models": 5,
+     "cost": 80
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Hippogriff AFV",
+   "points": [
+    {
+     "models": 1,
+     "cost": 70
+    },
+    {
+     "models": 2,
+     "cost": 140
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Hydra",
+   "points": [
+    {
+     "models": 1,
+     "cost": 90
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Hydra Platform",
+   "points": [
+    {
+     "models": 1,
+     "cost": 95
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Kasrkin",
+   "points": [
+    {
+     "models": 10,
+     "cost": 105,
+     "copyFrom": 1,
+     "copyTo": 2
+    },
+    {
+     "models": 10,
+     "cost": 120,
+     "copyFrom": 3
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Krieg Combat Engineers",
+   "points": [
+    {
+     "models": 5,
+     "cost": 65,
+     "copyFrom": 1,
+     "copyTo": 2
+    },
+    {
+     "models": 10,
+     "cost": 95,
+     "copyFrom": 1,
+     "copyTo": 2
+    },
+    {
+     "models": 5,
+     "cost": 75,
+     "copyFrom": 3
+    },
+    {
+     "models": 10,
+     "cost": 105,
+     "copyFrom": 3
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Krieg Command Squad",
+   "points": [
+    {
+     "models": 6,
+     "cost": 60
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Krieg Heavy Weapons Squad",
+   "points": [
+    {
+     "models": 4,
+     "cost": 60
+    }
+   ],
+   "wargearCosts": [
+    {
+     "item": "Krieg heavy flamer",
+     "cost": 5
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Leman Russ Battle Tank",
+   "points": [
+    {
+     "models": 1,
+     "cost": 185,
+     "copyFrom": 1,
+     "copyTo": 2
+    },
+    {
+     "models": 1,
+     "cost": 195,
+     "copyFrom": 3
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Leman Russ Commander",
+   "points": [
+    {
+     "models": 1,
+     "cost": 215,
+     "copyFrom": 1,
+     "copyTo": 2
+    },
+    {
+     "models": 1,
+     "cost": 230,
+     "copyFrom": 3
+    }
+   ],
+   "wargearCosts": [
+    {
+     "item": "Demolisher battle cannon",
+     "cost": 15
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Leman Russ Demolisher",
+   "points": [
+    {
+     "models": 1,
+     "cost": 180,
+     "copyFrom": 1,
+     "copyTo": 2
+    },
+    {
+     "models": 1,
+     "cost": 190,
+     "copyFrom": 3
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Leman Russ Eradicator",
+   "points": [
+    {
+     "models": 1,
+     "cost": 170,
+     "copyFrom": 1,
+     "copyTo": 2
+    },
+    {
+     "models": 1,
+     "cost": 180,
+     "copyFrom": 3
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Leman Russ Executioner",
+   "points": [
+    {
+     "models": 1,
+     "cost": 170,
+     "copyFrom": 1,
+     "copyTo": 2
+    },
+    {
+     "models": 1,
+     "cost": 180,
+     "copyFrom": 3
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Leman Russ Exterminator",
+   "points": [
+    {
+     "models": 1,
+     "cost": 180,
+     "copyFrom": 1,
+     "copyTo": 2
+    },
+    {
+     "models": 1,
+     "cost": 190,
+     "copyFrom": 3
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Leman Russ Punisher",
+   "points": [
+    {
+     "models": 1,
+     "cost": 150,
+     "copyFrom": 1,
+     "copyTo": 2
+    },
+    {
+     "models": 1,
+     "cost": 160,
+     "copyFrom": 3
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Leman Russ Vanquisher",
+   "points": [
+    {
+     "models": 1,
+     "cost": 150,
+     "copyFrom": 1,
+     "copyTo": 2
+    },
+    {
+     "models": 1,
+     "cost": 160,
+     "copyFrom": 3
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Lord Marshal Dreir",
+   "points": [
+    {
+     "models": 1,
+     "cost": 75
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Lord Solar Leontus",
+   "points": [
+    {
+     "models": 1,
+     "cost": 130
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Macharius",
+   "points": [
+    {
+     "models": 1,
+     "cost": 310
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Macharius Omega",
+   "points": [
+    {
+     "models": 1,
+     "cost": 310
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Macharius Vanquisher",
+   "points": [
+    {
+     "models": 1,
+     "cost": 285
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Macharius Vulcan",
+   "points": [
+    {
+     "models": 1,
+     "cost": 310
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Malcador",
+   "points": [
+    {
+     "models": 1,
+     "cost": 250
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Malcador Annihilator",
+   "points": [
+    {
+     "models": 1,
+     "cost": 270
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Malcador Defender",
+   "points": [
+    {
+     "models": 1,
+     "cost": 310
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Malcador Infernus",
+   "points": [
+    {
+     "models": 1,
+     "cost": 235
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Manticore",
+   "points": [
+    {
+     "models": 1,
+     "cost": 150,
+     "copyFrom": 1,
+     "copyTo": 1
+    },
+    {
+     "models": 1,
+     "cost": 170,
+     "copyFrom": 2
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Manticore Platform",
+   "points": [
+    {
+     "models": 1,
+     "cost": 95
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Marauder Bomber",
+   "points": [
+    {
+     "models": 1,
+     "cost": 345
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Marauder Destroyer",
+   "points": [
+    {
+     "models": 1,
+     "cost": 375
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Medusa Carriage Battery",
+   "points": [
+    {
+     "models": 1,
+     "cost": 125
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Militarum Tempestus Command Squad",
+   "points": [
+    {
+     "models": 5,
+     "cost": 85,
+     "copyFrom": 1,
+     "copyTo": 2
+    },
+    {
+     "models": 5,
+     "cost": 95,
+     "copyFrom": 3
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Ministorum Priest",
+   "points": [
+    {
+     "models": 1,
+     "cost": 35
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Minotaur",
+   "points": [
+    {
+     "models": 1,
+     "cost": 225
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Mukaali Riders",
+   "points": [
+    {
+     "models": 3,
+     "cost": 110
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Munitorum Servitors",
+   "points": [
+    {
+     "models": 4,
+     "cost": 35
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Nork Deddog",
+   "points": [
+    {
+     "models": 1,
+     "cost": 60
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Ogryn Bodyguard",
+   "points": [
+    {
+     "models": 1,
+     "cost": 40
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Ogryn Squad",
+   "points": [
+    {
+     "models": 3,
+     "cost": 60
+    },
+    {
+     "models": 6,
+     "cost": 120
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Praetor",
+   "points": [
+    {
+     "models": 1,
+     "cost": 275
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Primaris Psyker",
+   "points": [
+    {
+     "models": 1,
+     "cost": 60
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Provisionally Prepared",
+   "points": [
+    {
+     "models": 1,
+     "cost": 40
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Quartermaster Cadre Squad",
+   "points": [
+    {
+     "models": 5,
+     "cost": 45
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Rapier Laser Destroyer Battery",
+   "points": [
+    {
+     "models": 1,
+     "cost": 35
+    },
+    {
+     "models": 2,
+     "cost": 70
+    },
+    {
+     "models": 3,
+     "cost": 105
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Ratlings",
+   "points": [
+    {
+     "models": 5,
+     "cost": 60
+    },
+    {
+     "models": 10,
+     "cost": 100
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Regimental Attach\u00e9s",
+   "points": [
+    {
+     "models": 3,
+     "cost": 40
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Rein And Raus",
+   "points": [
+    {
+     "models": 2,
+     "cost": 50
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Rogal Dorn Battle Tank",
+   "points": [
+    {
+     "models": 1,
+     "cost": 260,
+     "copyFrom": 1,
+     "copyTo": 1
+    },
+    {
+     "models": 1,
+     "cost": 275,
+     "copyFrom": 2
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Rogal Dorn Commander",
+   "points": [
+    {
+     "models": 1,
+     "cost": 290,
+     "copyFrom": 1,
+     "copyTo": 1
+    },
+    {
+     "models": 1,
+     "cost": 305,
+     "copyFrom": 2
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Sabre Weapons Battery",
+   "points": [
+    {
+     "models": 1,
+     "cost": 45
+    },
+    {
+     "models": 2,
+     "cost": 90
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Salamander Command Vehicle",
+   "points": [
+    {
+     "models": 1,
+     "cost": 80
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Salamander Scout Vehicle",
+   "points": [
+    {
+     "models": 1,
+     "cost": 95
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Scout Sentinels",
+   "points": [
+    {
+     "models": 1,
+     "cost": 55
+    },
+    {
+     "models": 2,
+     "cost": 100
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Sentinel Powerlifter",
+   "points": [
+    {
+     "models": 1,
+     "cost": 55
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Sergeant Harker",
+   "points": [
+    {
+     "models": 1,
+     "cost": 40
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Shadowsword",
+   "points": [
+    {
+     "models": 1,
+     "cost": 375,
+     "copyFrom": 1,
+     "copyTo": 1
+    },
+    {
+     "models": 1,
+     "cost": 405,
+     "copyFrom": 2
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Sly Marbo",
+   "points": [
+    {
+     "models": 1,
+     "cost": 55
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Storm Chimera",
+   "points": [
+    {
+     "models": 1,
+     "cost": 90
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Stormblade",
+   "points": [
+    {
+     "models": 1,
+     "cost": 415
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Stormlord",
+   "points": [
+    {
+     "models": 1,
+     "cost": 395,
+     "copyFrom": 1,
+     "copyTo": 1
+    },
+    {
+     "models": 1,
+     "cost": 430,
+     "copyFrom": 2
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Stormsword",
+   "points": [
+    {
+     "models": 1,
+     "cost": 430,
+     "copyFrom": 1,
+     "copyTo": 1
+    },
+    {
+     "models": 1,
+     "cost": 465,
+     "copyFrom": 2
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Stygies Destroyer Tank Hunter",
+   "points": [
+    {
+     "models": 1,
+     "cost": 180
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Tarantula Battery",
+   "points": [
+    {
+     "models": 1,
+     "cost": 40
+    },
+    {
+     "models": 2,
+     "cost": 80
+    },
+    {
+     "models": 3,
+     "cost": 120
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Tauros Assault Vehicle",
+   "points": [
+    {
+     "models": 1,
+     "cost": 50
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Tauros Venator",
+   "points": [
+    {
+     "models": 1,
+     "cost": 50
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Taurox",
+   "points": [
+    {
+     "models": 1,
+     "cost": 65,
+     "copyFrom": 1,
+     "copyTo": 3
+    },
+    {
+     "models": 1,
+     "cost": 75,
+     "copyFrom": 4
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Taurox Prime",
+   "points": [
+    {
+     "models": 1,
+     "cost": 75,
+     "copyFrom": 1,
+     "copyTo": 3
+    },
+    {
+     "models": 1,
+     "cost": 85,
+     "copyFrom": 4
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Tech-Priest Enginseer",
+   "points": [
+    {
+     "models": 1,
+     "cost": 45
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Tempestus Aquilons",
+   "points": [
+    {
+     "models": 10,
+     "cost": 95
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Tempestus Scions",
+   "points": [
+    {
+     "models": 5,
+     "cost": 75,
+     "copyFrom": 1,
+     "copyTo": 2
+    },
+    {
+     "models": 10,
+     "cost": 150,
+     "copyFrom": 1,
+     "copyTo": 2
+    },
+    {
+     "models": 5,
+     "cost": 85,
+     "copyFrom": 3
+    },
+    {
+     "models": 10,
+     "cost": 160,
+     "copyFrom": 3
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Trojan Support Vehicle",
+   "points": [
+    {
+     "models": 1,
+     "cost": 80
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Ursula Creed",
+   "points": [
+    {
+     "models": 1,
+     "cost": 85
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Valdor",
+   "points": [
+    {
+     "models": 1,
+     "cost": 285
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Valkyrie",
+   "points": [
+    {
+     "models": 1,
+     "cost": 170,
+     "copyFrom": 1,
+     "copyTo": 2
+    },
+    {
+     "models": 1,
+     "cost": 180,
+     "copyFrom": 3
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Valkyrie Sky Talon",
+   "points": [
+    {
+     "models": 1,
+     "cost": 185
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Vendetta Gunship",
+   "points": [
+    {
+     "models": 1,
+     "cost": 255
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Voss-pattern Lightning",
+   "points": [
+    {
+     "models": 1,
+     "cost": 130
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Vulture Gunship",
+   "points": [
+    {
+     "models": 1,
+     "cost": 225
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "Wyvern",
+   "points": [
+    {
+     "models": 1,
+     "cost": 95,
+     "copyFrom": 1,
+     "copyTo": 1
+    },
+    {
+     "models": 1,
+     "cost": 115,
+     "copyFrom": 2
+    }
+   ]
+  },
+  {
+   "faction": "AM",
+   "name": "\u2018Iron Hand\u2019 Straken",
+   "points": [
+    {
+     "models": 1,
+     "cost": 55
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Aquila Kill Team",
+   "points": [
+    {
+     "models": 5,
+     "cost": 100
+    },
+    {
+     "models": 10,
+     "cost": 200
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Callidus Assassin",
+   "points": [
+    {
+     "models": 1,
+     "cost": 100
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Corvus Blackstar",
+   "points": [
+    {
+     "models": 1,
+     "cost": 180
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Culexus Assassin",
+   "points": [
+    {
+     "models": 1,
+     "cost": 85
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Daemonhost",
+   "points": [
+    {
+     "models": 1,
+     "cost": 40
+    },
+    {
+     "models": 2,
+     "cost": 80
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Damned Legionnaires",
+   "points": [
+    {
+     "models": 5,
+     "cost": 90
+    },
+    {
+     "models": 10,
+     "cost": 180
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Deathwatch Kill Team",
+   "points": [
+    {
+     "models": 5,
+     "cost": 100
+    },
+    {
+     "models": 10,
+     "cost": 190
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Deathwatch Terminator Squad",
+   "points": [
+    {
+     "models": 5,
+     "cost": 210
+    },
+    {
+     "models": 10,
+     "cost": 420
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Eversor Assassin",
+   "points": [
+    {
+     "models": 1,
+     "cost": 100,
+     "note": "AGENTS OF THE IMPERIUM Detachment"
+    },
+    {
+     "models": 1,
+     "cost": 110,
+     "note": "Assigned Agent"
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Exaction Squad",
+   "points": [
+    {
+     "models": 11,
+     "cost": 90,
+     "note": "AGENTS OF THE IMPERIUM Detachment"
+    },
+    {
+     "models": 11,
+     "cost": 85,
+     "note": "Assigned Agent"
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Fortis Kill Team",
+   "points": [
+    {
+     "models": 5,
+     "cost": 100
+    },
+    {
+     "models": 10,
+     "cost": 200
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Grey Knights Terminator Squad",
+   "points": [
+    {
+     "models": 5,
+     "cost": 175,
+     "note": "AGENTS OF THE IMPERIUM Detachment"
+    },
+    {
+     "models": 5,
+     "cost": 190,
+     "note": "Assigned Agent"
+    }
+   ],
+   "wargearCosts": [
+    {
+     "item": "Psycannon",
+     "cost": 5
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Imperial Navy Breachers",
+   "points": [
+    {
+     "models": 10,
+     "cost": 90
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Imperial Rhino",
+   "points": [
+    {
+     "models": 1,
+     "cost": 65,
+     "copyFrom": 1,
+     "copyTo": 3
+    },
+    {
+     "models": 1,
+     "cost": 75,
+     "copyFrom": 4
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Indomitor Kill Team",
+   "points": [
+    {
+     "models": 5,
+     "cost": 120
+    },
+    {
+     "models": 10,
+     "cost": 240
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Inquisitor",
+   "points": [
+    {
+     "models": 1,
+     "cost": 55,
+     "note": "AGENTS OF THE IMPERIUM Detachment"
+    },
+    {
+     "models": 1,
+     "cost": 65,
+     "note": "Assigned Agent"
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Inquisitor Coteaz",
+   "points": [
+    {
+     "models": 1,
+     "cost": 75,
+     "note": "AGENTS OF THE IMPERIUM Detachment"
+    },
+    {
+     "models": 1,
+     "cost": 95,
+     "note": "Assigned Agent"
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Inquisitor Draxus",
+   "points": [
+    {
+     "models": 1,
+     "cost": 75,
+     "note": "AGENTS OF THE IMPERIUM Detachment"
+    },
+    {
+     "models": 1,
+     "cost": 110,
+     "note": "Assigned Agent"
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Inquisitor Eisenhorn",
+   "points": [
+    {
+     "models": 1,
+     "cost": 65
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Inquisitor Greyfax",
+   "points": [
+    {
+     "models": 1,
+     "cost": 65
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Inquisitor In Terminator Armour",
+   "points": [
+    {
+     "models": 1,
+     "cost": 70
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Inquisitor Karamazov",
+   "points": [
+    {
+     "models": 1,
+     "cost": 140
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Inquisitor Kroyle",
+   "points": [
+    {
+     "models": 1,
+     "cost": 100
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Inquisitor Ostromandeus",
+   "points": [
+    {
+     "models": 2,
+     "cost": 65
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Inquisitorial Agents",
+   "points": [
+    {
+     "models": 6,
+     "cost": 50,
+     "note": "AGENTS OF THE IMPERIUM Detachment"
+    },
+    {
+     "models": 12,
+     "cost": 100,
+     "note": "AGENTS OF THE IMPERIUM Detachment"
+    },
+    {
+     "models": 6,
+     "cost": 60,
+     "note": "Assigned Agent"
+    },
+    {
+     "models": 12,
+     "cost": 120,
+     "note": "Assigned Agent"
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Inquisitorial Chimera",
+   "points": [
+    {
+     "models": 1,
+     "cost": 60,
+     "copyFrom": 1,
+     "copyTo": 3
+    },
+    {
+     "models": 1,
+     "cost": 70,
+     "copyFrom": 4
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Janus Draik",
+   "points": [
+    {
+     "models": 1,
+     "cost": 40
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Jokaero Weaponsmith",
+   "points": [
+    {
+     "models": 1,
+     "cost": 30
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Kill Team Cassius",
+   "points": [
+    {
+     "models": 11,
+     "cost": 220
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Ministorum Priest",
+   "points": [
+    {
+     "models": 1,
+     "cost": 40
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Navigator",
+   "points": [
+    {
+     "models": 1,
+     "cost": 60,
+     "note": "AGENTS OF THE IMPERIUM Detachment"
+    },
+    {
+     "models": 1,
+     "cost": 75,
+     "note": "Assigned Agent"
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Neyam Shai Murad",
+   "points": [
+    {
+     "models": 1,
+     "cost": 40
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Proteus Kill Team",
+   "points": [
+    {
+     "models": 5,
+     "cost": 160
+    },
+    {
+     "models": 10,
+     "cost": 320
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Rogue Trader Entourage",
+   "points": [
+    {
+     "models": 4,
+     "cost": 75,
+     "note": "AGENTS OF THE IMPERIUM Detachment"
+    },
+    {
+     "models": 4,
+     "cost": 105,
+     "note": "Assigned Agent"
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Sanctifiers",
+   "points": [
+    {
+     "models": 9,
+     "cost": 100
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Sisters of Battle Immolator",
+   "points": [
+    {
+     "models": 1,
+     "cost": 90,
+     "note": "AGENTS OF THE IMPERIUM Detachment",
+     "copyFrom": 1,
+     "copyTo": 3
+    },
+    {
+     "models": 1,
+     "cost": 100,
+     "note": "AGENTS OF THE IMPERIUM Detachment",
+     "copyFrom": 4
+    },
+    {
+     "models": 1,
+     "cost": 105,
+     "note": "Assigned Agent",
+     "copyFrom": 1,
+     "copyTo": 3
+    },
+    {
+     "models": 1,
+     "cost": 115,
+     "note": "Assigned Agent",
+     "copyFrom": 4
+    }
+   ],
+   "wargearCosts": [
+    {
+     "item": "Twin multi-melta",
+     "cost": 15
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Sisters of Battle Squad",
+   "points": [
+    {
+     "models": 10,
+     "cost": 100,
+     "note": "AGENTS OF THE IMPERIUM Detachment"
+    },
+    {
+     "models": 10,
+     "cost": 110,
+     "note": "Assigned Agent"
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Spectrus Kill Team",
+   "points": [
+    {
+     "models": 5,
+     "cost": 90
+    },
+    {
+     "models": 10,
+     "cost": 180
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Subductor Squad",
+   "points": [
+    {
+     "models": 11,
+     "cost": 85,
+     "note": "AGENTS OF THE IMPERIUM Detachment"
+    },
+    {
+     "models": 11,
+     "cost": 100,
+     "note": "Assigned Agent"
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "UR-025",
+   "points": [
+    {
+     "models": 1,
+     "cost": 55
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Veteran Bike Squad",
+   "points": [
+    {
+     "models": 3,
+     "cost": 70
+    },
+    {
+     "models": 6,
+     "cost": 140
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Vigilant Squad",
+   "points": [
+    {
+     "models": 11,
+     "cost": 85
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Vindicare Assassin",
+   "points": [
+    {
+     "models": 1,
+     "cost": 110,
+     "note": "AGENTS OF THE IMPERIUM Detachment"
+    },
+    {
+     "models": 1,
+     "cost": 125,
+     "note": "Assigned Agent"
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Voidsmen-at-arms",
+   "points": [
+    {
+     "models": 6,
+     "cost": 50,
+     "note": "AGENTS OF THE IMPERIUM Detachment"
+    },
+    {
+     "models": 6,
+     "cost": 70,
+     "note": "Assigned Agent"
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Watch Captain Artemis",
+   "points": [
+    {
+     "models": 1,
+     "cost": 65
+    }
+   ]
+  },
+  {
+   "faction": "AoI",
+   "name": "Watch Master",
+   "points": [
+    {
+     "models": 1,
+     "cost": 95
+    }
+   ]
+  }
+ ],
+ "addEnhancements": [
+  {
+   "id": "enh11:abhuman_auxiliaries:sharp_eyes_light_fingers",
+   "name": "Sharp eyes, Light fingers",
+   "faction": "AM",
+   "cost": 10,
+   "detachment": "Abhuman Auxiliaries",
+   "detachmentId": "",
+   "upgrade": true,
+   "bearerKeywords": [
+    "ratlings"
+   ],
+   "description": "RATLINGS unit only. When this unit is selected to shoot, enemy units have +6\" detection range until this unit has shot."
+  },
+  {
+   "id": "enh11:abhuman_auxiliaries:exemplar_of_duty",
+   "name": "Exemplar of Duty",
+   "faction": "AM",
+   "cost": 10,
+   "detachment": "Abhuman Auxiliaries",
+   "detachmentId": "",
+   "upgrade": true,
+   "bearerKeywords": [
+    "commissar"
+   ],
+   "description": "LEADER: OGRYN SQUAD, BULLGRYN SQUAD. COMMISSAR model only. This model has Feel No Pain 4+."
+  },
+  {
+   "id": "enh11:designation_force:long_range_scout",
+   "name": "Long-Range Scout",
+   "faction": "AM",
+   "cost": 10,
+   "detachment": "Designation Force",
+   "detachmentId": "",
+   "upgrade": true,
+   "bearerKeywords": [
+    "scout sentinels"
+   ],
+   "description": "SCOUT SENTINEL unit only. This unit has Infiltrators."
+  },
+  {
+   "id": "enh11:designation_force:recon_star",
+   "name": "Recon Star",
+   "faction": "AM",
+   "cost": 10,
+   "detachment": "Designation Force",
+   "detachmentId": "",
+   "upgrade": true,
+   "bearerKeywords": [
+    "regiment"
+   ],
+   "description": "ASTRA MILITARUM INFANTRY PLATOON unit only. In your first Movement phase, this unit can make an ingress move."
+  }
+ ]
 }

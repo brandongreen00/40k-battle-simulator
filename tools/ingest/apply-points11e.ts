@@ -32,6 +32,11 @@ interface PatchFile {
   detachments: { faction: string; name: string; dp: number; disposition: string }[];
   enhancements: { faction: string; detachment: string; name: string; cost: number }[];
   datasheets: { faction: string; name: string; points: PointsTier[]; wargearCosts?: WargearCost[] }[];
+  /** Full records for 11e-ONLY enhancements/Upgrades whose detachments have no 10e counterpart
+   *  (Abhuman Auxiliaries, Designation Force) — upserted into enhancements.json by id.
+   *  Recon Star's bearer filter uses REGIMENT as the 10e-data stand-in for the 11e PLATOON
+   *  keyword (the 10e CSVs carry no PLATOON). */
+  addEnhancements?: Enhancement[];
 }
 
 /** Fold case, unicode punctuation and whitespace so "Priority-drop Beacon" = "Priority drop Beacon". */
@@ -75,6 +80,18 @@ for (const e of enhancements) {
   e.cost = cost;
 }
 
+// ── 11e-only enhancement/Upgrade records (no 10e counterpart) — upsert by id ─
+let enhAdded = 0;
+for (const rec of patch.addEnhancements ?? []) {
+  const at = enhancements.findIndex((e) => e.id === rec.id);
+  if (at === -1) {
+    enhancements.push(rec);
+    enhAdded++;
+  } else {
+    enhancements[at] = rec;
+  }
+}
+
 writeFileSync(resolve(GAME_DIR, 'datasheets.json'), JSON.stringify(datasheets, null, 2) + '\n', 'utf8');
 writeFileSync(resolve(GAME_DIR, 'enhancements.json'), JSON.stringify(enhancements, null, 2) + '\n', 'utf8');
 
@@ -82,6 +99,7 @@ console.log(`points11e (${patch.packVersion}, retrieved ${patch.retrieved})`);
 console.log(`  datasheets patched: ${patched}/${datasheets.length}`);
 if (unmatched.length) console.log(`  ⚠ 11e sheets with no 10e datasheet (skipped): ${unmatched.join(', ')}`);
 console.log(`  enhancement costs changed: ${enhPatched} (matched ${enhancements.length - enhNo11e.length}/${enhancements.length})`);
+console.log(`  11e-only enhancement records upserted: ${(patch.addEnhancements ?? []).length} (${enhAdded} new)`);
 if (enhNo11e.length) console.log(`  no 11e price (left as-is):\n    ${enhNo11e.join('\n    ')}`);
 if (patched !== patch.datasheets.length) {
   process.exitCode = 1;
