@@ -1266,6 +1266,9 @@ body {
     height: 100dvh;
     min-height: 0;
     overflow: hidden;
+    /* clip forbids ALL horizontal scrolling — tapping the right-most top-nav
+       button must not scroll-into-view the whole (overflow: hidden) shell. */
+    overflow-x: clip;
   }
   .topnav {
     position: static;
@@ -1276,6 +1279,11 @@ body {
   .topnav .brand {
     font-size: 13px;
     white-space: nowrap;
+    /* the brand yields (ellipsized) before the nav buttons can push past the edge */
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .topnav nav {
     flex: 1;
@@ -1982,99 +1990,464 @@ body {
   .sb-ability summary {
     min-height: 34px;
   }
-/* ===================================================================== */
-/* Auto Player (v2 simulator: run configurator, dashboard, replay)        */
-/* ===================================================================== */
-.autoplayer { padding: 12px 16px 40px; max-width: 1200px; margin: 0 auto; }
-.ap-tabs { display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
-  border-bottom: 1px solid #26303b; padding-bottom: 8px; margin-bottom: 14px; }
-.ap-tabs button { background: #161b22; color: #c9d3de; border: 1px solid #26303b;
-  border-radius: 8px; padding: 7px 14px; cursor: pointer; font-size: 14px; }
-.ap-tabs button.on { background: #1f6feb; border-color: #1f6feb; color: #fff; }
-.ap-datav { margin-left: auto; font-size: 12px; }
-.ap-panel h2 { margin: 4px 0 6px; font-size: 19px; }
-.ap-panel h3 { margin: 20px 0 8px; font-size: 15px; font-weight: 600; }
-.ap-dim { color: #8b97a5; font-size: 12px; }
-.ap-warn { background: #3b2a12; border: 1px solid #7a5a1e; color: #f0d9a8;
-  padding: 8px 12px; border-radius: 8px; font-size: 13px; }
-.ap-empty { color: #8b97a5; padding: 24px; }
+}
 
-.ap-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 10px; margin: 10px 0; }
-.ap-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 13px;
-  color: #c9d3de; min-width: 0; }
-.ap-grid select, .ap-grid input { background: #0d1117; color: #e6edf3;
-  border: 1px solid #30363d; border-radius: 6px; padding: 7px 8px; font-size: 14px;
-  max-width: 100%; }
-.ap-cmd { background: #0d1117; border: 1px solid #30363d; border-radius: 8px;
-  padding: 10px 12px; font-size: 12.5px; overflow-x: auto; white-space: pre-wrap;
-  word-break: break-word; }
-.ap-primary { background: #1f6feb; color: #fff; border: 0; border-radius: 8px;
-  padding: 9px 16px; cursor: pointer; font-size: 14px; }
-.ap-primary:disabled { background: #30363d; color: #8b97a5; cursor: not-allowed; }
-.ap-ghost { background: #161b22; color: #c9d3de; border: 1px solid #30363d;
-  border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 13px; }
+/* ═══════════════════ Auto Player (v2: run · results · replay) ═════════════════
+   Styled with the app theme tokens so it reads as one app with the List Builder
+   and the Measuring Board. On phones it joins the same app shell: an internally
+   scrolling page plus the bottom tab bar (.m-tabs). */
+.autoplayer {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 12px 16px 40px;
+}
 
-.ap-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 10px; margin: 12px 0; }
-.ap-card { background: #161b22; border: 1px solid #26303b; border-radius: 10px;
-  padding: 12px; }
-.ap-card-value { font-size: 22px; font-weight: 700; color: #e6edf3; }
-.ap-card-label { font-size: 12px; color: #8b97a5; text-transform: uppercase;
-  letter-spacing: .04em; }
-.ap-card-sub { margin-top: 3px; }
+/* Desktop tab strip — same idiom as the top nav / board toggles. */
+.ap-tabs {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+}
+.ap-tabs button {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 14px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.ap-tabs button:hover {
+  border-color: var(--accent);
+}
+.ap-tabs button.on {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+.ap-datav {
+  margin-left: auto;
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--muted);
+}
 
-.ap-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px;
-  display: block; overflow-x: auto; }
-.ap-table th, .ap-table td { text-align: left; padding: 6px 8px;
-  border-bottom: 1px solid #21262d; white-space: nowrap; }
-.ap-table th { color: #8b97a5; font-weight: 600; }
-.ap-units { white-space: normal; max-width: 420px; }
-.p0 { color: #58a6ff; } .p1 { color: #f0883e; }
+.ap-panel h2 {
+  margin: 2px 0 6px;
+  font-size: 18px;
+}
+.ap-lead {
+  margin: 0 0 12px;
+  line-height: 1.45;
+}
+/* Section cards — the same card idiom as the mobile sidebar sections. */
+.ap-sec {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 0 0 12px;
+}
+.ap-sec > h3 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.ap-dim {
+  color: var(--muted);
+  font-size: 12px;
+}
+.ap-warn {
+  background: #2a2410;
+  border: 1px solid #5c4d12;
+  color: #e8d9a0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 12.5px;
+}
+.ap-empty {
+  color: var(--muted);
+  padding: 24px;
+}
 
-.ap-loglist { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.ap-file { display: block; margin-top: 14px; font-size: 13px; color: #c9d3de; }
+.ap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 10px;
+  margin: 4px 0 2px;
+}
+.ap-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted);
+  min-width: 0;
+}
+.ap-grid select,
+.ap-grid input {
+  background: #11141a;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 8px;
+  font-size: 13px;
+  max-width: 100%;
+  min-width: 0;
+}
+/* The command block must stay selectable (the page disables selection globally). */
+.ap-cmd {
+  margin: 0 0 8px;
+  background: #11141a;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.ap-btnrow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 2px 0;
+}
+.ap-primary {
+  background: var(--accent);
+  color: #14161a;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 9px 16px;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.ap-primary:disabled {
+  background: #232936;
+  border-color: var(--line);
+  color: var(--muted);
+  font-weight: 500;
+  cursor: not-allowed;
+}
+.ap-ghost {
+  background: #232936;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 12.5px;
+}
+.ap-ghost:hover {
+  border-color: var(--accent);
+}
+
+/* Stat cards — the scoreboard's score-cell idiom. */
+.ap-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+  margin: 8px 0;
+}
+.ap-card {
+  background: #232936;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.ap-card-value {
+  font-size: 20px;
+  font-weight: 700;
+}
+.ap-card-label {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+.ap-card-sub {
+  margin-top: 3px;
+}
+
+/* Wide tables scroll inside their own container — the page never scrolls sideways. */
+.ap-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+.ap-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  margin-top: 6px;
+}
+.ap-table th,
+.ap-table td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.ap-table th {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.ap-units {
+  white-space: normal;
+  max-width: 420px;
+}
+/* Side colors match the v1 board's player/AI tokens. */
+.p0 { color: #60a5fa; }
+.p1 { color: #f87171; }
+
+.ap-loglist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.ap-logrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  background: #11141a;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin: 2px 0;
+  cursor: pointer;
+  font-size: 13px;
+}
+.ap-logrow:hover {
+  border-color: var(--accent);
+}
+.ap-logrow .ap-logname {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ap-logrow .ap-dim {
+  white-space: nowrap;
+}
+.ap-file {
+  display: block;
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.ap-file input {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
 
 /* -- replay ----------------------------------------------------------- */
-.ap-replay-head { display: flex; justify-content: space-between; align-items: center;
-  gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
-.ap-replay-body { display: grid; grid-template-columns: minmax(0, 2fr) minmax(220px, 1fr);
-  gap: 14px; align-items: start; }
-.ap-board { width: 100%; height: auto; background: #0b0f14; border: 1px solid #26303b;
-  border-radius: 8px; }
-.ap-ground { fill: #11161c; }
-.ap-zone { fill: #1f6feb; opacity: .06; stroke: #1f6feb; stroke-opacity: .3;
-  stroke-dasharray: 4 4; }
-.ap-zone-defender { fill: #f0883e; stroke: #f0883e; }
-.ap-terrain { fill: #2b3440; stroke: #3d4855; }
-.ap-terrain-dense { fill: #39434f; }
-.ap-terrain-light { fill: #2a323c; }
-.ap-terrain-exposed { fill: #1a2027; }
-.ap-obj-range { fill: #8b97a5; opacity: .10; }
-.ap-obj-range.p0 { fill: #58a6ff; opacity: .18; }
-.ap-obj-range.p1 { fill: #f0883e; opacity: .18; }
+.ap-replay-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.ap-replay-body {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(230px, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+.ap-replay-main {
+  min-width: 0;
+}
+.ap-board {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* portrait maps letterbox (svg bg == ground fill) instead of pushing the
+     transport controls below the fold */
+  max-height: calc(100vh - 240px);
+  background: #11141a;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.ap-ground { fill: #11141a; }
+/* Zones/models follow the v1 board palette: player blue, opponent red. */
+.ap-zone {
+  fill: #3b82f6;
+  opacity: 0.07;
+  stroke: #3b82f6;
+  stroke-opacity: 0.35;
+  stroke-dasharray: 4 4;
+}
+.ap-zone-defender {
+  fill: #ef4444;
+  stroke: #ef4444;
+}
+.ap-terrain { fill: #2a303c; stroke: #3a4250; }
+.ap-terrain-dense { fill: #3a4250; }
+.ap-terrain-light { fill: #2e3542; }
+.ap-terrain-exposed { fill: #1d222b; }
+.ap-obj-range { fill: #9aa3b0; opacity: 0.1; }
+.ap-obj-range.p0 { fill: #3b82f6; opacity: 0.2; }
+.ap-obj-range.p1 { fill: #ef4444; opacity: 0.2; }
 .ap-obj { fill: #d8dee6; }
-.ap-model { fill: #58a6ff; stroke: #0b0f14; stroke-width: .6; }
-.ap-model.p1 { fill: #f0883e; }
-.ap-model.shocked { stroke: #f85149; stroke-width: 1.2; }
+.ap-model { fill: #3b82f6; stroke: #0e1116; stroke-width: 0.6; }
+.ap-model.p1 { fill: #ef4444; }
+.ap-model.shocked { stroke: var(--accent); stroke-width: 1.2; }
 
-.ap-replay-side { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.ap-scoreline { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
-.ap-turnline { font-size: 13px; color: #c9d3de; border-top: 1px solid #21262d;
-  padding-top: 8px; }
-.ap-feed { font-size: 12px; display: flex; flex-direction: column; gap: 3px;
-  max-height: 340px; overflow-y: auto; }
-.ap-feed-row { color: #a6b2c0; word-break: break-word; }
-.ap-feed-row.now { color: #e6edf3; font-weight: 600; }
-.ap-event { color: #7ee787; }
-.ap-transport { display: flex; align-items: center; gap: 8px; margin-top: 10px;
-  flex-wrap: wrap; }
-.ap-transport input[type='range'] { flex: 1 1 160px; }
-.ap-result { margin-top: 10px; font-size: 14px; }
-.ap-missions { margin: 0; }
+.ap-replay-side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+}
+.ap-scoreline {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+.ap-turnline {
+  font-size: 13px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+.ap-feed {
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 340px;
+  overflow-y: auto;
+}
+.ap-feed-row {
+  color: var(--muted);
+  word-break: break-word;
+}
+.ap-feed-row.now {
+  color: var(--text);
+  font-weight: 600;
+}
+.ap-event {
+  color: #86efac;
+}
+.ap-transport {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.ap-transport input[type='range'] {
+  flex: 1 1 140px;
+  min-width: 0;
+  accent-color: var(--accent);
+}
+.ap-transport select {
+  background: #11141a;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+.ap-result {
+  margin-top: 10px;
+  font-size: 14px;
+}
+.ap-missions {
+  margin: 0;
+}
 
-@media (max-width: 880px) {
-  .autoplayer { padding: 10px 12px 30px; }
-  .ap-replay-body { grid-template-columns: 1fr; }
-  .ap-feed { max-height: 200px; }
+/* ── Auto Player on phones: join the app shell ──────────────────────────────
+   Same breakpoint as the rest of the app. The view becomes a fixed-height
+   column — the page scrolls internally, the bottom tab bar (.m-tabs, styled by
+   the shared shell rules) replaces the desktop tab strip. */
+@media (max-width: 880px), ((pointer: coarse) and (max-height: 520px)) {
+  .autoplayer {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    max-width: none;
+    padding: 0;
+  }
+  .autoplayer .ap-tabs {
+    display: none;
+  }
+  .autoplayer .ap-page {
+    order: 1;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: clip;
+    padding: 14px 14px 24px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .ap-panel h2 {
+    font-size: 17px;
+  }
+  /* Touch sizing — 44px targets, ≥15px fields (stops the iOS focus zoom). */
+  .ap-primary,
+  .ap-ghost,
+  .ap-logrow {
+    min-height: 44px;
+    border-radius: 10px;
+    font-size: 13.5px;
+  }
+  .ap-grid select,
+  .ap-grid input,
+  .ap-transport select {
+    min-height: 44px;
+    font-size: 15px;
+    border-radius: 10px;
+  }
+  .ap-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  /* Replay: board + transport first, score/feed below; cap heights so the
+     controls stay reachable. */
+  .ap-replay-body {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .ap-board {
+    max-height: 46vh;
+  }
+  .ap-transport {
+    gap: 8px;
+  }
+  .ap-transport button {
+    min-width: 44px;
+  }
+  .ap-feed {
+    max-height: 200px;
+  }
 }

@@ -77,6 +77,7 @@ export function ReplayViewer({ log, onClose }: Props) {
       {versionWarning && <p className="ap-warn">⚠ {versionWarning}</p>}
 
       <div className="ap-replay-body">
+        <div className="ap-replay-main">
         <svg
           className="ap-board"
           viewBox={`0 0 ${W} ${H}`}
@@ -141,6 +142,54 @@ export function ReplayViewer({ log, onClose }: Props) {
           )}
         </svg>
 
+        {/* Transport lives directly under the board so playback is reachable
+            without scrolling past the feed — on desktop and phones alike. */}
+        <div className="ap-transport">
+          <button className="ap-ghost" onClick={() => setIndex(0)} aria-label="restart">⏮</button>
+          <button className="ap-ghost" onClick={() => setIndex((i) => Math.max(0, i - 1))}>◀</button>
+          <button className="ap-primary" onClick={() => setPlaying((p) => !p)}>
+            {playing ? '⏸ pause' : '▶ play'}
+          </button>
+          <button
+            className="ap-ghost"
+            onClick={() => setIndex((i) => Math.min(frames.length - 1, i + 1))}
+          >
+            ▶
+          </button>
+          <button className="ap-ghost" onClick={() => setIndex(frames.length - 1)}>⏭</button>
+          <input
+            type="range"
+            min={0}
+            max={Math.max(0, frames.length - 1)}
+            value={index}
+            onChange={(e) => setIndex(Number(e.target.value))}
+            aria-label="frame"
+          />
+          <span className="ap-dim">
+            {index + 1}/{frames.length}
+          </span>
+          <select value={speed} onChange={(e) => setSpeed(Number(e.target.value))} aria-label="speed">
+            <option value={800}>0.5×</option>
+            <option value={400}>1×</option>
+            <option value={160}>2.5×</option>
+            <option value={60}>7×</option>
+          </select>
+        </div>
+
+        {index >= frames.length - 1 && (
+          <p className="ap-result">
+            Final {log.result.vp[0]} : {log.result.vp[1]} —{' '}
+            {log.result.winner === null
+              ? 'draw'
+              : `${log.meta.armies[log.result.winner]} wins`}{' '}
+            <span className="ap-dim">
+              (primary {log.result.primary.join('/')} · secondary {log.result.secondary.join('/')}
+              {' '}· battle ready {log.result.battle_ready.join('/')})
+            </span>
+          </p>
+        )}
+        </div>
+
         <aside className="ap-replay-side">
           <div className="ap-scoreline">
             <span className="p0">
@@ -183,51 +232,6 @@ export function ReplayViewer({ log, onClose }: Props) {
           </div>
         </aside>
       </div>
-
-      <div className="ap-transport">
-        <button className="ap-ghost" onClick={() => setIndex(0)} aria-label="restart">⏮</button>
-        <button className="ap-ghost" onClick={() => setIndex((i) => Math.max(0, i - 1))}>◀</button>
-        <button className="ap-primary" onClick={() => setPlaying((p) => !p)}>
-          {playing ? '⏸ pause' : '▶ play'}
-        </button>
-        <button
-          className="ap-ghost"
-          onClick={() => setIndex((i) => Math.min(frames.length - 1, i + 1))}
-        >
-          ▶
-        </button>
-        <button className="ap-ghost" onClick={() => setIndex(frames.length - 1)}>⏭</button>
-        <input
-          type="range"
-          min={0}
-          max={Math.max(0, frames.length - 1)}
-          value={index}
-          onChange={(e) => setIndex(Number(e.target.value))}
-          aria-label="frame"
-        />
-        <span className="ap-dim">
-          {index + 1}/{frames.length}
-        </span>
-        <select value={speed} onChange={(e) => setSpeed(Number(e.target.value))} aria-label="speed">
-          <option value={800}>0.5×</option>
-          <option value={400}>1×</option>
-          <option value={160}>2.5×</option>
-          <option value={60}>7×</option>
-        </select>
-      </div>
-
-      {index >= frames.length - 1 && (
-        <p className="ap-result">
-          Final {log.result.vp[0]} : {log.result.vp[1]} —{' '}
-          {log.result.winner === null
-            ? 'draw'
-            : `${log.meta.armies[log.result.winner]} wins`}{' '}
-          <span className="ap-dim">
-            (primary {log.result.primary.join('/')} · secondary {log.result.secondary.join('/')}
-            {' '}· battle ready {log.result.battle_ready.join('/')})
-          </span>
-        </p>
-      )}
     </div>
   );
 }

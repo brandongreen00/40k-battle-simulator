@@ -9,6 +9,9 @@ import { ReplayViewer } from './ReplayViewer';
  * GitHub Pages cannot execute the engine, so this app does three things:
  * configure a run (and hand you the exact command, or dispatch it to GitHub
  * Actions), read the committed result artifacts, and replay any battle log.
+ *
+ * The surface follows the app shell: on desktop an in-page tab strip under the
+ * top nav, on phones the same bottom tab bar as the List Builder / board.
  */
 
 type Tab = 'run' | 'results' | 'replay';
@@ -33,30 +36,52 @@ export function AutoPlayer() {
       );
   }, []);
 
+  const tabs: Array<{ id: Tab; ico: string; label: string }> = [
+    { id: 'run', ico: '▶️', label: 'Run' },
+    { id: 'results', ico: '📊', label: 'Results' },
+    { id: 'replay', ico: '🎞️', label: 'Replay' },
+  ];
+
   return (
     <div className="autoplayer">
+      {/* Desktop tab strip (hidden on phones — the bottom bar takes over). */}
       <div className="ap-tabs">
-        <button className={tab === 'run' ? 'on' : ''} onClick={() => setTab('run')}>
-          ▶ Run
-        </button>
-        <button className={tab === 'results' ? 'on' : ''} onClick={() => setTab('results')}>
-          📊 Results
-        </button>
-        <button className={tab === 'replay' ? 'on' : ''} onClick={() => setTab('replay')}>
-          🎞 Replay
-        </button>
-        <span className="ap-dim ap-datav">
+        {tabs.map((t) => (
+          <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => setTab(t.id)}>
+            {t.ico} {t.label}
+          </button>
+        ))}
+        <span className="ap-datav">
           {index?.data_version ? `snapshot ${index.data_version}` : ''}
         </span>
       </div>
 
-      {error && <p className="ap-warn">{error}</p>}
+      <div className="ap-page">
+        {error && <p className="ap-warn">{error}</p>}
 
-      {tab === 'run' && <RunTab index={index} />}
-      {tab === 'results' && <ResultsTab index={index} onReplay={(l) => { setLog(l); setTab('replay'); }} />}
-      {tab === 'replay' && (
-        <ReplayTab index={index} log={log} setLog={setLog} />
-      )}
+        {tab === 'run' && <RunTab index={index} />}
+        {tab === 'results' && (
+          <ResultsTab index={index} onReplay={(l) => { setLog(l); setTab('replay'); }} />
+        )}
+        {tab === 'replay' && <ReplayTab index={index} log={log} setLog={setLog} />}
+      </div>
+
+      {/* Mobile-only bottom nav — same shell as the List Builder / board pages. */}
+      <div className="m-tabs" role="tablist">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            role="tab"
+            aria-selected={tab === t.id}
+            className={tab === t.id ? 'on' : ''}
+            onClick={() => setTab(t.id)}
+          >
+            <span className="m-ico" aria-hidden>{t.ico}</span>
+            <span>{t.label}</span>
+          </button>
+        ))}
+        {index?.data_version && <span className="m-points">{index.data_version}</span>}
+      </div>
     </div>
   );
 }
@@ -78,6 +103,7 @@ function RunTab({ index }: { index: ResultsIndex | null }) {
     () => localStorage.getItem(REPO_KEY) ?? 'brandongreen00/40k-battle-simulator',
   );
   const [dispatch, setDispatch] = useState('');
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (armies.length && !a) setA(armies[0].name);
@@ -93,6 +119,13 @@ function RunTab({ index }: { index: ResultsIndex | null }) {
     return `python3 -m sim2.cli batch --a "${a}" --b "${b}" --games ${games} ` +
       `--battle-size ${size} --seed ${seed} --agent-a ${agentA} --agent-b ${agentB}`;
   }, [mode, a, b, games, size, seed, agentA, agentB, candidates, armies]);
+
+  function copyCommand() {
+    navigator.clipboard?.writeText(command).then(() => {
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    }).catch(() => undefined);
+  }
 
   async function runOnActions() {
     setDispatch('dispatching…');
@@ -130,108 +163,122 @@ function RunTab({ index }: { index: ResultsIndex | null }) {
   return (
     <div className="ap-panel">
       <h2>Configure a run</h2>
-      <p className="ap-dim">
+      <p className="ap-dim ap-lead">
         The engine is Python and runs outside this page — GitHub Pages serves static files only.
         Copy the command below, or dispatch it to GitHub Actions with a fine-grained token
         (kept in this browser, never committed).
       </p>
 
-      <div className="ap-grid">
-        <label>
-          Mode
-          <select value={mode} onChange={(e) => setMode(e.target.value as 'batch' | 'optimize')}>
-            <option value="batch">Batch — army vs army</option>
-            <option value="optimize">Optimizer — search lists vs a fixed opponent</option>
-          </select>
-        </label>
-        <label>
-          {mode === 'batch' ? 'Army A' : 'Faction seed army'}
-          <select value={a} onChange={(e) => setA(e.target.value)}>
-            {armies.map((x) => (
-              <option key={x.name} value={x.name}>
-                {x.name} — {x.faction} {x.points}pts [{x.disposition}]
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          {mode === 'batch' ? 'Army B' : 'Opponent list'}
-          <select value={b} onChange={(e) => setB(e.target.value)}>
-            {armies.map((x) => (
-              <option key={x.name} value={x.name}>
-                {x.name} — {x.faction} {x.points}pts [{x.disposition}]
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Battle size
-          <select value={size} onChange={(e) => setSize(Number(e.target.value))}>
-            <option value={500}>500 — Combat Patrol-class</option>
-            <option value={1000}>1000 — Incursion-class</option>
-            <option value={2000}>2000 — Strike Force-class</option>
-          </select>
-        </label>
-        <label>
-          Games {mode === 'optimize' ? 'per candidate' : ''}
-          <input type="number" min={1} max={500} value={games}
-                 onChange={(e) => setGames(Number(e.target.value))} />
-        </label>
-        <label>
-          Seed
-          <input type="number" value={seed} onChange={(e) => setSeed(Number(e.target.value))} />
-        </label>
-        {mode === 'batch' ? (
-          <>
-            <label>
-              Agent A
-              <select value={agentA} onChange={(e) => setAgentA(e.target.value)}>
-                <option value="heuristic">heuristic</option>
-                <option value="random">random</option>
-                <option value="search">search (MCTS scaffold)</option>
-              </select>
-            </label>
-            <label>
-              Agent B
-              <select value={agentB} onChange={(e) => setAgentB(e.target.value)}>
-                <option value="heuristic">heuristic</option>
-                <option value="random">random</option>
-                <option value="search">search (MCTS scaffold)</option>
-              </select>
-            </label>
-          </>
-        ) : (
+      <section className="ap-sec">
+        <h3>Matchup</h3>
+        <div className="ap-grid">
           <label>
-            Candidate lists
-            <input type="number" min={2} max={500} value={candidates}
-                   onChange={(e) => setCandidates(Number(e.target.value))} />
+            Mode
+            <select value={mode} onChange={(e) => setMode(e.target.value as 'batch' | 'optimize')}>
+              <option value="batch">Batch — army vs army</option>
+              <option value="optimize">Optimizer — search lists vs a fixed opponent</option>
+            </select>
           </label>
-        )}
-      </div>
+          <label>
+            {mode === 'batch' ? 'Army A' : 'Faction seed army'}
+            <select value={a} onChange={(e) => setA(e.target.value)}>
+              {armies.map((x) => (
+                <option key={x.name} value={x.name}>
+                  {x.name} — {x.faction} {x.points}pts [{x.disposition}]
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            {mode === 'batch' ? 'Army B' : 'Opponent list'}
+            <select value={b} onChange={(e) => setB(e.target.value)}>
+              {armies.map((x) => (
+                <option key={x.name} value={x.name}>
+                  {x.name} — {x.faction} {x.points}pts [{x.disposition}]
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Battle size
+            <select value={size} onChange={(e) => setSize(Number(e.target.value))}>
+              <option value={500}>500 — Combat Patrol-class</option>
+              <option value={1000}>1000 — Incursion-class</option>
+              <option value={2000}>2000 — Strike Force-class</option>
+            </select>
+          </label>
+          <label>
+            Games {mode === 'optimize' ? 'per candidate' : ''}
+            <input type="number" min={1} max={500} value={games}
+                   onChange={(e) => setGames(Number(e.target.value))} />
+          </label>
+          <label>
+            Seed
+            <input type="number" value={seed} onChange={(e) => setSeed(Number(e.target.value))} />
+          </label>
+          {mode === 'batch' ? (
+            <>
+              <label>
+                Agent A
+                <select value={agentA} onChange={(e) => setAgentA(e.target.value)}>
+                  <option value="heuristic">heuristic</option>
+                  <option value="random">random</option>
+                  <option value="search">search (MCTS scaffold)</option>
+                </select>
+              </label>
+              <label>
+                Agent B
+                <select value={agentB} onChange={(e) => setAgentB(e.target.value)}>
+                  <option value="heuristic">heuristic</option>
+                  <option value="random">random</option>
+                  <option value="search">search (MCTS scaffold)</option>
+                </select>
+              </label>
+            </>
+          ) : (
+            <label>
+              Candidate lists
+              <input type="number" min={2} max={500} value={candidates}
+                     onChange={(e) => setCandidates(Number(e.target.value))} />
+            </label>
+          )}
+        </div>
+      </section>
 
-      <h3>Run it locally</h3>
-      <pre className="ap-cmd">{command}</pre>
+      <section className="ap-sec">
+        <h3>Run it locally</h3>
+        <pre className="ap-cmd">{command}</pre>
+        <div className="ap-btnrow">
+          <button className="ap-ghost" onClick={copyCommand}>
+            {copied ? '✓ Copied' : '⧉ Copy command'}
+          </button>
+        </div>
+      </section>
 
-      <h3>Or run it on GitHub Actions</h3>
-      <div className="ap-grid">
-        <label>
-          Repository
-          <input value={repo} onChange={(e) => { setRepo(e.target.value); localStorage.setItem(REPO_KEY, e.target.value); }} />
-        </label>
-        <label>
-          Fine-grained token (Actions: write)
-          <input type="password" value={token} placeholder="github_pat_…"
-                 onChange={(e) => { setToken(e.target.value); localStorage.setItem(TOKEN_KEY, e.target.value); }} />
-        </label>
-      </div>
-      <button className="ap-primary" disabled={!token} onClick={runOnActions}>
-        Dispatch workflow
-      </button>
-      {dispatch && <p className="ap-dim">{dispatch}</p>}
-      <p className="ap-dim">
-        The token stays in this browser's local storage. Committing a token to the repository is
-        prohibited.
-      </p>
+      <section className="ap-sec">
+        <h3>Or run it on GitHub Actions</h3>
+        <div className="ap-grid">
+          <label>
+            Repository
+            <input value={repo} onChange={(e) => { setRepo(e.target.value); localStorage.setItem(REPO_KEY, e.target.value); }} />
+          </label>
+          <label>
+            Fine-grained token (Actions: write)
+            <input type="password" value={token} placeholder="github_pat_…"
+                   onChange={(e) => { setToken(e.target.value); localStorage.setItem(TOKEN_KEY, e.target.value); }} />
+          </label>
+        </div>
+        <div className="ap-btnrow">
+          <button className="ap-primary" disabled={!token} onClick={runOnActions}>
+            🚀 Dispatch workflow
+          </button>
+        </div>
+        {dispatch && <p className="ap-dim">{dispatch}</p>}
+        <p className="ap-dim">
+          The token stays in this browser's local storage. Committing a token to the repository is
+          prohibited.
+        </p>
+      </section>
     </div>
   );
 }
@@ -270,18 +317,21 @@ function ResultsTab({
       {warn && <p className="ap-warn">⚠ {warn}</p>}
 
       {cov && (
-        <div className="ap-cards">
-          <Card label="datasheets" value={cov.datasheets ?? 0} />
-          <Card label="effect records" value={cov.effects ?? 0}
-                sub={`${boundCount(cov)} bound to primitives`} />
-          <Card label="detachments" value={cov.detachments ?? 0} />
-          <Card label="layouts" value={cov.layouts ?? 0} />
-          <Card label="logged gaps" value={cov.gaps ?? 0} sub="never guessed" />
-        </div>
+        <section className="ap-sec">
+          <h3>Data snapshot</h3>
+          <div className="ap-cards">
+            <Card label="datasheets" value={cov.datasheets ?? 0} />
+            <Card label="effect records" value={cov.effects ?? 0}
+                  sub={`${boundCount(cov)} bound to primitives`} />
+            <Card label="detachments" value={cov.detachments ?? 0} />
+            <Card label="layouts" value={cov.layouts ?? 0} />
+            <Card label="logged gaps" value={cov.gaps ?? 0} sub="never guessed" />
+          </div>
+        </section>
       )}
 
       {batch ? (
-        <>
+        <section className="ap-sec">
           <h3>
             {batch.config.armies[0]} vs {batch.config.armies[1]}
             <span className="ap-dim">
@@ -299,47 +349,49 @@ function ResultsTab({
             <Card label="avg seconds/game" value={batch.totals.avg_duration_s} />
           </div>
 
-          <table className="ap-table">
-            <thead>
-              <tr>
-                <th>seed</th><th>VP</th><th>winner</th><th>rounds</th>
-                <th>layout</th><th>primaries</th><th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {batch.games.map((g) => (
-                <tr key={g.seed}>
-                  <td>{g.seed}</td>
-                  <td>{g.vp.join(' : ')}</td>
-                  <td className={g.winner === null ? '' : `p${g.winner}`}>
-                    {g.winner === null ? 'draw' : batch.config.armies[g.winner]}
-                  </td>
-                  <td>{g.rounds}</td>
-                  <td className="ap-dim">{g.layout}</td>
-                  <td className="ap-dim">{g.primaries.join(' / ')}</td>
-                  <td>
-                    {g.log && (
-                      <button
-                        className="ap-ghost"
-                        onClick={() =>
-                          fetchJson<BattleLog>(g.log!.replace(/^results\//, '')).then(onReplay)
-                        }
-                      >
-                        replay
-                      </button>
-                    )}
-                  </td>
+          <div className="ap-scroll">
+            <table className="ap-table">
+              <thead>
+                <tr>
+                  <th>seed</th><th>VP</th><th>winner</th><th>rounds</th>
+                  <th>layout</th><th>primaries</th><th></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </>
+              </thead>
+              <tbody>
+                {batch.games.map((g) => (
+                  <tr key={g.seed}>
+                    <td>{g.seed}</td>
+                    <td>{g.vp.join(' : ')}</td>
+                    <td className={g.winner === null ? '' : `p${g.winner}`}>
+                      {g.winner === null ? 'draw' : batch.config.armies[g.winner]}
+                    </td>
+                    <td>{g.rounds}</td>
+                    <td className="ap-dim">{g.layout}</td>
+                    <td className="ap-dim">{g.primaries.join(' / ')}</td>
+                    <td>
+                      {g.log && (
+                        <button
+                          className="ap-ghost"
+                          onClick={() =>
+                            fetchJson<BattleLog>(g.log!.replace(/^results\//, '')).then(onReplay)
+                          }
+                        >
+                          🎞 replay
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
       ) : (
         <p className="ap-dim">No batch artifact published yet.</p>
       )}
 
       {opt && (
-        <>
+        <section className="ap-sec">
           <h3>
             Optimizer leaderboard
             <span className="ap-dim">
@@ -347,29 +399,31 @@ function ResultsTab({
               {opt.pool_size} legal datasheets searched
             </span>
           </h3>
-          <table className="ap-table">
-            <thead>
-              <tr><th>#</th><th>list</th><th>pts</th><th>score</th><th>W</th><th>avg VP</th></tr>
-            </thead>
-            <tbody>
-              {opt.leaderboard.slice(0, 12).map((e, i) => (
-                <tr key={e.name}>
-                  <td>{i + 1}</td>
-                  <td>
-                    {e.name}
-                    <div className="ap-dim ap-units">
-                      {e.units.map((u) => `${u.models}× ${u.datasheet.split('.').pop()}`).join(', ')}
-                    </div>
-                  </td>
-                  <td>{e.points}</td>
-                  <td>{e.score}</td>
-                  <td>{e.wins}/{e.games}</td>
-                  <td>{e.avg_vp_for} : {e.avg_vp_against}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </>
+          <div className="ap-scroll">
+            <table className="ap-table">
+              <thead>
+                <tr><th>#</th><th>list</th><th>pts</th><th>score</th><th>W</th><th>avg VP</th></tr>
+              </thead>
+              <tbody>
+                {opt.leaderboard.slice(0, 12).map((e, i) => (
+                  <tr key={e.name}>
+                    <td>{i + 1}</td>
+                    <td>
+                      {e.name}
+                      <div className="ap-dim ap-units">
+                        {e.units.map((u) => `${u.models}× ${u.datasheet.split('.').pop()}`).join(', ')}
+                      </div>
+                    </td>
+                    <td>{e.points}</td>
+                    <td>{e.score}</td>
+                    <td>{e.wins}/{e.games}</td>
+                    <td>{e.avg_vp_for} : {e.avg_vp_against}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
       )}
     </div>
   );
@@ -415,38 +469,44 @@ function ReplayTab({
     <div className="ap-panel">
       <h2>Replay a battle</h2>
       {error && <p className="ap-warn">{error}</p>}
-      {logs.length ? (
-        <ul className="ap-loglist">
-          {logs.map((l) => (
-            <li key={l.path}>
-              <button
-                className="ap-ghost"
-                onClick={() =>
-                  fetchJson<BattleLog>(l.path.replace(/^results\//, ''))
-                    .then(setLog)
-                    .catch((e) => setError(String(e)))
-                }
-              >
-                {l.label ?? l.path}
-              </button>
-              <span className="ap-dim"> {l.generated ?? ''}</span>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="ap-dim">No published battle logs yet.</p>
-      )}
-      <label className="ap-file">
-        Or open a battle log from disk
-        <input
-          type="file"
-          accept="application/json"
-          onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])}
-        />
-      </label>
-      <p className="ap-dim">
-        Any log written by the CLI (<code>results/logs/battle_&lt;seed&gt;.json</code>) replays here.
-      </p>
+
+      <section className="ap-sec">
+        <h3>Published battle logs</h3>
+        {logs.length ? (
+          <ul className="ap-loglist">
+            {logs.map((l) => (
+              <li key={l.path}>
+                <button
+                  className="ap-logrow"
+                  onClick={() =>
+                    fetchJson<BattleLog>(l.path.replace(/^results\//, ''))
+                      .then(setLog)
+                      .catch((e) => setError(String(e)))
+                  }
+                >
+                  <span className="ap-logname">🎞 {l.label ?? l.path}</span>
+                  <span className="ap-dim">{l.generated ?? ''}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="ap-dim">No published battle logs yet.</p>
+        )}
+      </section>
+
+      <section className="ap-sec">
+        <h3>Open a log from disk</h3>
+        <label className="ap-file">
+          Any log written by the CLI (<code>results/logs/battle_&lt;seed&gt;.json</code>) replays
+          here.
+          <input
+            type="file"
+            accept="application/json"
+            onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])}
+          />
+        </label>
+      </section>
     </div>
   );
 }
