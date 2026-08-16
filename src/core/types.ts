@@ -523,9 +523,11 @@ export interface CpMissionState {
 // ── Pre-battle setup / deployment ────────────────────────────────────────────
 export type Stage = 'setup' | 'battle' | 'done';
 
-/** Steps of the pre-battle sequence (mission pack order). 'scouts' = the pre-battle Scout moves
- *  window (after the first-turn roll, before the battle begins). */
-export type DeployStep = 'roll_roles' | 'deploy' | 'roll_first_turn' | 'scouts' | 'ready';
+/** Steps of the pre-battle sequence (mission pack order). 'formations' = Declare Battle
+ *  Formations — BEFORE deployment, each side declares which units start embarked within
+ *  transports (18.01) and which start in Strategic Reserves (20.01). 'scouts' = the pre-battle
+ *  Scout moves window (after the first-turn roll, before the battle begins). */
+export type DeployStep = 'roll_roles' | 'formations' | 'deploy' | 'roll_first_turn' | 'scouts' | 'ready';
 
 export interface RollOff {
   player: number;
@@ -596,6 +598,13 @@ export interface SetupState {
   /** Post-deployment enhancement redeploys (Liber Heresius etc.), Warrant-of-Trade mould:
    *  present once used/declined; `remaining` counts down as units are pulled back. */
   redeploy?: Partial<Record<Side, { enhancementId: string; label: string; remaining: number }>>;
+  /** Sides that have finished the Declare Battle Formations step. When both are done the step
+   *  advances to 'deploy' (Defender first). */
+  formationsDone?: Partial<Record<Side, boolean>>;
+  /** DEDICATED TRANSPORT roster entries destroyed at the end of Declare Battle Formations for
+   *  having no unit embarked (18.01). They never enter play and count as handled for deployment;
+   *  no destruction triggers fire. */
+  destroyedEntries?: { side: Side; entryKey: string; name: string }[];
   /** Roll-off that set the first turn (for the dice display). */
   firstTurnRoll?: RollOff;
   firstTurn?: Side;

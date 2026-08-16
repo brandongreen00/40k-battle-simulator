@@ -20,7 +20,7 @@ import { checkUnitDeployment, deepStrikeArrivalLegal, deployAbilityFromKeywords,
 import { checkCoherency } from './coherency';
 import { anyOverlap, occupiedBases, unitOverlaps } from './collision';
 import { blockedByDense, unitDenseViolation } from './terrainmove';
-import { canEmbark, disembarkMode, isAircraft, splitRideCounts, splitRuleSelects, transportSplitRule } from './transport';
+import { canDeclareEmbark, canEmbark, disembarkMode, isAircraft, isDedicatedTransport, splitRideCounts, splitRuleSelects, transportCapacity, transportSplitRule } from './transport';
 import {
   PREBATTLE_GRANTS, REDEPLOY_RULES, allowsRound1DeepStrike, blocksOverwatch, enhancementDeployGrant,
   enhancementWoundBonus, grantSelects, grantedDeployAbility, ordersEchoTakeCover, redeployRuleSelects,
@@ -223,6 +223,9 @@ export type Intent =
       modelCount: number;
       wounds: number;
       transportUnitId: string;
+      /** The transport's datasheet — required when the transport is still an undeployed roster
+       *  entry (Declare Battle Formations happens before deployment). */
+      transportDsId?: string;
       rideCount: number;
       rideWargear?: Record<string, number>;
       totalWargear?: Record<string, number>;
@@ -230,6 +233,28 @@ export type Intent =
   /** Undo a declared split: removes BOTH half-units (wherever they are) and the split record, so
    *  the original entry re-enters the deployment flow. Setup only. */
   | { type: 'ClearSplit'; entryKey: string }
+  /** Declare Battle Formations (18.01): a unit will start the battle embarked within a friendly
+   *  transport, identified by its roster ENTRY KEY (`transportKey`) — the transport need not be
+   *  deployed yet (this step happens before deployment); when it deploys, the declared riders are
+   *  already inside. `transportDsId` carries the transport's datasheet for the capacity check. */
+  | {
+      type: 'DeclareEmbark';
+      side: Side;
+      unitId: string;
+      transportKey: string;
+      transportDsId: string;
+      datasheetId: string;
+      baseShape: BaseShape;
+      modelCount: number;
+      wounds: number;
+      wargear?: Record<string, number>;
+      enhancementId?: string;
+    }
+  /** Finish the Declare Battle Formations step for one side. `destroyEntries` lists the side's
+   *  DEDICATED TRANSPORT roster entries with no unit embarked — each is destroyed per 18.01
+   *  (validated: dedicated, unplaced, riderless). When both sides have finished, the step
+   *  advances to 'deploy' (Defender first). */
+  | { type: 'FinishFormations'; side: Side; destroyEntries?: { entryKey: string; datasheetId: string }[] }
   /** COMBAT SQUAD (Declare Battle Formations): split a 10-model unit into two 5-model units.
    *  The wargear partitions as evenly as possible; both halves deploy like any other unit.
    *  Does not consume the side's deployment slot (nothing is placed). */
@@ -909,13 +934,17 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         layout: layoutForAttacker(state.layout, attacker),
         setup: {
           ...(state.setup ?? { step: 'roll_roles' }),
-          step: 'deploy',
+          step: 'formations', // Declare Battle Formations (transports & Reserves) precedes deployment
           roleRoll: ro,
           attacker,
           defender,
           toDeploy: defender, // the Defender deploys first (mission sequence step 8)
         },
-        log: [...state.log, `Roll-off: player ${ro.player}, ai ${ro.ai} → ${attacker} is Attacker; ${defender} deploys first`],
+        log: [
+          ...state.log,
+          `Roll-off: player ${ro.player}, ai ${ro.ai} → ${attacker} is Attacker; ${defender} deploys first`,
+          '— Declare Battle Formations: declare which units start embarked in transports and which start in Strategic Reserves —',
+        ],
       };
       const dispositions = state.setup?.dispositions as Record<Side, DispositionId> | undefined;
       // Combat Patrol battles play the CP mission cards (a later stage), not the 11e CA deck.
@@ -932,8 +961,12 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
         ...state,
         stage: 'setup',
         layout: layoutForAttacker(state.layout, attacker),
-        setup: { ...(state.setup ?? { step: 'roll_roles' }), step: 'deploy', attacker, defender, toDeploy: defender },
-        log: [...state.log, `${attacker} is Attacker; ${defender} deploys first`],
+        setup: { ...(state.setup ?? { step: 'roll_roles' }), step: 'formations', attacker, defender, toDeploy: defender },
+        log: [
+          ...state.log,
+          `${attacker} is Attacker; ${defender} deploys first`,
+          '— Declare Battle Formations: declare which units start embarked in transports and which start in Strategic Reserves —',
+        ],
       };
       const dispositions = state.setup?.dispositions as Record<Side, DispositionId> | undefined;
       if (dispositions && next.layout.terrainAreas && state.battleType !== 'combat_patrol') {
@@ -1154,8 +1187,8 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
     }
 
     case 'DeclareFormation': {
-      if (state.stage !== 'setup' || state.setup?.step !== 'deploy') {
-        return { ...state, log: [...state.log, 'Formation rejected: declare Leader pairings during deployment'] };
+      if (state.stage !== 'setup' || (state.setup?.step !== 'formations' && state.setup?.step !== 'deploy')) {
+        return { ...state, log: [...state.log, 'Formation rejected: declare Leader pairings before deployment'] };
       }
       if (isUnitPlaced(state, intent.leaderKey) || isUnitPlaced(state, intent.bodyguardKey)) {
         return { ...state, log: [...state.log, 'Formation rejected: that unit is already deployed'] };
@@ -1204,21 +1237,33 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
 
     case 'DeclareSplit': {
       const reject = (why: string): GameState => ({ ...state, log: [...state.log, `Split rejected: ${why}`] });
-      if (state.stage !== 'setup' || state.setup?.step !== 'deploy') return reject('declare splits during deployment');
+      if (state.stage !== 'setup' || (state.setup?.step !== 'formations' && state.setup?.step !== 'deploy')) {
+        return reject('declare splits at Declare Battle Formations');
+      }
       if (!ctx) return reject('no datasheet context supplied');
       if (state.setup.splits?.some((s) => s.entryKey === intent.entryKey)) return reject('that unit is already split');
       if (isUnitPlaced(state, intent.entryKey)) return reject('that unit is already deployed');
       if ((state.setup.formations ?? []).some((f) => f.leaderKey === intent.entryKey || f.bodyguardKey === intent.entryKey)) {
         return reject('that unit is in a declared Leader pairing');
       }
+      // The transport is either a materialized unit (deploy-step flow) or a still-undeployed
+      // roster entry (Declare Battle Formations — the riders wait embarked for it to deploy).
       const transport = state.units.find((u) => u.id === intent.transportUnitId);
-      if (!transport || transport.owner !== intent.side || transport.inReserves || !transport.models.some((m) => m.alive)) {
-        return reject('the transport must be deployed on the battlefield first');
+      if (transport && (transport.owner !== intent.side || !transport.models.some((m) => m.alive))) {
+        return reject('not a friendly transport');
       }
-      const tDs = ctx.datasheets.get(transport.datasheetId);
+      if (!transport) {
+        if (!intent.transportUnitId.startsWith(`${intent.side}:`) || !intent.transportDsId) {
+          return reject('the transport must be deployed on the battlefield first');
+        }
+        if ((state.setup.destroyedEntries ?? []).some((d) => d.entryKey === intent.transportUnitId)) {
+          return reject('that transport was destroyed at Declare Battle Formations');
+        }
+      }
+      const tDs = ctx.datasheets.get(transport?.datasheetId ?? intent.transportDsId!);
       const uDs = ctx.datasheets.get(intent.datasheetId);
       const rule = transportSplitRule(tDs);
-      if (!tDs || !rule) return reject(`${tDs?.name ?? transport.id} has no Declare Battle Formations split rule`);
+      if (!tDs || !rule) return reject(`${tDs?.name ?? intent.transportUnitId} has no Declare Battle Formations split rule`);
       if (!uDs || !splitRuleSelects(rule, uDs)) {
         return reject(`${tDs.name} cannot select ${uDs?.name ?? intent.datasheetId} (rule: ${rule.selectTokens.join(' ').toUpperCase()})`);
       }
@@ -1258,23 +1303,29 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       const rider: UnitInstance = {
         id: rideId, owner: intent.side, datasheetId: intent.datasheetId,
         models: rideModels, startingModels: rideModels.length, status: {},
-        inReserves: true, embarkedIn: transport.id,
+        inReserves: true, embarkedIn: intent.transportUnitId,
         ...(Object.keys(rideWargear).length ? { wargearCounts: rideWargear } : {}),
       };
-      const check = canEmbark(state, rider, transport, ctx);
+      const check = canDeclareEmbark(state, [rider], intent.transportUnitId, tDs, ctx);
       if (!check.ok) return reject(check.reason!);
       const footCount = intent.modelCount - intent.rideCount;
       const split = {
         side: intent.side,
         entryKey: intent.entryKey,
         dsId: intent.datasheetId,
-        transportUnitId: transport.id,
+        transportUnitId: intent.transportUnitId,
         groups: [
           { count: intent.rideCount, ...(Object.keys(rideWargear).length ? { wargear: rideWargear } : {}) },
           { count: footCount, ...(Object.keys(footWargear).length ? { wargear: footWargear } : {}) },
         ] as [SplitGroup, SplitGroup],
       };
-      const setup = { ...state.setup, splits: [...(state.setup.splits ?? []), split], toDeploy: otherSide(intent.side) };
+      // During the deploy step the split's embarked half consumes the side's alternation slot;
+      // at Declare Battle Formations nothing has deployed yet, so toDeploy is untouched.
+      const setup = {
+        ...state.setup,
+        splits: [...(state.setup.splits ?? []), split],
+        ...(state.setup.step === 'deploy' ? { toDeploy: otherSide(intent.side) } : {}),
+      };
       return {
         ...state,
         units: [...state.units, rider],
@@ -1290,7 +1341,9 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
 
     case 'DeclareCombatSquad': {
       const reject = (why: string): GameState => ({ ...state, log: [...state.log, `Combat Squad rejected: ${why}`] });
-      if (state.stage !== 'setup' || state.setup?.step !== 'deploy') return reject('declare Combat Squads during deployment');
+      if (state.stage !== 'setup' || (state.setup?.step !== 'formations' && state.setup?.step !== 'deploy')) {
+        return reject('declare Combat Squads at Declare Battle Formations');
+      }
       if (!ctx) return reject('no datasheet context supplied');
       const ds = ctx.datasheets.get(intent.datasheetId);
       if (!ds || !hasAbilityStarting(ds, 'combat squad')) return reject(`${ds?.name ?? intent.datasheetId} has no COMBAT SQUAD ability`);
@@ -1359,7 +1412,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
     }
 
     case 'ClearSplit': {
-      if (state.stage !== 'setup' || state.setup?.step !== 'deploy') {
+      if (state.stage !== 'setup' || (state.setup?.step !== 'formations' && state.setup?.step !== 'deploy')) {
         return { ...state, log: [...state.log, 'Split kept: the battle is under way'] };
       }
       const split = state.setup.splits?.find((s) => s.entryKey === intent.entryKey);
@@ -1382,25 +1435,133 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
 
     case 'UndeployUnit': {
       const reject = (why: string): GameState => ({ ...state, log: [...state.log, `Undo rejected: ${why}`] });
-      if (state.stage !== 'setup' || state.setup?.step !== 'deploy') return reject('only during deployment');
+      const step = state.setup?.step;
+      if (state.stage !== 'setup' || (step !== 'deploy' && step !== 'formations')) return reject('only during deployment');
       const unit = state.units.find((u) => u.id === intent.unitId);
       if (!unit) return reject('unit not found');
-      if (!unit.embarkedIn) return reject('only a start-embarked deployment can be undone here');
+      // During the Declare Battle Formations step a Reserves declaration may be undone too;
+      // during deployment only start-embarked placements are undoable (a Reserves placement
+      // already consumed the side's alternation slot).
+      if (!unit.embarkedIn && !(step === 'formations' && unit.inReserves)) {
+        return reject('only a start-embarked deployment can be undone here');
+      }
       // The RIDING half of a split (#a) must stay embarked in its transport — undo the whole
       // split instead. The on-foot half (#b) that chose to embark elsewhere may freely undo.
-      if (state.setup.splits?.some((s) => intent.unitId === `${s.entryKey}#a`)) {
+      if (state.setup?.splits?.some((s) => intent.unitId === `${s.entryKey}#a`)) {
         return reject('that unit is the riding half of a declared split — clear the split instead');
+      }
+      // A transport with declared riders keeps them: undo the riders first.
+      if (state.units.some((u) => u.embarkedIn === unit.id && u.models.some((m) => m.alive))) {
+        return reject('units are declared to start embarked within it — undo those first');
       }
       return {
         ...state,
         units: state.units.filter((u) => u.id !== unit.id),
-        log: [...state.log, `${ctx?.datasheets.get(unit.datasheetId)?.name ?? unit.id} disembarks back into the deployment pool`],
+        log: [...state.log, `${ctx?.datasheets.get(unit.datasheetId)?.name ?? unit.id} returns to the deployment pool`],
+      };
+    }
+
+    case 'DeclareEmbark': {
+      const reject = (why: string): GameState => ({ ...state, log: [...state.log, `Embark declaration rejected: ${why}`] });
+      if (state.stage !== 'setup') return reject('declare embarked units during setup');
+      const step = state.setup?.step;
+      if (state.mode === 'match' && step !== 'formations' && step !== 'deploy') {
+        return reject('declare embarked units at Declare Battle Formations (18.01)');
+      }
+      if (!ctx) return reject('no datasheet context supplied');
+      const tDs = ctx.datasheets.get(intent.transportDsId);
+      if (!tDs || !transportCapacity(tDs)) return reject(`${tDs?.name ?? intent.transportDsId} is not a transport`);
+      if (!intent.transportKey.startsWith(`${intent.side}:`)) return reject('not a friendly transport');
+      if ((state.setup?.destroyedEntries ?? []).some((d) => d.entryKey === intent.transportKey)) {
+        return reject(`${tDs.name} was destroyed at Declare Battle Formations`);
+      }
+      const tUnit = state.units.find((u) => u.id === intent.transportKey);
+      if (tUnit && (tUnit.owner !== intent.side || !tUnit.models.some((m) => m.alive))) {
+        return reject('not a friendly transport');
+      }
+      if (isUnitPlaced(state, intent.unitId)) return reject('that unit is already placed');
+      if (isAircraft(ctx.datasheets.get(intent.datasheetId))) {
+        return reject('AIRCRAFT must start in Strategic Reserves (23.01)');
+      }
+      const cpRound = state.battleType === 'combat_patrol' ? ctx.datasheets.get(intent.datasheetId)?.cpReserveRound : undefined;
+      if (state.mode === 'match' && cpRound) {
+        return reject(`this unit must start in Strategic Reserves (arrives battle round ${cpRound})`);
+      }
+      const carry = absorbCpEnhancementCarry(state, intent.side, intent.datasheetId, intent.enhancementId);
+      const models = layoutModels(
+        {
+          ...intent,
+          wounds:
+            intent.wounds +
+            enhancementWoundBonus(carry.enhancementId, intent.modelCount) +
+            abilityWoundBonus(ctx.datasheets.get(intent.datasheetId)),
+          anchor: { x: 0, y: 0 },
+        },
+        state.layout,
+      );
+      const unit: UnitInstance = {
+        id: intent.unitId, owner: intent.side, datasheetId: intent.datasheetId,
+        models, startingModels: models.length, status: {},
+        inReserves: true, embarkedIn: intent.transportKey,
+        ...(intent.wargear ? { wargearCounts: intent.wargear } : {}),
+        ...(carry.enhancementId ? { enhancementId: carry.enhancementId } : cpEnhancementFor(state, intent.side, intent.datasheetId) ? { enhancementId: cpEnhancementFor(state, intent.side, intent.datasheetId)! } : {}),
+      };
+      const check = canDeclareEmbark(state, [unit], intent.transportKey, tDs, ctx);
+      if (!check.ok) return reject(check.reason!);
+      const uName = ctx.datasheets.get(intent.datasheetId)?.name ?? intent.unitId;
+      return {
+        ...carry.state,
+        units: [...carry.state.units, unit],
+        log: [...carry.state.log, `${intent.side} declares ${uName} will start the battle embarked within ${tDs.name}`],
+      };
+    }
+
+    case 'FinishFormations': {
+      const reject = (why: string): GameState => ({ ...state, log: [...state.log, `Finish rejected: ${why}`] });
+      if (state.stage !== 'setup' || state.setup?.step !== 'formations') {
+        return reject('not in the Declare Battle Formations step');
+      }
+      if (state.setup.formationsDone?.[intent.side]) return reject(`${intent.side} already finished declaring`);
+      const log = [...state.log];
+      // 18.01: each DEDICATED TRANSPORT without an embarked unit at the end of this step is
+      // destroyed (no destruction triggers). The intent carries the side's riderless entries —
+      // the reducer has no roster — but each is re-validated here.
+      const destroyed = [...(state.setup.destroyedEntries ?? [])];
+      for (const d of intent.destroyEntries ?? []) {
+        const ds = ctx?.datasheets.get(d.datasheetId);
+        if (!ds || !isDedicatedTransport(ds)) continue;
+        if (!d.entryKey.startsWith(`${intent.side}:`)) continue;
+        if (state.units.some((u) => u.id === d.entryKey)) continue; // already materialized (reserves)
+        if (state.units.some((u) => u.embarkedIn === d.entryKey && u.models.some((m) => m.alive))) continue;
+        if (destroyed.some((x) => x.entryKey === d.entryKey)) continue;
+        destroyed.push({ side: intent.side, entryKey: d.entryKey, name: ds.name });
+        log.push(`${intent.side}'s ${ds.name} is destroyed — no unit embarked within it at the end of Declare Battle Formations (18.01)`);
+      }
+      const done = { ...(state.setup.formationsDone ?? {}), [intent.side]: true };
+      const bothDone = !!done.player && !!done.ai;
+      const defender = state.setup.defender ?? otherSide(state.setup.attacker ?? 'player');
+      log.push(
+        bothDone
+          ? `— Declare Battle Formations complete — deployment begins, ${defender} first —`
+          : `${intent.side} finishes declaring battle formations`,
+      );
+      return {
+        ...state,
+        setup: {
+          ...state.setup,
+          formationsDone: done,
+          ...(destroyed.length ? { destroyedEntries: destroyed } : {}),
+          ...(bothDone ? { step: 'deploy' as const, toDeploy: defender } : {}),
+        },
+        log,
       };
     }
 
     case 'DeclareEnhancementGrant': {
       const reject = (why: string): GameState => ({ ...state, log: [...state.log, `Enhancement grant rejected: ${why}`] });
-      if (state.stage !== 'setup' || state.setup?.step !== 'deploy') return reject('declare during deployment');
+      if (state.stage !== 'setup' || (state.setup?.step !== 'formations' && state.setup?.step !== 'deploy')) {
+        return reject('declare at Declare Battle Formations');
+      }
       const rule = PREBATTLE_GRANTS[intent.enhancementId];
       if (!rule) return reject('that enhancement has no Declare Battle Formations grant');
       if ((state.setup.grants ?? []).some((g) => g.side === intent.side && g.enhancementId === intent.enhancementId)) {
