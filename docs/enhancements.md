@@ -110,12 +110,43 @@ datasheet abilities have no engine binding).
 
 ## Steel Hammer
 
+**KEYWORDS rule (11e):** *"In the Muster Armies step, you can select one or more ASTRA
+MILITARUM TITANIC units from your army to gain the CHARACTER keyword"* — so the selected tanks
+can be given Enhancements and one can be the Warlord. Validation treats taking an enhancement
+on an AM TITANIC unit in a Steel Hammer army as the opt-in; the in-game CHARACTER interactions
+(Assassination scoring against the tank, Epic Challenge, Precision) are NOT reflected — the
+keyword lives on the shared datasheet (known nit).
+
 | Enhancement | Status | Notes |
 |---|---|---|
 | Assault Hatches | ✅ | Units disembarking after the bearer's Normal move may still charge. |
 | Battalion Commander | 🟡 | The bearer gains OFFICER/Voice of Command and may order AM TITANIC + SQUADRON units (human UI; the AI's target filter still prefers REGIMENT). |
 | Engine Speaker | 📖 | Rides on Omnissiah's Blessing — that ability itself isn't modelled. |
 | Titan Killer | 📖 | Damage-roll re-roll — the combat pipeline has no damage re-roll seam yet. |
+
+## Abhuman Auxiliaries — Upgrades (11e-only detachment)
+
+Both cards are **Upgrade**-tagged. Printed core rule: Upgrades may be given to non-CHARACTER
+units, up to **three copies** of the same Upgrade per army, and only the FIRST copy counts
+against the army's enhancement budget (each copy still costs its points). Records live in
+`tools/ingest/points11e.json` (`addEnhancements`) so a re-ingest reproduces them; bearer
+scoping is enforced via the curated `bearerKeywords` field.
+
+The detachment rule, **Absolutist Principles**, is bound: Bullgryn/Ogryn Squads and Ratlings
+count as ABHUMAN, and COMMISSAR officers may order them — restricted to **Take Aim!** (the one
+Order the printed rule names) at the decision sites (GamePanel + AI).
+
+| Upgrade | Bearer | Status | Notes |
+|---|---|---|---|
+| Exemplar of Duty (10 pts) | COMMISSAR | 🟡 | The **LEADER: OGRYN SQUAD, BULLGRYN SQUAD** grant is bound (canAttach + Declare Battle Formations + the List Builder's Attach-to). FNP 4+ binds only while the bearer fights alone (an attached Commissar's FNP would over-buff the merged squad — same rule as Blackweave Shroud). |
+| Sharp eyes, Light fingers (10 pts) | RATLINGS | 📖 | Detection-range rider on the unit's own shooting — the Hidden detection seam is per-observer, not per-shooter-until-shot. |
+
+## Designation Force — Upgrades (11e-only detachment)
+
+| Upgrade | Bearer | Status | Notes |
+|---|---|---|---|
+| Long-Range Scout (10 pts) | SCOUT SENTINEL | 📖 | Infiltrators grant — the enhancement deploy-grant seam covers Deep Strike only (no owned list fields Scout Sentinels). |
+| Recon Star (10 pts) | AM INFANTRY PLATOON | 📖 | Round-1 ingress move — no seam. `bearerKeywords` uses REGIMENT as the 10e-data stand-in for the 11e PLATOON keyword. |
 
 ## Armoured Infantry
 

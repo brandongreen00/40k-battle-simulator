@@ -1,0 +1,130 @@
+{
+  "name": "Comp III",
+  "faction": "AM",
+  "detachment": "Abhuman Auxiliaries and Steel Hammer",
+  "points": 2000,
+  "units": [
+    {
+      "datasheetId": "000000716",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Plasma pistol": 1,
+        "Power weapon": 1
+      },
+      "enhancementId": "enh11:abhuman_auxiliaries:exemplar_of_duty"
+    },
+    {
+      "datasheetId": "000000723",
+      "modelCount": 6,
+      "wargearCounts": {
+        "Brute Shield": 6,
+        "Bullgryn maul": 6,
+        "Close combat weapon": 6
+      }
+    },
+    {
+      "datasheetId": "000000716",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Plasma pistol": 1,
+        "Power weapon": 1
+      },
+      "enhancementId": "enh11:abhuman_auxiliaries:exemplar_of_duty"
+    },
+    {
+      "datasheetId": "000000723",
+      "modelCount": 6,
+      "wargearCounts": {
+        "Brute Shield": 6,
+        "Bullgryn maul": 6,
+        "Close combat weapon": 6
+      }
+    },
+    {
+      "datasheetId": "000000716",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Plasma pistol": 1,
+        "Power weapon": 1
+      },
+      "enhancementId": "enh11:abhuman_auxiliaries:exemplar_of_duty"
+    },
+    {
+      "datasheetId": "000000723",
+      "modelCount": 6,
+      "wargearCounts": {
+        "Brute Shield": 6,
+        "Bullgryn maul": 6,
+        "Close combat weapon": 6
+      }
+    },
+    {
+      "datasheetId": "000000704",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Armoured tracks": 1,
+        "Lascannon": 4,
+        "Quake cannon": 1,
+        "Twin heavy bolter": 1,
+        "Twin heavy flamer": 4
+      },
+      "enhancementId": "000010787003"
+    },
+    {
+      "datasheetId": "000000709",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Armoured tracks": 1,
+        "Lascannon": 4,
+        "Stormsword siege cannon": 1,
+        "Twin heavy bolter": 1,
+        "Twin heavy flamer": 4
+      },
+      "enhancementId": "000010787002"
+    },
+    {
+      "datasheetId": "000001396",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Enginseer axe": 1,
+        "Mechanicus pistol": 1,
+        "Servo-arm": 1
+      },
+      "enhancementId": "000010787004"
+    },
+    {
+      "datasheetId": "000001396",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Enginseer axe": 1,
+        "Mechanicus pistol": 1,
+        "Servo-arm": 1
+      }
+    },
+    {
+      "datasheetId": "000000694",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Armoured tracks": 1,
+        "Heavy flamer": 1,
+        "Hunter-killer missile": 1,
+        "Inferno cannon": 1
+      }
+    },
+    {
+      "datasheetId": "000000694",
+      "modelCount": 1,
+      "wargearCounts": {
+        "Armoured tracks": 1,
+        "Heavy flamer": 1,
+        "Hunter-killer missile": 1,
+        "Inferno cannon": 1
+      }
+    }
+  ],
+  "recommended": {
+    "disposition": "purge_the_foe",
+    "profile": "attrition"
+  },
+  "note": "Imported from the 40k-app text export comp_iii.txt via pnpm import:roster."
+}
