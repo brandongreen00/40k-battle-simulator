@@ -13,7 +13,7 @@
    "BATTLEFIELD DOMINANCE"
   ],
   "areas": 16,
-  "features": 26,
+  "features": 32,
   "objectives": 5
  },
  {
@@ -30,7 +30,7 @@
    "BATTLEFIELD DOMINANCE"
   ],
   "areas": 16,
-  "features": 28,
+  "features": 31,
   "objectives": 5
  },
  {
@@ -47,7 +47,7 @@
    "BATTLEFIELD DOMINANCE"
   ],
   "areas": 16,
-  "features": 26,
+  "features": 31,
   "objectives": 5
  },
  {
@@ -64,7 +64,7 @@
    "UNSTOPPABLE FORCE"
   ],
   "areas": 16,
-  "features": 27,
+  "features": 31,
   "objectives": 6
  },
  {
@@ -81,7 +81,7 @@
    "UNSTOPPABLE FORCE"
   ],
   "areas": 16,
-  "features": 27,
+  "features": 30,
   "objectives": 6
  },
  {
@@ -98,7 +98,7 @@
    "UNSTOPPABLE FORCE"
   ],
   "areas": 16,
-  "features": 27,
+  "features": 31,
   "objectives": 6
  },
  {
@@ -115,7 +115,7 @@
    "DEATH TRAP"
   ],
   "areas": 16,
-  "features": 26,
+  "features": 28,
   "objectives": 5
  },
  {
@@ -132,7 +132,7 @@
    "DEATH TRAP"
   ],
   "areas": 16,
-  "features": 28,
+  "features": 32,
   "objectives": 5
  },
  {
@@ -149,7 +149,7 @@
    "DEATH TRAP"
   ],
   "areas": 16,
-  "features": 28,
+  "features": 30,
   "objectives": 5
  },
  {
@@ -166,7 +166,7 @@
    "RECONNAISSANCE SWEEP"
   ],
   "areas": 16,
-  "features": 30,
+  "features": 31,
   "objectives": 5
  },
  {
@@ -183,7 +183,7 @@
    "RECONNAISSANCE SWEEP"
   ],
   "areas": 16,
-  "features": 26,
+  "features": 31,
   "objectives": 5
  },
  {
@@ -200,7 +200,7 @@
    "RECONNAISSANCE SWEEP"
   ],
   "areas": 16,
-  "features": 28,
+  "features": 30,
   "objectives": 5
  },
  {
@@ -217,7 +217,7 @@
    "SECURE ASSET"
   ],
   "areas": 16,
-  "features": 26,
+  "features": 29,
   "objectives": 6
  },
  {
@@ -234,7 +234,7 @@
    "SECURE ASSET"
   ],
   "areas": 16,
-  "features": 29,
+  "features": 30,
   "objectives": 6
  },
  {
@@ -251,7 +251,7 @@
    "SECURE ASSET"
   ],
   "areas": 16,
-  "features": 27,
+  "features": 30,
   "objectives": 6
  },
  {
@@ -268,7 +268,7 @@
    "MEATGRINDER"
   ],
   "areas": 16,
-  "features": 29,
+  "features": 30,
   "objectives": 6
  },
  {
@@ -285,7 +285,7 @@
    "MEATGRINDER"
   ],
   "areas": 16,
-  "features": 27,
+  "features": 33,
   "objectives": 6
  },
  {
@@ -302,7 +302,7 @@
    "MEATGRINDER"
   ],
   "areas": 16,
-  "features": 27,
+  "features": 32,
   "objectives": 6
  },
  {
@@ -319,7 +319,7 @@
    "DELAYING ACTION"
   ],
   "areas": 16,
-  "features": 27,
+  "features": 30,
   "objectives": 6
  },
  {
@@ -336,7 +336,7 @@
    "DELAYING ACTION"
   ],
   "areas": 16,
-  "features": 28,
+  "features": 31,
   "objectives": 6
  },
  {
@@ -353,7 +353,7 @@
    "DELAYING ACTION"
   ],
   "areas": 16,
-  "features": 27,
+  "features": 30,
   "objectives": 6
  },
  {
@@ -370,7 +370,7 @@
    "TRIANGULATION"
   ],
   "areas": 16,
-  "features": 26,
+  "features": 32,
   "objectives": 6
  },
  {
@@ -404,7 +404,7 @@
    "TRIANGULATION"
   ],
   "areas": 16,
-  "features": 27,
+  "features": 32,
   "objectives": 6
  },
  {
@@ -421,7 +421,7 @@
    "VITAL LINK"
   ],
   "areas": 16,
-  "features": 28,
+  "features": 33,
   "objectives": 6
  },
  {
@@ -438,7 +438,7 @@
    "VITAL LINK"
   ],
   "areas": 16,
-  "features": 27,
+  "features": 29,
   "objectives": 6
  },
  {
@@ -455,7 +455,7 @@
    "VITAL LINK"
   ],
   "areas": 16,
-  "features": 28,
+  "features": 31,
   "objectives": 6
  },
  {
@@ -472,7 +472,7 @@
    "OUTMANOEUVRE"
   ],
   "areas": 16,
-  "features": 27,
+  "features": 31,
   "objectives": 5
  },
  {
@@ -489,7 +489,7 @@
    "OUTMANOEUVRE"
   ],
   "areas": 16,
-  "features": 26,
+  "features": 31,
   "objectives": 5
  },
  {
@@ -506,7 +506,7 @@
    "OUTMANOEUVRE"
   ],
   "areas": 16,
-  "features": 26,
+  "features": 30,
   "objectives": 5
  },
  {
@@ -523,7 +523,7 @@
    "SURVEIL THE FOE"
   ],
   "areas": 16,
-  "features": 27,
+  "features": 29,
   "objectives": 6
  },
  {
@@ -540,7 +540,7 @@
    "SURVEIL THE FOE"
   ],
   "areas": 16,
-  "features": 26,
+  "features": 31,
   "objectives": 6
  },
  {
@@ -557,7 +557,7 @@
    "SURVEIL THE FOE"
   ],
   "areas": 16,
-  "features": 26,
+  "features": 31,
   "objectives": 6
  },
  {
@@ -574,7 +574,7 @@
    "EXTRACT RELIC"
   ],
   "areas": 16,
-  "features": 27,
+  "features": 31,
   "objectives": 5
  },
  {
@@ -591,7 +591,7 @@
    "EXTRACT RELIC"
   ],
   "areas": 16,
-  "features": 28,
+  "features": 31,
   "objectives": 5
  },
  {
@@ -608,7 +608,7 @@
    "EXTRACT RELIC"
   ],
   "areas": 16,
-  "features": 28,
+  "features": 32,
   "objectives": 5
  },
  {
@@ -625,7 +625,7 @@
    "GATHER INTEL"
   ],
   "areas": 16,
-  "features": 26,
+  "features": 30,
   "objectives": 5
  },
  {
@@ -642,7 +642,7 @@
    "GATHER INTEL"
   ],
   "areas": 16,
-  "features": 27,
+  "features": 31,
   "objectives": 5
  },
  {
@@ -659,7 +659,7 @@
    "GATHER INTEL"
   ],
   "areas": 16,
-  "features": 26,
+  "features": 31,
   "objectives": 5
  },
  {
@@ -676,7 +676,7 @@
    "VANGUARD OPERATION"
   ],
   "areas": 16,
-  "features": 28,
+  "features": 31,
   "objectives": 5
  },
  {
@@ -693,7 +693,7 @@
    "VANGUARD OPERATION"
   ],
   "areas": 16,
-  "features": 28,
+  "features": 30,
   "objectives": 5
  },
  {
@@ -710,7 +710,7 @@
    "VANGUARD OPERATION"
   ],
   "areas": 16,
-  "features": 26,
+  "features": 29,
   "objectives": 5
  },
  {
@@ -727,7 +727,7 @@
    "SABOTAGE"
   ],
   "areas": 16,
-  "features": 27,
+  "features": 31,
   "objectives": 5
  },
  {
@@ -744,7 +744,7 @@
    "SABOTAGE"
   ],
   "areas": 16,
-  "features": 27,
+  "features": 30,
   "objectives": 5
  },
  {
@@ -761,7 +761,7 @@
    "SABOTAGE"
   ],
   "areas": 16,
-  "features": 26,
+  "features": 32,
   "objectives": 5
  }
 ]
