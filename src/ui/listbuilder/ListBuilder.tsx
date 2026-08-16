@@ -6,6 +6,7 @@ import {
   BATTLE_SIZES,
   createArmyList,
   enhancementCost,
+  extremisSurcharge,
   listPoints,
   patrolArmyList,
   removeUnit,
@@ -327,7 +328,9 @@ export function ListBuilder({ onOpenInBoard }: Props) {
             const pts =
               unitCost(ds, u.modelCount, copyIndex) +
               unitWargearPoints(ds, u.loadout) +
-              enhancementCost(u.enhancementId, dataIndex);
+              enhancementCost(u.enhancementId, dataIndex) +
+              // Veiled Blade's Extremis Sanction: assassins pay their Extremis ability's cost.
+              extremisSurcharge(ds, list.detachment, dataIndex);
             return (
               <ListUnitCard
                 key={u.uid}

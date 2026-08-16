@@ -53,14 +53,24 @@ as **bound** below. Ids refer to `data/game/enhancements.json`.)*
 | Gift of the Prescient | 📖 | Grey Knights Terminator carve-out — GK Terminators aren't in the owned lists. |
 | Grimoire of True Names (Aura) | 📖 | Enemy Ld/hit/wound aura — enemy-side auras aren't in the effect gathering. |
 
-## Veiled Blade Elimination Force
+## Veiled Blade Elimination Force — Extremis Abilities (NOT enhancements)
 
-| Enhancement | Status | Notes |
-|---|---|---|
-| Decoy Targets | 📖 | Model-swap teleport — no engine primitive. |
-| Esoteric Explosives | 📖 | Grenades-stratagem interaction — the Grenades stratagem isn't dice-modelled per roll. |
-| Intraneural Biotech | 📖 | 0 CP Heroic Intervention/Counter-offensive — CP-discount bookkeeping isn't modelled. |
-| Micromelta Rounds | ✅ | Bearer's ranged weapons gain [ANTI-MONSTER 4+] and [ANTI-VEHICLE 4+]. |
+**These four cards are not pickable enhancements.** The printed detachment rule, *Extremis
+Sanction* (Faction Pack v1.1), auto-grants each OFFICIO ASSASSINORUM unit its temple's card and
+**mandatorily increases that unit's points cost** by the printed amount. In any army that
+includes Veiled Blade (alone or in a multi-detachment pair), `toRoster` stamps the card into the
+assassin's enhancement slot (always free — assassins are Epic Heroes), `listPoints` adds the
+surcharge, the List Builder card explains the higher price, and the enhancement picker/validation
+reject them as picks (`EXTREMIS_ABILITIES` in `core/enhancements.ts`). The rule's second half —
+Overkill / Soulless Horror / Shieldbreaker usable twice per battle — is text-only (those
+datasheet abilities have no engine binding).
+
+| Extremis ability | Bearer | Surcharge | Status | Notes |
+|---|---|---|---|---|
+| Decoy Targets | Callidus Assassin | +15 pts | 📖 | Model-swap teleport — no engine primitive. |
+| Esoteric Explosives | Culexus Assassin | +10 pts | 📖 | Grenades-stratagem interaction — the Grenades stratagem isn't dice-modelled per roll. |
+| Intraneural Biotech | Eversor Assassin | +15 pts | 📖 | 0 CP Heroic Intervention/Counter-offensive — CP-discount bookkeeping isn't modelled. |
+| Micromelta Rounds | Vindicare Assassin | +20 pts | ✅ | Exitus rifle gains [ANTI-MONSTER 4+] and [ANTI-VEHICLE 4+] — live via the auto-stamped id. |
 
 ## Grizzled Company
 

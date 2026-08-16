@@ -10,6 +10,7 @@
 import type { Datasheet, Enhancement, Roster } from './types';
 import { defensiveItemsInText, normalizeItemName, validateUnitLoadout, type Loadout } from './wargear';
 import { armyHasDetachment, checkDetachmentPoints, dpBudget } from './detachments';
+import { EXTREMIS_IDS, extremisAbilityId } from './enhancements';
 
 // ── Battle size (points limit + datasheet copy limits) ───────────────────────
 export type BattleSize = 'Combat Patrol' | 'Incursion' | 'Strike Force';
@@ -109,6 +110,15 @@ export function unitWargearPoints(ds: Datasheet | undefined, loadout?: Loadout):
 export function enhancementCost(enhId: string | undefined, ix: DataIndex): number {
   return enhId ? (ix.enhancements.get(enhId)?.cost ?? 0) : 0;
 }
+/**
+ * Veiled Blade's Extremis Sanction: in an army that includes that detachment, every OFFICIO
+ * ASSASSINORUM unit automatically has its temple's Extremis ability and MUST pay its printed
+ * cost (Callidus +15, Culexus +10, Eversor +15, Vindicare +20). The amounts live on the four
+ * catalog cards, so the surcharge is their `cost`.
+ */
+export function extremisSurcharge(ds: Datasheet | undefined, detachment: string | undefined, ix: DataIndex): number {
+  return enhancementCost(extremisAbilityId(ds, detachment) ?? undefined, ix);
+}
 export function listPoints(list: ArmyList, ix: DataIndex): number {
   let total = 0;
   const copies = new Map<string, number>();
@@ -119,6 +129,7 @@ export function listPoints(list: ArmyList, ix: DataIndex): number {
     total += unitCost(ds, u.modelCount, copyIndex);
     total += unitWargearPoints(ds, u.loadout);
     total += enhancementCost(u.enhancementId, ix);
+    total += extremisSurcharge(ds, list.detachment, ix);
   }
   return total;
 }
@@ -301,7 +312,15 @@ export function validate(list: ArmyList, ix: DataIndex): Violation[] {
       v.push({ severity: 'error', uid: u.uid, message: lv.message });
     }
 
-    if (u.enhancementId) {
+    if (u.enhancementId && EXTREMIS_IDS.has(u.enhancementId)) {
+      // The four Veiled Blade cards are Extremis abilities, not enhancements — Extremis
+      // Sanction grants them (and charges for them) automatically; they are never picked.
+      v.push({
+        severity: 'error',
+        uid: u.uid,
+        message: `${ds.name}: "${ix.enhancements.get(u.enhancementId)?.name ?? u.enhancementId}" is an Extremis ability — Veiled Blade's Extremis Sanction grants it automatically, it cannot be taken as an enhancement.`,
+      });
+    } else if (u.enhancementId) {
       enhUsed.set(u.enhancementId, (enhUsed.get(u.enhancementId) ?? 0) + 1);
       const enh = ix.enhancements.get(u.enhancementId);
       if (!enh) {
@@ -374,12 +393,17 @@ export function toRoster(list: ArmyList, ix: DataIndex): Roster {
     ...(list.combatPatrol ? { combatPatrol: true } : {}),
     points: listPoints(list, ix),
     units: list.units.map((u) => {
-      const wargearCounts = resolveWargearCounts(ix.datasheets.get(u.datasheetId), u);
+      const ds = ix.datasheets.get(u.datasheetId);
+      const wargearCounts = resolveWargearCounts(ds, u);
+      // Extremis Sanction: a Veiled Blade army's assassins carry their auto-granted Extremis
+      // ability into the game through the (always-free — Epic Hero) enhancement slot, so the
+      // in-game bindings (e.g. Micromelta Rounds' [ANTI-…] weapon grant) apply unchanged.
+      const enhancementId = extremisAbilityId(ds, list.detachment) ?? u.enhancementId;
       return {
         datasheetId: u.datasheetId,
         modelCount: u.modelCount,
         ...(Object.keys(wargearCounts).length ? { wargearCounts } : {}),
-        ...(u.enhancementId ? { enhancementId: u.enhancementId } : {}),
+        ...(enhancementId ? { enhancementId } : {}),
         ...(u.attachedTo ? { attachedCharacterId: u.attachedTo } : {}),
       };
     }),

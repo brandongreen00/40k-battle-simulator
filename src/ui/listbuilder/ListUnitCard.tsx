@@ -2,7 +2,8 @@ import { useState } from 'react';
 import type { Datasheet, Enhancement } from '../../core/types';
 import { isCharacter, isEpicHero, type ArmyList, type ListUnit } from '../../core/army';
 import { defaultLoadoutCounts, groupFits, loadoutCount, normalizeItemName, wargearOptionGroups } from '../../core/wargear';
-import { getDatasheet, type CpEnhancement } from '../../data/loaders';
+import { extremisAbilityId } from '../../core/enhancements';
+import { dataIndex, getDatasheet, type CpEnhancement } from '../../data/loaders';
 
 interface Props {
   unit: ListUnit;
@@ -26,6 +27,9 @@ export function ListUnitCard(props: Props) {
   const [open, setOpen] = useState(false);
 
   const character = isCharacter(ds);
+  // Veiled Blade's Extremis Sanction: an assassin in that army automatically has its temple's
+  // Extremis ability and pays its cost — surfaced here so the higher price is explained.
+  const extremis = list.combatPatrol ? undefined : dataIndex.enhancements.get(extremisAbilityId(ds, list.detachment) ?? '');
   // Combat Patrol enhancements are printed for a specific unit (Character or not) — the select
   // appears exactly on the bearers; the standard Character rule applies to normal lists only.
   const cpEnh = props.cpEnhancements ?? [];
@@ -118,6 +122,11 @@ export function ListUnitCard(props: Props) {
         </label>
       )}
       {cpPicked && cpPicked.text && <p className="lu-note">{cpPicked.text}</p>}
+      {extremis && (
+        <p className="lu-note" title={extremis.description}>
+          Extremis Sanction (Veiled Blade): has <strong>{extremis.name}</strong> — +{extremis.cost} pts, automatic.
+        </p>
+      )}
 
       {open && (
         <div className="lu-options">

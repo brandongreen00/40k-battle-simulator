@@ -383,11 +383,12 @@ ability-system design that these stages depend on.
   and Veiled Blade Elimination Force (3 Detachment Points)"; got enhancement-scope errors,
   Sanctifiers hand-flamer cap errors and an Inquisitorial Chimera heavy-flamer cap error; the
   list is app-legal). Separate PR off main.** All gates green: `pnpm typecheck`, `pnpm test`
-  (**576 tests**, +25: multi-detachment split/DP/membership, both-detachments stratagem offer,
-  default-wargear credits, the imported list's round-trip), `pnpm build`; a Playwright drive of
-  the real app (paste the export → 1985/2000, ZERO validation errors, combined detachment at
-  3/3 DP, enhancement picker offering BOTH detachments' cards, no over-cap wargear group,
-  zero console errors) passes **9/9**.
+  (**580 tests**, +29: multi-detachment split/DP/membership, both-detachments stratagem offer,
+  default-wargear credits, Extremis Sanction pricing/stamping, the imported list's round-trip),
+  `pnpm build`; a Playwright drive of the real app (paste the export → **2000/2000**, ZERO
+  validation errors, combined detachment at 3/3 DP, enhancement picker offering both
+  detachments' REAL enhancements and no Extremis cards, the Callidus card at 115 with its
+  Extremis note, no over-cap wargear group, zero console errors) passes **11/11**.
   - **Multi-detachment armies are now modelled** (the 11e rule the DP doc recorded: multiple
     detachments within the budget, army-wide enhancement cap). No schema change — the app's
     combined header string stays the single `detachment` field; new pure
@@ -420,18 +421,33 @@ ability-system design that these stages depend on.
     (also fixing case-mismatch lookups like the export's "Simulacrum Imperialis"); the two
     options group and hull+turret heavy flamers (or keeping the hull heavy bolter + adding the
     turret one) validate legal, while a third is still flagged.
+  - **Veiled Blade's Extremis Sanction implemented** (owner follow-up: "having the Veiled Blade
+    detachment increases the cost of assassins while giving them more abilities" — this was the
+    15-pt "discrepancy": the app's Callidus 115 = 100 + the printed surcharge, NOT a newer MFM).
+    The four Veiled Blade catalog cards (Decoy Targets 15 / Esoteric Explosives 10 / Intraneural
+    Biotech 15 / Micromelta Rounds 20) are the printed **Extremis Abilities table**, not pickable
+    enhancements: in any army that includes Veiled Blade, every OFFICIO ASSASSINORUM unit
+    AUTO-gains its temple's card and MUST pay its cost (transcribed live from the Wahapedia 11e
+    faction page). New `enhancements.EXTREMIS_ABILITIES`/`extremisAbilityId` +
+    `army.extremisSurcharge`: `listPoints`/the ListUnitCard price it, `toRoster` stamps the card
+    into the assassin's (always-free — Epic Hero) enhancement slot so the existing in-game
+    bindings apply unchanged (a VB Vindicare's Micromelta [ANTI-…] grant is LIVE; the other
+    three stay text-only as before), the picker excludes the four cards (a lone-VB army has NO
+    enhancements, matching the pack), and `validate` rejects taking one as an enhancement. The
+    twice-per-battle Overkill/Soulless Horror/Shieldbreaker rider is text-only (those abilities
+    have no engine binding). Doc: **docs/enhancements.md** (section reworked).
   - **The list itself is committed**: `tools/rosters/imports/hold_objectives.txt` →
-    `pnpm import:roster` → `data/rosters/hold_objectives.json` (20 units, 1985 pts, 0 warnings,
-    0 errors, Kroyle Warlord, both enhancements, `recommended: reconnaissance/operative`).
-  - **Points discrepancy flagged, not "fixed"**: the app (Data Version v925) prints 2000 by
-    pricing the Callidus Assassin at **115**; Wahapedia 11e (Faction Pack v1.1, re-checked live
-    this session) still prints **100**, which our data pins — hence 1985. Every other unit,
-    both enhancement costs (Digital Weapons 10, Clandestine Operation 15) and the Immolators'
-    105 (90 base + 15 priced twin multi-melta) reconcile exactly. If the app is a newer MFM,
-    the fix is a one-line edit in `tools/ingest/points11e.json` + `pnpm apply:points11e`.
+    `pnpm import:roster` → `data/rosters/hold_objectives.json` (20 units, **2000 pts — exact
+    app match**, 0 warnings, 0 errors, Kroyle Warlord, both enhancements, the Callidus stamped
+    with Decoy Targets, `recommended: reconnaissance/operative`). Every price reconciles: the
+    Immolators' 105 = 90 base + 15 priced twin multi-melta, Digital Weapons 10, Clandestine
+    Operation 15, Callidus 115 = 100 + 15 Extremis.
   - **Handoff nits**: the List Builder can't COMPOSE a multi-detachment pair from the dropdown
     (import-only); `ai/types.detachments` still carries one string per side (the combined name —
-    correct via membership checks); v2 (`sim2`) is untouched (single-detachment armies there).
+    correct via membership checks); the AI's unit valuation (`evaluate.ts`) reads `points[0]` so
+    it doesn't price the Extremis surcharge (minor); v2 (`sim2`) is untouched (its Veiled Blade
+    records already carry the rule text; its army builder doesn't model Extremis pricing —
+    gap-register candidate).
 
 - **[2026-08-16] — Standard (Event Companion) maps now use REAL terrain shapes, not squares
   (owner, comparing a standard map to a Combat Patrol one: "the first use squares, where the

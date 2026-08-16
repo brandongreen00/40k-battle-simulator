@@ -2,7 +2,7 @@
   "name": "HOLD OBJECTIVES",
   "faction": "AoI",
   "detachment": "Imperialis Fleet and Veiled Blade Elimination Force",
-  "points": 1985,
+  "points": 2000,
   "units": [
     {
       "datasheetId": "000003815",
@@ -84,7 +84,8 @@
       "wargearCounts": {
         "Neural shredder": 1,
         "Phase sword and poison blades": 1
-      }
+      },
+      "enhancementId": "000009757002"
     },
     {
       "datasheetId": "000002090",
