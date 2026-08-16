@@ -378,6 +378,42 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-08-16] — Auto Player UI redesign (owner: "make the auto player UI look much better…
+  consistent with List Builder and Measuring Board, and easily usable on mobile"). Separate PR
+  off main.** All gates green: `pnpm typecheck`, `pnpm test` (**591 tests**, unchanged — the
+  autoplayer suite's pinned selectors were preserved), `pnpm build`; a Playwright drive at
+  1440×900 and iPhone-13 across all three tabs + a live replay shows zero horizontal overflow,
+  zero console errors, the bottom tab bar on the phone and the replay play button a 44px target
+  visible without scrolling.
+  - **Root cause of the ugly desktop: a missing `}` in styles.css.** The phone-only media query
+    holding the stat-block/shoot-panel overrides was never closed, so the ENTIRE Auto Player
+    style block that followed lived inside it — desktop rendered the tab as raw unstyled HTML
+    (nested `@media` is valid CSS, so nothing errored). The brace is closed and the whole
+    `ap-*` sheet rewritten on the app theme tokens (`--panel/--line/--accent`, `.field`-style
+    inputs, `.score-cell`-style stat cards, uppercase-muted section headers, solid-accent
+    primary buttons) instead of the old GitHub-blue palette.
+  - **Phones join the real app shell**: `AutoPlayer.tsx` now renders the same bottom `.m-tabs`
+    bar as the List Builder (▶ Run / 📊 Results / 🎞 Replay + the data-snapshot chip), the
+    desktop `.ap-tabs` strip hides, and the content becomes an internally-scrolling `.ap-page`
+    (44px touch targets, 15px fields, `overflow-x: clip`, tables scroll inside `.ap-scroll`).
+    Run tab restructured into Matchup / Run it locally / GitHub Actions section cards with a
+    ⧉ Copy-command button (`.ap-cmd` is explicitly `user-select: text` — the body disables
+    selection globally).
+  - **Replay usability**: the transport controls moved INTO the board column, directly under
+    the map (previously below the event feed — unreachable without scrolling on a phone);
+    board capped (46vh phone / `100vh−240px` desktop, portrait maps letterbox seamlessly since
+    the svg background matches the ground fill); replay colors switched to the v1 board's
+    player-blue/AI-red (battle-shock stroke = accent yellow); the side panel is a proper card.
+  - **Pre-existing shell bug found by the drive and fixed**: the top nav's min-content is
+    ~416px on a 390px phone, and `.app{overflow:hidden}` let the browser scroll-into-view the
+    tapped right-most "Auto Player" button — shifting the ENTIRE app 26px off-screen left
+    (every mobile Auto Player visit hit this). `.app` is now `overflow-x: clip` (programmatic
+    scroll impossible) and `.topnav .brand` ellipsizes so the nav genuinely fits.
+  - **Handoff nits**: the results dashboard still shows only the FIRST batch/optimizer
+    artifact from the index (a history picker is a natural follow-up); the desktop `.ap-tabs`
+    strip and the mobile `.m-tabs` are two markup blocks (same pattern as the other views);
+    `sim2`/Python is untouched — this is a v2 *surface* change only.
+
 - **[2026-08-16] — "Comp III" import (same PR as HOLD OBJECTIVES): title-case export sections,
   11e UPGRADE enhancements, Steel Hammer's CHARACTER tanks, Commissars leading Bullgryns
   (owner: tanks "not being characters", "bullgryns and commisars not even being available at
