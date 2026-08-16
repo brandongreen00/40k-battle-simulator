@@ -2,7 +2,8 @@ import { useState } from 'react';
 import type { Datasheet, Enhancement } from '../../core/types';
 import { isCharacter, isEpicHero, type ArmyList, type ListUnit } from '../../core/army';
 import { defaultLoadoutCounts, groupFits, loadoutCount, normalizeItemName, wargearOptionGroups } from '../../core/wargear';
-import { extremisAbilityId } from '../../core/enhancements';
+import { extremisAbilityId, leaderGrantTargets } from '../../core/enhancements';
+import { armyHasDetachment } from '../../core/detachments';
 import { dataIndex, getDatasheet, type CpEnhancement } from '../../data/loaders';
 
 interface Props {
@@ -33,12 +34,33 @@ export function ListUnitCard(props: Props) {
   // Combat Patrol enhancements are printed for a specific unit (Character or not) — the select
   // appears exactly on the bearers; the standard Character rule applies to normal lists only.
   const cpEnh = props.cpEnhancements ?? [];
-  const canEnhance = list.combatPatrol ? cpEnh.length > 0 : character && !isEpicHero(ds);
+  const kws = ds.keywords.map((k) => k.toLowerCase());
+  // Steel Hammer's KEYWORDS rule: an AM TITANIC unit in that army may gain CHARACTER, so it can
+  // take enhancements (taking one is the opt-in).
+  const steelHammerTitanic =
+    !list.combatPatrol && kws.includes('titanic') && kws.includes('astra militarum') &&
+    armyHasDetachment(list.detachment, 'Steel Hammer');
+  // Upgrades go only on their printed bearers; other units see none. Characters (and opted-in
+  // Steel Hammer tanks) see the full catalog minus foreign-bearer Upgrades.
+  const upgradeFits = (e: Enhancement): boolean =>
+    !e.bearerKeywords?.length || e.bearerKeywords.some((b) => kws.includes(b) || ds.name.toLowerCase() === b);
+  const offered = list.combatPatrol || isEpicHero(ds)
+    ? []
+    : character || steelHammerTitanic
+      ? enhancements.filter((e) => !e.upgrade || upgradeFits(e))
+      : enhancements.filter((e) => e.upgrade && upgradeFits(e));
+  const canEnhance = list.combatPatrol ? cpEnh.length > 0 : offered.length > 0;
   const cpPicked = cpEnh.find((e) => e.id === unit.enhancementId);
 
-  // Bodyguard units already in the list that this leader can attach to.
+  // Bodyguard units already in the list that this leader can attach to — from the datasheet's
+  // Leader list, or granted by its enhancement (Exemplar of Duty → Ogryn/Bullgryn squads).
+  const grantNames = leaderGrantTargets(unit.enhancementId);
   const attachTargets = list.units
-    .filter((u) => u.uid !== unit.uid && (ds.canLead ?? []).includes(u.datasheetId))
+    .filter((u) => {
+      if (u.uid === unit.uid) return false;
+      if ((ds.canLead ?? []).includes(u.datasheetId)) return true;
+      return grantNames.includes((getDatasheet(u.datasheetId)?.name ?? '').toLowerCase());
+    })
     .map((u) => ({ uid: u.uid, name: getDatasheet(u.datasheetId)?.name ?? u.datasheetId }));
 
   // Real, cap-aware wargear options for this unit's current model count. Options that share
@@ -113,9 +135,9 @@ export function ListUnitCard(props: Props) {
                 {e.name}
               </option>
             ))}
-            {enhancements.map((e) => (
+            {offered.map((e) => (
               <option key={e.id} value={e.id}>
-                {e.name} (+{e.cost})
+                {e.name} (+{e.cost}){e.upgrade ? ' · Upgrade' : ''}
               </option>
             ))}
           </select>

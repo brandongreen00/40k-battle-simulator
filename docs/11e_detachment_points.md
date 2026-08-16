@@ -17,11 +17,12 @@ Source: Warhammer Community, "Building an army in the new edition of Warhammer 4
 published budgets found for 500/3000 pts. An army may take **multiple detachments** within the
 budget; the enhancement cap is **army-wide**, not per-detachment.
 
-**Lone-detachment allowance:** GW has stated on Warhammer Community that it *intends* any single
-lone detachment to be legal regardless of DP cost, but this is **not in errata or the app**. The
-simulator applies the stated-intent rule: a lone detachment over budget validates with a
-**warning**, not an error. After the v1.1 costs below, that only affects the two 3 DP Astra
-Militarum detachments (Grizzled Company, Recon Element) at 1000 pts.
+**Lone-detachment allowance — now PRINTED (2026-08-16):** the 11e core rules' Upgrades
+paragraph ends with *"If you are playing an Incursion battle, you can select a 3DP detachment
+as your only detachment"* (Wahapedia 11e core rules, Select Units step). The simulator no
+longer warns for that case (the only over-budget lone combination that exists: Grizzled
+Company / Recon Element at 1000 pts). A MULTI-detachment army over the summed budget is a hard
+error — the allowance is explicitly about a single detachment.
 
 ## DP costs — Astra Militarum (11 detachments, Faction Pack v1.1)
 

@@ -51,6 +51,11 @@ describe('imported owner lists', () => {
     // reconciles the app exactly: the Callidus is 100 base + 15 Extremis Sanction surcharge
     // (Veiled Blade auto-grants Decoy Targets and charges for it).
     { txt: 'hold_objectives.txt', json: 'hold_objectives.json', name: 'HOLD OBJECTIVES', units: 20, points: 2000 },
+    // v2.3.1 export format: TITLE-CASE section headers ("Attached Units" — the body must open on
+    // the first unit header or the whole attached block lands in the preamble), "(Upgrade)"
+    // enhancement suffixes, Upgrade-tagged enhancements (3× Exemplar of Duty), and Steel
+    // Hammer's KEYWORDS rule putting enhancements on TITANIC tanks. 2000 = exact app match.
+    { txt: 'comp_iii.txt', json: 'comp_iii.json', name: 'Comp III', units: 12, points: 2000 },
   ];
 
   for (const c of cases) {
@@ -132,6 +137,30 @@ describe('imported owner lists', () => {
     expect(
       validate(tampered, dataIndex).some((v) => v.severity === 'error' && v.message.includes(foreign.name)),
     ).toBe(true);
+  });
+
+  it('Comp III (v2.3.1 export): title-case sections survive, Upgrades resolve, tanks keep enhancements', () => {
+    const text = readFileSync(join(root, 'tools', 'rosters', 'imports', 'comp_iii.txt'), 'utf-8');
+    const { list, warnings, disposition } = parseArmyText(normalizeExport(text), deps);
+    expect(warnings).toEqual([]);
+    expect(list.detachment).toBe('Abhuman Auxiliaries and Steel Hammer');
+    expect(disposition).toBe('Purge the Foe');
+    const names = list.units.map((u) => dataIndex.datasheets.get(u.datasheetId)?.name);
+    // The title-case "Attached Units" block imports — 3 Commissars + 3 Bullgryn Squads.
+    expect(names.filter((n) => n === 'Commissar')).toHaveLength(3);
+    expect(names.filter((n) => n === 'Bullgryn Squad')).toHaveLength(3);
+    // "Enhancement: Exemplar of Duty (Upgrade)" resolves on every Commissar.
+    const exemplars = list.units.filter(
+      (u) => u.enhancementId && dataIndex.enhancements.get(u.enhancementId)?.name === 'Exemplar of Duty',
+    );
+    expect(exemplars).toHaveLength(3);
+    // The TITANIC tanks carry their Steel Hammer enhancements and validate clean.
+    const tankEnh = list.units
+      .filter((u) => ['Banesword', 'Stormsword'].includes(dataIndex.datasheets.get(u.datasheetId)?.name ?? ''))
+      .map((u) => u.enhancementId && dataIndex.enhancements.get(u.enhancementId)?.name)
+      .sort();
+    expect(tankEnh).toEqual(['Battalion Commander', 'Titan Killer']);
+    expect(validate(list, dataIndex).filter((v) => v.severity === 'error')).toEqual([]);
   });
 
   it('Bane carries the full per-model wargear through normalization (the glyphless lines)', () => {

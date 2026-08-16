@@ -51,7 +51,7 @@ export const ENH = {
   INTRANEURAL_BIOTECH: '000009757004', // text-only (0 CP stratagem plays)
   MICROMELTA_ROUNDS: '000009757005',
   // Grizzled Company
-  ABHUMAN_DETAIL: '000010637002', // text-only (no Ogryn units in the owned data pool)
+  ABHUMAN_DETAIL: '000010637002', // leader grant bound (Ogryn/Bullgryn squads); the Order rider is text-only
   AQUILAN_EYE: '000010637003',
   SPEC_OPS_VETERAN: '000010637004',
   LAUD_HAILER: '000010637005',
@@ -95,6 +95,12 @@ export const ENH = {
   SCARE_GAS: '000009869003', // text-only (activated battle-shock test)
   SURVIVAL_GEAR: '000009869004',
   TRIPWIRES: '000009869005', // text-only (event-driven stun)
+  // Abhuman Auxiliaries (11e-only detachment — records added by apply-points11e; all Upgrades)
+  SHARP_EYES_LIGHT_FINGERS: 'enh11:abhuman_auxiliaries:sharp_eyes_light_fingers', // text-only (detection range)
+  EXEMPLAR_OF_DUTY: 'enh11:abhuman_auxiliaries:exemplar_of_duty', // FNP 4+ + leads Ogryn/Bullgryn squads
+  // Designation Force (11e-only detachment — all Upgrades)
+  LONG_RANGE_SCOUT: 'enh11:designation_force:long_range_scout', // text-only (Infiltrators grant)
+  RECON_STAR: 'enh11:designation_force:recon_star', // text-only (round-1 ingress move)
   // Boarding Actions detachments (0 pt)
   RIGGED_BLIND_GRENADES: '000009380002', // text-only (Hatchways not modelled)
   SHIPBOARD_VETERAN: '000009380003', // text-only (CP-on-4+ event)
@@ -165,9 +171,12 @@ export function enhancementEffectIds(unit: UnitInstance, ctx?: EngineContext, st
   const out: string[] = [];
   for (const id of enhancementIdsOf(unit)) {
     out.push(...(STATIC_EFFECTS[id] ?? []));
-    // Blackweave Shroud: FNP 4+ on the BEARER model. Unit-level effects can't scope to one model,
-    // so it binds only while the bearer fights alone (a merged squad would be over-buffed).
-    if (id === ENH.BLACKWEAVE_SHROUD && !unit.attachedLeaders?.length) out.push('fnp_4');
+    // Blackweave Shroud / Exemplar of Duty: FNP 4+ on the BEARER model. Unit-level effects can't
+    // scope to one model, so they bind only while the bearer fights alone (a merged squad would
+    // be over-buffed — an attached Commissar's FNP stays text-only for the Bullgryn unit).
+    if ((id === ENH.BLACKWEAVE_SHROUD || id === ENH.EXEMPLAR_OF_DUTY) && !unit.attachedLeaders?.length) {
+      out.push('fnp_4');
+    }
     // Drill Commander: crits on 5+ with ranged attacks while the unit Remained Stationary.
     if (id === ENH.DRILL_COMMANDER && unit.status.remainedStationary) out.push('enh:crit5_ranged');
     // Smoke Grenades: Benefit of Cover + Stealth while wholly within 3" of a friendly TRANSPORT.
@@ -236,6 +245,20 @@ export function enhancementWeaponGrantFor(unit: UnitInstance, sourceDsId: string
     if (g) return g;
   }
   return null;
+}
+
+// ── leader-attachment grants ──────────────────────────────────────────────────
+// Some enhancements extend the bearer's Leader list ("LEADER: OGRYN SQUAD, BULLGRYN SQUAD" on
+// 11e Upgrade cards; Grizzled Company's Abhuman Detail prints the same grant in prose). Keys are
+// enhancement ids; values are the bodyguard DATASHEET NAMES (lowercase) the bearer may join.
+export const ENHANCEMENT_LEADER_GRANTS: Record<string, string[]> = {
+  [ENH.EXEMPLAR_OF_DUTY]: ['ogryn squad', 'bullgryn squad'],
+  [ENH.ABHUMAN_DETAIL]: ['ogryn squad', 'bullgryn squad'],
+};
+
+/** Bodyguard datasheet names (lowercase) this enhancement lets its bearer lead. */
+export function leaderGrantTargets(enhancementId: string | undefined): string[] {
+  return enhancementId ? (ENHANCEMENT_LEADER_GRANTS[enhancementId] ?? []) : [];
 }
 
 // ── deployment grants ─────────────────────────────────────────────────────────

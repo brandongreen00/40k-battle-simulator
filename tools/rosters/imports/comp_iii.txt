@@ -1,0 +1,114 @@
+Comp III (2000 points)
+
+Astra Militarum
+Abhuman Auxiliaries and Steel Hammer (3 Detachment Points)
+Purge the Foe
+Strike Force (2000 points)
+
+Attached Units
+Attached Unit 1
+
+Commissar (40 points)
+• Attached as: Leader (Character)
+  • 1x Plasma pistol
+    1x Power weapon
+  • Enhancement: Exemplar of Duty (Upgrade)
+
+Bullgryn Squad (200 points)
+• Attached as: Bodyguard
+  • 1x Bullgryn Bone ’ead
+    • 1x Brute Shield
+      1x Bullgryn maul
+      1x Close combat weapon
+  • 5x Bullgryn
+    • 5x Brute Shield
+      5x Bullgryn maul
+      5x Close combat weapon
+
+Attached Unit 2
+
+Commissar (40 points)
+• Attached as: Leader (Character)
+  • 1x Plasma pistol
+    1x Power weapon
+  • Enhancement: Exemplar of Duty (Upgrade)
+
+Bullgryn Squad (215 points)
+• Attached as: Bodyguard
+  • 1x Bullgryn Bone ’ead
+    • 1x Brute Shield
+      1x Bullgryn maul
+      1x Close combat weapon
+  • 5x Bullgryn
+    • 5x Brute Shield
+      5x Bullgryn maul
+      5x Close combat weapon
+
+Attached Unit 3
+
+Commissar (40 points)
+• Attached as: Leader (Character)
+  • 1x Plasma pistol
+    1x Power weapon
+  • Enhancement: Exemplar of Duty (Upgrade)
+
+Bullgryn Squad (215 points)
+• Attached as: Bodyguard
+  • 1x Bullgryn Bone ’ead
+    • 1x Brute Shield
+      1x Bullgryn maul
+      1x Close combat weapon
+  • 5x Bullgryn
+    • 5x Brute Shield
+      5x Bullgryn maul
+      5x Close combat weapon
+
+
+CHARACTERS
+
+Banesword (435 points)
+  • Steel Hammer Keywords: Character
+  • 1x Armoured tracks
+    4x Lascannon
+    1x Quake cannon
+    1x Twin heavy bolter
+    4x Twin heavy flamer
+  • Enhancement: Titan Killer
+
+Stormsword (460 points)
+  • Steel Hammer Keywords: Character
+  • Warlord
+  • 1x Armoured tracks
+    4x Lascannon
+    1x Stormsword siege cannon
+    1x Twin heavy bolter
+    4x Twin heavy flamer
+  • Enhancement: Battalion Commander
+
+Tech-Priest Enginseer (60 points)
+  • 1x Enginseer axe
+    1x Mechanicus pistol
+    1x Servo-arm
+  • Enhancement: Engine Speaker
+
+Tech-Priest Enginseer (45 points)
+  • 1x Enginseer axe
+    1x Mechanicus pistol
+    1x Servo-arm
+
+
+OTHER DATASHEETS
+
+Hellhound (125 points)
+  • 1x Armoured tracks
+    1x Heavy flamer
+    1x Hunter-killer missile
+    1x Inferno cannon
+
+Hellhound (125 points)
+  • 1x Armoured tracks
+    1x Heavy flamer
+    1x Hunter-killer missile
+    1x Inferno cannon
+
+Exported with App Version: v2.3.1 (138), Data Version: v913

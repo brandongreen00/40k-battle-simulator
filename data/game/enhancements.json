@@ -574,5 +574,57 @@
     "detachment": "Voidship’s Company",
     "detachmentId": "000000924",
     "description": "VOiDFARERS model only. In the Deploy Armies step, your opponent must deploy their entire army before you deploy yours. If both players have this rule, they must roll off and deploy their armies normally. In addition, IMPERiAL NAvY BREACHERS units from your army gain the Infiltrators ability."
+  },
+  {
+    "id": "enh11:abhuman_auxiliaries:sharp_eyes_light_fingers",
+    "name": "Sharp eyes, Light fingers",
+    "faction": "AM",
+    "cost": 10,
+    "detachment": "Abhuman Auxiliaries",
+    "detachmentId": "",
+    "upgrade": true,
+    "bearerKeywords": [
+      "ratlings"
+    ],
+    "description": "RATLINGS unit only. When this unit is selected to shoot, enemy units have +6\" detection range until this unit has shot."
+  },
+  {
+    "id": "enh11:abhuman_auxiliaries:exemplar_of_duty",
+    "name": "Exemplar of Duty",
+    "faction": "AM",
+    "cost": 10,
+    "detachment": "Abhuman Auxiliaries",
+    "detachmentId": "",
+    "upgrade": true,
+    "bearerKeywords": [
+      "commissar"
+    ],
+    "description": "LEADER: OGRYN SQUAD, BULLGRYN SQUAD. COMMISSAR model only. This model has Feel No Pain 4+."
+  },
+  {
+    "id": "enh11:designation_force:long_range_scout",
+    "name": "Long-Range Scout",
+    "faction": "AM",
+    "cost": 10,
+    "detachment": "Designation Force",
+    "detachmentId": "",
+    "upgrade": true,
+    "bearerKeywords": [
+      "scout sentinels"
+    ],
+    "description": "SCOUT SENTINEL unit only. This unit has Infiltrators."
+  },
+  {
+    "id": "enh11:designation_force:recon_star",
+    "name": "Recon Star",
+    "faction": "AM",
+    "cost": 10,
+    "detachment": "Designation Force",
+    "detachmentId": "",
+    "upgrade": true,
+    "bearerKeywords": [
+      "regiment"
+    ],
+    "description": "ASTRA MILITARUM INFANTRY PLATOON unit only. In your first Movement phase, this unit can make an ingress move."
   }
 ]

@@ -97,7 +97,7 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
             b.key !== e.key &&
             !isPlaced(b.key) &&
             !formations.some((f) => f.bodyguardKey === b.key) &&
-            canAttach(e.ds, b.ds),
+            canAttach(e.ds, b.ds, e.unit.enhancementId),
         );
         if (targets.length) out.push({ side, leader: e, targets });
       }
@@ -114,7 +114,7 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
       const targets = state.units.filter((b) => {
         if (b.owner !== u.owner || b.id === u.id || b.inReserves) return false;
         if ((b.attachedLeaders?.length ?? 0) > 0) return false; // one Leader per unit
-        return canAttach(ds, datasheetsById.get(b.datasheetId));
+        return canAttach(ds, datasheetsById.get(b.datasheetId), u.enhancementId);
       });
       if (targets.length) out.push({ leader: u, targets });
     }
@@ -365,7 +365,7 @@ export function DeploymentPanel({ state, dispatch, datasheetsById, rosters, rost
                     value=""
                     onChange={(e) => {
                       const b = targets.find((t) => t.key === e.target.value);
-                      if (b) dispatch({ type: 'DeclareFormation', side, leaderKey: leader.key, leaderDsId: leader.ds.id, bodyguardKey: b.key, bodyguardDsId: b.ds.id });
+                      if (b) dispatch({ type: 'DeclareFormation', side, leaderKey: leader.key, leaderDsId: leader.ds.id, bodyguardKey: b.key, bodyguardDsId: b.ds.id, ...(leader.unit.enhancementId ? { leaderEnhancementId: leader.unit.enhancementId } : {}) });
                     }}
                   >
                     <option value="">— will lead —</option>

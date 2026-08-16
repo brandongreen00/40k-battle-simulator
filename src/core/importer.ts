@@ -131,15 +131,16 @@ export function parseArmyText(text: string, deps: ImportDeps): ImportResult {
   const nameMatch = unitHeader(nameLine);
   const listName = nameMatch ? nameMatch.name : nameLine.trim();
 
-  // Find where the body (sections + units) begins. Prefer the first section header so the
-  // "Incursion (1,000 Points)" battle-size line stays in the preamble; otherwise the first unit.
-  let bodyStart = lines.findIndex((l, i) => i > 0 && isSectionHeader(l));
-  if (bodyStart === -1) {
-    bodyStart = lines.findIndex(
-      (l, i) => i > 0 && unitHeader(l) !== undefined && !/\b(combat patrol|incursion|strike force)\b/i.test(l),
-    );
-  }
-  if (bodyStart === -1) bodyStart = lines.length;
+  // Find where the body (sections + units) begins: the FIRST section header or unit header,
+  // whichever comes first — the battle-size line ("Incursion (1,000 Points)") stays in the
+  // preamble. Some app versions write section headers in title case ("Attached Units",
+  // v2.3.1) which isSectionHeader can't recognise, so the first unit header must also be able
+  // to open the body or the whole attached-units block silently lands in the preamble.
+  const firstSection = lines.findIndex((l, i) => i > 0 && isSectionHeader(l));
+  const firstUnit = lines.findIndex(
+    (l, i) => i > 0 && unitHeader(l) !== undefined && !/\b(combat patrol|incursion|strike force)\b/i.test(l),
+  );
+  const bodyStart = [firstSection, firstUnit].filter((i) => i !== -1).reduce((a, b) => Math.min(a, b), lines.length);
   const preamble = lines.slice(1, bodyStart).map((l) => l.trim());
 
   let faction = 'AM';
@@ -204,7 +205,12 @@ export function parseArmyText(text: string, deps: ImportDeps): ImportResult {
   if (warlordUids.length > 0) list = setWarlord(list, warlordUids[0]!);
   if (warlordUids.length > 1) warnings.push('Multiple Warlords in import — kept the first.');
   for (const [uid, enhName] of Object.entries(enhancementByUid)) {
-    const enh = deps.enhancements.find((e) => e.name.toLowerCase() === enhName.toLowerCase());
+    // v2.3.1 exports suffix the enhancement type — "Exemplar of Duty (Upgrade)" — so fall back
+    // to matching with a trailing parenthetical stripped.
+    const bare = enhName.replace(/\s*\([^)]*\)\s*$/, '');
+    const enh =
+      deps.enhancements.find((e) => e.name.toLowerCase() === enhName.toLowerCase()) ??
+      deps.enhancements.find((e) => e.name.toLowerCase() === bare.toLowerCase());
     if (enh) list = setEnhancement(list, uid, enh.id);
     else warnings.push(`Enhancement "${enhName}" not found in the catalog — left unset.`);
   }

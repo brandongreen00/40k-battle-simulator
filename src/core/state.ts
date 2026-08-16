@@ -204,6 +204,9 @@ export type Intent =
       leaderDsId: string;
       bodyguardKey: string;
       bodyguardDsId: string;
+      /** The leader's roster enhancement — some enhancements extend its Leader list
+       *  (Exemplar of Duty / Abhuman Detail → Ogryn/Bullgryn squads). */
+      leaderEnhancementId?: string;
     }
   /** Undo a declared (not yet deployed) Leader pairing. */
   | { type: 'ClearFormation'; leaderKey: string }
@@ -1048,7 +1051,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       if (ctx) {
         const lDs = ctx.datasheets.get(leader.datasheetId);
         const bDs = ctx.datasheets.get(bodyguard.datasheetId);
-        if (!canAttach(lDs, bDs)) {
+        if (!canAttach(lDs, bDs, leader.enhancementId)) {
           return { ...state, log: [...state.log, `Attach rejected: ${lDs?.name ?? leader.id} cannot lead ${bDs?.name ?? bodyguard.id}`] };
         }
       }
@@ -1166,7 +1169,7 @@ export function reduce(state: GameState, intent: Intent, rng: RNG, ctx?: EngineC
       }
       const lDs = ctx?.datasheets.get(intent.leaderDsId);
       const bDs = ctx?.datasheets.get(intent.bodyguardDsId);
-      if (!ctx || !lDs || !bDs || !canAttach(lDs, bDs)) {
+      if (!ctx || !lDs || !bDs || !canAttach(lDs, bDs, intent.leaderEnhancementId)) {
         return { ...state, log: [...state.log, `Formation rejected: ${lDs?.name ?? intent.leaderDsId} cannot lead ${bDs?.name ?? intent.bodyguardDsId}`] };
       }
       const infiltrate = pairInfiltrates(lDs, bDs, formations, intent.side, ctx);

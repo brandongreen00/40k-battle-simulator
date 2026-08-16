@@ -5,7 +5,7 @@
 // Primary scoring — its dice change who can receive Orders), then the buffs + AdvancePhase.
 
 import type { GameState, Side, UnitInstance } from '../types';
-import { unitIsOfficer, AM_ORDERS } from '../orders';
+import { unitIsOfficer, AM_ORDERS, abhumanOnlyOrderTarget } from '../orders';
 import { armyHasDetachment } from '../detachments';
 import { extraOrderCount } from '../enhancements';
 import { orderableUnits, isOnBoard, engagedEnemies } from '../phases';
@@ -84,15 +84,18 @@ export function aiCommandAction(state: GameState, side: Side, profile: AiProfile
     let issued = 0;
     // orderableUnits already applies the keyword + battle-shock eligibility (incl. Battalion
     // Commander's TITANIC/SQUADRON reach — a canReceiveOrders re-check would wrongly demand
-    // REGIMENT and silently drop those targets).
-    const targets = orderableUnits(officer, state, ctx)
+    // REGIMENT and silently drop those targets — and Abhuman Auxiliaries' COMMISSAR→ABHUMAN reach).
+    const targets = orderableUnits(officer, state, ctx, detachment)
       .filter((t) => !ordered.has(t.id))
       .sort((a, b) => unitValue(b, ctx) - unitValue(a, ctx) || a.id.localeCompare(b.id));
     for (const t of targets) {
       if (issued >= ordersPerOfficer) break;
-      const effectId = profile.random
-        ? AM_ORDERS[deps.rng.int(0, AM_ORDERS.length - 1)]!.effectId
-        : bestOrderFor(state, t, deps);
+      // Absolutist Principles targets (ABHUMAN, no REGIMENT) only receive Take Aim!.
+      const effectId = abhumanOnlyOrderTarget(ctx.datasheets.get(t.datasheetId))
+        ? 'order:take_aim'
+        : profile.random
+          ? AM_ORDERS[deps.rng.int(0, AM_ORDERS.length - 1)]!.effectId
+          : bestOrderFor(state, t, deps);
       ordered.add(t.id);
       issued++;
       intents.push({ intent: { type: 'IssueOrder', unitId: t.id, effectId } });

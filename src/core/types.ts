@@ -117,6 +117,12 @@ export interface Enhancement {
   detachment: string;
   detachmentId: string;
   description: string;
+  /** 11e "Upgrade"-tagged enhancement: may be given to non-CHARACTER units, up to three copies
+   *  per army, and only the FIRST copy counts against the army's enhancement budget. */
+  upgrade?: boolean;
+  /** Curated bearer filter for Upgrades ("COMMISSAR model only", "RATLINGS unit only") — the
+   *  unit qualifies when ANY entry matches a datasheet keyword or the datasheet name (lowercase). */
+  bearerKeywords?: string[];
 }
 
 // ── Roster (an owned army list) ──────────────────────────────────────────────

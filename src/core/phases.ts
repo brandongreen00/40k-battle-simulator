@@ -14,6 +14,7 @@ import { baseRadius } from './geometry';
 import { canActAfterAdvance, hasFightsFirstAbility, hasLoneOperative, ignoresLoneOperative, unitScoutDistance } from './abilities';
 import { canFly, isAircraft } from './transport';
 import { allowsRound1DeepStrike, orderRangeFor, ordersReachTitanicSquadron } from './enhancements';
+import { isAbhumanArmy, isAbhumanUnit, unitHasCommissar } from './orders';
 import { checkCoherency, type CoherencyResult } from './coherency';
 
 const FALLBACK_SHAPE = { kind: 'circle' as const, radius: 0.63 };
@@ -309,9 +310,12 @@ const VOICE_OF_COMMAND_RANGE = 6; // inches
  * Enhancements: Laud Hailer stretches the range to 12"; Battalion Commander's Orders also reach
  * ASTRA MILITARUM TITANIC and SQUADRON units.
  */
-export function orderableUnits(officer: UnitInstance, state: GameState, ctx: EngineContext): UnitInstance[] {
+export function orderableUnits(officer: UnitInstance, state: GameState, ctx: EngineContext, detachment?: string): UnitInstance[] {
   const range = orderRangeFor(officer, VOICE_OF_COMMAND_RANGE);
   const titanicSquadron = ordersReachTitanicSquadron(officer);
+  // Abhuman Auxiliaries' Absolutist Principles: COMMISSAR officers can order ABHUMAN units
+  // (Bullgryn/Ogryn squads, Ratlings — incl. the Commissar's own merged unit).
+  const abhuman = isAbhumanArmy(detachment) && unitHasCommissar(officer, ctx);
   return state.units.filter((u) => {
     if (u.owner !== officer.owner || !isOnBoard(u)) return false;
     if (u.status.battleShocked) return false;
@@ -319,7 +323,8 @@ export function orderableUnits(officer: UnitInstance, state: GameState, ctx: Eng
     const kws = (ds?.keywords ?? []).map((k) => k.toLowerCase());
     const qualifies =
       kws.includes('regiment') ||
-      (titanicSquadron && kws.includes('astra militarum') && (kws.includes('titanic') || kws.includes('squadron')));
+      (titanicSquadron && kws.includes('astra militarum') && (kws.includes('titanic') || kws.includes('squadron'))) ||
+      (abhuman && isAbhumanUnit(ds));
     if (!qualifies) return false;
     return u.id === officer.id || gapBetween(officer, u, ctx) <= range;
   });

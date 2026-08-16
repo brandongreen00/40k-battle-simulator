@@ -378,6 +378,61 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-08-16] — "Comp III" import (same PR as HOLD OBJECTIVES): title-case export sections,
+  11e UPGRADE enhancements, Steel Hammer's CHARACTER tanks, Commissars leading Bullgryns
+  (owner: tanks "not being characters", "bullgryns and commisars not even being available at
+  all").** All gates green: `pnpm typecheck`, `pnpm test` (**591 tests**, +11 in
+  `tests/abhumanSteelHammer.test.ts` + the comp_iii round-trip), `pnpm build`; a Playwright
+  drive of the import passes **11/11** (2000/2000 exact app match, 12 cards, Exemplar of Duty
+  "(+10) · Upgrade" on each Commissar, Banesword 435 with Titan Killer, Attach-to offering the
+  Bullgryn Squads, zero console errors); an AI-vs-AI sim (Comp III vs Bane ×2) ends ok with all
+  3 Commissars declaring "will lead Bullgryn Squad" and Take Aim! flowing to the merged units.
+  - **The vanishing Commissars/Bullgryns were an importer bug, silent**: the v2.3.1 app export
+    writes section headers in TITLE CASE ("Attached Units") which `isSectionHeader` (all-caps)
+    can't see, so `bodyStart` jumped to "CHARACTERS" and the whole attached block landed in the
+    discarded preamble — no warnings. The body now opens at the first section header OR first
+    unit header, whichever comes first. (Both datasheets were in the data all along.)
+    Enhancement resolution also strips the export's "(Upgrade)" suffix.
+  - **11e "Upgrade" enhancements implemented from the printed core rule** (transcribed live:
+    non-CHARACTER bearers allowed; up to THREE copies of the same Upgrade; only the first
+    counts against the enhancement budget; each copy still costs points). `Enhancement.upgrade`
+    + curated `bearerKeywords` (validation + the card's picker enforce the printed bearer);
+    the four 11e-only Upgrade records (Abhuman Auxiliaries: Sharp eyes Light fingers 10 /
+    Exemplar of Duty 10; Designation Force: Long-Range Scout 10 / Recon Star 10) live in
+    `points11e.json addEnhancements` and are upserted by `pnpm apply:points11e`, so re-ingest
+    reproduces them — and both 11e-only detachments now appear in the List Builder's dropdown.
+  - **Steel Hammer's KEYWORDS rule bound at the list layer**: "select one or more AM TITANIC
+    units … to gain the CHARACTER keyword" — taking an enhancement on an AM TITANIC unit in a
+    Steel Hammer army IS the opt-in (validate + the card's picker accept it; Banesword 415+20
+    Titan Killer = 435, Stormsword 430+30 Battalion Commander = 460 — Battalion Commander's
+    Orders binding already worked off the enhancement id). In-game CHARACTER interactions
+    (Assassination vs the tank, Precision) are NOT granted — datasheet keywords are shared
+    (documented nit in docs/enhancements.md).
+  - **Exemplar of Duty's LEADER grant bound**: `ENHANCEMENT_LEADER_GRANTS` (also covers
+    Grizzled's Abhuman Detail) → `canAttach(leader, bodyguard, leaderEnhancementId?)`, threaded
+    through AttachLeader, DeclareFormation (new optional `leaderEnhancementId` on the intent),
+    the AI's pairing, the DeploymentPanel and the List Builder's Attach-to. FNP 4+ binds only
+    while the bearer fights alone (Blackweave rule — a merged Commissar would over-buff the
+    Bullgryns; text-only when attached).
+  - **Absolutist Principles (Abhuman Auxiliaries) bound**: BULLGRYN/OGRYN SQUAD + RATLINGS
+    count as ABHUMAN; `orderableUnits` gained an optional detachment param — COMMISSAR
+    officers (the datasheet already carries OFFICER) reach ABHUMAN units, and targets that
+    qualify ONLY as ABHUMAN are restricted to **Take Aim!** (the one Order the print names) at
+    both decision sites (GamePanel + AI). Reading noted: the printed bullets are ambiguous
+    ("Issue the Take Aim! Order / Issue 1 Order to a friendly ABHUMAN unit"); bound
+    conservatively as 1× Take Aim! to an ABHUMAN unit.
+  - **Lone-detachment allowance is now PRINTED** (core rules, Upgrades paragraph: a 3DP
+    detachment may be your only detachment at Incursion) — the "pending errata" validation
+    warning is removed; multi-detachment over-budget stays a hard error. Docs updated.
+  - **The list is committed**: `tools/rosters/imports/comp_iii.txt` → `data/rosters/
+    comp_iii.json` (12 units, **2000 pts — exact app match**: Commissar 30+10 ×3, Bullgryns
+    200/215/215 via the copy-escalation tiers, Enginseer 45(+15), Hellhounds 125×2,
+    `recommended: purge_the_foe/attrition`).
+  - **Handoff nits**: Steel Hammer tanks don't carry CHARACTER in-game; the Exemplar FNP is
+    inert while attached (per-model FNP still unmodelled); Sharp eyes/Long-Range Scout/Recon
+    Star are text-only (no owned list fields them); the AI never picks Upgrades/enhancements
+    when building lists (import/List Builder only, as before).
+
 - **[2026-08-16] — MULTI-DETACHMENT ARMIES + two wargear-validation false positives (owner:
   imported "HOLD OBJECTIVES", a 2000 pt Imperial Agents army with detachment "Imperialis Fleet
   and Veiled Blade Elimination Force (3 Detachment Points)"; got enhancement-scope errors,
