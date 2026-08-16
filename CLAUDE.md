@@ -378,6 +378,47 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-08-16] — List Builder: detachment selection is now a MULTISELECT with the DP budget
+  as the limiter (owner: "make the detachment selection a multiselect menu … so i can select a
+  2 AND 1 DP detachment if the limit is 3"). Separate PR off main.** Closes the "List Builder
+  can't COMPOSE a multi-detachment pair" handoff from the HOLD OBJECTIVES entry. All gates
+  green: `pnpm typecheck`, `pnpm test` (**597 tests**, +6: joinDetachments/isKnownDetachment
+  pins, setDetachments pruning, 3 jsdom multiselect drives), `pnpm build`; a Playwright drive
+  of the real app passes **14/14** (desktop: compose 2 DP + 1 DP at Strike Force → 3/3 DP, a
+  further option budget-disabled, BOTH detachments' enhancements offered on a Character card,
+  unchecking a component clears its now-stranded pick, the lone-allowance 3 DP pick at
+  Incursion, legacy lone-only both directions; iPhone-13: 57px tap rows toggling to 2/2 DP,
+  zero horizontal overflow; zero console errors on both).
+  - **The dropdown is a checkbox list** (`.detach-multi` in ListBuilder.tsx): every faction
+    detachment renders with its DP price; checking composes the army's single `detachment`
+    string via new `core/detachments.joinDetachments` — the canonical " and " join the GW app
+    prints and `splitDetachments` reverses. **No schema change**: rosters/imports/validation/
+    membership scoping (enhancements, stratagems, detachment rules in-game) all read the same
+    combined string they already handled. The DP header keeps the live cost/budget readout.
+  - **The DP budget is the limiter**: with nothing checked every option is open (a lone pick
+    may exceed the budget — the printed lone-detachment allowance, still labelled in the
+    header); once anything is checked, an unchecked option is disabled when the summed cost
+    would bust the budget (2 DP at 1000 pts, 3 DP at 2000 — so 2+1 fits at Strike Force,
+    which was the owner's exact ask), with the reason as the row's tooltip. `validate`'s
+    existing `overBudgetMulti` hard error still backstops imported over-budget pairs.
+  - **Legacy detachments are lone-only**: Embarked Regiment / Tempestus Boarding Regiment /
+    Interdiction Team / Voidship's Company exist in the (10e) enhancement catalog but not the
+    printed 11e pack, so `splitDetachments` could never recognise them inside a combined name —
+    combining one would silently break enhancement scoping and DP sums. New `isKnownDetachment`
+    gates them: selectable alone, never combinable (tooltip explains).
+  - **Enhancement handling improved**: new pure `army.setDetachments(list, names, ix)` prunes
+    ONLY the picks whose detachment left the army (the old single select cleared EVERY
+    enhancement on any change); a pick from a surviving component now rides through unchanged.
+  - **Latent CSS bug found + fixed (verified in-browser both ways)**: the phone-overrides
+    media query added 2026-08-14 (`.statblock`/`.sb-close` block at the end of styles.css) was
+    never closed, so the ENTIRE Auto Player style section sat inside it — on desktop every
+    `.ap-*` rule was inert and the Auto Player tab rendered unstyled (`.autoplayer` max-width
+    "none" before, 1200px after). One closing brace restores it; the multiselect's own 44px
+    phone override lives inside that query as intended.
+  - **Handoff nits**: an imported UNKNOWN combined name (a pair of unlisted detachments) still
+    displays as one checked un-splittable row, unchanged from the dropdown era; the AI's unit
+    valuation `points[0]` nit is untouched; v2 (`sim2`) untouched.
+
 - **[2026-08-16] — Auto Player UI redesign (owner: "make the auto player UI look much better…
   consistent with List Builder and Measuring Board, and easily usable on mobile"). Separate PR
   off main.** All gates green: `pnpm typecheck`, `pnpm test` (**591 tests**, unchanged — the
