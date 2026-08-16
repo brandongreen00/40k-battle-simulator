@@ -1,0 +1,58 @@
+{
+ "name": "Bane",
+ "faction": "AM",
+ "detachments": [
+  "am.grizzled_company"
+ ],
+ "units": [
+  {
+   "datasheet_id": "am.commissar_yarrick",
+   "models": 1,
+   "warlord": true,
+   "key": "0"
+  },
+  {
+   "datasheet_id": "am.death_korps_of_krieg",
+   "models": 10,
+   "key": "1"
+  },
+  {
+   "datasheet_id": "am.death_korps_of_krieg",
+   "models": 10,
+   "key": "2"
+  },
+  {
+   "datasheet_id": "am.artillery_team",
+   "models": 1,
+   "key": "3"
+  },
+  {
+   "datasheet_id": "am.death_riders",
+   "models": 10,
+   "key": "4"
+  },
+  {
+   "datasheet_id": "am.krieg_combat_engineers",
+   "models": 5,
+   "key": "5"
+  },
+  {
+   "datasheet_id": "am.stormlord",
+   "models": 1,
+   "key": "6"
+  }
+ ],
+ "battle_size": 1000,
+ "points": 935,
+ "notes": [
+  "Imported from a 40k app text export by tools2/import_army.py.",
+  "The export states 985 points; the snapshot totals 935.",
+  "Points come from the 11th edition snapshot, so they differ from an export written by a 10th edition app: this is the list re-priced under 11e, not a verified-legal 11e roster. Points are also unreconciled with the MFM (register A5), so treat the total as provisional.",
+  "Commissar Yarrick: snapshot says 120 pts for 1 models, the export says 150 — snapshot value used (points are unreconciled with MFM)",
+  "Death Korps Of Krieg: snapshot says 75 pts for 10 models, the export says 65 — snapshot value used (points are unreconciled with MFM)",
+  "Death Korps Of Krieg: snapshot says 75 pts for 10 models, the export says 65 — snapshot value used (points are unreconciled with MFM)",
+  "Death Riders: snapshot says 110 pts for 10 models, the export says 120 — snapshot value used (points are unreconciled with MFM)",
+  "Krieg Combat Engineers: snapshot says 65 pts for 5 models, the export says 60 — snapshot value used (points are unreconciled with MFM)",
+  "Stormlord: snapshot says 395 pts for 1 models, the export says 430 — snapshot value used (points are unreconciled with MFM)"
+ ]
+}

@@ -278,3 +278,89 @@ def test_eleventh_edition_datasheets_print_one_statline(data):
     assert entourage is not None
     assert len(entourage.models) == 1
     assert all(len(ds.models) == 1 for ds in data.datasheets.values())
+
+
+# --------------------------------------------------------------------------
+# Army importer (tools2/import_army.py)
+# --------------------------------------------------------------------------
+def _import(data, path):
+    from tools2.import_army import import_export
+
+    return import_export(data, open(path, encoding="utf-8").read())
+
+
+def test_importer_resolves_every_unit_of_the_real_exports(data):
+    """The owner's three 40k-app exports must import with nothing dropped."""
+    for name in ("bane", "inquisitors", "rogue_traders_army"):
+        report = _import(data, f"tools/rosters/imports/{name}.txt")
+        assert report.army is not None, name
+        assert report.unresolved == [], (name, report.unresolved)
+        assert report.army.units, name
+
+
+def test_importer_infers_printed_unit_sizes(data):
+    """Model counts are inferred from the export's bullet tree; every one must
+    land on a size the datasheet actually prints (including the 11-model squads
+    whose cyber-mastiff is a model in its own right)."""
+    for name in ("bane", "inquisitors", "rogue_traders_army"):
+        report = _import(data, f"tools/rosters/imports/{name}.txt")
+        for unit in report.army.units:
+            ds = data.datasheets[unit.datasheet_id]
+            sizes = {t.models for t in ds.points}
+            assert unit.models in sizes, (name, ds.name, unit.models, sorted(sizes))
+
+
+def test_importer_reads_the_header(data):
+    report = _import(data, "tools/rosters/imports/bane.txt")
+    army = report.army
+    assert army.name == "Bane"
+    assert army.faction == "AM"
+    assert army.detachment == "am.grizzled_company"
+    assert army.battle_size == 1000
+    assert any(u.warlord for u in army.units), "the export marks a Warlord"
+
+
+def test_importer_handles_both_header_dialects(data):
+    """One export prints "Grizzled Company" on its own line; another prints
+    "Ordo Hereticus, Purgation Force (3 Detachment Points)" plus a Force
+    Dispositions line."""
+    assert _import(data, "tools/rosters/imports/inquisitors.txt").army.detachment == (
+        "ia.ordo_hereticus_purgation_force"
+    )
+    assert _import(data, "tools/rosters/imports/rogue_traders_army.txt").army.detachment == (
+        "ia.imperialis_fleet"
+    )
+
+
+def test_importer_flags_a_disposition_disagreement(data):
+    """The exports were written by a 10th edition app. Where its stated Force
+    Disposition disagrees with the 11e pack, the pack wins and the difference is
+    reported — it decides which primary missions the army scores."""
+    report = _import(data, "tools/rosters/imports/inquisitors.txt")
+    assert any("Force Disposition" in w for w in report.warnings)
+    assert any("Take and Hold" in w for w in report.warnings)
+
+
+def test_importer_never_invents_a_datasheet(data):
+    """An unknown unit is reported and dropped, never matched to something
+    similar (mandate 3)."""
+    from tools2.import_army import import_export
+
+    export = (
+        "Fake List (100 points)\n\nAstra Militarum\nIncursion (1,000 Points)\n"
+        "Grizzled Company\n\nCHARACTERS\n\nUnit That Does Not Exist (100 points)\n"
+        "  • 1x Something\n"
+    )
+    report = import_export(data, export)
+    assert report.unresolved and "Unit That Does Not Exist" in report.unresolved[0]
+    assert not report.ok
+
+
+def test_imported_armies_are_loadable(data):
+    """The written files must round-trip through the loader the engine uses."""
+    for name in ("Bane", "Inquisitors"):
+        army = data.armies.get(name)
+        assert army is not None, f"{name} not in data2/armies"
+        assert army.units and army.points > 0
+        for unit in army.units:
+            assert unit.datasheet_id in data.datasheets

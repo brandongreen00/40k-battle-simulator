@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-16T09:17:14Z",
+ "generated": "2026-08-16T09:25:50Z",
  "data_version": "2026-08-14",
  "armies": [
   {
@@ -10,6 +10,15 @@
    "points": 485,
    "units": 8,
    "battle_size": 500
+  },
+  {
+   "name": "Bane",
+   "faction": "AM",
+   "detachment": "am.grizzled_company",
+   "disposition": "Priority Assets",
+   "points": 935,
+   "units": 7,
+   "battle_size": 1000
   },
   {
    "name": "Combined Arms Battlegroup",
@@ -36,6 +45,24 @@
    "disposition": "Reconnaissance",
    "points": 970,
    "units": 14,
+   "battle_size": 1000
+  },
+  {
+   "name": "Inquisitors",
+   "faction": "IA",
+   "detachment": "ia.ordo_hereticus_purgation_force",
+   "disposition": "Take and Hold",
+   "points": 940,
+   "units": 11,
+   "battle_size": 1000
+  },
+  {
+   "name": "Rogue Trader\u2019s Army",
+   "faction": "IA",
+   "detachment": "ia.imperialis_fleet",
+   "disposition": "Reconnaissance",
+   "points": 960,
+   "units": 10,
    "battle_size": 1000
   },
   {
@@ -111,6 +138,11 @@
   {
    "path": "heuristic_vs_random/logs/battle_502.json",
    "label": "Alien Hunters Strike vs Siege Regiment Vanguard \u2014 seed 502",
+   "generated": "2026-08-16"
+  },
+  {
+   "path": "logs/bane_vs_rogue_trader.json",
+   "label": "Bane vs Rogue Trader\u2019s Army \u2014 seed 1",
    "generated": "2026-08-16"
   },
   {
