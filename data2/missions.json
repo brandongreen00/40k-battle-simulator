@@ -1,0 +1,1290 @@
+[
+ {
+  "id": "battlefield_dominance",
+  "name": "Battlefield Dominance",
+  "kind": "primary",
+  "disposition": "Take and Hold",
+  "text": " (mirror match — both players play this card) [FIRST & SECOND BATTLE ROUND] — When: End of your turn - You control more objectives than your opponent. → 2VP [SECOND BATTLE ROUND ONWARDS] — When: End of your Command phase (or the end of your turn in the fifth battle round) - For each objective you control. → 3VP per instance (\"for each\") - + CUMULATIVE: For each of those objectives (excluding your home objective) if you control your home objective. → 2VP per instance (\"for each\") Source: https://gdmissions.app/11th/primary-missions/take-and-hold/battlefield-dominance ",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "rule": "control_more_objectives",
+    "per": 2,
+    "max": 2,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "you control more objectives than your opponent."
+   },
+   {
+    "rule": "control_objectives",
+    "per": 3,
+    "max": 15,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "for each objective you control."
+   },
+   {
+    "rule": "control_objectives",
+    "per": 2,
+    "max": 15,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "for each of those objectives (excluding your home objective) if you control your home objective."
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md (Warhammer Event Companion deck, GDM transcription)",
+   "retrieved": "2026-08-16",
+   "note": "card text is a community transcription; flagged for verification against the printed deck (§5.2)"
+  }
+ },
+ {
+  "id": "immovable_object",
+  "name": "Immovable Object",
+  "kind": "primary",
+  "disposition": "Take and Hold",
+  "text": " [ANY BATTLE ROUND] — When: End of your turn - You control one or more central objectives. → 3VP [SECOND TO FOURTH BATTLE ROUND] — When: End of your Command phase - For each objective you control (excluding your home objective). → 5VP per instance (\"for each\") [FIFTH BATTLE ROUND] — When: End of your turn - For each objective you control (excluding your home objective). → 5VP per instance (\"for each\") Source: https://gdmissions.app/11th/primary-missions/take-and-hold/immovable-object ",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "rule": "control_at_least",
+    "per": 3,
+    "max": 3,
+    "count": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "you control one or more central objectives."
+   },
+   {
+    "rule": "control_objectives",
+    "per": 5,
+    "max": 15,
+    "when": "command_phase",
+    "from_round": 1,
+    "printed": "for each objective you control (excluding your home objective)."
+   },
+   {
+    "rule": "control_objectives",
+    "per": 5,
+    "max": 15,
+    "when": "command_phase",
+    "from_round": 1,
+    "printed": "for each objective you control (excluding your home objective)."
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md (Warhammer Event Companion deck, GDM transcription)",
+   "retrieved": "2026-08-16",
+   "note": "card text is a community transcription; flagged for verification against the printed deck (§5.2)"
+  }
+ },
+ {
+  "id": "determined_acquisition",
+  "name": "Determined Acquisition",
+  "kind": "primary",
+  "disposition": "Take and Hold",
+  "text": " [ANY BATTLE ROUND] — When: End of your turn - For each objective you control that you did not control at the start of the turn (excluding your home objective). → 2VP per instance (\"for each\") [SECOND BATTLE ROUND ONWARDS] — When: End of your Command phase (or the end of your turn in the fifth battle round) - For each objective you control. → 3VP per instance (\"for each\") - + CUMULATIVE: For each of those objectives that is within your opponent's territory. → 3VP per instance (\"for each\") Source: https://gdmissions.app/11th/primary-missions/take-and-hold/determined-acquisition ",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "rule": "control_objectives",
+    "per": 2,
+    "max": 15,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "for each objective you control that you did not control at the start of the turn (excluding your home objective)."
+   },
+   {
+    "rule": "control_objectives",
+    "per": 3,
+    "max": 15,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "for each objective you control."
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md (Warhammer Event Companion deck, GDM transcription)",
+   "retrieved": "2026-08-16",
+   "note": "card text is a community transcription; flagged for verification against the printed deck (§5.2)"
+  }
+ },
+ {
+  "id": "purge_and_secure",
+  "name": "Purge and Secure",
+  "kind": "primary",
+  "disposition": "Take and Hold",
+  "text": " [ANY BATTLE ROUND] — When: End of your turn - One or more enemy units were destroyed this turn by a friendly unit that was within range of one or more objectives. → 3VP - OR: One or more enemy units that started the turn within range of one or more objectives were destroyed this turn. → 3VP [SECOND BATTLE ROUND ONWARDS] — When: End of your Command phase (or the end of your turn in the fifth battle round) - For each objective you control (excluding your home objective). → 4VP per instance (\"for each\") [SECOND BATTLE ROUND ONWARDS] — When: End of your turn - You control one or more objectives you did not control at the start of the turn (excluding your home objective). → 3VP Source: https://gdmissions.app/11th/primary-missions/take-and-hold/purge-and-secure ",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 3,
+    "max": 3,
+    "at_least": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "one or more enemy units were destroyed this turn by a friendly unit that was within range of one or more objectives."
+   },
+   {
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 3,
+    "max": 3,
+    "at_least": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "or: one or more enemy units that started the turn within range of one or more objectives were destroyed this turn."
+   },
+   {
+    "rule": "control_objectives",
+    "per": 4,
+    "max": 15,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "for each objective you control (excluding your home objective)."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 3,
+    "max": 3,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control one or more objectives you did not control at the start of the turn (excluding your home objective)."
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md (Warhammer Event Companion deck, GDM transcription)",
+   "retrieved": "2026-08-16",
+   "note": "card text is a community transcription; flagged for verification against the printed deck (§5.2)"
+  }
+ },
+ {
+  "id": "inescapable_dominion",
+  "name": "Inescapable Dominion",
+  "kind": "primary",
+  "disposition": "Take and Hold",
+  "text": " [ANY BATTLE ROUND] — When: End of your turn - You control three or more objectives. → 4VP [SECOND BATTLE ROUND ONWARDS] — When: End of your Command phase (or the end of your turn in the fifth battle round) - You control two or more objectives. → 5VP - You control more objectives than your opponent. → 4VP [END OF BATTLE] - You control your opponent's home objective. → 5VP Source: https://gdmissions.app/11th/primary-missions/take-and-hold/inescapable-dominion ### Purge the Foe player's missions ",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "rule": "control_at_least",
+    "per": 4,
+    "max": 4,
+    "count": 3,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "you control three or more objectives."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 5,
+    "max": 5,
+    "count": 2,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control two or more objectives."
+   },
+   {
+    "rule": "control_more_objectives",
+    "per": 4,
+    "max": 4,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control more objectives than your opponent."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 5,
+    "max": 5,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control your opponent's home objective."
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md (Warhammer Event Companion deck, GDM transcription)",
+   "retrieved": "2026-08-16",
+   "note": "card text is a community transcription; flagged for verification against the printed deck (§5.2)"
+  }
+ },
+ {
+  "id": "unstoppable_force",
+  "name": "Unstoppable Force",
+  "kind": "primary",
+  "disposition": "Purge the Foe",
+  "text": " [ANY BATTLE ROUND] — When: End of your turn - One or more enemy units were destroyed this turn. → 3VP [SECOND BATTLE ROUND ONWARDS] — When: End of your Command phase (or the end of your turn in the fifth battle round) - For each objective you control (excluding your home objective). → 4VP per instance (\"for each\") [SECOND BATTLE ROUND ONWARDS] — When: End of your turn - You control one or more objectives you did not control at the start of the turn (excluding your home objective). → 3VP [END OF BATTLE] - You control one or more central objectives. → 5VP Source: https://gdmissions.app/11th/primary-missions/purge-the-foe/unstoppable-force ",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 3,
+    "max": 3,
+    "at_least": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "one or more enemy units were destroyed this turn."
+   },
+   {
+    "rule": "control_objectives",
+    "per": 4,
+    "max": 15,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "for each objective you control (excluding your home objective)."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 3,
+    "max": 3,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control one or more objectives you did not control at the start of the turn (excluding your home objective)."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 5,
+    "max": 5,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control one or more central objectives."
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md (Warhammer Event Companion deck, GDM transcription)",
+   "retrieved": "2026-08-16",
+   "note": "card text is a community transcription; flagged for verification against the printed deck (§5.2)"
+  }
+ },
+ {
+  "id": "meatgrinder",
+  "name": "Meatgrinder",
+  "kind": "primary",
+  "disposition": "Purge the Foe",
+  "text": " (mirror match — both players play this card) [ANY BATTLE ROUND] — When: End of your turn - One or more enemy units were destroyed this turn. → 3VP [SECOND BATTLE ROUND ONWARDS] — When: End of your Command phase (or the end of your turn in the fifth battle round) - You control one or more objectives (excluding your home objective). → 4VP [SECOND BATTLE ROUND ONWARDS] — When: End of your turn - More enemy units were destroyed this turn than friendly units were destroyed in the previous turn. → 5VP - You control your opponent's home objective. → 5VP Source: https://gdmissions.app/11th/primary-missions/purge-the-foe/meatgrinder ",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 3,
+    "max": 3,
+    "at_least": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "one or more enemy units were destroyed this turn."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 4,
+    "max": 4,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control one or more objectives (excluding your home objective)."
+   },
+   {
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 5,
+    "max": 5,
+    "at_least": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "more enemy units were destroyed this turn than friendly units were destroyed in the previous turn."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 5,
+    "max": 5,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control your opponent's home objective."
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md (Warhammer Event Companion deck, GDM transcription)",
+   "retrieved": "2026-08-16",
+   "note": "card text is a community transcription; flagged for verification against the printed deck (§5.2)"
+  }
+ },
+ {
+  "id": "punishment",
+  "name": "Punishment",
+  "kind": "primary",
+  "disposition": "Purge the Foe",
+  "text": " Card preamble (setup rule, printed above the scoring blocks; transcribed from the card face): \"START OF YOUR TURN: Choose one to three enemy units on the battlefield that are within range of objectives and/or destroyed at least one friendly unit during the previous turn. If you cannot do so, choose any enemy unit on the battlefield instead. From now until the start of your next turn, those units are condemned.\" [ANY BATTLE ROUND] — When: End of a turn - One or more condemned enemy units left the battlefield this turn. → 5VP [SECOND BATTLE ROUND ONWARDS] — When: End of your Command phase (or the end of your turn in the fifth battle round) - You control one or more objectives (excluding your home objective). → 4VP - You control more objectives than your opponent. → 5VP [END OF BATTLE] - You control your opponent's home objective. → 8VP Source: https://gdmissions.app/11th/primary-missions/purge-the-foe/punishment ",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "rule": "control_at_least",
+    "per": 4,
+    "max": 4,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control one or more objectives (excluding your home objective)."
+   },
+   {
+    "rule": "control_more_objectives",
+    "per": 5,
+    "max": 5,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control more objectives than your opponent."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 8,
+    "max": 8,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control your opponent's home objective."
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md (Warhammer Event Companion deck, GDM transcription)",
+   "retrieved": "2026-08-16",
+   "note": "card text is a community transcription; flagged for verification against the printed deck (§5.2)"
+  }
+ },
+ {
+  "id": "consecrate",
+  "name": "Consecrate",
+  "kind": "primary",
+  "disposition": "Purge the Foe",
+  "text": " Card preamble (transcribed from the card face): \"CONSECRATE: When a friendly unit destroys an enemy unit it becomes a consecration unit. At the end of your turn, each consecration unit in range of an objective (excluding your home objective) not yet consecrated consecrates it — place an operation marker there; the unit then is no longer a consecration unit.\" [ANY BATTLE ROUND] — When: End of your turn - One or two objectives are consecrated. → 3VP - OR: Three or more objectives are consecrated. → 6VP [SECOND BATTLE ROUND ONWARDS] — When: End of your Command phase (or the end of your turn in the fifth battle round) - You control one or more objectives (excluding your home objective). → 4VP - You control more objectives than your opponent. → 4VP [END OF BATTLE] - The enemy home objective has been consecrated. → 5VP Source: https://gdmissions.app/11th/primary-missions/purge-the-foe/consecrate ",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "rule": "control_at_least",
+    "per": 4,
+    "max": 4,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control one or more objectives (excluding your home objective)."
+   },
+   {
+    "rule": "control_more_objectives",
+    "per": 4,
+    "max": 4,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control more objectives than your opponent."
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md (Warhammer Event Companion deck, GDM transcription)",
+   "retrieved": "2026-08-16",
+   "note": "card text is a community transcription; flagged for verification against the printed deck (§5.2)"
+  }
+ },
+ {
+  "id": "destroyer's_wrath",
+  "name": "Destroyer's Wrath",
+  "kind": "primary",
+  "disposition": "Purge the Foe",
+  "text": " [ANY BATTLE ROUND] — When: End of your turn - One or more enemy units were destroyed this turn. → 3VP [SECOND BATTLE ROUND ONWARDS] — When: End of your Command phase (or the end of your turn in the fifth battle round) - You control one or more objectives (excluding your home objective). → 4VP - You control more objectives than your opponent. → 6VP [SECOND BATTLE ROUND ONWARDS] — When: End of your turn - More enemy units were destroyed this turn than friendly units were destroyed in the previous turn. → 4VP Source: https://gdmissions.app/11th/primary-missions/purge-the-foe/destroyers-wrath ### Disruption player's missions ",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 3,
+    "max": 3,
+    "at_least": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "one or more enemy units were destroyed this turn."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 4,
+    "max": 4,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control one or more objectives (excluding your home objective)."
+   },
+   {
+    "rule": "control_more_objectives",
+    "per": 6,
+    "max": 6,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control more objectives than your opponent."
+   },
+   {
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 4,
+    "max": 4,
+    "at_least": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "more enemy units were destroyed this turn than friendly units were destroyed in the previous turn."
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md (Warhammer Event Companion deck, GDM transcription)",
+   "retrieved": "2026-08-16",
+   "note": "card text is a community transcription; flagged for verification against the printed deck (§5.2)"
+  }
+ },
+ {
+  "id": "death_trap",
+  "name": "Death Trap",
+  "kind": "primary",
+  "disposition": "Disruption",
+  "text": " [ANY BATTLE ROUND] — When: End of your turn - For each terrain area trapped this turn (see reverse). → 2VP per instance (\"for each\") - + CUMULATIVE: For each of those terrain areas that is an objective. → 3VP per instance (\"for each\") [ANY BATTLE ROUND] — When: End of your turn - One or more enemy units that started the turn within a terrain area were destroyed, if that terrain area is trapped. → 3VP [SECOND BATTLE ROUND ONWARDS] — When: End of your Command phase (or the end of your turn in the fifth battle round) - You control one or more objectives (excluding your home objective). → 4VP Objective Action (card reverse): “Booby Trap” - STARTS: Your Shooting phase. - UNITS: One friendly unit within range of an objective (excluding your home objective), or within a terrain area outside your deployment zone that is not yet trapped. - USE LIMIT: Unlimited. Each unit initiating this action this phase must be within a different terrain area. - COMPLETES: Immediately. - EFFECT: That terrain area is trapped — place one of your operation markers within that terrain area. Source: https://gdmissions.app/11th/primary-missions/disruption/death-trap ",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 3,
+    "max": 3,
+    "at_least": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "one or more enemy units that started the turn within a terrain area were destroyed, if that terrain area is trapped."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 4,
+    "max": 4,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control one or more objectives (excluding your home objective)."
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md (Warhammer Event Companion deck, GDM transcription)",
+   "retrieved": "2026-08-16",
+   "note": "card text is a community transcription; flagged for verification against the printed deck (§5.2)"
+  }
+ },
+ {
+  "id": "delaying_action",
+  "name": "Delaying Action",
+  "kind": "primary",
+  "disposition": "Disruption",
+  "text": " [ANY BATTLE ROUND] — When: End of your turn - For each enemy unit destroyed this turn. → 2VP per instance (\"for each\") [SECOND BATTLE ROUND ONWARDS] — When: End of your Command phase (or the end of your turn in the fifth battle round) - You control one or more objectives (excluding home objectives). → 4VP [SECOND BATTLE ROUND ONWARDS] — When: End of your turn - You control one or more central objectives and one or more expansion objectives. → 3VP Source: https://gdmissions.app/11th/primary-missions/disruption/delaying-action ",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 2,
+    "max": 15,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "for each enemy unit destroyed this turn."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 4,
+    "max": 4,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control one or more objectives (excluding home objectives)."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 3,
+    "max": 3,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control one or more central objectives and one or more expansion objectives."
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md (Warhammer Event Companion deck, GDM transcription)",
+   "retrieved": "2026-08-16",
+   "note": "card text is a community transcription; flagged for verification against the printed deck (§5.2)"
+  }
+ },
+ {
+  "id": "outmanoeuvre",
+  "name": "Outmanoeuvre",
+  "kind": "primary",
+  "disposition": "Disruption",
+  "text": " (mirror match — both players play this card) [ANY BATTLE ROUND] — When: End of your turn - You control the enemy home objective. → 10VP [FIRST BATTLE ROUND] — When: End of your turn - For each objective you control (excluding your home objective). → 4VP per instance (\"for each\") [SECOND & THIRD BATTLE ROUND] — When: End of your Command phase - For each objective you control (excluding your home objective). → 5VP per instance (\"for each\") [FOURTH BATTLE ROUND ONWARDS] — When: End of your turn - For each objective you control (excluding your home objective). → 6VP per instance (\"for each\") Source: https://gdmissions.app/11th/primary-missions/disruption/outmanoeuvre ",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "rule": "control_at_least",
+    "per": 10,
+    "max": 10,
+    "count": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "you control the enemy home objective."
+   },
+   {
+    "rule": "control_objectives",
+    "per": 4,
+    "max": 15,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "for each objective you control (excluding your home objective)."
+   },
+   {
+    "rule": "control_objectives",
+    "per": 5,
+    "max": 15,
+    "when": "command_phase",
+    "from_round": 1,
+    "printed": "for each objective you control (excluding your home objective)."
+   },
+   {
+    "rule": "control_objectives",
+    "per": 6,
+    "max": 15,
+    "when": "command_phase",
+    "from_round": 1,
+    "printed": "for each objective you control (excluding your home objective)."
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md (Warhammer Event Companion deck, GDM transcription)",
+   "retrieved": "2026-08-16",
+   "note": "card text is a community transcription; flagged for verification against the printed deck (§5.2)"
+  }
+ },
+ {
+  "id": "smoke_and_mirrors",
+  "name": "Smoke and Mirrors",
+  "kind": "primary",
+  "disposition": "Disruption",
+  "text": " [ANY BATTLE ROUND] — When: End of your turn - For each objective that is decoyed (see reverse). → 2VP per instance (\"for each\") - + CUMULATIVE: For each of those objectives that is within your opponent's territory. → 2VP per instance (\"for each\") [SECOND BATTLE ROUND ONWARDS] — When: End of your Command phase (or the end of your turn in the fifth battle round) - You control one or more objectives (excluding your home objective). → 4VP [END OF BATTLE] - Four or more objectives are decoyed. → 10VP Objective Action (card reverse): “Decoy” - STARTS: Your Shooting phase. - UNITS: One friendly unit within range of an objective (excluding your home objective) that is not a decoy. - USE LIMIT: Unlimited. Each unit that starts this action this phase must be within range of a different objective. - COMPLETES: End of your turn, if your unit controls that objective. - EFFECT: That objective becomes a decoy — place one of your operation markers within range of that objective. Source: https://gdmissions.app/11th/primary-missions/disruption/smoke-and-mirrors ",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "rule": "control_at_least",
+    "per": 4,
+    "max": 4,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control one or more objectives (excluding your home objective)."
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md (Warhammer Event Companion deck, GDM transcription)",
+   "retrieved": "2026-08-16",
+   "note": "card text is a community transcription; flagged for verification against the printed deck (§5.2)"
+  }
+ },
+ {
+  "id": "locate_and_deny",
+  "name": "Locate and Deny",
+  "kind": "primary",
+  "disposition": "Disruption",
+  "text": " Card preamble (transcribed from the card face): \"START OF THE BATTLE: Select five terrain areas not within your deployment zone and place one of your operation markers in each. If this is not possible, place one in each terrain area outside your deployment zone.\" [ANY BATTLE ROUND] — When: End of your turn - One or more enemy units that started the turn within range of one or more objectives are destroyed. → 4VP - Only one of your operation markers remains (see reverse), with a unit of yours in that terrain area and no enemy units there. → 4VP [SECOND BATTLE ROUND ONWARDS] — When: End of your Command phase (or the end of your turn in the fifth battle round) - You control one or more objectives (excluding your home objective). → 4VP [END OF BATTLE] - Only one of your operation markers remains, with a unit of yours in that terrain area and no enemy units there. → 5VP Objective Action (card reverse): “Sensor Sweep” - STARTS: Your Shooting phase. - UNITS: One friendly unit within range of a central objective. - USE LIMIT: Once per turn. - COMPLETES: End of your turn, if your unit controls that objective. - EFFECT: Your unit performs a sensor sweep — remove one operation marker from the battlefield. - RESTRICTION: A unit cannot start this action if only one operation marker remains on the battlefield. Source: https://gdmissions.app/11th/primary-missions/disruption/locate-and-deny ### Reconnaissance player's missions ",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 4,
+    "max": 4,
+    "at_least": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "one or more enemy units that started the turn within range of one or more objectives are destroyed."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 4,
+    "max": 4,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control one or more objectives (excluding your home objective)."
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md (Warhammer Event Companion deck, GDM transcription)",
+   "retrieved": "2026-08-16",
+   "note": "card text is a community transcription; flagged for verification against the printed deck (§5.2)"
+  }
+ },
+ {
+  "id": "reconnaissance_sweep",
+  "name": "Reconnaissance Sweep",
+  "kind": "primary",
+  "disposition": "Reconnaissance",
+  "text": " [ANY BATTLE ROUND] — When: End of your turn - Three or more friendly units are wholly within three different table quarters and not within 6\" of the centre of the battlefield. → 3VP - OR: Four or more friendly units are wholly within four different table quarters and not within 6\" of the centre of the battlefield. → 6VP [ANY BATTLE ROUND] — When: End of your turn - For each enemy unit destroyed this turn. → 1VP per instance (\"for each\") [SECOND BATTLE ROUND ONWARDS] — When: End of your Command phase (or the end of your turn in the fifth battle round) - You control one or more objectives (excluding your home objective). → 3VP Source: https://gdmissions.app/11th/primary-missions/reconnaissance/reconnaissance-sweep ",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 1,
+    "max": 15,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "for each enemy unit destroyed this turn."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 3,
+    "max": 3,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control one or more objectives (excluding your home objective)."
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md (Warhammer Event Companion deck, GDM transcription)",
+   "retrieved": "2026-08-16",
+   "note": "card text is a community transcription; flagged for verification against the printed deck (§5.2)"
+  }
+ },
+ {
+  "id": "triangulation",
+  "name": "Triangulation",
+  "kind": "primary",
+  "disposition": "Reconnaissance",
+  "text": " [SECOND BATTLE ROUND ONWARDS] — When: End of your Command phase (or the end of your turn in the fifth battle round) - You control one or more objectives (excluding your home objective). → 4VP [SECOND BATTLE ROUND ONWARDS] — When: End of your turn - One objective is triangulated (see reverse). → 3VP - OR: Two objectives are triangulated. → 6VP - OR: Three or more objectives are triangulated. → 10VP [END OF BATTLE] - You control four or more objectives. → 10VP Objective Action (card reverse): “Triangulate” - STARTS: Your Shooting phase, from the second battle round onwards. - UNITS: One friendly unit within range of an objective (excluding your home objective). - USE LIMIT: Once per turn. - COMPLETES: End of your turn, if your unit controls that objective. - EFFECT: That objective is triangulated — place one of your operation markers within range of that objective. Source: https://gdmissions.app/11th/primary-missions/reconnaissance/triangulation ",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "rule": "control_at_least",
+    "per": 4,
+    "max": 4,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control one or more objectives (excluding your home objective)."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 10,
+    "max": 10,
+    "count": 4,
+    "when": "end_of_turn",
+    "from_round": 2,
+    "printed": "you control four or more objectives."
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md (Warhammer Event Companion deck, GDM transcription)",
+   "retrieved": "2026-08-16",
+   "note": "card text is a community transcription; flagged for verification against the printed deck (§5.2)"
+  }
+ },
+ {
+  "id": "surveil_the_foe",
+  "name": "Surveil the Foe",
+  "kind": "primary",
+  "disposition": "Reconnaissance",
+  "text": " Card preamble (transcribed from the card face): \"Each time a friendly unit ends a move within range of an objective that has enemy operation markers within range of it, remove those operation markers from the battlefield.\" [ANY BATTLE ROUND] — When: End of your turn - One or more enemy units were surveilled this turn (see reverse), unless each of those units is within range of one or more objectives that have one or more operation markers within range of them. → 4VP [SECOND BATTLE ROUND ONWARDS] — When: End of your Command phase (or the end of your turn in the fifth battle round) - You control one or more objectives (excluding your home objective). → 4VP - You control more objectives than your opponent. → 4VP [SECOND BATTLE ROUND ONWARDS] — When: End of your turn - No enemy operation markers are on the battlefield. → 5VP Objective Action (card reverse): “Surveil the Foe” - STARTS: Your Shooting phase. - UNITS: One friendly unit. - USE LIMIT: Unlimited. - COMPLETES: Immediately. - EFFECT: Select one enemy unit within 18\" of your unit that is visible to it and has not yet been surveilled this turn. Until the end of the turn, that enemy unit is surveilled. Source: https://gdmissions.app/11th/primary-missions/reconnaissance/surveil-the-foe ",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "rule": "control_at_least",
+    "per": 4,
+    "max": 4,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control one or more objectives (excluding your home objective)."
+   },
+   {
+    "rule": "control_more_objectives",
+    "per": 4,
+    "max": 4,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control more objectives than your opponent."
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md (Warhammer Event Companion deck, GDM transcription)",
+   "retrieved": "2026-08-16",
+   "note": "card text is a community transcription; flagged for verification against the printed deck (§5.2)"
+  }
+ },
+ {
+  "id": "gather_intel",
+  "name": "Gather Intel",
+  "kind": "primary",
+  "disposition": "Reconnaissance",
+  "text": " (mirror match — both players play this card) [FIRST BATTLE ROUND] — When: End of your turn - You control one or more central objectives. → 6VP [SECOND BATTLE ROUND ONWARDS] — When: End of your Command phase (or the end of your turn in the fifth battle round) - You control one or more objectives (excluding your home objective). → 4VP [SECOND BATTLE ROUND ONWARDS] — When: End of your turn - For each friendly unit that extracted intelligence this turn (see reverse). → 7VP per instance (\"for each\") [END OF BATTLE] - Three or more of your operation markers are on the battlefield. → 5VP - One of your operation markers is within range of your opponent's home objective. → 5VP Objective Action (card reverse): “Extract Intelligence” - STARTS: Your Shooting phase, from the second battle round onwards. - UNITS: One friendly unit within range of an objective (excluding your home objective) that does not have any of your operation markers within range of it. - USE LIMIT: Unlimited. Each unit that starts this action this phase must be within range of a different objective. - COMPLETES: End of your turn, if your unit controls that objective. - EFFECT: Your unit extracts intelligence — place one of your operation markers within range of that objective. Source: https://gdmissions.app/11th/primary-missions/reconnaissance/gather-intel ",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "rule": "control_at_least",
+    "per": 6,
+    "max": 6,
+    "count": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "you control one or more central objectives."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 4,
+    "max": 4,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control one or more objectives (excluding your home objective)."
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md (Warhammer Event Companion deck, GDM transcription)",
+   "retrieved": "2026-08-16",
+   "note": "card text is a community transcription; flagged for verification against the printed deck (§5.2)"
+  }
+ },
+ {
+  "id": "search_and_scour",
+  "name": "Search and Scour",
+  "kind": "primary",
+  "disposition": "Reconnaissance",
+  "text": " [ANY BATTLE ROUND] — When: End of your turn - You control one or more central objectives. → 3VP - One or more enemy units that started the turn within a terrain area are destroyed. → 2VP [SECOND BATTLE ROUND ONWARDS] — When: End of your Command phase (or the end of your turn in the fifth battle round) - For each objective you control (excluding your home objective). → 4VP per instance (\"for each\") [END OF BATTLE] - No enemy units are wholly within your territory. → 5VP Source: https://gdmissions.app/11th/primary-missions/reconnaissance/search-and-scour ### Priority Assets player's missions ",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "rule": "control_at_least",
+    "per": 3,
+    "max": 3,
+    "count": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "you control one or more central objectives."
+   },
+   {
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 2,
+    "max": 2,
+    "at_least": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "one or more enemy units that started the turn within a terrain area are destroyed."
+   },
+   {
+    "rule": "control_objectives",
+    "per": 4,
+    "max": 15,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "for each objective you control (excluding your home objective)."
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md (Warhammer Event Companion deck, GDM transcription)",
+   "retrieved": "2026-08-16",
+   "note": "card text is a community transcription; flagged for verification against the printed deck (§5.2)"
+  }
+ },
+ {
+  "id": "secure_asset",
+  "name": "Secure Asset",
+  "kind": "primary",
+  "disposition": "Priority Assets",
+  "text": " [ANY BATTLE ROUND] — When: End of your turn - A friendly unit secured the asset this turn (see reverse). → 4VP - One or more enemy units that started the turn within range of one or more central objectives are destroyed. → 2VP [SECOND BATTLE ROUND ONWARDS] — When: End of your Command phase (or the end of your turn in the fifth battle round) - You control one or more objectives (excluding your home objective). → 4VP - You control three or more objectives. → 4VP Objective Action (card reverse): “Secure Asset” - STARTS: Your Shooting phase. - UNITS: One friendly unit within range of an objective (excluding your home objective). - USE LIMIT: Once per turn. - COMPLETES: End of your turn, if your unit controls that objective. - EFFECT: Your unit secures the asset. Source: https://gdmissions.app/11th/primary-missions/priority-assets/secure-asset ",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 2,
+    "max": 2,
+    "at_least": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "one or more enemy units that started the turn within range of one or more central objectives are destroyed."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 4,
+    "max": 4,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control one or more objectives (excluding your home objective)."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 4,
+    "max": 4,
+    "count": 3,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control three or more objectives."
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md (Warhammer Event Companion deck, GDM transcription)",
+   "retrieved": "2026-08-16",
+   "note": "card text is a community transcription; flagged for verification against the printed deck (§5.2)"
+  }
+ },
+ {
+  "id": "vital_link",
+  "name": "Vital Link",
+  "kind": "primary",
+  "disposition": "Priority Assets",
+  "text": " [ANY BATTLE ROUND] — When: End of your turn - You control one or more central objectives. → 2VP - + CUMULATIVE: For each of your operation markers within range of one of those objectives (see reverse). → 1VP per instance (\"for each\") [SECOND BATTLE ROUND ONWARDS] — When: End of your Command phase (or the end of your turn in the fifth battle round) - You control one or more objectives (excluding your home objective). → 4VP - + CUMULATIVE: One or more of those objectives is a central objective. → 4VP [END OF BATTLE] - You control your opponent's home objective. → 10VP Objective Action (card reverse): “Maintain Control” - STARTS: Your Shooting phase. - UNITS: One friendly unit within range of one central objective. - USE LIMIT: Once per turn. - COMPLETES: End of your turn, if your unit controls that objective. - EFFECT: Place one of your operation markers within range of that objective. Source: https://gdmissions.app/11th/primary-missions/priority-assets/vital-link ",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "rule": "control_at_least",
+    "per": 2,
+    "max": 2,
+    "count": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "you control one or more central objectives."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 4,
+    "max": 4,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control one or more objectives (excluding your home objective)."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 10,
+    "max": 10,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control your opponent's home objective."
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md (Warhammer Event Companion deck, GDM transcription)",
+   "retrieved": "2026-08-16",
+   "note": "card text is a community transcription; flagged for verification against the printed deck (§5.2)"
+  }
+ },
+ {
+  "id": "extract_relic",
+  "name": "Extract Relic",
+  "kind": "primary",
+  "disposition": "Priority Assets",
+  "text": " [ANY BATTLE ROUND] — When: End of your turn - A friendly unit performed a sensor sweep this turn (see reverse). → 4VP - One or more enemy units that started the turn within range of one or more objectives are destroyed. → 3VP - Only one of your opponent's operation markers is on the battlefield, if one or more of your units are within the same terrain area as that operation marker, and no enemy units are within that terrain area. → 4VP [SECOND BATTLE ROUND ONWARDS] — When: End of your Command phase (or the end of your turn in the fifth battle round) - You control one or more objectives (excluding your home objective). → 4VP [END OF BATTLE] - Only one of your opponent's operation markers is on the battlefield, if one or more of your units are within the same terrain area as that operation marker, and no enemy units are within that terrain area. → 5VP Objective Action (card reverse): “Sensor Sweep” - STARTS: Your Shooting phase. - UNITS: One friendly unit within range of a central objective. - USE LIMIT: Once per turn. - COMPLETES: End of your turn, if your unit controls that objective. - EFFECT: Your unit performs a sensor sweep — remove one operation marker from the battlefield. - RESTRICTIONS: A unit cannot start this action if only one operation marker remains on the battlefield. Source: https://gdmissions.app/11th/primary-missions/priority-assets/extract-relic ",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 3,
+    "max": 3,
+    "at_least": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "one or more enemy units that started the turn within range of one or more objectives are destroyed."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 4,
+    "max": 4,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control one or more objectives (excluding your home objective)."
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md (Warhammer Event Companion deck, GDM transcription)",
+   "retrieved": "2026-08-16",
+   "note": "card text is a community transcription; flagged for verification against the printed deck (§5.2)"
+  }
+ },
+ {
+  "id": "vanguard_operation",
+  "name": "Vanguard Operation",
+  "kind": "primary",
+  "disposition": "Priority Assets",
+  "text": " [ANY BATTLE ROUND] — When: End of your turn - A friendly unit performed a vanguard operation this turn (see reverse). → 4VP - One or more enemy units were destroyed this turn. → 2VP [SECOND BATTLE ROUND ONWARDS] — When: End of your Command phase (or the end of your turn in the fifth battle round) - You control one or more objectives (excluding your home objective). → 4VP [END OF BATTLE] - You control your opponent's home objective. → 10VP Objective Action (card reverse): “Vanguard Operation” - STARTS: Your Shooting phase. - UNITS: One friendly unit within a terrain area located in enemy territory. - USE LIMIT: Once per turn. - COMPLETES: End of your turn, provided no enemy units are within that terrain area. - EFFECT: Your unit performs a vanguard operation. Source: https://gdmissions.app/11th/primary-missions/priority-assets/vanguard-operation ",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 2,
+    "max": 2,
+    "at_least": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "one or more enemy units were destroyed this turn."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 4,
+    "max": 4,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control one or more objectives (excluding your home objective)."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 10,
+    "max": 10,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control your opponent's home objective."
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md (Warhammer Event Companion deck, GDM transcription)",
+   "retrieved": "2026-08-16",
+   "note": "card text is a community transcription; flagged for verification against the printed deck (§5.2)"
+  }
+ },
+ {
+  "id": "sabotage",
+  "name": "Sabotage",
+  "kind": "primary",
+  "disposition": "Priority Assets",
+  "text": " (mirror match — both players play this card) [ANY BATTLE ROUND] — When: End of your turn - For each friendly unit that committed sabotage this turn (see reverse). → 3VP per instance (\"for each\") - + CUMULATIVE: For each of those units that is within range of one or more objectives in your opponent's territory. → 2VP per instance (\"for each\") [SECOND BATTLE ROUND ONWARDS] — When: End of your Command phase (or the end of your turn in the fifth battle round) - You control one or more objectives (excluding your home objective). → 4VP Objective Action (card reverse): “Sabotage” - STARTS: Your Shooting phase. - UNITS: One unit within range of an objective (excluding your home objective). - USE LIMIT: Unlimited. Each unit that starts this action this phase must be within range of a different objective. - COMPLETES: End of your turn, if that unit controls that objective. - EFFECT: Your unit commits sabotage. Source: https://gdmissions.app/11th/primary-missions/priority-assets/sabotage --- ## 4. Secondary Missions — full card rules (all 18) The deck is 18 cards per player (Attacker deck + Defender deck, same contents — see §1). Four cards are dual FIXED/TACTICAL (usable as Fixed missions): Assassination, Bring it Down, A Grievous Blow, Engage on All Fronts; the FIXED block on those cards is the version used when the card is one of your two chosen Fixed Missions, and the TACTICAL block is the version used when it is drawn from the deck. All other cards are Tactical-only. Per Tabletop ",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "rule": "control_at_least",
+    "per": 4,
+    "max": 4,
+    "count": 1,
+    "when": "command_phase",
+    "from_round": 2,
+    "printed": "you control one or more objectives (excluding your home objective)."
+   },
+   {
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 4,
+    "max": 15,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "for each enemy unit with a starting strength of 13 or more that is destroyed this turn."
+   },
+   {
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 5,
+    "max": 5,
+    "at_least": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "one or more enemy units with a starting strength of 13 or more were destroyed this turn."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 3,
+    "max": 3,
+    "count": 1,
+    "when": "end_of_turn",
+    "from_round": 2,
+    "printed": "you control your home objective."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 5,
+    "max": 5,
+    "count": 1,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "you control your opponent's home objective and/or each expansion objective."
+   },
+   {
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 2,
+    "max": 15,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "for each enemy unit destroyed this turn."
+   },
+   {
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 3,
+    "max": 15,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "for each enemy unit that started the turn within range of one or more objectives and is destroyed."
+   },
+   {
+    "rule": "control_at_least",
+    "per": 5,
+    "max": 5,
+    "count": 2,
+    "when": "end_of_turn",
+    "from_round": 1,
+    "printed": "you control two or more objectives within no man's land (excluding your home objective)."
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md (Warhammer Event Companion deck, GDM transcription)",
+   "retrieved": "2026-08-16",
+   "note": "card text is a community transcription; flagged for verification against the printed deck (§5.2)"
+  }
+ },
+ {
+  "id": "destroyer’s_wrath",
+  "name": "Destroyer’S Wrath",
+  "kind": "primary",
+  "disposition": "Purge The Foe",
+  "text": "",
+  "fixed_capable": false,
+  "scoring": [],
+  "provenance": {
+   "source": "Event Companion layout pages (mission name only)",
+   "retrieved": "2026-08-16"
+  }
+ },
+ {
+  "id": "a_grievous_blow_—_**fixed_capable**",
+  "name": "A Grievous Blow — **FIXED-capable**",
+  "kind": "secondary",
+  "disposition": "",
+  "text": "",
+  "fixed_capable": true,
+  "scoring": [],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md",
+   "retrieved": "2026-08-16"
+  }
+ },
+ {
+  "id": "a_tempting_target",
+  "name": "A Tempting Target",
+  "kind": "secondary",
+  "disposition": "",
+  "text": "",
+  "fixed_capable": false,
+  "scoring": [],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md",
+   "retrieved": "2026-08-16"
+  }
+ },
+ {
+  "id": "assassination_—_**fixed_capable**",
+  "name": "Assassination — **FIXED-capable**",
+  "kind": "secondary",
+  "disposition": "",
+  "text": "",
+  "fixed_capable": true,
+  "scoring": [],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md",
+   "retrieved": "2026-08-16"
+  }
+ },
+ {
+  "id": "beacon",
+  "name": "Beacon",
+  "kind": "secondary",
+  "disposition": "",
+  "text": "",
+  "fixed_capable": false,
+  "scoring": [],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md",
+   "retrieved": "2026-08-16"
+  }
+ },
+ {
+  "id": "behind_enemy_lines",
+  "name": "Behind Enemy Lines",
+  "kind": "secondary",
+  "disposition": "",
+  "text": "",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "when": "end_of_turn",
+    "rule": "units_in_enemy_half",
+    "per": 4,
+    "max": 8
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md",
+   "retrieved": "2026-08-16"
+  }
+ },
+ {
+  "id": "bring_it_down_—_**fixed_capable**",
+  "name": "Bring It Down — **FIXED-capable**",
+  "kind": "secondary",
+  "disposition": "",
+  "text": "",
+  "fixed_capable": true,
+  "scoring": [],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md",
+   "retrieved": "2026-08-16"
+  }
+ },
+ {
+  "id": "burden_of_trust",
+  "name": "Burden of Trust",
+  "kind": "secondary",
+  "disposition": "",
+  "text": "",
+  "fixed_capable": false,
+  "scoring": [],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md",
+   "retrieved": "2026-08-16"
+  }
+ },
+ {
+  "id": "centre_ground",
+  "name": "Centre Ground",
+  "kind": "secondary",
+  "disposition": "",
+  "text": "",
+  "fixed_capable": false,
+  "scoring": [],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md",
+   "retrieved": "2026-08-16"
+  }
+ },
+ {
+  "id": "cleanse",
+  "name": "Cleanse",
+  "kind": "secondary",
+  "disposition": "",
+  "text": "",
+  "fixed_capable": false,
+  "scoring": [],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md",
+   "retrieved": "2026-08-16"
+  }
+ },
+ {
+  "id": "defend_stronghold",
+  "name": "Defend Stronghold",
+  "kind": "secondary",
+  "disposition": "",
+  "text": "",
+  "fixed_capable": false,
+  "scoring": [],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md",
+   "retrieved": "2026-08-16"
+  }
+ },
+ {
+  "id": "display_of_might",
+  "name": "Display of Might",
+  "kind": "secondary",
+  "disposition": "",
+  "text": "",
+  "fixed_capable": false,
+  "scoring": [],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md",
+   "retrieved": "2026-08-16"
+  }
+ },
+ {
+  "id": "engage_on_all_fronts_—_**fixed_capable**",
+  "name": "Engage on All Fronts — **FIXED-capable**",
+  "kind": "secondary",
+  "disposition": "",
+  "text": "",
+  "fixed_capable": true,
+  "scoring": [],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md",
+   "retrieved": "2026-08-16"
+  }
+ },
+ {
+  "id": "forward_position",
+  "name": "Forward Position",
+  "kind": "secondary",
+  "disposition": "",
+  "text": "",
+  "fixed_capable": false,
+  "scoring": [],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md",
+   "retrieved": "2026-08-16"
+  }
+ },
+ {
+  "id": "no_prisoners",
+  "name": "No Prisoners",
+  "kind": "secondary",
+  "disposition": "",
+  "text": "",
+  "fixed_capable": false,
+  "scoring": [
+   {
+    "when": "end_of_turn",
+    "rule": "enemy_units_destroyed_this_turn",
+    "per": 2,
+    "max": 10
+   }
+  ],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md",
+   "retrieved": "2026-08-16"
+  }
+ },
+ {
+  "id": "outflank",
+  "name": "Outflank",
+  "kind": "secondary",
+  "disposition": "",
+  "text": "",
+  "fixed_capable": false,
+  "scoring": [],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md",
+   "retrieved": "2026-08-16"
+  }
+ },
+ {
+  "id": "overwhelming_force",
+  "name": "Overwhelming Force",
+  "kind": "secondary",
+  "disposition": "",
+  "text": "",
+  "fixed_capable": false,
+  "scoring": [],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md",
+   "retrieved": "2026-08-16"
+  }
+ },
+ {
+  "id": "plunder",
+  "name": "Plunder",
+  "kind": "secondary",
+  "disposition": "",
+  "text": "",
+  "fixed_capable": false,
+  "scoring": [],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md",
+   "retrieved": "2026-08-16"
+  }
+ },
+ {
+  "id": "secure_no_man's_land",
+  "name": "Secure No Man's Land",
+  "kind": "secondary",
+  "disposition": "",
+  "text": "",
+  "fixed_capable": false,
+  "scoring": [],
+  "provenance": {
+   "source": "project mission dossier docs/11e_missions.md",
+   "retrieved": "2026-08-16"
+  }
+ }
+]

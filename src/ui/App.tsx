@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import type { Roster } from '../core/types';
+import { AutoPlayer } from './autoplayer/AutoPlayer';
 import { ListBuilder } from './listbuilder/ListBuilder';
 import { MeasuringBoard } from './MeasuringBoard';
 
-type View = 'builder' | 'board';
+type View = 'builder' | 'board' | 'autoplayer';
 
 export function App() {
   const [view, setView] = useState<View>('builder');
@@ -21,10 +22,19 @@ export function App() {
           <button className={view === 'board' ? 'on' : ''} onClick={() => setView('board')}>
             Measuring Board
           </button>
+          <button
+            className={view === 'autoplayer' ? 'on' : ''}
+            onClick={() => setView('autoplayer')}
+            title="v2 simulator: configure runs, read results, replay battles"
+          >
+            Auto Player
+          </button>
         </nav>
       </header>
 
-      {view === 'builder' ? (
+      {view === 'autoplayer' ? (
+        <AutoPlayer />
+      ) : view === 'builder' ? (
         <ListBuilder
           onOpenInBoard={(roster) => {
             setBuiltRoster(roster);
