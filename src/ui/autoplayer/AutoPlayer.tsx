@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { BatchResult, BattleLog, OptimizerResult, ResultsIndex } from './artifacts';
+import type { ArmySummary, BatchResult, BattleLog, OptimizerResult, ResultsIndex } from './artifacts';
 import { checkResultVersion, fetchJson, loadIndex } from './artifacts';
 import { ReplayViewer } from './ReplayViewer';
+import {
+  loadSavedArmyCatalog,
+  payloadFileName,
+  type SavedArmy,
+  type SavedArmyCatalog,
+} from './savedArmies';
 
 /**
  * Auto Player — the v2 simulator's control-and-replay surface (brief §11).
@@ -87,8 +93,62 @@ export function AutoPlayer() {
 }
 
 /* ---------------------------------------------------------------- Run --- */
+
+/** Picker values: published armies are their plain name; saved lists are
+ *  prefixed so a name collision with a published army stays unambiguous. */
+const SAVED_PREFIX = 'saved:';
+
+function ArmyPicker({
+  label, value, onChange, armies, saved,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  armies: ArmySummary[];
+  saved: SavedArmyCatalog;
+}) {
+  return (
+    <label>
+      {label}
+      <select value={value} onChange={(e) => onChange(e.target.value)}>
+        {armies.length > 0 && (
+          <optgroup label="Published (data2/armies)">
+            {armies.map((x) => (
+              <option key={x.name} value={x.name}>
+                {x.name} — {x.faction} {x.points}pts [{x.disposition}]
+              </option>
+            ))}
+          </optgroup>
+        )}
+        {saved.armies.length > 0 && (
+          <optgroup label="My saved lists (this browser)">
+            {saved.armies.map((s) => (
+              <option key={SAVED_PREFIX + s.payload.name} value={SAVED_PREFIX + s.payload.name}>
+                {s.payload.name} — {s.payload.faction} · {s.payload.units.length} units (saved)
+              </option>
+            ))}
+          </optgroup>
+        )}
+      </select>
+    </label>
+  );
+}
+
+/** Hand the browser-held payload to the user as a file the CLI can take. */
+function downloadPayload(s: SavedArmy) {
+  const blob = new Blob([JSON.stringify(s.payload, null, 1)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const el = document.createElement('a');
+  el.href = url;
+  el.download = payloadFileName(s.payload);
+  el.click();
+  URL.revokeObjectURL(url);
+}
+
 function RunTab({ index }: { index: ResultsIndex | null }) {
   const armies = index?.armies ?? [];
+  // Saved List Builder lists, converted to named-list payloads (savedArmies.ts).
+  const saved = useMemo(() => loadSavedArmyCatalog(), []);
   const [a, setA] = useState('');
   const [b, setB] = useState('');
   const [mode, setMode] = useState<'batch' | 'optimize'>('batch');
@@ -106,19 +166,50 @@ function RunTab({ index }: { index: ResultsIndex | null }) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (armies.length && !a) setA(armies[0].name);
-    if (armies.length > 1 && !b) setB(armies[1].name);
-  }, [armies, a, b]);
+    const fallback = saved.armies.length ? SAVED_PREFIX + saved.armies[0].payload.name : '';
+    if (!a) {
+      if (armies.length) setA(armies[0].name);
+      else if (fallback) setA(fallback);
+    }
+    if (!b) {
+      if (armies.length > 1) setB(armies[1].name);
+      else if (armies.length) setB(armies[0].name);
+      else if (fallback) setB(fallback);
+    }
+  }, [armies, saved, a, b]);
+
+  // A saved-list selection resolves to its payload; a published one to its name.
+  const savedByName = useMemo(
+    () => new Map(saved.armies.map((s) => [s.payload.name, s])),
+    [saved],
+  );
+  const savedOf = (v: string): SavedArmy | undefined =>
+    v.startsWith(SAVED_PREFIX) ? savedByName.get(v.slice(SAVED_PREFIX.length)) : undefined;
+  const labelOf = (v: string): string =>
+    v.startsWith(SAVED_PREFIX) ? v.slice(SAVED_PREFIX.length) : v;
+
+  const savedA = savedOf(a);
+  const savedB = savedOf(b);
+  // In the local command a saved list is the downloaded payload file next to
+  // the CLI; sim2.cli resolves its unit names against the snapshot at run time.
+  const aArg = savedA ? `./${payloadFileName(savedA.payload)}` : labelOf(a);
+  const bArg = savedB ? `./${payloadFileName(savedB.payload)}` : labelOf(b);
+  // The payload files the local command actually reads (the optimizer's seed
+  // side contributes only its faction, so no file is needed for it).
+  const commandFiles = [...new Set(
+    (mode === 'batch' ? [savedA, savedB] : [savedB]).filter((s): s is SavedArmy => !!s),
+  )];
 
   const command = useMemo(() => {
     if (mode === 'optimize') {
-      const faction = armies.find((x) => x.name === a)?.faction ?? 'AM';
-      return `python3 -m sim2.cli optimize --faction ${faction} --vs "${b}" ` +
+      const faction =
+        savedA?.payload.faction ?? armies.find((x) => x.name === a)?.faction ?? 'AM';
+      return `python3 -m sim2.cli optimize --faction ${faction} --vs "${bArg}" ` +
         `--candidates ${candidates} --games ${games} --battle-size ${size} --seed ${seed}`;
     }
-    return `python3 -m sim2.cli batch --a "${a}" --b "${b}" --games ${games} ` +
+    return `python3 -m sim2.cli batch --a "${aArg}" --b "${bArg}" --games ${games} ` +
       `--battle-size ${size} --seed ${seed} --agent-a ${agentA} --agent-b ${agentB}`;
-  }, [mode, a, b, games, size, seed, agentA, agentB, candidates, armies]);
+  }, [mode, a, aArg, bArg, games, size, seed, agentA, agentB, candidates, armies, savedA]);
 
   function copyCommand() {
     navigator.clipboard?.writeText(command).then(() => {
@@ -133,11 +224,22 @@ function RunTab({ index }: { index: ResultsIndex | null }) {
       const workflow = mode === 'batch' ? 'simulate.yml' : 'optimize.yml';
       const inputs: Record<string, string> =
         mode === 'batch'
-          ? { army_a: a, army_b: b, games: String(games), battle_size: String(size),
-              seed: String(seed), agent_a: agentA, agent_b: agentB }
-          : { faction: armies.find((x) => x.name === a)?.faction ?? 'AM', opponent: b,
-              candidates: String(candidates), games: String(games),
+          ? { army_a: labelOf(a), army_b: labelOf(b), games: String(games),
+              battle_size: String(size), seed: String(seed),
+              agent_a: agentA, agent_b: agentB }
+          : { faction: savedA?.payload.faction ?? armies.find((x) => x.name === a)?.faction ?? 'AM',
+              opponent: labelOf(b), candidates: String(candidates), games: String(games),
               battle_size: String(size), seed: String(seed) };
+      // A saved list rides along as a named-list payload input; the workflow
+      // writes it to a file and the CLI resolves it (or refuses) at run time.
+      // The keys are only sent when needed so older committed workflows keep
+      // accepting published-army dispatches.
+      if (mode === 'batch') {
+        if (savedA) inputs.army_a_json = JSON.stringify(savedA.payload);
+        if (savedB) inputs.army_b_json = JSON.stringify(savedB.payload);
+      } else if (savedB) {
+        inputs.opponent_json = JSON.stringify(savedB.payload);
+      }
       const res = await fetch(
         `https://api.github.com/repos/${repo}/actions/workflows/${workflow}/dispatches`,
         {
@@ -179,26 +281,14 @@ function RunTab({ index }: { index: ResultsIndex | null }) {
               <option value="optimize">Optimizer — search lists vs a fixed opponent</option>
             </select>
           </label>
-          <label>
-            {mode === 'batch' ? 'Army A' : 'Faction seed army'}
-            <select value={a} onChange={(e) => setA(e.target.value)}>
-              {armies.map((x) => (
-                <option key={x.name} value={x.name}>
-                  {x.name} — {x.faction} {x.points}pts [{x.disposition}]
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            {mode === 'batch' ? 'Army B' : 'Opponent list'}
-            <select value={b} onChange={(e) => setB(e.target.value)}>
-              {armies.map((x) => (
-                <option key={x.name} value={x.name}>
-                  {x.name} — {x.faction} {x.points}pts [{x.disposition}]
-                </option>
-              ))}
-            </select>
-          </label>
+          <ArmyPicker
+            label={mode === 'batch' ? 'Army A' : 'Faction seed army'}
+            value={a} onChange={setA} armies={armies} saved={saved}
+          />
+          <ArmyPicker
+            label={mode === 'batch' ? 'Army B' : 'Opponent list'}
+            value={b} onChange={setB} armies={armies} saved={saved}
+          />
           <label>
             Battle size
             <select value={size} onChange={(e) => setSize(Number(e.target.value))}>
@@ -243,6 +333,22 @@ function RunTab({ index }: { index: ResultsIndex | null }) {
             </label>
           )}
         </div>
+        <p className="ap-dim">
+          Lists saved in the List Builder appear under “My saved lists” automatically.
+          {saved.skipped.length > 0 &&
+            ` Not offered: ${saved.skipped.map((s) => `${s.name} (${s.reason})`).join('; ')}.`}
+        </p>
+        {mode === 'optimize' && savedA && (
+          <p className="ap-dim">
+            A saved list as the seed contributes only its faction — the optimizer generates
+            its own candidate lists against the opponent.
+          </p>
+        )}
+        {(savedA?.problems.length || savedB?.problems.length) ? (
+          <p className="ap-warn">
+            ⚠ {[...new Set([...(savedA?.problems ?? []), ...(savedB?.problems ?? [])])].join(' · ')}
+          </p>
+        ) : null}
       </section>
 
       <section className="ap-sec">
@@ -252,7 +358,20 @@ function RunTab({ index }: { index: ResultsIndex | null }) {
           <button className="ap-ghost" onClick={copyCommand}>
             {copied ? '✓ Copied' : '⧉ Copy command'}
           </button>
+          {commandFiles.map((s) => (
+            <button key={s.payload.name} className="ap-ghost" onClick={() => downloadPayload(s)}>
+              ⬇ {payloadFileName(s.payload)}
+            </button>
+          ))}
         </div>
+        {commandFiles.length > 0 && (
+          <p className="ap-dim">
+            Saved lists exist only in this browser — download the army file(s) into the
+            folder you run the command from. Unit names resolve against the v2 snapshot
+            when the run starts; anything that does not resolve aborts the run instead of
+            fielding a partial army.
+          </p>
+        )}
       </section>
 
       <section className="ap-sec">
