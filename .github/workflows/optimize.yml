@@ -15,9 +15,13 @@ on:
         required: false
         default: ''
       opponent:
-        description: Opponent army name
+        description: Opponent army name (display label when opponent_json is set)
         required: true
         default: Imperialis Fleet Patrol
+      opponent_json:
+        description: Optional named-list payload JSON for the opponent (a List Builder saved list, sent by the Auto Player tab) — overrides opponent
+        required: false
+        default: ''
       candidates:
         description: Candidate lists to generate
         required: true
@@ -52,12 +56,24 @@ jobs:
         with:
           python-version: '3.11'
 
+      # See simulate.yml: a dispatched saved list is written to a file via env
+      # vars and passed as a path; unresolved units abort the sweep.
+      - name: Materialise the dispatched opponent payload
+        if: inputs.opponent_json != ''
+        env:
+          OPPONENT_JSON: ${{ inputs.opponent_json }}
+        run: |
+          mkdir -p /tmp/dispatch
+          printf '%s' "$OPPONENT_JSON" > /tmp/dispatch/opponent.sim2list.json
+
       - name: Run the sweep
+        env:
+          VS_ARG: ${{ inputs.opponent_json != '' && '/tmp/dispatch/opponent.sim2list.json' || inputs.opponent }}
         run: |
           python3 -m sim2.cli optimize \
             --faction "${{ inputs.faction }}" \
             --detachment "${{ inputs.detachment }}" \
-            --vs "${{ inputs.opponent }}" \
+            --vs "$VS_ARG" \
             --candidates "${{ inputs.candidates }}" \
             --games "${{ inputs.games }}" \
             --battle-size "${{ inputs.battle_size }}" \

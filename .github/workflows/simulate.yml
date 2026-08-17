@@ -8,13 +8,21 @@ on:
   workflow_dispatch:
     inputs:
       army_a:
-        description: Army A (name as listed by `python3 -m sim2.cli armies`)
+        description: Army A (name as listed by `python3 -m sim2.cli armies`; display label when army_a_json is set)
         required: true
         default: Imperialis Fleet Patrol
       army_b:
         description: Army B
         required: true
         default: Grizzled Company Line
+      army_a_json:
+        description: Optional named-list payload JSON for A (a List Builder saved list, sent by the Auto Player tab) — overrides army_a
+        required: false
+        default: ''
+      army_b_json:
+        description: Optional named-list payload JSON for B — overrides army_b
+        required: false
+        default: ''
       games:
         description: Number of games
         required: true
@@ -54,11 +62,28 @@ jobs:
         with:
           python-version: '3.11'
 
+      # A dispatched saved list arrives as JSON in the inputs; it is written to a
+      # file through env vars (never shell-interpolated) and handed to the CLI as
+      # a path — sim2.cli resolves unit names against the snapshot and refuses
+      # the run if any unit does not resolve.
+      - name: Materialise dispatched army payloads
+        if: inputs.army_a_json != '' || inputs.army_b_json != ''
+        env:
+          ARMY_A_JSON: ${{ inputs.army_a_json }}
+          ARMY_B_JSON: ${{ inputs.army_b_json }}
+        run: |
+          mkdir -p /tmp/dispatch
+          [ -z "$ARMY_A_JSON" ] || printf '%s' "$ARMY_A_JSON" > /tmp/dispatch/army_a.sim2list.json
+          [ -z "$ARMY_B_JSON" ] || printf '%s' "$ARMY_B_JSON" > /tmp/dispatch/army_b.sim2list.json
+
       - name: Run the batch
+        env:
+          A_ARG: ${{ inputs.army_a_json != '' && '/tmp/dispatch/army_a.sim2list.json' || inputs.army_a }}
+          B_ARG: ${{ inputs.army_b_json != '' && '/tmp/dispatch/army_b.sim2list.json' || inputs.army_b }}
         run: |
           python3 -m sim2.cli batch \
-            --a "${{ inputs.army_a }}" \
-            --b "${{ inputs.army_b }}" \
+            --a "$A_ARG" \
+            --b "$B_ARG" \
             --games "${{ inputs.games }}" \
             --battle-size "${{ inputs.battle_size }}" \
             --seed "${{ inputs.seed }}" \
