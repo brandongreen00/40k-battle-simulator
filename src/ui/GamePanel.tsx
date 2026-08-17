@@ -22,6 +22,7 @@ import { usableStratagems } from '../core/stratagems';
 import { stratagems } from '../data/loaders';
 import { Die } from './Dice';
 import { OWNER_COLOR } from './view';
+import { ATAC_META, type AtacKind, type AtacPick } from './AtAllCostsBar';
 import type { Side } from '../core/types';
 
 interface Props {
@@ -39,6 +40,12 @@ interface Props {
   detachmentBySide?: Record<Side, string>;
   /** Reports the currently selected attacker/target so the board can highlight them. */
   onTargeting?: (t: { attackerUnitId?: string; targetUnitId?: string }) => void;
+  /** "At all Costs" (Imperialis Fleet): the currently armed board pick, if any. */
+  atacPick?: AtacPick | null;
+  /** Arm an At All Costs pick — the user then taps the unit on the board and confirms there.
+   *  When absent (no board wiring), the block falls back to a plain unit dropdown. */
+  onAtacPick?: (kind: AtacKind) => void;
+  onAtacCancel?: () => void;
 }
 
 const MOVE_MODES: { mode: MoveMode; label: string }[] = [
@@ -53,7 +60,7 @@ const MOVE_MODES: { mode: MoveMode; label: string }[] = [
  * scoreboard, attack/charge resolution between on-board units, Order/Stratagem application, and the
  * live dice log. All actions go through the same intent reducer the rest of the app uses.
  */
-export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [], setSelectedUnitIds, onBeginArrival, onBeginDisembark, detachmentBySide, onTargeting }: Props) {
+export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [], setSelectedUnitIds, onBeginArrival, onBeginDisembark, detachmentBySide, onTargeting, atacPick, onAtacPick, onAtacCancel }: Props) {
   const units = state.units;
   const phase = state.phase;
   const inMatch = state.mode === 'match';
@@ -402,24 +409,57 @@ export function GamePanel({ state, dispatch, datasheetsById, selectedUnitIds = [
         </div>
       )}
 
-      {/* Command phase — Imperialis Fleet "At all Costs" */}
+      {/* Command phase — Imperialis Fleet "At all Costs": click an action, tap the unit on the
+          board, confirm in the bar under the board (the picks show here as ✓ once made). */}
       {phase === 'Command' && armyHasDetachment(activeDetachment, 'Imperialis Fleet') && (
         <div className="phase-block">
           <h3>At all Costs</h3>
-          <div className="order-row">
-            <span>Eliminate (mark enemy: +1 to Hit it)</span>
-            <select value="" onChange={(e) => { if (e.target.value) dispatch({ type: 'UseStratagem', name: 'Eliminate At All Costs', side: state.activePlayer, cost: 0, targetUnitId: e.target.value, effectId: 'mark_eliminate' }); }}>
-              <option value="">— enemy unit —</option>
-              {enemiesOnBoard.map((u) => <option key={u.id} value={u.id}>{nameOf(u.id)}</option>)}
-            </select>
-          </div>
-          <div className="order-row">
-            <span>Acquire (your unit on an objective: 5++, +1 OC/Ld)</span>
-            <select value="" onChange={(e) => { if (e.target.value) dispatch({ type: 'UseStratagem', name: 'Acquire At All Costs', side: state.activePlayer, cost: 0, targetUnitId: e.target.value, effectId: 'acquire_buff' }); }}>
-              <option value="">— your unit —</option>
-              {myUnits.map((u) => <option key={u.id} value={u.id}>{nameOf(u.id)}</option>)}
-            </select>
-          </div>
+          {(['eliminate', 'acquire'] as const).map((kind) => {
+            const meta = ATAC_META[kind];
+            // Already chosen this turn? The effect sits on the unit until its next turn reset,
+            // so during this Command phase a carried mark means the pick was made.
+            const done = (kind === 'eliminate' ? enemiesOnBoard : myUnits).filter((u) =>
+              (u.status.activeEffects ?? []).includes(meta.effectId),
+            );
+            const arming = atacPick?.kind === kind;
+            const label = kind === 'eliminate' ? 'mark an enemy: +1 to Hit it' : 'your unit on an objective: 5++, +1 OC/Ld';
+            return (
+              <div key={kind} className="atac-row">
+                {done.length > 0 ? (
+                  <span className="ok">
+                    ✓ {meta.icon} {meta.name}: <strong>{done.map((u) => nameOf(u.id)).join(', ')}</strong> — {meta.desc}
+                  </span>
+                ) : arming ? (
+                  <>
+                    <span className="atac-arming">
+                      {meta.icon} Tap {kind === 'eliminate' ? 'an enemy unit' : 'your unit'} on the board, then confirm…
+                    </span>
+                    <button onClick={() => onAtacCancel?.()}>✕ Cancel</button>
+                  </>
+                ) : onAtacPick ? (
+                  <button className="atac-btn" onClick={() => onAtacPick(kind)} title={label}>
+                    {meta.icon} {meta.name} — {label}
+                  </button>
+                ) : (
+                  // No board wiring (standalone panel): fall back to a plain dropdown.
+                  <>
+                    <span>{meta.name} ({label})</span>
+                    <select
+                      value=""
+                      onChange={(e) => {
+                        if (e.target.value) dispatch({ type: 'UseStratagem', name: meta.intentName, side: state.activePlayer, cost: 0, targetUnitId: e.target.value, effectId: meta.effectId });
+                      }}
+                    >
+                      <option value="">— {kind === 'eliminate' ? 'enemy unit' : 'your unit'} —</option>
+                      {(kind === 'eliminate' ? enemiesOnBoard : myUnits).map((u) => (
+                        <option key={u.id} value={u.id}>{nameOf(u.id)}</option>
+                      ))}
+                    </select>
+                  </>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 

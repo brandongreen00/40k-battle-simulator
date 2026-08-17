@@ -378,6 +378,44 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-08-17] — "At all Costs" is now tap-on-the-map with a confirmation (owner: "Trying to
+  use At All Costs doesn't work, I can't actually select a unit… a thing where you click on it,
+  then tap the unit that you'd like to target, with a final confirmation screen. Ensure that
+  this works for acquire too."). Separate PR off main.** All gates green: `pnpm typecheck`,
+  `pnpm test` (**610 tests**, +3 jsdom in `tests/atAllCosts.test.tsx`), `pnpm build`; a
+  Playwright drive of the REAL app (new battle Fleet Boarding Party vs Cadian Bulwark → deploy →
+  the player's Command phase → both actions end-to-end, desktop 1440×900 AND the 390px phone
+  shell) passes **23/23** with zero console errors and zero horizontal overflow.
+  - **The reported control was a dead-feeling dropdown, replaced wholesale.** The old block was
+    two always-empty-looking `<select value="">`s that dispatched instantly on change with ZERO
+    feedback (the select snaps back to its placeholder, nothing anywhere shows the mark landed) —
+    the engine path was verified fine, the UI was the problem. The block in the GamePanel is now
+    two buttons (🎯 Eliminate / 🛡️ Acquire): click one → tap the unit on the BOARD → ✓ Confirm
+    in a bar under the map. Nothing dispatches until Confirm, so a mis-tap can never mark the
+    wrong unit; after confirming, the block shows "✓ Eliminate: <unit>" / "✓ Acquire: <unit>"
+    status lines and retires that button for the turn (one of each per Command phase — the
+    carried `mark_eliminate`/`acquire_buff` effect IS the tracker, since turn resets clear it
+    before the next Command phase; AI-made picks surface on the same lines).
+  - **New generic board mode `PickerUI`** (Board.tsx, alongside MovementUI/ShootingUI): eligible
+    units get the amber tappable rings, the tapped unit switches to the red targeting rings, the
+    HUD explains the pick (amber "placing" styling), Esc cancels, taps on ineligible units are
+    ignored, and measuring/stat-block/drags are suppressed while armed — reusable for any future
+    "choose a unit" rule. Empty-board presses only pan (a mis-tap must not cancel the pick).
+  - **New `src/ui/AtAllCostsBar.tsx`**: the confirmation bar in the proven under-board slot
+    (ShootingBar's), so on phones the whole flow lives on the Board page — arming auto-jumps to
+    it and confirming/cancelling returns to Play (same effect pattern as placement ghosts).
+    Buttons are 44px on phones. Acquire warns "⚠ not within range of an objective" (area-aware
+    via `missions11.withinObjectiveRange`) but never blocks — the printed wording is surfaced,
+    the reducer stays the enforcer (it doesn't validate this, as before).
+  - **Decisions**: picks are NOT gated on the seat being human (the old selects weren't either —
+    a spectating human may drive an AI side's Command window; the pick disarms itself the moment
+    the phase moves on); a confirmed mark is final for the turn (no unmark intent exists — the
+    confirm step is the mistake-guard); GamePanel keeps a plain-dropdown fallback for mounts
+    without board wiring (none in the app today).
+  - **Handoff nits**: `unitOnObjective` reads the unit datasheet's base radius (a merged
+    Leader's own base is approximated by the Bodyguard's — warning-only, cosmetic); the AI's
+    Eliminate/Acquire picks still auto-resolve with no prompt (its own turn, by design).
+
 - **[2026-08-17] — Optimizer/batch runs now print a live heartbeat, so an Actions log shows
   progress instead of 30+ silent minutes (owner: a 20-candidate × 20-game optimize dispatch ran
   32 min with an empty log and was canceled as stuck — nothing was wrong: that workload is ~400
@@ -398,7 +436,9 @@ ability-system design that these stages depend on.
     games, then re-run the top few with more games).
   - **Flagged to the owner (their call, unchanged)**: §1 of this file says the repo is private;
     it is actually PUBLIC on GitHub (presumably so free Pages works) — the GW/Wahapedia
-    personal-use constraint assumed private. (owner: "How
+    personal-use constraint assumed private.
+
+- **[2026-08-17] — The Auto Player pulls armies from SAVED LISTS in the Pages app (owner: "How
   can I get the auto player to pull armies from my saved lists in the GitHub pages app?").
   Separate PR off main (v2 surface + tools2 + workflows; v1 untouched).** All gates green:
   `pnpm typecheck`, `pnpm test` (**615 tests**, +8 in `tests/savedArmies.test.tsx` incl. a jsdom
