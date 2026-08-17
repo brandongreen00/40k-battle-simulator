@@ -36,6 +36,20 @@ export interface MovementUI {
   warnings: { unitId: string; centroid: Vec2 }[];
 }
 
+/** Unit-pick interaction (e.g. At All Costs): the eligible units are highlighted, a tap on one
+ *  reports it upward, and the parent shows a confirmation bar under the board. While armed,
+ *  taps never inspect/drag/measure — the board is a picker and nothing else. */
+export interface PickerUI {
+  /** Unit ids the current pick may choose (amber highlight; taps elsewhere are ignored). */
+  eligibleIds: string[];
+  /** The unit tapped and awaiting confirmation (the parent draws it with the targeting rings). */
+  pickedUnitId: string | null;
+  /** HUD line shown above the board while the pick is armed. */
+  hud: string;
+  onPickUnit: (unitId: string) => void;
+  onCancel: () => void;
+}
+
 /** Shooting-phase interaction: tap one of your units to see its weapon ranges on the board,
  *  then tap an enemy inside a ring to target it (the panel under the board shows the matchup). */
 export interface ShootingUI {
@@ -66,6 +80,8 @@ interface Props {
   movement?: MovementUI | null;
   /** When set, the board is in Shooting-phase mode (tap shooter → ranges, tap enemy → target). */
   shooting?: ShootingUI | null;
+  /** When set, the board is in unit-pick mode (tap a highlighted unit — e.g. At All Costs). */
+  picker?: PickerUI | null;
   /** Combat targeting (from the game panel): highlight the attacker and its target on the board. */
   targeting?: { attackerUnitId?: string; targetUnitId?: string } | null;
   /** A unit was TAPPED (pressed and released without dragging) — open its stat block. Not called
@@ -118,6 +134,7 @@ export function Board({
   onPlacementCancel,
   movement,
   shooting,
+  picker,
   targeting,
   onInspectUnit,
   fx,
@@ -218,6 +235,16 @@ export function Board({
     return () => window.removeEventListener('keydown', onKey);
   }, [placement, onPlacementCycle, onPlacementCancel, onPlacementRotate]);
 
+  // Esc cancels an armed unit pick (the on-screen ✕ is the touch path).
+  useEffect(() => {
+    if (!picker) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') picker.onCancel();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [picker]);
+
   // model id -> resolved render/measure info
   const index = useMemo(() => {
     const map = new Map<string, Resolved>();
@@ -290,7 +317,13 @@ export function Board({
     // Arm the stat block: if this press ends without dragging, it was a tap on the unit. Armed
     // before the mode branches so it survives their early returns; a drag disarms it on move.
     const tapped = index.get(modelId)?.unitId;
-    tapCandidate.current = onInspectUnit && !shooting && tapped ? { unitId: tapped, cx: e.clientX, cy: e.clientY } : null;
+    tapCandidate.current = onInspectUnit && !shooting && !picker && tapped ? { unitId: tapped, cx: e.clientX, cy: e.clientY } : null;
+    if (picker) {
+      // Unit-pick mode: a tap on an eligible unit reports it; anything else is ignored (no
+      // drags, no stat block — the confirmation bar under the board owns the next step).
+      if (tapped && picker.eligibleIds.includes(tapped)) picker.onPickUnit(tapped);
+      return;
+    }
     if (shooting) {
       // Shooting phase: a tap picks the shooter (own unit) or its target (enemy unit) —
       // no drags, so nothing here can dispatch a rejected MoveModel mid-match.
@@ -344,6 +377,15 @@ export function Board({
         if (!placement.legal(positions)) return;
       }
       onPlacementCommit?.(anchor);
+      return;
+    }
+    if (picker) {
+      // Unit-pick mode: an empty-board press only pans (when zoomed) — a mis-tap must not
+      // cancel the pick; the bar's ✕ / Esc does that deliberately.
+      if (zoomed) {
+        panDrag.current = { cx: e.clientX, cy: e.clientY };
+        svgRef.current?.setPointerCapture(e.pointerId);
+      }
       return;
     }
     if (movement) {
@@ -483,9 +525,9 @@ export function Board({
   // Is the current ghost a legal placement? (deployment zone / Infiltrators)
   const ghostLegal = ghost && placement?.legal ? placement.legal(ghost) : true;
 
-  // ── measurement (suppressed while placing or shooting) ──
-  const a = !placement && !shooting && selectedIds[0] ? index.get(selectedIds[0]) : undefined;
-  const b = !placement && !shooting && selectedIds[1] ? index.get(selectedIds[1]) : undefined;
+  // ── measurement (suppressed while placing, shooting or picking) ──
+  const a = !placement && !shooting && !picker && selectedIds[0] ? index.get(selectedIds[0]) : undefined;
+  const b = !placement && !shooting && !picker && selectedIds[1] ? index.get(selectedIds[1]) : undefined;
 
   let measure: { from: Vec2; to: Vec2; gap: number; centre: number } | null = null;
   if (a && b) {
@@ -540,6 +582,7 @@ export function Board({
     placementHud ??
     movementHud ??
     shootingHud ??
+    picker?.hud ??
     (measure
       ? a && b
         ? `${a.unitName} → ${b.unitName}: ${measure.gap.toFixed(2)}" base-to-base (${measure.centre.toFixed(2)}" centre)`
@@ -553,7 +596,7 @@ export function Board({
 
   return (
     <div className="board-wrap">
-      <div className={`board-hud${placement ? ' placing' : ''}${movementHud && movement!.warnings.length ? ' warn' : ''}`}>{hud}</div>
+      <div className={`board-hud${placement || picker ? ' placing' : ''}${movementHud && movement!.warnings.length ? ' warn' : ''}`}>{hud}</div>
       <div className="board-stage">
         <svg
           ref={svgRef}
@@ -688,6 +731,40 @@ export function Board({
                       return (
                         <circle
                           key={`tgt-${m.id}`}
+                          className="targetable-ring"
+                          cx={pxX(m.pos.x)}
+                          cy={pxY(m.pos.y, layout.boardHeight)}
+                          r={pxLen(rad) + 3}
+                          fill="none"
+                          stroke="#fbbf24"
+                          strokeOpacity={0.8}
+                          strokeWidth={1.5}
+                          strokeDasharray="3 3"
+                        />
+                      );
+                    });
+                })}
+            </g>
+          )}
+
+          {/* Unit-pick mode: every eligible unit gets the amber tappable ring (the tapped one
+              switches to the red targeting rings the parent passes via `targeting`). */}
+          {picker && picker.eligibleIds.length > 0 && (
+            <g pointerEvents="none" className="targetable-overlay">
+              {picker.eligibleIds
+                .filter((id) => id !== picker.pickedUnitId)
+                .map((id) => {
+                  const u = units.find((x) => x.id === id && !x.inReserves);
+                  if (!u) return null;
+                  return u.models
+                    .filter((m) => m.alive)
+                    .map((m) => {
+                      const r = index.get(m.id);
+                      if (!r) return null;
+                      const rad = r.shape.kind === 'circle' ? r.shape.radius! : Math.max(r.shape.rx!, r.shape.ry!);
+                      return (
+                        <circle
+                          key={`pick-${m.id}`}
                           className="targetable-ring"
                           cx={pxX(m.pos.x)}
                           cy={pxY(m.pos.y, layout.boardHeight)}

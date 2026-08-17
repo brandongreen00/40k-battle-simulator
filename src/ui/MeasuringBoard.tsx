@@ -22,9 +22,11 @@ import {
 } from '../core/ai/prompts';
 import { dataIndex, datasheetsById, deployAbilityForDatasheet, getDatasheet, layouts, layoutsForPairing, rosters, stratagems } from '../data/loaders';
 import { DISPOSITIONS, MISSION_MATRIX, MISSION_NAMES, type DispositionId } from '../core/missions11';
-import { Board, type Placement, type MovementUI, type ShootingUI, type ShotFx } from './Board';
+import { armyHasDetachment } from '../core/detachments';
+import { Board, type Placement, type MovementUI, type PickerUI, type ShootingUI, type ShotFx } from './Board';
 import { GamePanel } from './GamePanel';
 import { ShootingBar, ringsForPlan } from './ShootingPanel';
+import { AtAllCostsBar, ATAC_META, type AtacPick } from './AtAllCostsBar';
 import { UnitStatBlock } from './UnitStatBlock';
 import { DeploymentPanel, effectiveSide } from './DeploymentPanel';
 import { AiBar, type AiSeats } from './AiBar';
@@ -270,6 +272,9 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName, initialSt
   const [targeting, setTargeting] = useState<{ attackerUnitId?: string; targetUnitId?: string }>({});
   // Shooting from the map: the unit tapped as the shooter and the enemy tapped as its target.
   const [shootSel, setShootSel] = useState<{ attackerId?: string; targetId?: string }>({});
+  // "At all Costs" (Imperialis Fleet, Command phase): the armed Eliminate/Acquire pick — the
+  // user taps the unit on the board and confirms in the bar under it before anything dispatches.
+  const [atacPick, setAtacPick] = useState<AtacPick | null>(null);
   // The unit whose stat block is open (tapped on the map). Read-only — never dispatches.
   const [inspectId, setInspectId] = useState<string | null>(null);
   const spawnCount = useRef(0);
@@ -650,6 +655,14 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName, initialSt
     else setMTab(flowKey === 'deploy' || flowKey === 'sandbox' ? 'tools' : 'game');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [placingActive]);
+  // Arming an At All Costs pick jumps to the Board page (the unit is tapped and confirmed
+  // there); resolving or cancelling the pick returns to the flow's home page.
+  const atacArmed = !!atacPick;
+  useEffect(() => {
+    if (atacArmed) setMTab('board');
+    else setMTab(flowKey === 'deploy' || flowKey === 'sandbox' ? 'tools' : 'game');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [atacArmed]);
   // A prompt (incoming fire / reaction window) must be SEEN — on phones, jump to the Game tab.
   useEffect(() => {
     if (incoming || heldPrompt) setMTab('game');
@@ -1003,8 +1016,44 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName, initialSt
       )
     : undefined;
   useEffect(() => {
-    if (inspectId && (!inspectUnit || inShooting)) setInspectId(null);
-  }, [inspectId, inspectUnit, inShooting]);
+    if (inspectId && (!inspectUnit || inShooting || atacArmed)) setInspectId(null);
+  }, [inspectId, inspectUnit, inShooting, atacArmed]);
+
+  // ── "At all Costs" (Imperialis Fleet, Command phase) ──────────────────────────
+  // Click Eliminate/Acquire in the game panel → tap the unit on the board → confirm in the bar
+  // under the board. The window is the active player's Command phase with a Fleet detachment;
+  // the armed pick disarms itself the moment that window closes (phase advance, game end).
+  const atacActive =
+    !inSetup && !state.ended && state.phase === 'Command' && !placing &&
+    armyHasDetachment(rosterFor(state.activePlayer)?.detachment ?? '', 'Imperialis Fleet');
+  useEffect(() => {
+    if (!atacActive && atacPick) setAtacPick(null);
+  }, [atacActive, atacPick]);
+  const atacEligibleIds = useMemo(() => {
+    if (!atacActive || !atacPick) return [];
+    const mine = atacPick.kind === 'acquire';
+    return state.units
+      .filter((u) => (u.owner === state.activePlayer) === mine && !u.inReserves && u.models.some((m) => m.alive))
+      .map((u) => u.id);
+  }, [atacActive, atacPick, state.units, state.activePlayer]);
+  const picker: PickerUI | null =
+    atacActive && atacPick
+      ? {
+          eligibleIds: atacEligibleIds,
+          pickedUnitId: atacPick.unitId ?? null,
+          hud: `${ATAC_META[atacPick.kind].icon} ${ATAC_META[atacPick.kind].name} at all costs — ${
+            atacPick.unitId
+              ? 'confirm (or pick another unit) below'
+              : atacPick.kind === 'eliminate'
+                ? 'tap an ENEMY unit to mark it (+1 to Hit) · Esc cancels'
+                : 'tap YOUR unit on an objective (5++, +1 OC/Ld) · Esc cancels'
+          }`,
+          // Tapping the picked unit again un-picks it; tapping another eligible unit switches.
+          onPickUnit: (unitId) =>
+            setAtacPick((p) => (p ? { ...p, unitId: p.unitId === unitId ? undefined : unitId } : p)),
+          onCancel: () => setAtacPick(null),
+        }
+      : null;
 
   const sandboxRoster = rosterFor('player');
 
@@ -1445,6 +1494,7 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName, initialSt
           onPlacementCancel={() => setPlacing(null)}
           movement={movement}
           shooting={shooting}
+          picker={picker}
           targeting={
             incoming
               ? {
@@ -1453,12 +1503,14 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName, initialSt
                 }
               : inSetup
                 ? null
-                : shooting && (shooting.attackerUnitId || shooting.targetUnitId)
-                  ? {
-                      ...(shooting.attackerUnitId ? { attackerUnitId: shooting.attackerUnitId } : {}),
-                      ...(shooting.targetUnitId ? { targetUnitId: shooting.targetUnitId } : {}),
-                    }
-                  : targeting
+                : picker?.pickedUnitId
+                  ? { targetUnitId: picker.pickedUnitId }
+                  : shooting && (shooting.attackerUnitId || shooting.targetUnitId)
+                    ? {
+                        ...(shooting.attackerUnitId ? { attackerUnitId: shooting.attackerUnitId } : {}),
+                        ...(shooting.targetUnitId ? { targetUnitId: shooting.targetUnitId } : {}),
+                      }
+                    : targeting
           }
           onInspectUnit={setInspectId}
           fx={fx}
@@ -1481,6 +1533,31 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName, initialSt
             datasheetsById={datasheetsById}
             dispatch={dispatch}
             onClear={() => setShootSel({})}
+          />
+        )}
+        {/* At All Costs (Command phase): the armed pick's confirmation bar — the tapped unit's
+            name and effect are shown and NOTHING dispatches until ✓ Confirm, so a mis-tap can
+            never mark the wrong unit. Lives under the board so the phone flow never tab-flips. */}
+        {atacActive && atacPick && (
+          <AtAllCostsBar
+            state={state}
+            pick={atacPick}
+            datasheetsById={datasheetsById}
+            onClearUnit={() => setAtacPick((p) => (p ? { kind: p.kind } : p))}
+            onCancel={() => setAtacPick(null)}
+            onConfirm={() => {
+              if (!atacPick.unitId) return;
+              const meta = ATAC_META[atacPick.kind];
+              dispatch({
+                type: 'UseStratagem',
+                name: meta.intentName,
+                side: stateRef.current.activePlayer,
+                cost: 0,
+                targetUnitId: atacPick.unitId,
+                effectId: meta.effectId,
+              });
+              setAtacPick(null);
+            }}
           />
         )}
         {/* Mobile-only: drive the Movement phase right on the Board page — selecting and
@@ -1574,6 +1651,9 @@ export function MeasuringBoard({ extraRosters = [], initialRosterName, initialSt
             onBeginDisembark={beginDisembark}
             detachmentBySide={{ player: rosterFor('player')?.detachment ?? '', ai: rosterFor('ai')?.detachment ?? '' }}
             onTargeting={setTargeting}
+            atacPick={atacActive ? atacPick : null}
+            onAtacPick={atacActive ? (kind) => setAtacPick({ kind }) : undefined}
+            onAtacCancel={() => setAtacPick(null)}
           />
         )}
       </aside>
