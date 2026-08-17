@@ -21,7 +21,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from ..rng import Rng
 from ..schema import Army, ArmyUnit, Datasheet
-from .run import RESULT_SCHEMA_VERSION, play_game
+from .run import RESULT_SCHEMA_VERSION, fmt_duration, play_game
 
 MAX_COPIES = 3           # duplication limit for a non-BATTLELINE datasheet
 MAX_COPIES_BATTLELINE = 6
@@ -154,9 +154,23 @@ def run_optimizer(
 
     scored: List[Candidate] = []
     started = time.time()
+    total_games = candidates * games
+    played = 0
+    # Progress goes to stdout flushed so a CI log shows a heartbeat mid-run
+    # (a 20x20 sweep at 1000 pts runs for hours and used to print nothing).
+    print(
+        f"[optimize] {faction} / {detachment or '(no detachment)'} vs {opponent.name}: "
+        f"{candidates} candidates x {games} games at {battle_size} pts "
+        f"({len(legal_pool(data, faction))} legal datasheets in the pool)",
+        flush=True,
+    )
     for i in range(candidates):
         army = generate_candidate(data, faction, detachment, battle_size, rng, i)
         if army is None:
+            print(
+                f"[optimize] candidate {i + 1}/{candidates}: no legal roster, skipped",
+                flush=True,
+            )
             continue
         cand = Candidate(army=army)
         for g in range(games):
@@ -167,8 +181,24 @@ def run_optimizer(
             cand.vp_against += res.vp[1]
             if res.winner == 0:
                 cand.wins += 1
+            played += 1
+            elapsed = time.time() - started
+            eta = fmt_duration(elapsed / played * (total_games - (i * games + g + 1)))
+            outcome = "W" if res.winner == 0 else ("D" if res.winner is None else "L")
+            print(
+                f"[optimize] candidate {i + 1}/{candidates} ({army.points} pts) "
+                f"game {g + 1}/{games}: {outcome} {res.vp[0]}:{res.vp[1]} | "
+                f"elapsed {fmt_duration(elapsed)}, ETA ~{eta}",
+                flush=True,
+            )
         cand.score = (cand.vp_for - cand.vp_against) / max(1, cand.games)
         scored.append(cand)
+        print(
+            f"[optimize] candidate {i + 1}/{candidates} scored {cand.score:+.2f} "
+            f"({cand.wins}/{cand.games} wins, avg VP "
+            f"{cand.vp_for / max(1, cand.games):.1f}:{cand.vp_against / max(1, cand.games):.1f})",
+            flush=True,
+        )
 
     scored.sort(key=lambda c: -c.score)
     summary = {

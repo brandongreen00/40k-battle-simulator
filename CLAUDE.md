@@ -378,7 +378,27 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
-- **[2026-08-17] — The Auto Player pulls armies from SAVED LISTS in the Pages app (owner: "How
+- **[2026-08-17] — Optimizer/batch runs now print a live heartbeat, so an Actions log shows
+  progress instead of 30+ silent minutes (owner: a 20-candidate × 20-game optimize dispatch ran
+  32 min with an empty log and was canceled as stuck — nothing was wrong: that workload is ~400
+  full 1000 pt games ≈ 4.5 h, and `run_optimizer` printed nothing until the very end).** Small PR
+  off main; v2 stdout only, artifacts/JSON byte-identical. Gates: `pytest tests_py` (**79**),
+  `tools2/lint_determinism.py` clean; CLI smoke runs of both subcommands show the new lines.
+  - `sim2/harness/run.py`: new `fmt_duration`; `run_batch` prints a flushed header + a per-game
+    line (W/D/L from army A's seat, VP, rounds, elapsed, ETA). `run_optimizer` (optimizer.py)
+    prints the sweep header (pool size, candidates × games × points), a flushed per-game line
+    with a running ETA, a per-candidate score summary, and names skipped candidates. Everything
+    `flush=True` — Python block-buffers piped stdout, so unflushed prints would still look hung
+    in the Actions UI for minutes.
+  - **For the next "is it stuck?" question**: Actions minutes are FREE on this repo (public →
+    standard runners unmetered; a private flip would get 2,000 free min/mo and the default $0
+    spending cap just stops jobs, never bills). optimize.yml's `timeout-minutes: 330` is sized
+    for real sweeps — the DEFAULT 20×4 sweep is ~1 h; 20×20 at 1000 pts is ~4.5 h, close to
+    GitHub's hard 6 h job cap, and a 2000 pt 20×20 would likely exceed it (drop candidates or
+    games, then re-run the top few with more games).
+  - **Flagged to the owner (their call, unchanged)**: §1 of this file says the repo is private;
+    it is actually PUBLIC on GitHub (presumably so free Pages works) — the GW/Wahapedia
+    personal-use constraint assumed private. (owner: "How
   can I get the auto player to pull armies from my saved lists in the GitHub pages app?").
   Separate PR off main (v2 surface + tools2 + workflows; v1 untouched).** All gates green:
   `pnpm typecheck`, `pnpm test` (**615 tests**, +8 in `tests/savedArmies.test.tsx` incl. a jsdom

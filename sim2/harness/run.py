@@ -24,6 +24,15 @@ RESULT_SCHEMA_VERSION = "2.0.0"
 MAX_ACTIONS = 6000
 
 
+def fmt_duration(seconds: float) -> str:
+    s = max(0, int(seconds))
+    if s >= 3600:
+        return f"{s // 3600}h{(s % 3600) // 60:02d}m"
+    if s >= 60:
+        return f"{s // 60}m{s % 60:02d}s"
+    return f"{s}s"
+
+
 @dataclass
 class GameResult:
     seed: int
@@ -166,6 +175,12 @@ def run_batch(
     os.makedirs(out_dir, exist_ok=True)
     results: List[GameResult] = []
     logs_written = 0
+    started = time.time()
+    # Progress goes to stdout flushed so a CI log shows a heartbeat mid-run.
+    print(
+        f"[batch] {army_a.name} vs {army_b.name}: {games} games at {battle_size} pts",
+        flush=True,
+    )
     for i in range(games):
         game_seed = seed + i
         log_path = ""
@@ -177,6 +192,14 @@ def run_batch(
             write_log=log_path,
         )
         results.append(res)
+        elapsed = time.time() - started
+        outcome = "W" if res.winner == 0 else ("D" if res.winner is None else "L")
+        eta = fmt_duration(elapsed / (i + 1) * (games - i - 1))
+        print(
+            f"[batch] game {i + 1}/{games}: {outcome} {res.vp[0]}:{res.vp[1]} "
+            f"in {res.rounds} rounds | elapsed {fmt_duration(elapsed)}, ETA ~{eta}",
+            flush=True,
+        )
 
     wins = [sum(1 for r in results if r.winner == i) for i in (0, 1)]
     draws = sum(1 for r in results if r.winner is None)
