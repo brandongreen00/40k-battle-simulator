@@ -144,10 +144,15 @@ Reviews (mandate 2b): [`reviews/rules-kernel.md`](reviews/rules-kernel.md) ·
 
 ```bash
 python3 tools2/import_army.py <export.txt>  # import a 40k-app list into data2/armies
+python3 tools2/import_army.py <list.sim2list.json>  # …or a named-list payload (a List
+                                            # Builder saved list downloaded from the
+                                            # Auto Player tab's army picker)
 python3 -m sim2.cli data                    # snapshot coverage
 python3 -m sim2.cli armies                  # the sample armies
 python3 -m sim2.cli play  --a "Alien Hunters Strike" --b "Siege Regiment Vanguard" \
                           --battle-size 500 --seed 1 --out results/logs/battle.json
+# --a/--b/--vs also take a path to an army or named-list JSON file directly;
+# a named list resolves by unit name and REFUSES to run if anything is unresolved
 python3 -m sim2.cli batch --a "Imperialis Fleet Patrol" --b "Grizzled Company Line" --games 20
 python3 -m sim2.cli optimize --faction AM --vs "Imperialis Fleet Patrol" --candidates 20
 python3 train.py --iterations 3             # RL smoke run (see the caveat above)
