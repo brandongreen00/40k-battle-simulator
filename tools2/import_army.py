@@ -1,7 +1,8 @@
-"""Import a 40k app text export into a v2 army (`data2/armies/*.json`).
+"""Import a 40k app text export OR a named-list payload into a v2 army.
 
     python3 tools2/import_army.py tools/rosters/imports/bane.txt
     python3 tools2/import_army.py <export.txt> --name "Bane" --dry-run
+    python3 tools2/import_army.py my_list.sim2list.json          # named-list payload
 
 The app's export is the only place the owner's real lists exist in a machine-
 readable form, so this is the bridge between "lists I actually play" and the
@@ -9,6 +10,15 @@ simulator. v1 has its own importer for the 10th-edition schema
 (`src/core/importer.ts`); this is the 11th-edition equivalent and shares none of
 its code — the two schemas key units differently (v1 by Wahapedia numeric id,
 v2 by 11e slug).
+
+The second accepted input is a **named-list payload** (`kind:
+"sim2_named_list"`): unit NAMES + model counts, no ids of either schema. It is
+what the Auto Player tab generates in the browser from a List Builder saved
+list (`src/ui/autoplayer/savedArmies.ts`) — localStorage only exists in the
+browser, so the browser transcribes names and this importer resolves them
+against the snapshot, exactly like the text-export path (same resolvers, same
+points columns). `sim2.cli` also accepts such a payload file directly as
+`--a`/`--b`/`--vs`, resolving it in memory for a one-off run.
 
 Discipline (brief mandate 3): a unit whose name does not resolve against the
 snapshot is **reported and skipped**, never approximated to something similar.
@@ -241,6 +251,40 @@ def resolve_detachment(data, name: str, faction: str) -> str:
     return ""
 
 
+def resolve_detachments(data, raw: str, faction: str) -> Tuple[List[str], List[str]]:
+    """One raw detachment line → the army's detachment id list.
+
+    The 11e app prints a multi-detachment army as one combined header
+    ("Imperialis Fleet and Veiled Blade Elimination Force"). The whole string
+    is tried first so a name containing "and" can never be broken; only when
+    that fails is it split, and the split is kept only if EVERY part resolves
+    (mirroring v1's splitDetachments rule). Returns (ids, warnings).
+    """
+    raw = (raw or "").strip()
+    if not raw:
+        return [], []
+    # Exact whole-string match first, so a single detachment whose name happens
+    # to contain "and" can never be broken apart.
+    target = norm(raw)
+    for det in data.detachments.values():
+        if det.faction == faction and norm(det.name) == target:
+            return [det.id], []
+    parts = [p.strip() for p in re.split(r"\s+and\s+", raw) if p.strip()]
+    if len(parts) > 1:
+        ids = [resolve_detachment(data, p, faction) for p in parts]
+        if all(ids):
+            return ids, []
+    # Fuzzy fallback last — it substring-matches, which would otherwise swallow
+    # a combined header into one of its components.
+    whole = resolve_detachment(data, raw, faction)
+    if whole:
+        return [whole], []
+    return [], [
+        f"detachment {raw!r} did not resolve; the army carries none, "
+        "so its detachment rule and stratagems will not be in play"
+    ]
+
+
 def resolve_enhancement(data, name: str, detachment_id: str) -> str:
     target = norm(name)
     for rec in data.effects.values():
@@ -259,47 +303,61 @@ def points_column(ds: Datasheet, army_faction: str) -> str:
 
 
 # --------------------------------------------------------------------------
-def import_export(data, text: str, name_override: str = "") -> ImportReport:
-    header, parsed = parse_export(text)
-    report = ImportReport(stated_points=header.get("stated_points", 0))
+@dataclass
+class UnitSpec:
+    """One unit as the input names it — the shared shape both import paths
+    (text export and named-list payload) feed the assembler."""
 
-    faction = header.get("faction") or ""
-    if not faction:
-        report.warnings.append("faction line not recognised; datasheets matched across both")
-    detachment_id = resolve_detachment(data, header.get("detachment", ""), faction)
-    if header.get("detachment") and not detachment_id:
-        report.warnings.append(
-            f"detachment {header['detachment']!r} did not resolve; the army carries none, "
-            "so its detachment rule and stratagems will not be in play"
-        )
+    name: str
+    models: int = 0                # 0 = infer from the parsed bullets/points
+    stated_points: int = 0         # 0 = the source stated no per-unit points
+    enhancement: str = ""
+    warlord: bool = False
+    attached_as: str = ""
+    parsed: Optional[ParsedUnit] = None
 
-    stated_disp = header.get("stated_disposition", "")
-    if stated_disp and detachment_id:
-        actual = data.detachments[detachment_id].disposition
-        if norm(stated_disp) != norm(actual):
-            report.warnings.append(
-                f"the export states Force Disposition {stated_disp!r}, but the 11th edition "
-                f"pack gives {data.detachments[detachment_id].name} {actual!r} — the pack "
-                "value is used, and it decides which primary missions this army scores"
-            )
+
+def _assemble(data, report: ImportReport, *, name: str, faction: str,
+              detachment_raw: str, battle_size: int, specs: List[UnitSpec],
+              source_notes: List[str]) -> ImportReport:
+    """Resolve UnitSpecs against the snapshot into ``report.army``.
+
+    Shared by both import paths so name resolution, the Agents ally points
+    column, copy escalation and the never-approximate discipline cannot drift
+    between them.
+    """
+    detachment_ids, det_warnings = resolve_detachments(data, detachment_raw, faction)
+    report.warnings.extend(det_warnings)
 
     units: List[ArmyUnit] = []
     total = 0
     copies: Dict[str, int] = {}
-    for entry in parsed:
-        ds = resolve_datasheet(data, entry.name, faction)
+    for spec in specs:
+        ds = resolve_datasheet(data, spec.name, faction)
         if ds is None:
-            report.unresolved.append(f"{entry.name} ({entry.points} pts)")
+            report.unresolved.append(
+                f"{spec.name} ({spec.stated_points} pts)" if spec.stated_points
+                else spec.name
+            )
             continue
         if ds.legends:
             report.legends.append(ds.name)
 
-        models = infer_model_count(entry, ds)
+        if spec.models:
+            models = spec.models
+        elif spec.parsed is not None:
+            models = infer_model_count(spec.parsed, ds)
+        else:
+            models = min((t.models for t in ds.points), default=1)
+            report.warnings.append(
+                f"{ds.name}: the source stated no model count; the smallest printed "
+                f"size ({models}) is used"
+            )
         sizes = sorted({t.models for t in ds.points})
         if sizes and models not in sizes:
             report.warnings.append(
                 f"{ds.name}: {models} models is not a printed unit size {sizes}; "
-                "check the export's model groups"
+                "check the source's model counts"
             )
         copies[ds.id] = copies.get(ds.id, 0) + 1
         column = points_column(ds, faction or ds.faction)
@@ -307,32 +365,35 @@ def import_export(data, text: str, name_override: str = "") -> ImportReport:
         if cost is None:
             report.warnings.append(
                 f"{ds.name}: no points tier for {models} models in the {column} column; "
-                f"the export's {entry.points} pts is used"
+                f"the source's {spec.stated_points} pts is used"
             )
-            cost = entry.points
-        elif cost != entry.points:
+            cost = spec.stated_points
+        elif spec.stated_points and cost != spec.stated_points:
             report.warnings.append(
-                f"{ds.name}: snapshot says {cost} pts for {models} models, the export says "
-                f"{entry.points} — snapshot value used (points are unreconciled with MFM)"
+                f"{ds.name}: snapshot says {cost} pts for {models} models, the source says "
+                f"{spec.stated_points} — snapshot value used (points are unreconciled with MFM)"
             )
         total += cost
 
         enhancement_id = ""
-        if entry.enhancement:
-            enhancement_id = resolve_enhancement(data, entry.enhancement, detachment_id)
+        if spec.enhancement:
+            for did in detachment_ids or [""]:
+                enhancement_id = resolve_enhancement(data, spec.enhancement, did)
+                if enhancement_id:
+                    break
             if not enhancement_id:
                 report.warnings.append(
-                    f"{ds.name}: enhancement {entry.enhancement!r} did not resolve"
+                    f"{ds.name}: enhancement {spec.enhancement!r} did not resolve"
                 )
 
         units.append(ArmyUnit(
             datasheet_id=ds.id,
             models=models,
             enhancement_id=enhancement_id,
-            warlord=entry.warlord,
-            # The export records Leader/Bodyguard pairing; it is transcribed
+            warlord=spec.warlord,
+            # The source records Leader/Bodyguard pairing; it is transcribed
             # even though attached units are not implemented yet (register C1).
-            attached_to=entry.attached_as if entry.attached_as in ("leader", "bodyguard") else "",
+            attached_to=spec.attached_as if spec.attached_as in ("leader", "bodyguard") else "",
             key=str(len(units)),
         ))
         report.resolved.append(f"{ds.name} ×{models} ({cost} pts)")
@@ -341,36 +402,137 @@ def import_export(data, text: str, name_override: str = "") -> ImportReport:
         report.warnings.append("no units resolved; nothing written")
         return report
 
-    notes = [
-        "Imported from a 40k app text export by tools2/import_army.py.",
-        f"The export states {report.stated_points} points; the snapshot totals {total}.",
-        "Points come from the 11th edition snapshot, so they differ from an export "
-        "written by a 10th edition app: this is the list re-priced under 11e, not a "
-        "verified-legal 11e roster. Points are also unreconciled with the MFM "
-        "(register A5), so treat the total as provisional.",
-    ]
+    notes = list(source_notes)
+    if report.stated_points:
+        notes.append(
+            f"The source states {report.stated_points} points; the snapshot totals {total}."
+        )
     if report.legends:
         notes.append("Contains Legends datasheets (not tournament legal): "
                      + ", ".join(sorted(set(report.legends))))
     notes.extend(report.warnings)
 
     report.army = Army(
-        name=name_override or header.get("name") or "Imported army",
+        name=name or "Imported army",
         faction=faction or units[0].datasheet_id.split(".")[0].upper(),
-        detachments=[detachment_id] if detachment_id else [],
+        detachments=detachment_ids,
         units=units,
-        battle_size=header.get("battle_size") or 1000,
+        battle_size=battle_size or 1000,
         points=total,
         notes=notes,
     )
     return report
 
 
+def import_export(data, text: str, name_override: str = "") -> ImportReport:
+    header, parsed = parse_export(text)
+    report = ImportReport(stated_points=header.get("stated_points", 0))
+
+    faction = header.get("faction") or ""
+    if not faction:
+        report.warnings.append("faction line not recognised; datasheets matched across both")
+
+    specs = [
+        UnitSpec(name=entry.name, stated_points=entry.points,
+                 enhancement=entry.enhancement, warlord=entry.warlord,
+                 attached_as=entry.attached_as, parsed=entry)
+        for entry in parsed
+    ]
+    _assemble(
+        data, report,
+        name=name_override or header.get("name") or "",
+        faction=faction,
+        detachment_raw=header.get("detachment", ""),
+        battle_size=header.get("battle_size") or 1000,
+        specs=specs,
+        source_notes=[
+            "Imported from a 40k app text export by tools2/import_army.py.",
+            "Points come from the 11th edition snapshot, so they differ from an export "
+            "written by a 10th edition app: this is the list re-priced under 11e, not a "
+            "verified-legal 11e roster. Points are also unreconciled with the MFM "
+            "(register A5), so treat the total as provisional.",
+        ],
+    )
+
+    stated_disp = header.get("stated_disposition", "")
+    det_id = report.army.detachments[0] if report.army and report.army.detachments else ""
+    if stated_disp and det_id:
+        actual = data.detachments[det_id].disposition
+        if norm(stated_disp) != norm(actual):
+            note = (
+                f"the export states Force Disposition {stated_disp!r}, but the 11th edition "
+                f"pack gives {data.detachments[det_id].name} {actual!r} — the pack "
+                "value is used, and it decides which primary missions this army scores"
+            )
+            report.warnings.append(note)
+            report.army.notes.append(note)
+    return report
+
+
+#: The payload the Auto Player tab writes from a List Builder saved list
+#: (src/ui/autoplayer/savedArmies.ts). Nothing but names and counts — both
+#: schemas' ids stay on their own side of the bridge.
+NAMED_LIST_KIND = "sim2_named_list"
+
+
+def looks_like_named_list(blob: Any) -> bool:
+    if not isinstance(blob, dict):
+        return False
+    if blob.get("kind") == NAMED_LIST_KIND:
+        return True
+    units = blob.get("units")
+    return bool(units) and all(
+        isinstance(u, dict) and u.get("name") and "datasheet_id" not in u for u in units
+    )
+
+
+def import_named_list(data, payload: Dict[str, Any], name_override: str = "") -> ImportReport:
+    """Resolve a named-list payload (unit names + model counts) into an Army."""
+    report = ImportReport(stated_points=int(payload.get("points") or 0))
+
+    faction = str(payload.get("faction") or "").strip().upper()
+    if faction and faction not in ("IA", "AM"):
+        report.warnings.append(
+            f"faction {faction!r} is not in the snapshot (IA / AM); "
+            "datasheets matched across both"
+        )
+        faction = ""
+    if not faction:
+        report.warnings.append("payload names no snapshot faction; datasheets matched across both")
+
+    specs = [
+        UnitSpec(
+            name=str(u.get("name") or ""),
+            models=int(u.get("models") or 0),
+            enhancement=str(u.get("enhancement") or ""),
+            warlord=bool(u.get("warlord")),
+            attached_as="leader" if u.get("attached") else "",
+        )
+        for u in payload.get("units", [])
+        if isinstance(u, dict)
+    ]
+    return _assemble(
+        data, report,
+        name=name_override or str(payload.get("name") or ""),
+        faction=faction,
+        detachment_raw=str(payload.get("detachment") or ""),
+        battle_size=int(payload.get("battle_size") or 1000),
+        specs=specs,
+        source_notes=[
+            "Converted from a List Builder saved list (named-list payload) by "
+            "tools2/import_army.py.",
+            "Points come from the 11th edition snapshot and are unreconciled with the "
+            "MFM (register A5), so treat the total as provisional. Wargear/loadout "
+            "choices do not transfer — the v2 schema does not model them yet.",
+        ],
+    )
+
+
 # --------------------------------------------------------------------------
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("export", help="path to the app's text export")
+    ap.add_argument("export", help="path to the app's text export or a named-list payload (.json)")
     ap.add_argument("--out", default="data2/armies", help="output directory")
     ap.add_argument("--name", default="", help="override the army name")
     ap.add_argument("--dry-run", action="store_true", help="report without writing")
@@ -378,7 +540,20 @@ def main(argv=None) -> int:
 
     data = load()
     text = open(args.export, encoding="utf-8").read()
-    report = import_export(data, text, args.name)
+    blob: Any = None
+    if text.lstrip().startswith("{"):
+        try:
+            blob = json.loads(text)
+        except json.JSONDecodeError:
+            blob = None
+    if blob is not None:
+        if not looks_like_named_list(blob):
+            print("This JSON is not a named-list payload. A v2 army file "
+                  "(datasheet_id units) belongs in data2/armies/ as-is.", file=sys.stderr)
+            return 1
+        report = import_named_list(data, blob, args.name)
+    else:
+        report = import_export(data, text, args.name)
 
     if report.army is None:
         print("IMPORT FAILED", file=sys.stderr)
