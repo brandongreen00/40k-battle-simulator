@@ -88,3 +88,19 @@ three things a static page *can* do: build the exact command for you, dispatch a
 (kept in browser storage — committing a token is prohibited), and replay the
 committed JSON artifacts. Heavy runs (large batches, RL training) belong on a
 local machine through the same CLI and emit the same artifacts.
+
+## Saved lists (the second army source)
+
+Besides `data2/armies/`, the Run tab offers the List Builder's saved lists,
+which exist only in that browser's localStorage and in the v1 schema. The
+bridge is a **named-list payload** (`kind: "sim2_named_list"`): the browser
+transcribes unit NAMES + model counts out of the v1 catalogs
+(`src/ui/autoplayer/savedArmies.ts` — data reuse only, no v1 rules code), and
+Python resolves the names against the snapshot with the same resolver as the
+text-export importer (`tools2/import_army.import_named_list`). The payload
+travels either as a downloaded `*.sim2list.json` file next to the CLI
+(`--a/--b/--vs` accept file paths) or as a `workflow_dispatch` input the
+workflow writes to a file. A unit that does not resolve ABORTS the run —
+mandate 3 applies to this path exactly as it does to the importer. Committing
+`tools2/import_army.py <payload>`'s output to `data2/armies/` turns a saved
+list into a published army for every browser.

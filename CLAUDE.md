@@ -378,6 +378,56 @@ ability-system design that these stages depend on.
 
 *(Newest entries at top. Each session appends what it did, decided, and left for the next.)*
 
+- **[2026-08-17] — The Auto Player pulls armies from SAVED LISTS in the Pages app (owner: "How
+  can I get the auto player to pull armies from my saved lists in the GitHub pages app?").
+  Separate PR off main (v2 surface + tools2 + workflows; v1 untouched).** All gates green:
+  `pnpm typecheck`, `pnpm test` (**615 tests**, +8 in `tests/savedArmies.test.tsx` incl. a jsdom
+  render of the Run tab offering a saved list), `pnpm build`, `pytest tests_py` (**79**, +7 in
+  `tests_py/test_named_list.py`), `tools2/lint_determinism.py`; an end-to-end CLI game played
+  FROM a payload file ends naturally (5 rounds, 186 actions, ZERO rejected).
+  - **The bridge is a NAMED-LIST payload** (`kind: "sim2_named_list"`: unit names + model
+    counts, neither schema's ids). Saved List Builder lists live in browser localStorage in
+    the v1 schema (Wahapedia numeric ids) that Python can't read, and Pages can't execute the
+    engine — so the browser only TRANSCRIBES names out of the v1 JSON catalogs (new
+    `src/ui/autoplayer/savedArmies.ts`, data-only imports per §7b), and Python resolves them
+    against the v2 snapshot with the SAME resolver as the text-export importer
+    (`tools2/import_army.import_named_list`; both paths now share one `_assemble` — Agents
+    ally column, copy escalation, snapshot points). Transcribe-never-reconstruct holds end to
+    end: an unresolved unit ABORTS the run (CLI SystemExit / workflow failure), never
+    approximates, and the browser transcribes even an unknown catalog id verbatim so Python
+    is the one that refuses.
+  - **Run tab**: both army pickers gain a "My saved lists (this browser)" optgroup (`saved:`
+    value prefix, so a name collision with a published army stays unambiguous; auto-selected
+    when no results index exists yet). Local runs: the copyable command references
+    `./<slug>.sim2list.json` and a ⬇ download button hands over the payload file —
+    `sim2.cli`'s `--a/--b/--vs` now accept a path to an army OR named-list JSON. Actions
+    runs: the payload rides the dispatch as new optional inputs (simulate.yml
+    `army_a_json`/`army_b_json`, optimize.yml `opponent_json`) that the workflow writes to
+    files via env vars (JSON is never shell-interpolated) and passes as paths; the keys are
+    sent only when a saved list is picked, so pre-update workflows keep accepting
+    published-army dispatches. Combat Patrol boxes are skipped with a visible reason (not in
+    the v2 IA/AM snapshot); in optimize mode a saved seed contributes only its faction (noted
+    in-UI).
+  - **Latent importer bug found + fixed**: `resolve_detachment`'s substring fallback swallowed
+    a combined multi-detachment header — "Imperialis Fleet and Veiled Blade Elimination
+    Force" resolved to Imperialis Fleet ALONE (both import paths). New `resolve_detachments`:
+    exact whole-string match first (a name containing "and" can never be broken), then the
+    " and " split kept only when EVERY part resolves (v1's splitDetachments rule), fuzzy
+    last; v2 armies now carry real multi-detachment lists.
+  - **The permanent path**: `python3 tools2/import_army.py <payload.json>` also accepts the
+    downloaded file — commit its output to `data2/armies/` (+ `tools2/sync_results.py`) and
+    the saved list becomes a published army in every browser's picker.
+  - **Decisions**: resolution lives ONLY in Python (one resolver for both import paths; the
+    browser never guesses); the v2 surface reuses v1 *data* only (JSON catalogs +
+    localStorage — the `ArmyList` import is type-only, `loadSavedArmyLists` is browser-IO
+    glue); wargear/loadout picks do NOT transfer (the v2 schema has no slot — pre-existing
+    gap, stated in the payload's army notes); saved entries show unit count, not points (v2
+    prices at run time).
+  - **Handoff nits**: dispatching a saved list to Actions needs these workflow changes merged
+    to main first (the new inputs; published-army dispatches unaffected); enhancement picks
+    transfer by name but most v2 enhancement records are text-only; Leader pairings are
+    transcribed (`attached`) but v2 still doesn't implement attached units (register C1).
+
 - **[2026-08-16] — DECLARE BATTLE FORMATIONS is now a real pre-deployment step, and the
   Deathwatch Kill Team can ride its Rhino (owner: "I can't embark my deathwatch kill team onto
   my rhino… add a 'Declare battle formations' step [that] happens BEFORE deployment and is where
